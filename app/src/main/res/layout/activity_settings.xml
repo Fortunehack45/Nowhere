@@ -230,7 +230,7 @@
                     <RadioGroup
                         android:id="@+id/rgTruncate"
                         android:layout_width="match_parent"
-                        android:layout_height="36dp"
+                        android:layout_height="38dp"
                         android:layout_marginTop="10dp"
                         android:background="@drawable/bg_segmented_tab"
                         android:orientation="horizontal"
@@ -241,10 +241,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Full"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -253,10 +254,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="6 Dec (~0.1m)"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -265,10 +267,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="4 Dec (~11m)"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </RadioGroup>
@@ -475,10 +478,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Street"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -487,10 +491,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Terrain"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -499,10 +504,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Vector"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -511,10 +517,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Satellite"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </RadioGroup>
@@ -617,10 +624,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Dark Obsidian"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -629,10 +637,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Light"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -641,10 +650,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="System Default"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </RadioGroup>
@@ -678,10 +688,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Metric (KM/H, Meters)"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -690,10 +701,11 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
                             android:text="Imperial (MPH, Feet)"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </RadioGroup>
