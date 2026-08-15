@@ -1,0 +1,238 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7B0000012A00000000000001 /* NowhereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000012A00000000000001 /* NowhereApp.swift */; };
+		7B0000022A00000000000001 /* MainMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000022A00000000000001 /* MainMapView.swift */; };
+		7B0000032A00000000000001 /* LocationSimulationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000032A00000000000001 /* LocationSimulationEngine.swift */; };
+		7B0000042A00000000000001 /* GPXManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000042A00000000000001 /* GPXManager.swift */; };
+		7B0000052A00000000000001 /* SimulationMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000052A00000000000001 /* SimulationMode.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		7A0000002A00000000000001 /* Nowhere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nowhere.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A0000012A00000000000001 /* NowhereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowhereApp.swift; sourceTree = "<group>"; };
+		7A0000022A00000000000001 /* MainMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/MainMapView.swift; sourceTree = "<group>"; };
+		7A0000032A00000000000001 /* LocationSimulationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/LocationSimulationEngine.swift; sourceTree = "<group>"; };
+		7A0000042A00000000000001 /* GPXManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/GPXManager.swift; sourceTree = "<group>"; };
+		7A0000052A00000000000001 /* SimulationMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/SimulationMode.swift; sourceTree = "<group>"; };
+		7A0000062A00000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7C0000012A00000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7D0000012A00000000000001 = {
+			isa = PBXGroup;
+			children = (
+				7D0000022A00000000000001 /* Nowhere */,
+				7D0000032A00000000000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7D0000022A00000000000001 /* Nowhere */ = {
+			isa = PBXGroup;
+			children = (
+				7A0000012A00000000000001 /* NowhereApp.swift */,
+				7A0000022A00000000000001 /* MainMapView.swift */,
+				7A0000032A00000000000001 /* LocationSimulationEngine.swift */,
+				7A0000042A00000000000001 /* GPXManager.swift */,
+				7A0000052A00000000000001 /* SimulationMode.swift */,
+				7A0000062A00000000000001 /* Info.plist */,
+			);
+			path = Nowhere;
+			sourceTree = "<group>";
+		};
+		7D0000032A00000000000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7A0000002A00000000000001 /* Nowhere.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7E0000012A00000000000001 /* Nowhere */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7F0000012A00000000000001 /* Build configuration list for PBXNativeTarget "Nowhere" */;
+			buildPhases = (
+				7C0000022A00000000000001 /* Sources */,
+				7C0000012A00000000000001 /* Frameworks */,
+				7C0000032A00000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Nowhere;
+			productName = Nowhere;
+			productReference = 7A0000002A00000000000001 /* Nowhere.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7F0000002A00000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					7E0000012A00000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 7F0000022A00000000000001 /* Build configuration list for PBXProject "Nowhere" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 7D0000012A00000000000001;
+			productRefGroup = 7D0000032A00000000000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7E0000012A00000000000001 /* Nowhere */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7C0000032A00000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7C0000022A00000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7B0000012A00000000000001 /* NowhereApp.swift in Sources */,
+				7B0000022A00000000000001 /* MainMapView.swift in Sources */,
+				7B0000032A00000000000001 /* LocationSimulationEngine.swift in Sources */,
+				7B0000042A00000000000001 /* GPXManager.swift in Sources */,
+				7B0000052A00000000000001 /* SimulationMode.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		7E0000022A00000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Nowhere/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fakegps.mocklocation.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7E0000032A00000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Nowhere/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fakegps.mocklocation.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		7F0000032A00000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		7F0000042A00000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7F0000012A00000000000001 /* Build configuration list for PBXNativeTarget "Nowhere" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E0000022A00000000000001 /* Debug */,
+				7E0000032A00000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7F0000022A00000000000001 /* Build configuration list for PBXProject "Nowhere" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7F0000032A00000000000001 /* Debug */,
+				7F0000042A00000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 7F0000002A00000000000001 /* Project object */;
+}
