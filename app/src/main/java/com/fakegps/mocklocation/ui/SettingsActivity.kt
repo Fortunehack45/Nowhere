@@ -36,6 +36,24 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun refreshSystemStatus() {
+        // 24-Hour Ad-Free Pass Status
+        if (settingsPrefs.isAdFreeActive) {
+            binding.tvAdFreeBadge.text = "Active"
+            binding.tvAdFreeBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
+            binding.tvAdFreeDescription.text = "24-Hour Ad-Free pass is active! All ads are hidden."
+            binding.tvAdFreeProgressText.text = settingsPrefs.getAdFreeRemainingTimeText()
+            binding.pbAdFreeProgress.progress = 5
+            binding.btnWatchRewardedAd.text = "Extend +24h"
+        } else {
+            val watched = settingsPrefs.watchedRewardAdsCount
+            binding.tvAdFreeBadge.text = "Inactive"
+            binding.tvAdFreeBadge.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
+            binding.tvAdFreeDescription.text = "Watch 5 short rewarded videos to remove all banner, interstitial, and open ads for 24 hours."
+            binding.tvAdFreeProgressText.text = "$watched / 5 Videos Watched (${5 - watched} remaining)"
+            binding.pbAdFreeProgress.progress = watched
+            binding.btnWatchRewardedAd.text = "Watch Video"
+        }
+
         // Mock Location in Developer Options
         val isMockEnabled = PermissionHelper.isMockLocationEnabled(this)
         if (isMockEnabled) {
@@ -118,6 +136,29 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnResetDefaults.setOnClickListener {
             resetToDefaults()
             Toast.makeText(this, "Settings reset to defaults", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnWatchRewardedAd.setOnClickListener {
+            if (com.fakegps.mocklocation.ads.AdManager.isRewardedAdReady()) {
+                com.fakegps.mocklocation.ads.AdManager.showRewardedAd(
+                    this,
+                    onUserEarnedReward = {
+                        val (newCount, unlocked) = settingsPrefs.recordRewardedAdWatched()
+                        if (unlocked) {
+                            Toast.makeText(this, "24-Hour Ad-Free Pass Unlocked! All ads are removed.", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this, "Video $newCount / 5 complete! Watch ${5 - newCount} more to unlock 24h Ad-Free.", Toast.LENGTH_SHORT).show()
+                        }
+                        refreshSystemStatus()
+                    },
+                    onAdClosed = {
+                        refreshSystemStatus()
+                    }
+                )
+            } else {
+                com.fakegps.mocklocation.ads.AdManager.preloadRewardedAd(this)
+                Toast.makeText(this, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
+            }
         }
 
         // Permission & Integration buttons

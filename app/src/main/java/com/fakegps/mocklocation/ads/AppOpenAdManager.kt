@@ -96,6 +96,12 @@ class AppOpenAdManager(private val application: Application) :
      * Shows the ad if available when the app is brought to foreground.
      */
     fun showAdIfAvailable(activity: Activity, onShowAdCompleteListener: OnShowAdCompleteListener? = null) {
+        val prefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(activity)
+        if (prefs.isAdFreeActive) {
+            onShowAdCompleteListener?.onShowAdComplete()
+            return
+        }
+
         if (isShowingAd) {
             Log.d(TAG, "The app open ad is already showing.")
             return

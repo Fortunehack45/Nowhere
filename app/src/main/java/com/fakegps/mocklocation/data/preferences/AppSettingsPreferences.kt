@@ -103,6 +103,46 @@ class AppSettingsPreferences(context: Context) {
         get() = prefs.getBoolean("key_has_completed_onboarding", false)
         set(value) = prefs.edit().putBoolean("key_has_completed_onboarding", value).apply()
 
+    // --- 24-Hour Rewarded Ad-Free Pass ---
+
+    var watchedRewardAdsCount: Int
+        get() = prefs.getInt("key_watched_reward_ads_count", 0)
+        set(value) = prefs.edit().putInt("key_watched_reward_ads_count", value).apply()
+
+    var adFreeUntilTimestamp: Long
+        get() = prefs.getLong("key_ad_free_until_timestamp", 0L)
+        set(value) = prefs.edit().putLong("key_ad_free_until_timestamp", value).apply()
+
+    val isAdFreeActive: Boolean
+        get() = System.currentTimeMillis() < adFreeUntilTimestamp
+
+    /**
+     * Records a watched rewarded ad. If 5 ads are watched, activates 24 hours of ad-free access!
+     * Returns a pair of (newWatchedCount, didUnlock24hPass)
+     */
+    fun recordRewardedAdWatched(): Pair<Int, Boolean> {
+        val current = watchedRewardAdsCount + 1
+        return if (current >= 5) {
+            val oneDayMillis = 24 * 60 * 60 * 1000L
+            val currentFreeUntil = if (isAdFreeActive) adFreeUntilTimestamp else System.currentTimeMillis()
+            adFreeUntilTimestamp = currentFreeUntil + oneDayMillis
+            watchedRewardAdsCount = 0
+            Pair(5, true)
+        } else {
+            watchedRewardAdsCount = current
+            Pair(current, false)
+        }
+    }
+
+    fun getAdFreeRemainingTimeText(): String {
+        if (!isAdFreeActive) return "Inactive"
+        val remainingMillis = adFreeUntilTimestamp - System.currentTimeMillis()
+        if (remainingMillis <= 0) return "Expired"
+        val hours = remainingMillis / (1000 * 60 * 60)
+        val minutes = (remainingMillis % (1000 * 60 * 60)) / (1000 * 60)
+        return String.format("%dh %02dm remaining", hours, minutes)
+    }
+
     fun applyTheme(theme: String = appTheme) {
         when (theme) {
             "DARK" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

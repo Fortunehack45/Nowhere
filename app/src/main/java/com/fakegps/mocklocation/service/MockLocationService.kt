@@ -89,6 +89,14 @@ class MockLocationService : Service() {
         sessionPrefs = SessionPreferences(this)
         createNotificationChannel()
         acquireWakeLock()
+        startForegroundNotification("Nowhere Location Service", "Ready & Active")
+    }
+
+    private fun updateAllWidgets() {
+        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereJoystickWidgetProvider.updateAllJoystickWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -293,7 +301,7 @@ class MockLocationService : Service() {
         sessionPrefs.lastLatitude = latitude
         sessionPrefs.lastLongitude = longitude
         sessionPrefs.lastAltitude = altitude
-        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+        updateAllWidgets()
 
         startForegroundNotification(String.format("Fixed: %.5f, %.5f", latitude, longitude))
         updateLocationNotification(latitude, longitude, "Teleported / Fixed")
@@ -360,8 +368,7 @@ class MockLocationService : Service() {
         if (waypoints.isNotEmpty()) {
             updateLocationNotification(waypoints[0].latitude, waypoints[0].longitude, "Route Active (${transportMode.title})")
         }
-        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
-        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+        updateAllWidgets()
 
         simulationJob = serviceScope.launch {
             val stepSeconds = 1.0
@@ -412,7 +419,7 @@ class MockLocationService : Service() {
         if (current is ServiceState.Running) {
             _serviceState.value = current.copy(isPaused = true)
         }
-        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
+        updateAllWidgets()
     }
 
     fun resumeRoute() {
@@ -421,7 +428,7 @@ class MockLocationService : Service() {
         if (current is ServiceState.Running) {
             _serviceState.value = current.copy(isPaused = false)
         }
-        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
+        updateAllWidgets()
     }
 
     fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f) {
@@ -439,8 +446,7 @@ class MockLocationService : Service() {
         sessionPrefs.lastLatitude = startLat
         sessionPrefs.lastLongitude = startLon
         sessionPrefs.lastSpeedKmh = speedKmh
-        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
-        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
+        updateAllWidgets()
 
         startForegroundNotification(
             String.format("Joystick: %.5f, %.5f", startLat, startLon),
@@ -449,59 +455,50 @@ class MockLocationService : Service() {
         updateLocationNotification(startLat, startLon, "Joystick Active")
 
         simulationJob = serviceScope.launch {
-            var lastTime = System.currentTimeMillis()
-            var lastEngineTick = 0L
-
+            val deltaSeconds = 0.1
             while (isActive) {
-                val now = System.currentTimeMillis()
-                val deltaSeconds = (now - lastTime).coerceIn(10L, 500L) / 1000.0
-                lastTime = now
-
-                val isMoving = joystickMagnitude > 0.05f
-                val speedMps = if (isMoving) (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude else 0.0f
-
-                if (isMoving) {
+                if (joystickMagnitude > 0.01f) {
+                    val speedMps = (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude
                     val distanceMeters = speedMps * deltaSeconds
-                    val (nextLat, nextLon) = GeoUtils.computeDestinationPoint(
+
+                    val (newLat, newLon) = GeoUtils.computeDestinationPoint(
                         joystickLat,
                         joystickLon,
                         joystickAngleDeg,
                         distanceMeters
                     )
-                    joystickLat = nextLat
-                    joystickLon = nextLon
-                    sessionPrefs.lastLatitude = joystickLat
-                    sessionPrefs.lastLongitude = joystickLon
-                }
+                    joystickLat = newLat
+                    joystickLon = newLon
 
-                // Push location into Android test provider at 10Hz when moving, or 1Hz when stationary
-                if (isMoving || now - lastEngineTick >= 1000L) {
-                    lastEngineTick = now
                     val result = engine.setLocation(
-                        latitude = joystickLat,
-                        longitude = joystickLon,
+                        latitude = newLat,
+                        longitude = newLon,
+                        altitude = 15.0,
                         speed = speedMps,
                         bearing = joystickAngleDeg,
-                        applyStationaryJitter = !isMoving
+                        applyStationaryJitter = false
                     )
 
-                    if (result.isFailure) {
-                        val error = result.exceptionOrNull() as? com.fakegps.mocklocation.engine.MockLocationError
-                            ?: com.fakegps.mocklocation.engine.MockLocationError.InternalError("Joystick update failed")
-                        _serviceState.value = ServiceState.Error(error)
-                        stopSpoofing()
-                        break
+                    if (result.isSuccess) {
+                        _serviceState.value = ServiceState.Running(
+                            mode = activeMode,
+                            latitude = newLat,
+                            longitude = newLon,
+                            altitude = 15.0,
+                            speedMps = speedMps,
+                            bearingDegrees = joystickAngleDeg
+                        )
                     }
+                } else {
+                    engine.setLocation(
+                        latitude = joystickLat,
+                        longitude = joystickLon,
+                        altitude = 15.0,
+                        speed = 0.0f,
+                        bearing = joystickAngleDeg,
+                        applyStationaryJitter = false
+                    )
                 }
-
-                _serviceState.value = ServiceState.Running(
-                    mode = activeMode,
-                    latitude = joystickLat,
-                    longitude = joystickLon,
-                    altitude = 15.0,
-                    speedMps = speedMps,
-                    bearingDegrees = joystickAngleDeg
-                )
 
                 delay(100L)
             }
@@ -522,8 +519,7 @@ class MockLocationService : Service() {
         engine.stop()
         sessionPrefs.isSessionActive = false
         _serviceState.value = ServiceState.Idle
-        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
-        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
+        updateAllWidgets()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }

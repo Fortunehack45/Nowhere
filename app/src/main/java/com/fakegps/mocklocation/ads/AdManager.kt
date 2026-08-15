@@ -11,6 +11,7 @@ import android.widget.RatingBar
 import android.widget.TextView
 import com.fakegps.mocklocation.BuildConfig
 import com.fakegps.mocklocation.R
+import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -23,6 +24,9 @@ import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
+import com.google.android.gms.ads.rewarded.RewardItem
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.material.button.MaterialButton
 
 object AdManager {
@@ -34,13 +38,16 @@ object AdManager {
     const val PROD_HOME_BANNER_AD_UNIT_ID = "ca-app-pub-5191202278112313/8553859547"
     const val PROD_APP_OPEN_AD_UNIT_ID = "ca-app-pub-5191202278112313/3576719243"
     const val PROD_NATIVE_AD_UNIT_ID = "ca-app-pub-5191202278112313/5736124511"
+    const val PROD_REWARDED_AD_UNIT_ID = "ca-app-pub-5191202278112313/1933445026"
 
     // Official Google Test Ad Unit IDs for safe debug & QA
     const val TEST_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
     const val TEST_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
     const val TEST_NATIVE_AD_UNIT_ID = "ca-app-pub-3940256099942544/2247696110"
+    const val TEST_REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
 
     private var interstitialAd: InterstitialAd? = null
+    private var rewardedAd: RewardedAd? = null
     private var lastInterstitialShowTime: Long = 0
     private const val INTERSTITIAL_COOLDOWN_MS = 180_000L // 3 minutes cooldown
 
@@ -50,6 +57,7 @@ object AdManager {
                 Log.d(TAG, "Google Mobile Ads initialized: $status")
             }
             preloadInterstitial(context)
+            preloadRewardedAd(context)
         } catch (e: Exception) {
             Log.w(TAG, "AdMob initialization skipped: ${e.message}")
         }
@@ -59,6 +67,12 @@ object AdManager {
      * Loads an Adaptive/Standard Banner Ad into the specified container.
      */
     fun loadBanner(activity: Activity, container: FrameLayout, isHomeBanner: Boolean = false) {
+        val prefs = AppSettingsPreferences(activity)
+        if (prefs.isAdFreeActive) {
+            container.visibility = View.GONE
+            return
+        }
+
         try {
             val adUnit = if (BuildConfig.DEBUG) {
                 TEST_BANNER_AD_UNIT_ID
@@ -85,6 +99,12 @@ object AdManager {
      * Loads a Native Advanced Ad into the specified container.
      */
     fun loadNativeAd(activity: Activity, container: FrameLayout) {
+        val prefs = AppSettingsPreferences(activity)
+        if (prefs.isAdFreeActive) {
+            container.visibility = View.GONE
+            return
+        }
+
         try {
             val adUnit = if (BuildConfig.DEBUG) TEST_NATIVE_AD_UNIT_ID else PROD_NATIVE_AD_UNIT_ID
 
@@ -136,7 +156,7 @@ object AdManager {
         adView.advertiserView = adView.findViewById(R.id.ad_advertiser)
         adView.mediaView = adView.findViewById(R.id.ad_media)
 
-        // Headline (Required)
+        // Headline
         (adView.headlineView as? TextView)?.text = nativeAd.headline
 
         // Body
@@ -207,6 +227,9 @@ object AdManager {
     }
 
     fun preloadInterstitial(context: Context) {
+        val prefs = AppSettingsPreferences(context)
+        if (prefs.isAdFreeActive) return
+
         try {
             val adRequest = AdRequest.Builder().build()
             InterstitialAd.load(
@@ -231,9 +254,12 @@ object AdManager {
     }
 
     fun showInterstitialIfReady(activity: Activity) {
+        val prefs = AppSettingsPreferences(activity)
+        if (prefs.isAdFreeActive) return
+
         val now = System.currentTimeMillis()
         if (now - lastInterstitialShowTime < INTERSTITIAL_COOLDOWN_MS) {
-            return // Cooldown active
+            return
         }
 
         interstitialAd?.let { ad ->
@@ -243,6 +269,65 @@ object AdManager {
             preloadInterstitial(activity)
         } ?: run {
             preloadInterstitial(activity)
+        }
+    }
+
+    // --- Rewarded Ads (Watch 5 Videos -> 24 Hours Ad-Free Pass) ---
+
+    fun preloadRewardedAd(context: Context) {
+        try {
+            val adUnit = if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else PROD_REWARDED_AD_UNIT_ID
+            val adRequest = AdRequest.Builder().build()
+
+            RewardedAd.load(
+                context,
+                adUnit,
+                adRequest,
+                object : RewardedAdLoadCallback() {
+                    override fun onAdLoaded(ad: RewardedAd) {
+                        rewardedAd = ad
+                        Log.d(TAG, "Rewarded ad preloaded successfully.")
+                    }
+
+                    override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                        rewardedAd = null
+                        Log.w(TAG, "Rewarded ad failed to load: ${loadAdError.message}")
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Preload rewarded error: ${e.message}")
+        }
+    }
+
+    fun isRewardedAdReady(): Boolean = rewardedAd != null
+
+    fun showRewardedAd(
+        activity: Activity,
+        onUserEarnedReward: (RewardItem) -> Unit,
+        onAdClosed: () -> Unit
+    ) {
+        rewardedAd?.let { ad ->
+            ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedAd = null
+                    preloadRewardedAd(activity)
+                    onAdClosed()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                    rewardedAd = null
+                    preloadRewardedAd(activity)
+                    onAdClosed()
+                }
+            }
+
+            ad.show(activity) { rewardItem ->
+                onUserEarnedReward(rewardItem)
+            }
+        } ?: run {
+            preloadRewardedAd(activity)
+            onAdClosed()
         }
     }
 }
