@@ -12,8 +12,8 @@ android {
         applicationId = "com.fakegps.mocklocation"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -22,18 +22,25 @@ android {
     }
 
     signingConfigs {
-        getByName("debug") {
-            // Standard consistent debug signature for seamless updates
+        create("universalKey") {
+            storeFile = file("nowhere_key.jks")
+            storePassword = "nowhere123"
+            keyAlias = "nowhere"
+            keyPassword = "nowhere123"
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("universalKey")
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug") // Ensure release can update debug seamlessly
+            signingConfig = signingConfigs.getByName("universalKey")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -87,7 +87,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchSettingsBootInjection.setOnCheckedChangeListener { _, isChecked ->
             sessionPrefs.isPersistentBootInjectionEnabled = isChecked
-            val msg = if (isChecked) "⚡ Auto-Inject on Boot: Enabled" else "Auto-Inject on Boot: Disabled"
+            val msg = if (isChecked) "Auto-Inject on Boot: Enabled" else "Auto-Inject on Boot: Disabled"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 

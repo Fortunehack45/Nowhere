@@ -128,6 +128,12 @@ class MainActivity : AppCompatActivity() {
         binding.btnHeaderSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        if (intent?.getBooleanExtra("open_overlay_permission", false) == true) {
+            if (!PermissionHelper.canDrawOverlays(this)) {
+                PermissionHelper.requestOverlayPermission(this)
+            }
+        }
     }
 
     override fun onStart() {
@@ -462,7 +468,7 @@ class MainActivity : AppCompatActivity() {
         binding.switchPersistentInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchPersistentInjection.setOnCheckedChangeListener { _, isChecked ->
             sessionPrefs.isPersistentBootInjectionEnabled = isChecked
-            val msg = if (isChecked) "⚡ Auto-Inject on Boot: Active (Survives phone restarts)" else "Auto-Inject on Boot: Disabled"
+            val msg = if (isChecked) "Auto-Inject on Boot: Active (Survives phone restarts)" else "Auto-Inject on Boot: Disabled"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 

@@ -203,7 +203,7 @@ class MockLocationService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("📍 $locationTitle")
+            .setContentTitle(locationTitle)
             .setContentText(contentSubtitle)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setColor(ContextCompat.getColor(this, R.color.primary))
@@ -254,7 +254,7 @@ class MockLocationService : Service() {
             )
 
             val notification = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
-                .setContentTitle("📍 $placeName")
+                .setContentTitle(placeName)
                 .setContentText(coordsText)
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
                 .setColor(ContextCompat.getColor(this@MockLocationService, R.color.primary))

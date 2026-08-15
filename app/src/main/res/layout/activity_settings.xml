@@ -72,7 +72,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.06"
-                android:text="⚡ SYSTEM LOCATION INJECTOR"
+                android:text="SYSTEM LOCATION INJECTOR"
                 android:textColor="@color/primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
