@@ -1,34 +1,22 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp"
-    android:height="48dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- Outer Red Diamond Ring -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#E41B1B"
-        android:strokeWidth="6"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M 54,18 L 90,54 L 54,90 L 18,54 Z" />
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
 
-    <!-- Corner Radar Accent Ticks -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#E41B1B"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:pathData="M 54,8 L 54,18 M 54,90 L 54,100 M 8,54 L 18,54 M 90,54 L 100,54" />
-
-    <!-- Inner Concentric Ring -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#E41B1B"
-        android:strokeWidth="4"
-        android:pathData="M 54,34 A 20,20 0 1,1 53.9,34 Z" />
-
-    <!-- Center Precision Target Dot -->
+    <!-- Main Pin Base Path -->
     <path
         android:fillColor="#E41B1B"
-        android:pathData="M 54,46 A 8,8 0 1,1 53.9,46 Z" />
+        android:pathData="M100,20 C133.14,20 160,46.86 160,80 C160,118 100,185 100,185 C100,185 40,118 40,80 C40,46.86 66.86,20 100,20 Z" />
+
+    <!-- Dark Crimson Top-Left Segment / Radar Quadrant -->
+    <path
+        android:fillColor="#5C1615"
+        android:pathData="M100,20 C66.86,20 40,46.86 40,80 L75,80 C75,66.2 86.2,55 100,55 Z" />
+
+    <!-- Center Cutout Aperture Circle -->
+    <!-- Handled by White/Theme or Background circle cutout -->
+    <path
+        android:fillColor="#0E1117"
+        android:pathData="M100,55 C113.8,55 125,66.2 125,80 C125,93.8 113.8,105 100,105 C86.2,105 75,93.8 75,80 C75,66.2 86.2,55 100,55 Z" />
 </vector>
