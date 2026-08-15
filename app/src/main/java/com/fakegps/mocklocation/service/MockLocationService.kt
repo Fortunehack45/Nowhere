@@ -343,13 +343,19 @@ class MockLocationService : Service() {
         startForegroundNotification(String.format("Joystick: %.5f, %.5f", startLat, startLon))
 
         simulationJob = serviceScope.launch {
-            val stepSeconds = 1.0
+            var lastTime = System.currentTimeMillis()
+            var lastEngineTick = 0L
+
             while (isActive) {
+                val now = System.currentTimeMillis()
+                val deltaSeconds = (now - lastTime).coerceIn(10L, 500L) / 1000.0
+                lastTime = now
+
                 val isMoving = joystickMagnitude > 0.05f
                 val speedMps = if (isMoving) (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude else 0.0f
 
                 if (isMoving) {
-                    val distanceMeters = speedMps * stepSeconds
+                    val distanceMeters = speedMps * deltaSeconds
                     val (nextLat, nextLon) = GeoUtils.computeDestinationPoint(
                         joystickLat,
                         joystickLon,
@@ -358,35 +364,40 @@ class MockLocationService : Service() {
                     )
                     joystickLat = nextLat
                     joystickLon = nextLon
+                    sessionPrefs.lastLatitude = joystickLat
+                    sessionPrefs.lastLongitude = joystickLon
                 }
 
-                val result = engine.setLocation(
-                    latitude = joystickLat,
-                    longitude = joystickLon,
-                    speed = speedMps,
-                    bearing = joystickAngleDeg,
-                    applyStationaryJitter = !isMoving
-                )
-
-                if (result.isFailure) {
-                    val error = result.exceptionOrNull() as? com.fakegps.mocklocation.engine.MockLocationError
-                        ?: com.fakegps.mocklocation.engine.MockLocationError.InternalError("Joystick update failed")
-                    _serviceState.value = ServiceState.Error(error)
-                    stopSpoofing()
-                    break
-                } else {
-                    _serviceState.value = ServiceState.Running(
-                        mode = activeMode,
+                // Push location into Android test provider at 10Hz when moving, or 1Hz when stationary
+                if (isMoving || now - lastEngineTick >= 1000L) {
+                    lastEngineTick = now
+                    val result = engine.setLocation(
                         latitude = joystickLat,
                         longitude = joystickLon,
-                        altitude = 15.0,
-                        speedMps = speedMps,
-                        bearingDegrees = joystickAngleDeg
+                        speed = speedMps,
+                        bearing = joystickAngleDeg,
+                        applyStationaryJitter = !isMoving
                     )
+
+                    if (result.isFailure) {
+                        val error = result.exceptionOrNull() as? com.fakegps.mocklocation.engine.MockLocationError
+                            ?: com.fakegps.mocklocation.engine.MockLocationError.InternalError("Joystick update failed")
+                        _serviceState.value = ServiceState.Error(error)
+                        stopSpoofing()
+                        break
+                    }
                 }
 
-                val delayMs = realismLayer.getAdaptiveIntervalMs(isMoving)
-                delay(delayMs)
+                _serviceState.value = ServiceState.Running(
+                    mode = activeMode,
+                    latitude = joystickLat,
+                    longitude = joystickLon,
+                    altitude = 15.0,
+                    speedMps = speedMps,
+                    bearingDegrees = joystickAngleDeg
+                )
+
+                delay(100L)
             }
         }
     }

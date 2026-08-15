@@ -5,7 +5,7 @@
     android:layout_height="wrap_content">
 
     <LinearLayout
-        android:layout_width="200dp"
+        android:layout_width="210dp"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_card_glass"
         android:gravity="center_horizontal"
@@ -16,12 +16,12 @@
         <LinearLayout
             android:id="@+id/floatingDragHandle"
             android:layout_width="match_parent"
-            android:layout_height="24dp"
+            android:layout_height="28dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <View
-                android:layout_width="30dp"
+                android:layout_width="32dp"
                 android:layout_height="4dp"
                 android:layout_marginStart="8dp"
                 android:background="@drawable/bg_status_pill"
@@ -34,14 +34,14 @@
                 android:layout_weight="1"
                 android:text="NOWHERE"
                 android:textColor="@color/primary"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <ImageButton
                 android:id="@+id/btnFloatingClose"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="@color/transparent"
                 android:src="@drawable/ic_clear"
                 app:tint="@color/text_muted" />
         </LinearLayout>
@@ -49,8 +49,8 @@
         <!-- Live Joystick Control -->
         <com.fakegps.mocklocation.ui.custom.JoystickView
             android:id="@+id/floatingJoystick"
-            android:layout_width="160dp"
-            android:layout_height="160dp"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
             android:layout_marginTop="4dp" />
     </LinearLayout>
 </FrameLayout>
