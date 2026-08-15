@@ -15,14 +15,9 @@ data class SimulatedLocation(
 class RouteSimulator(
     waypoints: List<RoutePoint>,
     var targetSpeedKmh: Float = 20.0f,
-    var isLooping: Boolean = true
+    var isLooping: Boolean = true,
+    var transportMode: TransportMode = TransportMode.VEHICLE
 ) {
-    companion object {
-        private const val MAX_ACCELERATION_MPS2 = 2.0 // 2 m/s² (realistic vehicle/jogger acceleration)
-        private const val MAX_DECELERATION_MPS2 = 3.0 // 3 m/s² deceleration
-        private const val MIN_CORNER_SPEED_MPS = 2.0f // Corner minimum speed ~7.2 km/h
-    }
-
     private val rawWaypoints = if (waypoints.size >= 2) waypoints else emptyList()
     private val segments: List<RouteSegment>
     val totalDistanceMeters: Double
@@ -105,22 +100,35 @@ class RouteSimulator(
             return currentLoc.copy(speedMps = 0.0f)
         }
 
-        val targetSpeedMps = (targetSpeedKmh * 1000f / 3600f).coerceAtLeast(0.5f)
+        val maxAccelerationMps2 = when (transportMode) {
+            TransportMode.FOOT -> 1.2
+            TransportMode.VEHICLE -> 2.5
+            TransportMode.SHIP -> 0.6
+            TransportMode.AIRCRAFT -> 6.0
+        }
+
+        val maxDecelerationMps2 = when (transportMode) {
+            TransportMode.FOOT -> 2.0
+            TransportMode.VEHICLE -> 3.5
+            TransportMode.SHIP -> 0.8
+            TransportMode.AIRCRAFT -> 4.5
+        }
+
+        val targetSpeedMps = (targetSpeedKmh * 1000f / 3600f).coerceAtLeast(0.2f)
 
         // Find active segment
         val segmentIndex = findSegmentIndexForDistance(currentDistanceAlongRoute)
-        val activeSegment = segments[segmentIndex]
 
         // Calculate realistic speed constraint near upcoming turns or route end
-        val desiredSpeedMps = calculateDesiredSpeed(segmentIndex, targetSpeedMps)
+        val desiredSpeedMps = calculateDesiredSpeed(segmentIndex, targetSpeedMps, maxDecelerationMps2)
 
         // Smooth acceleration/deceleration
         if (currentSpeedMps < desiredSpeedMps) {
-            currentSpeedMps = (currentSpeedMps + MAX_ACCELERATION_MPS2 * deltaTimeSeconds)
+            currentSpeedMps = (currentSpeedMps + maxAccelerationMps2 * deltaTimeSeconds)
                 .toFloat()
                 .coerceAtMost(desiredSpeedMps)
         } else if (currentSpeedMps > desiredSpeedMps) {
-            currentSpeedMps = (currentSpeedMps - MAX_DECELERATION_MPS2 * deltaTimeSeconds)
+            currentSpeedMps = (currentSpeedMps - maxDecelerationMps2 * deltaTimeSeconds)
                 .toFloat()
                 .coerceAtLeast(desiredSpeedMps)
         }
@@ -142,26 +150,32 @@ class RouteSimulator(
         return getLocationAtDistance(currentDistanceAlongRoute)
     }
 
-    private fun calculateDesiredSpeed(currentSegmentIndex: Int, baseTargetSpeed: Float): Float {
+    private fun calculateDesiredSpeed(
+        currentSegmentIndex: Int,
+        baseTargetSpeed: Float,
+        maxDeceleration: Double
+    ): Float {
         // If coming to end of route and not looping, decelerate
         if (!isLooping) {
             val distToEnd = totalDistanceMeters - currentDistanceAlongRoute
-            val stoppingDistance = (currentSpeedMps.pow(2)) / (2 * MAX_DECELERATION_MPS2)
+            val stoppingDistance = (currentSpeedMps.pow(2)) / (2 * maxDeceleration)
             if (distToEnd <= stoppingDistance + 5.0) {
-                return (sqrt(2 * MAX_DECELERATION_MPS2 * distToEnd)).toFloat().coerceAtLeast(0.2f)
+                return (sqrt(2 * maxDeceleration * distToEnd)).toFloat().coerceAtLeast(0.2f)
             }
         }
 
-        // Cornering speed reduction
-        val nextSegmentIndex = currentSegmentIndex + 1
-        if (nextSegmentIndex < segments.size) {
-            val nextSegment = segments[nextSegmentIndex]
-            if (nextSegment.turnAngleDeg > 35f) {
-                val distToTurn = nextSegment.startCumulativeDistance - currentDistanceAlongRoute
-                if (distToTurn in 0.0..20.0) {
-                    val severity = (nextSegment.turnAngleDeg / 180.0).coerceIn(0.0, 1.0)
-                    val cornerSpeed = baseTargetSpeed * (1.0 - 0.6 * severity).toFloat()
-                    return max(MIN_CORNER_SPEED_MPS, cornerSpeed)
+        // Cornering speed reduction for land vehicles and ships (aircraft maintain bank speed)
+        if (transportMode != TransportMode.AIRCRAFT) {
+            val nextSegmentIndex = currentSegmentIndex + 1
+            if (nextSegmentIndex < segments.size) {
+                val nextSegment = segments[nextSegmentIndex]
+                if (nextSegment.turnAngleDeg > 35f) {
+                    val distToTurn = nextSegment.startCumulativeDistance - currentDistanceAlongRoute
+                    if (distToTurn in 0.0..25.0) {
+                        val severity = (nextSegment.turnAngleDeg / 180.0).coerceIn(0.0, 1.0)
+                        val cornerSpeed = baseTargetSpeed * (1.0 - 0.55 * severity).toFloat()
+                        return max(1.5f, cornerSpeed)
+                    }
                 }
             }
         }
@@ -198,12 +212,16 @@ class RouteSimulator(
             fraction
         )
 
-        val alt = seg.start.altitude + (seg.end.altitude - seg.start.altitude) * fraction
+        val baseAltitude = if (seg.start.altitude > 0.1 || seg.end.altitude > 0.1) {
+            seg.start.altitude + (seg.end.altitude - seg.start.altitude) * fraction
+        } else {
+            transportMode.defaultAltitudeMeters
+        }
 
         return SimulatedLocation(
             latitude = lat,
             longitude = lon,
-            altitude = alt,
+            altitude = baseAltitude,
             speedMps = currentSpeedMps,
             bearingDegrees = seg.bearing,
             isCompleted = isCompleted

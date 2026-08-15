@@ -2,6 +2,7 @@ package com.fakegps.mocklocation
 
 import com.fakegps.mocklocation.simulator.RoutePoint
 import com.fakegps.mocklocation.simulator.RouteSimulator
+import com.fakegps.mocklocation.simulator.TransportMode
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -22,7 +23,7 @@ class RouteSimulatorTest {
             RoutePoint(37.7769, -122.4194)
         )
 
-        val sim = RouteSimulator(waypoints, targetSpeedKmh = 36.0f, isLooping = false) // 10 m/s
+        val sim = RouteSimulator(waypoints, targetSpeedKmh = 36.0f, isLooping = false, transportMode = TransportMode.VEHICLE)
         assertTrue(sim.hasValidRoute())
         assertTrue(sim.totalDistanceMeters > 200.0)
 
@@ -40,6 +41,24 @@ class RouteSimulatorTest {
         }
 
         assertTrue(lastLoc!!.isCompleted)
+    }
+
+    @Test
+    fun testRouteSimulator_transportModes() {
+        val waypoints = listOf(
+            RoutePoint(37.7749, -122.4194),
+            RoutePoint(37.7849, -122.4194)
+        )
+
+        val flightSim = RouteSimulator(waypoints, targetSpeedKmh = 500.0f, transportMode = TransportMode.AIRCRAFT)
+        val loc = flightSim.tick(1.0)
+        assertNotNull(loc)
+        assertEquals(9500.0, loc!!.altitude, 0.1)
+
+        val shipSim = RouteSimulator(waypoints, targetSpeedKmh = 25.0f, transportMode = TransportMode.SHIP)
+        val shipLoc = shipSim.tick(1.0)
+        assertNotNull(shipLoc)
+        assertEquals(0.0, shipLoc!!.altitude, 0.1)
     }
 
     @Test

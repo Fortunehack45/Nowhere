@@ -22,6 +22,7 @@ data class MainUiState(
     val routeWaypoints: List<RoutePoint> = emptyList(),
     val routeSpeedKmh: Float = 20.0f,
     val isRouteLooping: Boolean = true,
+    val transportMode: com.fakegps.mocklocation.simulator.TransportMode = com.fakegps.mocklocation.simulator.TransportMode.VEHICLE,
     val joystickSpeedKmh: Float = 10.0f,
     val searchResults: List<AddressSearchResult> = emptyList(),
     val isSearching: Boolean = false,

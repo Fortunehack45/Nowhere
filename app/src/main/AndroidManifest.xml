@@ -15,6 +15,7 @@
     <!-- Boot & Background Resilience -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Network for Map Tiles & Geocoding -->
     <uses-permission android:name="android.permission.INTERNET" />

@@ -351,6 +351,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRouteActions() {
+        binding.rgTransportMode.setOnCheckedChangeListener { _, checkedId ->
+            val mode = when (checkedId) {
+                R.id.rbTransportFoot -> com.fakegps.mocklocation.simulator.TransportMode.FOOT
+                R.id.rbTransportAircraft -> com.fakegps.mocklocation.simulator.TransportMode.AIRCRAFT
+                R.id.rbTransportShip -> com.fakegps.mocklocation.simulator.TransportMode.SHIP
+                else -> com.fakegps.mocklocation.simulator.TransportMode.VEHICLE
+            }
+            viewModel.setTransportMode(mode)
+        }
+
         binding.btnImportGpx.setOnClickListener {
             gpxPickerLauncher.launch("*/*")
         }
@@ -499,9 +509,12 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_ROUTE
+            putExtra(MockLocationService.EXTRA_SPEED_KMH, state.routeSpeedKmh)
+            putExtra(MockLocationService.EXTRA_IS_LOOPING, state.isRouteLooping)
+            putExtra(MockLocationService.EXTRA_TRANSPORT_MODE, state.transportMode.name)
         }
         startForegroundServiceCompat(intent)
-        mockService?.startRoute(state.routeWaypoints, state.routeSpeedKmh, state.isRouteLooping)
+        mockService?.startRoute(state.routeWaypoints, state.routeSpeedKmh, state.isRouteLooping, state.transportMode)
     }
 
     private fun startJoystickSpoofing() {
@@ -646,8 +659,18 @@ class MainActivity : AppCompatActivity() {
         val formattedDist = settingsPrefs.formatDistance(totalRouteDist)
         binding.tvWaypointsCount.text = "${state.routeWaypoints.size} Waypoints ($formattedDist)"
         binding.tvRouteSpeedLabel.text = settingsPrefs.formatSpeed(state.routeSpeedKmh)
-        binding.sliderRouteSpeed.value = state.routeSpeedKmh.coerceIn(5.0f, 120.0f)
+
+        binding.sliderRouteSpeed.valueFrom = state.transportMode.minSpeedKmh
+        binding.sliderRouteSpeed.valueTo = state.transportMode.maxSpeedKmh
+        binding.sliderRouteSpeed.value = state.routeSpeedKmh.coerceIn(state.transportMode.minSpeedKmh, state.transportMode.maxSpeedKmh)
         binding.switchLoopRoute.isChecked = state.isRouteLooping
+
+        when (state.transportMode) {
+            com.fakegps.mocklocation.simulator.TransportMode.FOOT -> binding.rbTransportFoot.isChecked = true
+            com.fakegps.mocklocation.simulator.TransportMode.AIRCRAFT -> binding.rbTransportAircraft.isChecked = true
+            com.fakegps.mocklocation.simulator.TransportMode.SHIP -> binding.rbTransportShip.isChecked = true
+            else -> binding.rbTransportVehicle.isChecked = true
+        }
 
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.ROUTE) {
             binding.btnRouteToggle.text = getString(R.string.btn_stop_simulation)

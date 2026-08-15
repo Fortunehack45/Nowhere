@@ -467,10 +467,81 @@
                     app:trackTint="@color/stroke_subtle" />
             </LinearLayout>
 
+            <!-- Transport Mode Selector (Foot, Vehicle, Aircraft, Ship) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:letterSpacing="0.04"
+                android:text="TRANSPORT MODE"
+                android:textColor="@color/primary"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <RadioGroup
+                android:id="@+id/rgTransportMode"
+                android:layout_width="match_parent"
+                android:layout_height="34dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_segmented_tab"
+                android:checkedButton="@id/rbTransportVehicle"
+                android:orientation="horizontal"
+                android:padding="2dp">
+
+                <RadioButton
+                    android:id="@+id/rbTransportFoot"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="🚶 Foot"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rbTransportVehicle"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="🚗 Vehicle"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rbTransportAircraft"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="✈️ Aircraft"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rbTransportShip"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="🚢 Ship"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </RadioGroup>
+
             <!-- Route Speed Slider -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -489,9 +560,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:value="20.0"
-                    android:valueFrom="5.0"
-                    android:valueTo="120.0"
-                    android:stepSize="5.0" />
+                    android:valueFrom="1.0"
+                    android:valueTo="1000.0"
+                    android:stepSize="1.0" />
             </LinearLayout>
 
             <!-- Route Advanced Action Bar (Saved Routes, Save Route, Reverse, GPX, Clear) -->

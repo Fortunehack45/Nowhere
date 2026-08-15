@@ -7,10 +7,9 @@ import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.lifecycleScope
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
@@ -20,13 +19,14 @@ import com.fakegps.mocklocation.engine.RealismLayer
 import com.fakegps.mocklocation.simulator.RoutePoint
 import com.fakegps.mocklocation.simulator.RouteSimulator
 import com.fakegps.mocklocation.simulator.SimulationMode
+import com.fakegps.mocklocation.simulator.TransportMode
 import com.fakegps.mocklocation.ui.MainActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class MockLocationService : LifecycleService() {
+class MockLocationService : Service() {
 
     companion object {
         private const val TAG = "MockLocationService"
@@ -46,6 +46,7 @@ class MockLocationService : LifecycleService() {
         const val EXTRA_ALTITUDE = "extra_altitude"
         const val EXTRA_SPEED_KMH = "extra_speed_kmh"
         const val EXTRA_IS_LOOPING = "extra_is_looping"
+        const val EXTRA_TRANSPORT_MODE = "extra_transport_mode"
     }
 
     inner class LocalBinder : Binder() {
@@ -57,6 +58,12 @@ class MockLocationService : LifecycleService() {
     private lateinit var realismLayer: RealismLayer
     private lateinit var sessionPrefs: SessionPreferences
     private lateinit var settingsPrefs: AppSettingsPreferences
+
+    // Dedicated independent coroutine scope that runs continuously in background
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(serviceJob + Dispatchers.Default)
+
+    private var wakeLock: PowerManager.WakeLock? = null
 
     private val _serviceState = MutableStateFlow<ServiceState>(ServiceState.Idle)
     val serviceState: StateFlow<ServiceState> = _serviceState.asStateFlow()
@@ -79,15 +86,14 @@ class MockLocationService : LifecycleService() {
         engine = MockLocationEngine(this, realismLayer, settingsPrefs)
         sessionPrefs = SessionPreferences(this)
         createNotificationChannel()
+        acquireWakeLock()
     }
 
     override fun onBind(intent: Intent): IBinder {
-        super.onBind(intent)
         return binder
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
         when (intent?.action) {
             ACTION_STOP -> stopSpoofing()
             ACTION_PAUSE_ROUTE -> pauseRoute()
@@ -107,6 +113,29 @@ class MockLocationService : LifecycleService() {
             }
         }
         return START_STICKY
+    }
+
+    private fun acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Nowhere::MockLocationLock").apply {
+                    setReferenceCounted(false)
+                    acquire(24 * 60 * 60 * 1000L) // 24 hours max safeguard
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not acquire WakeLock: ${e.message}")
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+            }
+            wakeLock = null
+        } catch (ignored: Exception) {}
     }
 
     private fun startForegroundNotification(contentSummary: String) {
@@ -131,7 +160,7 @@ class MockLocationService : LifecycleService() {
         )
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Nowhere • Active")
+            .setContentTitle("Nowhere • Active in Background")
             .setContentText(contentSummary)
             .setSmallIcon(R.drawable.ic_nowhere_logo)
             .setContentIntent(openAppPendingIntent)
@@ -168,6 +197,7 @@ class MockLocationService : LifecycleService() {
 
     fun startFixed(latitude: Double, longitude: Double, altitude: Double = 15.0) {
         stopCurrentLoop()
+        acquireWakeLock()
         activeMode = SimulationMode.Fixed(latitude, longitude, altitude)
         sessionPrefs.isSessionActive = true
         sessionPrefs.activeMode = "FIXED"
@@ -177,7 +207,7 @@ class MockLocationService : LifecycleService() {
 
         startForegroundNotification(String.format("Fixed: %.5f, %.5f", latitude, longitude))
 
-        simulationJob = lifecycleScope.launch(Dispatchers.Default) {
+        simulationJob = serviceScope.launch {
             while (isActive) {
                 val result = engine.setLocation(
                     latitude = latitude,
@@ -212,11 +242,17 @@ class MockLocationService : LifecycleService() {
         }
     }
 
-    fun startRoute(waypoints: List<RoutePoint>, speedKmh: Float = 20.0f, isLooping: Boolean = true) {
+    fun startRoute(
+        waypoints: List<RoutePoint>,
+        speedKmh: Float = 20.0f,
+        isLooping: Boolean = true,
+        transportMode: TransportMode = TransportMode.VEHICLE
+    ) {
         if (waypoints.size < 2) return
         stopCurrentLoop()
+        acquireWakeLock()
 
-        val simulator = RouteSimulator(waypoints, speedKmh, isLooping)
+        val simulator = RouteSimulator(waypoints, speedKmh, isLooping, transportMode)
         routeSimulator = simulator
         activeMode = SimulationMode.Route(waypoints, speedKmh, isLooping)
 
@@ -226,9 +262,9 @@ class MockLocationService : LifecycleService() {
         sessionPrefs.isLooping = isLooping
         sessionPrefs.saveWaypoints(waypoints)
 
-        startForegroundNotification(String.format("Route: %d waypoints (%.1f km/h)", waypoints.size, speedKmh))
+        startForegroundNotification(String.format("%s: %d points (%.1f km/h)", transportMode.title, waypoints.size, speedKmh))
 
-        simulationJob = lifecycleScope.launch(Dispatchers.Default) {
+        simulationJob = serviceScope.launch {
             val stepSeconds = 1.0
             while (isActive) {
                 val simLoc = simulator.tick(stepSeconds)
@@ -289,6 +325,7 @@ class MockLocationService : LifecycleService() {
 
     fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f) {
         stopCurrentLoop()
+        acquireWakeLock()
         joystickLat = startLat
         joystickLon = startLon
         joystickSpeedKmh = speedKmh
@@ -304,7 +341,7 @@ class MockLocationService : LifecycleService() {
 
         startForegroundNotification(String.format("Joystick: %.5f, %.5f", startLat, startLon))
 
-        simulationJob = lifecycleScope.launch(Dispatchers.Default) {
+        simulationJob = serviceScope.launch {
             val stepSeconds = 1.0
             while (isActive) {
                 val isMoving = joystickMagnitude > 0.05f
@@ -363,6 +400,7 @@ class MockLocationService : LifecycleService() {
 
     fun stopSpoofing() {
         stopCurrentLoop()
+        releaseWakeLock()
         engine.stop()
         sessionPrefs.isSessionActive = false
         _serviceState.value = ServiceState.Idle
@@ -393,7 +431,8 @@ class MockLocationService : LifecycleService() {
                     startRoute(
                         waypoints,
                         sessionPrefs.lastSpeedKmh,
-                        sessionPrefs.isLooping
+                        sessionPrefs.isLooping,
+                        TransportMode.VEHICLE
                     )
                 }
             }
@@ -409,6 +448,7 @@ class MockLocationService : LifecycleService() {
 
     override fun onDestroy() {
         stopSpoofing()
+        serviceJob.cancel()
         super.onDestroy()
     }
 }

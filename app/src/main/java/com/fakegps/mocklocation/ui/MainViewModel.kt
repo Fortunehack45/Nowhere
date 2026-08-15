@@ -105,6 +105,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(routeSpeedKmh = speedKmh) }
     }
 
+    fun setTransportMode(mode: com.fakegps.mocklocation.simulator.TransportMode) {
+        sessionPrefs.lastSpeedKmh = mode.defaultSpeedKmh
+        _uiState.update {
+            it.copy(
+                transportMode = mode,
+                routeSpeedKmh = mode.defaultSpeedKmh,
+                statusMessage = "Transport mode: ${mode.title}"
+            )
+        }
+    }
+
     fun setRouteLooping(isLooping: Boolean) {
         sessionPrefs.isLooping = isLooping
         _uiState.update { it.copy(isRouteLooping = isLooping) }
