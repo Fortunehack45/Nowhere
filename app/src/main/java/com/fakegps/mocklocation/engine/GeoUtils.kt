@@ -94,4 +94,41 @@ object GeoUtils {
         val lon = startLon + (endLon - startLon) * clampedFraction
         return Pair(lat, lon)
     }
+
+    /**
+     * Interpolates smoothly along the true spherical Great-Circle geodesic arc between two global coordinates.
+     * Perfect for high-speed aircraft, shipping, and cross-country/intercontinental routes.
+     */
+    fun interpolateGreatCircle(
+        startLat: Double,
+        startLon: Double,
+        endLat: Double,
+        endLon: Double,
+        fraction: Double
+    ): Pair<Double, Double> {
+        val f = fraction.coerceIn(0.0, 1.0)
+        if (f == 0.0) return Pair(startLat, startLon)
+        if (f == 1.0) return Pair(endLat, endLon)
+
+        val lat1 = Math.toRadians(startLat)
+        val lon1 = Math.toRadians(startLon)
+        val lat2 = Math.toRadians(endLat)
+        val lon2 = Math.toRadians(endLon)
+
+        val d = 2.0 * asin(sqrt(sin((lat2 - lat1) / 2.0).pow(2) + cos(lat1) * cos(lat2) * sin((lon2 - lon1) / 2.0).pow(2)))
+        if (d < 1e-7) return Pair(startLat, startLon)
+
+        val a = sin((1.0 - f) * d) / sin(d)
+        val b = sin(f * d) / sin(d)
+
+        val x = a * cos(lat1) * cos(lon1) + b * cos(lat2) * cos(lon2)
+        val y = a * cos(lat1) * sin(lon1) + b * cos(lat2) * sin(lon2)
+        val z = a * sin(lat1) + b * sin(lat2)
+
+        val latOut = atan2(z, sqrt(x * x + y * y))
+        val lonOut = atan2(y, x)
+
+        return Pair(Math.toDegrees(latOut), Math.toDegrees(lonOut))
+    }
 }
+

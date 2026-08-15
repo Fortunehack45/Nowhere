@@ -75,4 +75,28 @@ class RouteSimulatorTest {
             assertFalse(loc!!.isCompleted)
         }
     }
+
+    @Test
+    fun testRouteSimulator_crossCountryLongDistance() {
+        // London to Paris (~340 km)
+        val waypoints = listOf(
+            RoutePoint(51.5074, -0.1278),
+            RoutePoint(48.8566, 2.3522)
+        )
+
+        val sim = RouteSimulator(waypoints, targetSpeedKmh = 800.0f, isLooping = false, transportMode = TransportMode.AIRCRAFT)
+        assertTrue(sim.hasValidRoute())
+        assertTrue(sim.totalDistanceMeters > 300_000.0) // > 300 km
+
+        var count = 0
+        var loc = sim.tick(5.0)
+        while (loc != null && !loc.isCompleted && count < 1000) {
+            loc = sim.tick(5.0)
+            count++
+        }
+        assertNotNull(loc)
+        assertTrue(loc!!.isCompleted)
+        assertEquals(48.8566, loc.latitude, 0.05)
+        assertEquals(2.3522, loc.longitude, 0.05)
+    }
 }

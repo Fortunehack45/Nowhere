@@ -819,15 +819,33 @@ class MainActivity : AppCompatActivity() {
                 routePolyline = Polyline().apply {
                     setPoints(geoPoints)
                     outlinePaint.color = Color.parseColor("#E41B1B")
-                    outlinePaint.strokeWidth = 9f
+                    outlinePaint.strokeWidth = 8f
                 }
                 binding.mapView.overlays.add(routePolyline)
 
-                state.routeWaypoints.forEachIndexed { index, wp ->
+                val waypointsToMark = if (state.routeWaypoints.size <= 25) {
+                    state.routeWaypoints.mapIndexed { idx, pt -> Pair(idx + 1, pt) }
+                } else {
+                    val sampled = mutableListOf<Pair<Int, com.fakegps.mocklocation.simulator.RoutePoint>>()
+                    sampled.add(Pair(1, state.routeWaypoints.first()))
+                    val step = (state.routeWaypoints.size - 2) / 10
+                    if (step > 0) {
+                        for (i in 1..10) {
+                            val targetIndex = i * step
+                            if (targetIndex < state.routeWaypoints.size - 1) {
+                                sampled.add(Pair(targetIndex + 1, state.routeWaypoints[targetIndex]))
+                            }
+                        }
+                    }
+                    sampled.add(Pair(state.routeWaypoints.size, state.routeWaypoints.last()))
+                    sampled
+                }
+
+                for ((labelIdx, wp) in waypointsToMark) {
                     val marker = Marker(binding.mapView).apply {
                         position = GeoPoint(wp.latitude, wp.longitude)
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                        title = "Waypoint #${index + 1}"
+                        title = "Waypoint #$labelIdx"
                         icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_route)
                     }
                     routeMarkers.add(marker)

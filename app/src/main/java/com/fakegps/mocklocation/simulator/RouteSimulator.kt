@@ -26,6 +26,7 @@ class RouteSimulator(
     private var currentSpeedMps: Float = 0.0f
     private var isPaused: Boolean = false
     private var isCompleted: Boolean = false
+    private var cachedSegmentIndex: Int = 0
 
     private data class RouteSegment(
         val start: RoutePoint,
@@ -88,6 +89,7 @@ class RouteSimulator(
         currentSpeedMps = 0.0f
         isPaused = false
         isCompleted = false
+        cachedSegmentIndex = 0
     }
 
     /**
@@ -116,7 +118,7 @@ class RouteSimulator(
 
         val targetSpeedMps = (targetSpeedKmh * 1000f / 3600f).coerceAtLeast(0.2f)
 
-        // Find active segment
+        // Find active segment with high efficiency
         val segmentIndex = findSegmentIndexForDistance(currentDistanceAlongRoute)
 
         // Calculate realistic speed constraint near upcoming turns or route end
@@ -139,6 +141,7 @@ class RouteSimulator(
         if (currentDistanceAlongRoute >= totalDistanceMeters) {
             if (isLooping) {
                 currentDistanceAlongRoute %= totalDistanceMeters
+                cachedSegmentIndex = 0
             } else {
                 currentDistanceAlongRoute = totalDistanceMeters
                 isCompleted = true
@@ -184,13 +187,45 @@ class RouteSimulator(
     }
 
     private fun findSegmentIndexForDistance(distance: Double): Int {
-        for (i in segments.indices) {
-            val seg = segments[i]
-            if (distance >= seg.startCumulativeDistance && distance <= seg.startCumulativeDistance + seg.distanceMeters) {
-                return i
+        if (segments.isEmpty()) return 0
+        if (distance <= 0.0) return 0
+        if (distance >= totalDistanceMeters) return segments.lastIndex
+
+        // Fast sequential check from cached index (O(1) in continuous simulation)
+        if (cachedSegmentIndex in segments.indices) {
+            val currentSeg = segments[cachedSegmentIndex]
+            if (distance >= currentSeg.startCumulativeDistance && distance <= currentSeg.startCumulativeDistance + currentSeg.distanceMeters) {
+                return cachedSegmentIndex
+            }
+            if (cachedSegmentIndex + 1 in segments.indices) {
+                val nextSeg = segments[cachedSegmentIndex + 1]
+                if (distance >= nextSeg.startCumulativeDistance && distance <= nextSeg.startCumulativeDistance + nextSeg.distanceMeters) {
+                    cachedSegmentIndex++
+                    return cachedSegmentIndex
+                }
             }
         }
-        return segments.lastIndex
+
+        // Binary Search in O(log N) for arbitrary distance lookup
+        var low = 0
+        var high = segments.size - 1
+        while (low <= high) {
+            val mid = (low + high) ushr 1
+            val seg = segments[mid]
+            val segEnd = seg.startCumulativeDistance + seg.distanceMeters
+            if (distance < seg.startCumulativeDistance) {
+                high = mid - 1
+            } else if (distance > segEnd) {
+                low = mid + 1
+            } else {
+                cachedSegmentIndex = mid
+                return mid
+            }
+        }
+
+        val fallbackIndex = low.coerceIn(0, segments.lastIndex)
+        cachedSegmentIndex = fallbackIndex
+        return fallbackIndex
     }
 
     private fun getLocationAtDistance(distance: Double): SimulatedLocation {
@@ -204,13 +239,24 @@ class RouteSimulator(
             0.0
         }
 
-        val (lat, lon) = GeoUtils.interpolate(
-            seg.start.latitude,
-            seg.start.longitude,
-            seg.end.latitude,
-            seg.end.longitude,
-            fraction
-        )
+        // For large spans (> 20km) or airborne/marine voyages, use geodesic Great-Circle interpolation
+        val (lat, lon) = if (seg.distanceMeters > 20000.0 || transportMode == TransportMode.AIRCRAFT || transportMode == TransportMode.SHIP) {
+            GeoUtils.interpolateGreatCircle(
+                seg.start.latitude,
+                seg.start.longitude,
+                seg.end.latitude,
+                seg.end.longitude,
+                fraction
+            )
+        } else {
+            GeoUtils.interpolate(
+                seg.start.latitude,
+                seg.start.longitude,
+                seg.end.latitude,
+                seg.end.longitude,
+                fraction
+            )
+        }
 
         val baseAltitude = if (seg.start.altitude > 0.1 || seg.end.altitude > 0.1) {
             seg.start.altitude + (seg.end.altitude - seg.start.altitude) * fraction
