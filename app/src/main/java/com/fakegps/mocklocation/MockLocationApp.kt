@@ -2,10 +2,14 @@ package com.fakegps.mocklocation
 
 import android.app.Application
 import androidx.preference.PreferenceManager
+import com.fakegps.mocklocation.ads.AdManager
+import com.fakegps.mocklocation.ads.AppOpenAdManager
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import org.osmdroid.config.Configuration
 
 class MockLocationApp : Application() {
+
+    private lateinit var appOpenAdManager: AppOpenAdManager
 
     override fun onCreate() {
         super.onCreate()
@@ -29,6 +33,9 @@ class MockLocationApp : Application() {
         settingsPrefs.applyTheme()
 
         // Initialize Google Mobile Ads SDK (AdMob)
-        com.fakegps.mocklocation.ads.AdManager.initialize(this)
+        AdManager.initialize(this)
+
+        // Initialize Google AdMob App Open Ads Manager
+        appOpenAdManager = AppOpenAdManager(this)
     }
 }
