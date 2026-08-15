@@ -148,6 +148,20 @@
                 android:resource="@xml/widget_nowhere_favorites_info" />
         </receiver>
 
+        <!-- Home Screen App Widget: 1x1 Functional App Icon Widget -->
+        <receiver
+            android:name=".ui.widget.NowhereIconWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_ICON_WIDGET" />
+                <action android:name="com.fakegps.mocklocation.ACTION_ICON_WIDGET_CLICK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_nowhere_icon_info" />
+        </receiver>
+
     </application>
 
 </manifest>

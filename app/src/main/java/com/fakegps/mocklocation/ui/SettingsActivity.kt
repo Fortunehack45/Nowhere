@@ -186,6 +186,14 @@ class SettingsActivity : AppCompatActivity() {
             openBrowser("https://x.com/OnNerd_eth")
         }
 
+        binding.btnTelegramChannel.setOnClickListener {
+            openBrowser("https://t.me/nowhere_proxy")
+        }
+
+        binding.btnTelegramGroup.setOnClickListener {
+            openBrowser("https://t.me/+vcmA7kOtLEw3ZjM0")
+        }
+
         binding.btnDeveloperWhatsApp1.setOnClickListener {
             openBrowser("https://wa.me/2347067860584")
         }

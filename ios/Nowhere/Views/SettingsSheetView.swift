@@ -98,6 +98,26 @@ struct SettingsSheetView: View {
                         }
                     }
 
+                    Link(destination: URL(string: "https://t.me/nowhere_proxy")!) {
+                        HStack {
+                            Text("Telegram Channel")
+                            Spacer()
+                            Text("t.me/nowhere_proxy")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
+
+                    Link(destination: URL(string: "https://t.me/+vcmA7kOtLEw3ZjM0")!) {
+                        HStack {
+                            Text("Telegram Group")
+                            Spacer()
+                            Text("Join Community")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
+
                     Link(destination: URL(string: "https://twitter.com/OnNerd_eth")!) {
                         HStack {
                             Text("Follow on X / Twitter")
