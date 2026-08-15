@@ -30,6 +30,7 @@ import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.ActivityMainBinding
 import com.fakegps.mocklocation.engine.GeoUtils
 import com.fakegps.mocklocation.service.MockLocationService
+import com.fakegps.mocklocation.service.MockLocationServiceReceiver
 import com.fakegps.mocklocation.service.ServiceState
 import com.fakegps.mocklocation.simulator.RoutePoint
 import com.fakegps.mocklocation.ui.custom.JoystickView
@@ -186,6 +187,7 @@ class MainActivity : AppCompatActivity() {
             isFlingEnabled = true
             maxZoomLevel = 21.0
             minZoomLevel = 3.0
+            zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
             controller.setZoom(15.5)
             val initialPoint = GeoPoint(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
             controller.setCenter(initialPoint)
@@ -446,7 +448,11 @@ class MainActivity : AppCompatActivity() {
         binding.joystickOverlay.setOnJoystickMoveListener(object : JoystickView.OnJoystickMoveListener {
             override fun onJoystickMoved(angleDegrees: Float, magnitude: Float) {
                 val speedKmh = viewModel.uiState.value.joystickSpeedKmh
+                if (!viewModel.uiState.value.isServiceRunning && magnitude > 0.05f) {
+                    startJoystickSpoofing()
+                }
                 mockService?.updateJoystickVector(angleDegrees, magnitude, speedKmh)
+                MockLocationServiceReceiver.sendJoystickUpdate(this@MainActivity, angleDegrees, magnitude, speedKmh)
             }
         })
     }
@@ -458,6 +464,14 @@ class MainActivity : AppCompatActivity() {
             sessionPrefs.isPersistentBootInjectionEnabled = isChecked
             val msg = if (isChecked) "⚡ Auto-Inject on Boot: Active (Survives phone restarts)" else "Auto-Inject on Boot: Disabled"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        binding.fabZoomIn.setOnClickListener {
+            binding.mapView.controller.zoomIn()
+        }
+
+        binding.fabZoomOut.setOnClickListener {
+            binding.mapView.controller.zoomOut()
         }
 
         binding.fabMyLocation.setOnClickListener {
@@ -829,6 +843,8 @@ class MainActivity : AppCompatActivity() {
             val liveState = state.serviceState
             val currentPoint = GeoPoint(liveState.latitude, liveState.longitude)
 
+            updateFixedPinMarker(liveState.latitude, liveState.longitude)
+
             if (liveSimMarker == null) {
                 liveSimMarker = Marker(binding.mapView).apply {
                     position = currentPoint
@@ -840,6 +856,10 @@ class MainActivity : AppCompatActivity() {
             } else {
                 liveSimMarker?.position = currentPoint
                 liveSimMarker?.rotation = liveState.bearingDegrees
+            }
+
+            if (state.selectedTab == SelectedModeTab.JOYSTICK && liveState.speedMps > 0.05f) {
+                binding.mapView.controller.setCenter(currentPoint)
             }
         } else {
             if (liveSimMarker != null) {

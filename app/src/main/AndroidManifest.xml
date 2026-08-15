@@ -80,6 +80,21 @@
             </intent-filter>
         </receiver>
 
+        <!-- Home Screen App Widget -->
+        <receiver
+            android:name=".ui.widget.NowhereAppWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_WIDGET_STATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_WIDGET_TELEPORT" />
+                <action android:name="com.fakegps.mocklocation.ACTION_WIDGET_JOYSTICK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_nowhere_info" />
+        </receiver>
+
     </application>
 
 </manifest>

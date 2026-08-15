@@ -293,6 +293,7 @@ class MockLocationService : Service() {
         sessionPrefs.lastLatitude = latitude
         sessionPrefs.lastLongitude = longitude
         sessionPrefs.lastAltitude = altitude
+        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
 
         startForegroundNotification(String.format("Fixed: %.5f, %.5f", latitude, longitude))
         updateLocationNotification(latitude, longitude, "Teleported / Fixed")
@@ -434,6 +435,7 @@ class MockLocationService : Service() {
         sessionPrefs.lastLatitude = startLat
         sessionPrefs.lastLongitude = startLon
         sessionPrefs.lastSpeedKmh = speedKmh
+        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
 
         startForegroundNotification(
             String.format("Joystick: %.5f, %.5f", startLat, startLon),
@@ -515,6 +517,7 @@ class MockLocationService : Service() {
         engine.stop()
         sessionPrefs.isSessionActive = false
         _serviceState.value = ServiceState.Idle
+        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
