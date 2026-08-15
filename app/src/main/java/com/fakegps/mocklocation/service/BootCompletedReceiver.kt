@@ -15,11 +15,11 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        if (action == Intent.ACTION_BOOT_COMPLETED || action == "android.intent.action.QUICKBOOT_POWERON") {
+        if (action == Intent.ACTION_BOOT_COMPLETED || action == "android.intent.action.QUICKBOOT_POWERON" || action == Intent.ACTION_MY_PACKAGE_REPLACED || action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
             Log.d(TAG, "Boot completed event received ($action). Checking previous session state...")
             val sessionPrefs = SessionPreferences(context)
 
-            if (sessionPrefs.isSessionActive) {
+            if (sessionPrefs.isSessionActive && sessionPrefs.isPersistentBootInjectionEnabled) {
                 Log.d(TAG, "Restoring active mock location session for mode: ${sessionPrefs.activeMode}")
                 val serviceIntent = Intent(context, MockLocationService::class.java).apply {
                     this.action = MockLocationService.ACTION_RESTORE_SESSION

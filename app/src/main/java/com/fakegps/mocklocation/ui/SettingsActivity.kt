@@ -5,16 +5,19 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
+import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.ActivitySettingsBinding
 
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var settingsPrefs: AppSettingsPreferences
+    private lateinit var sessionPrefs: SessionPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         settingsPrefs = AppSettingsPreferences(this)
+        sessionPrefs = SessionPreferences(this)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -78,6 +81,14 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnResetDefaults.setOnClickListener {
             resetToDefaults()
             Toast.makeText(this, "Settings reset to defaults", Toast.LENGTH_SHORT).show()
+        }
+
+        // Persistent Location Injector
+        binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
+        binding.switchSettingsBootInjection.setOnCheckedChangeListener { _, isChecked ->
+            sessionPrefs.isPersistentBootInjectionEnabled = isChecked
+            val msg = if (isChecked) "⚡ Auto-Inject on Boot: Enabled" else "Auto-Inject on Boot: Disabled"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
         // Switches & Sliders

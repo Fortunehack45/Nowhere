@@ -448,18 +448,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupFloatingButtons() {
-        var is3dPerspectiveActive = false
-        binding.fab3dPerspective.setOnClickListener {
-            is3dPerspectiveActive = !is3dPerspectiveActive
-            if (is3dPerspectiveActive) {
-                binding.mapView.mapOrientation = 35.0f
-                binding.fab3dPerspective.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
-                Toast.makeText(this, "3D View Active (Pinch/twist map to rotate)", Toast.LENGTH_SHORT).show()
-            } else {
-                binding.mapView.mapOrientation = 0.0f
-                binding.fab3dPerspective.imageTintList = ContextCompat.getColorStateList(this, R.color.primary)
-                Toast.makeText(this, "2D Top-Down View Active", Toast.LENGTH_SHORT).show()
-            }
+        val sessionPrefs = SessionPreferences(this)
+        binding.switchPersistentInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
+        binding.switchPersistentInjection.setOnCheckedChangeListener { _, isChecked ->
+            sessionPrefs.isPersistentBootInjectionEnabled = isChecked
+            val msg = if (isChecked) "⚡ Auto-Inject on Boot: Active (Survives phone restarts)" else "Auto-Inject on Boot: Disabled"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
         binding.fabMyLocation.setOnClickListener {

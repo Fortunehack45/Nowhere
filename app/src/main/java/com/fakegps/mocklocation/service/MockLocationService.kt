@@ -10,6 +10,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
@@ -139,7 +140,7 @@ class MockLocationService : Service() {
         } catch (ignored: Exception) {}
     }
 
-    private fun startForegroundNotification(contentSummary: String) {
+    private fun startForegroundNotification(locationTitle: String, contentSubtitle: String = "Location Injected & Active") {
         val stopIntent = Intent(this, MockLocationService::class.java).apply {
             action = ACTION_STOP
         }
@@ -161,9 +162,10 @@ class MockLocationService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Nowhere • Active in Background")
-            .setContentText(contentSummary)
-            .setSmallIcon(R.drawable.ic_nowhere_logo)
+            .setContentTitle("📍 $locationTitle")
+            .setContentText(contentSubtitle)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setColor(ContextCompat.getColor(this, R.color.primary))
             .setContentIntent(openAppPendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -178,6 +180,51 @@ class MockLocationService : Service() {
             )
         } else {
             startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun updateLocationNotification(lat: Double, lon: Double, modeDescription: String = "Active") {
+        serviceScope.launch {
+            val placeName = com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
+                this@MockLocationService,
+                lat,
+                lon
+            )
+            val coordsText = String.format("%.5f°, %.5f° • %s", lat, lon, modeDescription)
+
+            val stopIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
+                action = ACTION_STOP
+            }
+            val stopPendingIntent = PendingIntent.getService(
+                this@MockLocationService,
+                1,
+                stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val openAppIntent = Intent(this@MockLocationService, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val openAppPendingIntent = PendingIntent.getActivity(
+                this@MockLocationService,
+                0,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val notification = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
+                .setContentTitle("📍 $placeName")
+                .setContentText(coordsText)
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setColor(ContextCompat.getColor(this@MockLocationService, R.color.primary))
+                .setContentIntent(openAppPendingIntent)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
+                .build()
+
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.notify(NOTIFICATION_ID, notification)
         }
     }
 
@@ -207,6 +254,7 @@ class MockLocationService : Service() {
         sessionPrefs.lastAltitude = altitude
 
         startForegroundNotification(String.format("Fixed: %.5f, %.5f", latitude, longitude))
+        updateLocationNotification(latitude, longitude, "Teleported / Fixed")
 
         simulationJob = serviceScope.launch {
             while (isActive) {
@@ -263,7 +311,13 @@ class MockLocationService : Service() {
         sessionPrefs.isLooping = isLooping
         sessionPrefs.saveWaypoints(waypoints)
 
-        startForegroundNotification(String.format("%s: %d points (%.1f km/h)", transportMode.title, waypoints.size, speedKmh))
+        startForegroundNotification(
+            String.format("Route: %d waypoints", waypoints.size),
+            String.format("%.1f KM/H • %s", speedKmh, transportMode.title)
+        )
+        if (waypoints.isNotEmpty()) {
+            updateLocationNotification(waypoints[0].latitude, waypoints[0].longitude, "Route Active (${transportMode.title})")
+        }
 
         simulationJob = serviceScope.launch {
             val stepSeconds = 1.0
@@ -340,7 +394,11 @@ class MockLocationService : Service() {
         sessionPrefs.lastLongitude = startLon
         sessionPrefs.lastSpeedKmh = speedKmh
 
-        startForegroundNotification(String.format("Joystick: %.5f, %.5f", startLat, startLon))
+        startForegroundNotification(
+            String.format("Joystick: %.5f, %.5f", startLat, startLon),
+            String.format("Speed: %.1f KM/H", speedKmh)
+        )
+        updateLocationNotification(startLat, startLon, "Joystick Active")
 
         simulationJob = serviceScope.launch {
             var lastTime = System.currentTimeMillis()

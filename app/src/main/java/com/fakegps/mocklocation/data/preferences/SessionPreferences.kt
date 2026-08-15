@@ -55,6 +55,10 @@ class SessionPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_BATTERY_PROMPTED, false)
         set(value) = prefs.edit().putBoolean(KEY_BATTERY_PROMPTED, value).apply()
 
+    var isPersistentBootInjectionEnabled: Boolean
+        get() = prefs.getBoolean("key_persistent_boot_injection", true)
+        set(value) = prefs.edit().putBoolean("key_persistent_boot_injection", value).apply()
+
     fun saveWaypoints(waypoints: List<RoutePoint>) {
         val jsonArray = JSONArray()
         for (wp in waypoints) {

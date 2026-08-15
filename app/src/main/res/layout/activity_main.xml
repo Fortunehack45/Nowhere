@@ -266,22 +266,6 @@
         app:layout_constraintVertical_bias="0.3">
 
         <ImageButton
-            android:id="@+id/fab3dPerspective"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="3D Perspective View"
-            android:src="@drawable/ic_3d"
-            app:tint="@color/primary" />
-
-        <View
-            android:layout_width="28dp"
-            android:layout_height="1dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="4dp"
-            android:background="@color/stroke_subtle" />
-
-        <ImageButton
             android:id="@+id/fabMyLocation"
             android:layout_width="42dp"
             android:layout_height="42dp"
@@ -435,19 +419,53 @@
             android:orientation="vertical"
             android:visibility="visible">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFixedToggle"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:backgroundTint="@color/primary"
-                android:letterSpacing="0.04"
-                android:text="@string/btn_start_teleport"
-                android:textColor="@color/white"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:cornerRadius="14dp"
-                app:icon="@drawable/ic_teleport"
-                app:iconTint="@color/white" />
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFixedToggle"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/primary"
+                    android:letterSpacing="0.04"
+                    android:text="@string/btn_start_teleport"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_teleport"
+                    app:iconTint="@color/white" />
+            </LinearLayout>
+
+            <!-- Persistent Location Injector Status & Boot Toggle -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="⚡ Auto-Inject on Device Boot"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchPersistentInjection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    app:thumbTint="@color/primary"
+                    app:trackTint="@color/stroke_subtle" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Dynamic Controls: Route Mode -->
