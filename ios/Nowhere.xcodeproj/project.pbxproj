@@ -12,6 +12,12 @@
 		7B0000032A00000000000001 /* LocationSimulationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000032A00000000000001 /* LocationSimulationEngine.swift */; };
 		7B0000042A00000000000001 /* GPXManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000042A00000000000001 /* GPXManager.swift */; };
 		7B0000052A00000000000001 /* SimulationMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000052A00000000000001 /* SimulationMode.swift */; };
+		7B0000062A00000000000001 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000072A00000000000001 /* StorageManager.swift */; };
+		7B0000072A00000000000001 /* SearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000082A00000000000001 /* SearchService.swift */; };
+		7B0000082A00000000000001 /* FavoritesSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000092A00000000000001 /* FavoritesSheetView.swift */; };
+		7B0000092A00000000000001 /* SavedRoutesSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A00000A2A00000000000001 /* SavedRoutesSheetView.swift */; };
+		7B00000A2A00000000000001 /* SettingsSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A00000B2A00000000000001 /* SettingsSheetView.swift */; };
+		7B00000B2A00000000000001 /* JoystickOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A00000C2A00000000000001 /* JoystickOverlayView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +28,12 @@
 		7A0000042A00000000000001 /* GPXManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/GPXManager.swift; sourceTree = "<group>"; };
 		7A0000052A00000000000001 /* SimulationMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/SimulationMode.swift; sourceTree = "<group>"; };
 		7A0000062A00000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7A0000072A00000000000001 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/StorageManager.swift; sourceTree = "<group>"; };
+		7A0000082A00000000000001 /* SearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/SearchService.swift; sourceTree = "<group>"; };
+		7A0000092A00000000000001 /* FavoritesSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/FavoritesSheetView.swift; sourceTree = "<group>"; };
+		7A00000A2A00000000000001 /* SavedRoutesSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SavedRoutesSheetView.swift; sourceTree = "<group>"; };
+		7A00000B2A00000000000001 /* SettingsSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SettingsSheetView.swift; sourceTree = "<group>"; };
+		7A00000C2A00000000000001 /* JoystickOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/JoystickOverlayView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,8 +60,14 @@
 			children = (
 				7A0000012A00000000000001 /* NowhereApp.swift */,
 				7A0000022A00000000000001 /* MainMapView.swift */,
+				7A0000092A00000000000001 /* FavoritesSheetView.swift */,
+				7A00000A2A00000000000001 /* SavedRoutesSheetView.swift */,
+				7A00000B2A00000000000001 /* SettingsSheetView.swift */,
+				7A00000C2A00000000000001 /* JoystickOverlayView.swift */,
 				7A0000032A00000000000001 /* LocationSimulationEngine.swift */,
 				7A0000042A00000000000001 /* GPXManager.swift */,
+				7A0000072A00000000000001 /* StorageManager.swift */,
+				7A0000082A00000000000001 /* SearchService.swift */,
 				7A0000052A00000000000001 /* SimulationMode.swift */,
 				7A0000062A00000000000001 /* Info.plist */,
 			);
@@ -137,6 +155,12 @@
 				7B0000032A00000000000001 /* LocationSimulationEngine.swift in Sources */,
 				7B0000042A00000000000001 /* GPXManager.swift in Sources */,
 				7B0000052A00000000000001 /* SimulationMode.swift in Sources */,
+				7B0000062A00000000000001 /* StorageManager.swift in Sources */,
+				7B0000072A00000000000001 /* SearchService.swift in Sources */,
+				7B0000082A00000000000001 /* FavoritesSheetView.swift in Sources */,
+				7B0000092A00000000000001 /* SavedRoutesSheetView.swift in Sources */,
+				7B00000A2A00000000000001 /* SettingsSheetView.swift in Sources */,
+				7B00000B2A00000000000001 /* JoystickOverlayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

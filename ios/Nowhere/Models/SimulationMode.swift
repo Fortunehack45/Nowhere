@@ -4,11 +4,11 @@ import CoreLocation
 enum SimulationMode: Equatable {
     case idle
     case fixed(coordinate: CLLocationCoordinate2D, altitude: Double)
-    case route(waypoints: [RoutePoint], speedKmh: Double, isLooping: Boolean = true, mode: TransportMode)
+    case route(waypoints: [RoutePoint], speedKmh: Double, isLooping: Bool = true, mode: TransportMode)
     case joystick(coordinate: CLLocationCoordinate2D, speedKmh: Double)
 }
 
-enum TransportMode: String, CaseIterable, Identifiable {
+enum TransportMode: String, CaseIterable, Identifiable, Codable {
     case walk = "WALK"
     case bicycle = "BICYCLE"
     case vehicle = "VEHICLE"
@@ -53,4 +53,27 @@ struct FavoriteLocation: Identifiable, Codable, Equatable {
     var longitude: Double
     var tag: String = "General"
     var createdAt: Date = Date()
+
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
+struct SavedRouteItem: Identifiable, Codable, Equatable {
+    var id: String = UUID().uuidString
+    var name: String
+    var waypoints: [RoutePoint]
+    var totalDistanceMeters: Double
+    var defaultSpeedKmh: Double
+    var createdAt: Date = Date()
+}
+
+struct SearchHistoryItem: Identifiable, Codable, Equatable {
+    var id: String = UUID().uuidString
+    var query: String
+    var title: String
+    var subtitle: String
+    var latitude: Double
+    var longitude: Double
+    var timestamp: Date = Date()
 }
