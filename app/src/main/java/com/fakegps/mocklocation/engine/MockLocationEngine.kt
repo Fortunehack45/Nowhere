@@ -123,17 +123,18 @@ class MockLocationEngine(
             return Result.failure(initResult.exceptionOrNull() ?: MockLocationError.InternalError("Init failed"))
         }
 
-        val (finalLat, finalLon) = if (applyStationaryJitter && speed < 0.1f) {
+        val isMoving = speed >= 0.1f
+        val (finalLat, finalLon) = if (applyStationaryJitter && !isMoving) {
             realismLayer.applyJitter(latitude, longitude)
         } else {
             realismLayer.truncateIfNeeded(latitude, longitude)
         }
 
-        val finalAltitude = realismLayer.generateAltitude(altitude)
-        val horizontalAccuracy = realismLayer.generateHorizontalAccuracy()
-        val verticalAccuracy = realismLayer.generateVerticalAccuracy()
-        val speedAccuracy = realismLayer.generateSpeedAccuracy()
-        val bearingAccuracy = realismLayer.generateBearingAccuracy()
+        val finalAltitude = realismLayer.generateAltitude(altitude, isMoving)
+        val horizontalAccuracy = realismLayer.generateHorizontalAccuracy(isMoving)
+        val verticalAccuracy = realismLayer.generateVerticalAccuracy(isMoving)
+        val speedAccuracy = realismLayer.generateSpeedAccuracy(isMoving)
+        val bearingAccuracy = realismLayer.generateBearingAccuracy(isMoving)
 
         var lastLocation: Location? = null
         val providers = getActiveProviders()
@@ -146,14 +147,14 @@ class MockLocationEngine(
                     this.altitude = finalAltitude
                     this.speed = speed
                     this.bearing = bearing
-                    this.accuracy = if (speed < 0.1f) 0.5f else horizontalAccuracy
+                    this.accuracy = horizontalAccuracy
                     this.time = System.currentTimeMillis()
                     this.elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        this.bearingAccuracyDegrees = if (speed < 0.1f) 0.1f else bearingAccuracy
-                        this.speedAccuracyMetersPerSecond = if (speed < 0.1f) 0.05f else speedAccuracy
-                        this.verticalAccuracyMeters = if (speed < 0.1f) 0.5f else verticalAccuracy
+                        this.bearingAccuracyDegrees = bearingAccuracy
+                        this.speedAccuracyMetersPerSecond = speedAccuracy
+                        this.verticalAccuracyMeters = verticalAccuracy
                     }
                 }
 

@@ -75,7 +75,7 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
                 updateAllFavoritesWidgets(context)
                 NowhereAppWidgetProvider.updateAllWidgets(context)
                 NowhereRouteWidgetProvider.updateAllRouteWidgets(context)
-                NowhereJoystickWidgetProvider.updateAllJoystickWidgets(context)
+                NowhereSearchWidgetProvider.updateAllSearchWidgets(context)
             }
             ACTION_FAV_STOP -> {
                 val stopIntent = Intent(context, MockLocationService::class.java).apply {
@@ -86,7 +86,7 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
                 updateAllFavoritesWidgets(context)
                 NowhereAppWidgetProvider.updateAllWidgets(context)
                 NowhereRouteWidgetProvider.updateAllRouteWidgets(context)
-                NowhereJoystickWidgetProvider.updateAllJoystickWidgets(context)
+                NowhereSearchWidgetProvider.updateAllSearchWidgets(context)
             }
             ACTION_UPDATE_FAV_WIDGET, Intent.ACTION_LOCALE_CHANGED, Intent.ACTION_CONFIGURATION_CHANGED -> {
                 val appWidgetManager = AppWidgetManager.getInstance(context)

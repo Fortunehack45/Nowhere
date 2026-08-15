@@ -15,6 +15,10 @@ import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.service.MockLocationService
 import com.fakegps.mocklocation.ui.MainActivity
+import com.fakegps.mocklocation.util.LocationNameResolver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class NowhereRouteWidgetProvider : AppWidgetProvider() {
 
@@ -103,18 +107,20 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
         val speedKmh = sessionPrefs.lastSpeedKmh
 
         if (isActive) {
-            views.setTextViewText(R.id.tvRouteWidgetStatus, "RUNNING")
-            views.setTextColor(R.id.tvRouteWidgetStatus, ContextCompat.getColor(context, R.color.badge_active_text))
-            views.setTextViewText(R.id.btnRouteWidgetPlayPause, "Pause")
-            views.setTextViewText(R.id.tvRouteWidgetProgress, "${waypoints.size} Waypoints • Active Simulation")
+            views.setTextViewText(R.id.tvWidgetRouteStatus, "RUNNING")
+            views.setTextColor(R.id.tvWidgetRouteStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+            views.setTextViewText(R.id.btnWidgetRoutePlayPause, "Pause")
+            views.setTextViewText(R.id.tvWidgetRouteWaypoints, "${waypoints.size} Waypoints • Active Route")
+            views.setProgressBar(R.id.pbWidgetRoute, 100, 60, false)
         } else {
-            views.setTextViewText(R.id.tvRouteWidgetStatus, "READY")
-            views.setTextColor(R.id.tvRouteWidgetStatus, ContextCompat.getColor(context, R.color.text_muted))
-            views.setTextViewText(R.id.btnRouteWidgetPlayPause, "Start Route")
-            views.setTextViewText(R.id.tvRouteWidgetProgress, "${waypoints.size} Waypoints • Standby")
+            views.setTextViewText(R.id.tvWidgetRouteStatus, "STANDBY")
+            views.setTextColor(R.id.tvWidgetRouteStatus, ContextCompat.getColor(context, R.color.text_muted))
+            views.setTextViewText(R.id.btnWidgetRoutePlayPause, "Start")
+            views.setTextViewText(R.id.tvWidgetRouteWaypoints, "${waypoints.size} Waypoints • Ready")
+            views.setProgressBar(R.id.pbWidgetRoute, 100, 0, false)
         }
 
-        views.setTextViewText(R.id.tvRouteWidgetSpeed, settingsPrefs.formatSpeed(speedKmh))
+        views.setTextViewText(R.id.tvWidgetRouteSpeed, settingsPrefs.formatSpeed(speedKmh))
 
         // Open App Intent
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
@@ -128,7 +134,6 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.routeWidgetRoot, openAppPendingIntent)
-        views.setOnClickPendingIntent(R.id.btnRouteWidgetOpenApp, openAppPendingIntent)
 
         // Play / Pause Action Intent
         val playPauseIntent = Intent(context, NowhereRouteWidgetProvider::class.java).apply {
@@ -136,27 +141,48 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
             putExtra("is_paused", false)
             setPackage(context.packageName)
         }
-        val playPausePendingIntent = PendingIntent.getBroadcast(
-            context,
-            102,
-            playPauseIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        views.setOnClickPendingIntent(
+            R.id.btnWidgetRoutePlayPause,
+            PendingIntent.getBroadcast(context, 102, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         )
-        views.setOnClickPendingIntent(R.id.btnRouteWidgetPlayPause, playPausePendingIntent)
 
         // Stop Action Intent
         val stopIntent = Intent(context, NowhereRouteWidgetProvider::class.java).apply {
             action = ACTION_ROUTE_WIDGET_STOP
             setPackage(context.packageName)
         }
-        val stopPendingIntent = PendingIntent.getBroadcast(
-            context,
-            103,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        views.setOnClickPendingIntent(
+            R.id.btnWidgetRouteStop,
+            PendingIntent.getBroadcast(context, 103, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         )
-        views.setOnClickPendingIntent(R.id.btnRouteWidgetStop, stopPendingIntent)
 
-        appWidgetManager.updateAppWidget(appWidgetId, views)
+        // Resolve Origin and Destination Place Names Asynchronously
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val originText: String
+                val destText: String
+
+                if (waypoints.isNotEmpty()) {
+                    val origin = waypoints.first()
+                    val dest = waypoints.last()
+
+                    originText = LocationNameResolver.resolveLocationName(context, origin.latitude, origin.longitude)
+                    destText = if (waypoints.size > 1) {
+                        LocationNameResolver.resolveLocationName(context, dest.latitude, dest.longitude)
+                    } else {
+                        "Tap map to set endpoint"
+                    }
+                } else {
+                    originText = String.format("%.4f°, %.4f°", sessionPrefs.lastLatitude, sessionPrefs.lastLongitude)
+                    destText = "Open map to plot route"
+                }
+
+                views.setTextViewText(R.id.tvRouteOrigin, originText)
+                views.setTextViewText(R.id.tvRouteDestination, destText)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: Exception) {
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            }
+        }
     }
 }

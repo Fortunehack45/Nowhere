@@ -7,16 +7,15 @@ import kotlin.math.round
 import kotlin.math.sqrt
 
 /**
- * Provides realism enhancements configured via AppSettingsPreferences:
- * GPS jitter, dynamic accuracy variance, coordinate precision truncation,
- * and adaptive battery-saving update intervals.
+ * Handles realism enhancements when explicitly enabled in settings.
+ * Defaults to completely stable, static, shake-free coordinates for Fixed mode.
  */
 class RealismLayer(
     private val settingsPrefs: AppSettingsPreferences? = null,
     private val random: Random = Random()
 ) {
     /**
-     * Applies realistic 2D polar/Gaussian jitter to stationary coordinates.
+     * Applies realistic 2D polar/Gaussian jitter.
      */
     fun applyJitter(latitude: Double, longitude: Double): Pair<Double, Double> {
         val shouldJitter = settingsPrefs?.randomizeJitter ?: true
@@ -34,7 +33,7 @@ class RealismLayer(
     }
 
     /**
-     * Truncates coordinates to the configured decimal places (e.g. 6, 4, 2 decimals) if configured.
+     * Truncates coordinates to configured decimal precision if enabled.
      */
     fun truncateIfNeeded(latitude: Double, longitude: Double): Pair<Double, Double> {
         val decimals = settingsPrefs?.truncateDecimals ?: -1
@@ -47,45 +46,43 @@ class RealismLayer(
     }
 
     /**
-     * Generates horizontal accuracy in meters configured from base accuracy.
+     * Generates horizontal accuracy in meters.
      */
-    fun generateHorizontalAccuracy(): Float {
-        val base = settingsPrefs?.baseAccuracy ?: 2.5f
-        val variance = (random.nextFloat() * 1.5f) - 0.75f
-        return (base + variance).coerceAtLeast(0.5f)
+    fun generateHorizontalAccuracy(isMoving: Boolean = false): Float {
+        val base = settingsPrefs?.baseAccuracy ?: 1.0f
+        if (!isMoving) return base.coerceAtLeast(0.5f)
+
+        val shouldRandomize = settingsPrefs?.randomizeJitter ?: false
+        return if (shouldRandomize) {
+            val variance = (random.nextFloat() * 0.6f) - 0.3f
+            (base + variance).coerceAtLeast(0.5f)
+        } else {
+            base.coerceAtLeast(0.5f)
+        }
     }
 
     /**
-     * Generates vertical altitude in meters with optional vertical variance.
+     * Generates vertical altitude in meters.
      */
-    fun generateAltitude(requestedAltitude: Double): Double {
+    fun generateAltitude(requestedAltitude: Double, isMoving: Boolean = false): Double {
         val defaultAlt = (settingsPrefs?.defaultAltitude?.toDouble() ?: requestedAltitude)
         val targetAlt = if (requestedAltitude > 0.1) requestedAltitude else defaultAlt
-        val shouldRandomize = settingsPrefs?.randomizeAltitude ?: true
+        val shouldRandomize = isMoving && (settingsPrefs?.randomizeAltitude ?: false)
 
         return if (shouldRandomize) {
-            val variance = (random.nextDouble() * 2.0) - 1.0
+            val variance = (random.nextDouble() * 0.8) - 0.4
             targetAlt + variance
         } else {
             targetAlt
         }
     }
 
-    fun generateVerticalAccuracy(): Float {
-        return 2.5f + (random.nextFloat() * 2.5f)
-    }
+    fun generateVerticalAccuracy(isMoving: Boolean = false): Float = if (isMoving) 1.5f else 0.5f
 
-    fun generateSpeedAccuracy(): Float {
-        return 0.1f + (random.nextFloat() * 0.3f)
-    }
+    fun generateSpeedAccuracy(isMoving: Boolean = false): Float = if (isMoving) 0.1f else 0.0f
 
-    fun generateBearingAccuracy(): Float {
-        return 2.0f + (random.nextFloat() * 5.0f)
-    }
+    fun generateBearingAccuracy(isMoving: Boolean = false): Float = if (isMoving) 1.0f else 0.0f
 
-    /**
-     * Returns the update interval in milliseconds configured in settings.
-     */
     fun getAdaptiveIntervalMs(isMoving: Boolean): Long {
         return if (isMoving) {
             settingsPrefs?.updateIntervalMovingMs ?: 1000L

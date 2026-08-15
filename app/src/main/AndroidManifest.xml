@@ -118,20 +118,19 @@
                 android:resource="@xml/widget_nowhere_route_info" />
         </receiver>
 
-        <!-- Home Screen App Widget: Joystick D-Pad Controller -->
+        <!-- Home Screen App Widget: Quick Search & Teleport Launcher -->
         <receiver
-            android:name=".ui.widget.NowhereJoystickWidgetProvider"
+            android:name=".ui.widget.NowhereSearchWidgetProvider"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_JOY_WIDGET" />
-                <action android:name="com.fakegps.mocklocation.ACTION_JOY_STEP" />
-                <action android:name="com.fakegps.mocklocation.ACTION_JOY_STOP" />
-                <action android:name="com.fakegps.mocklocation.ACTION_JOY_CYCLE_SPEED" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_SEARCH_WIDGET" />
+                <action android:name="com.fakegps.mocklocation.ACTION_SEARCH_WIDGET_TELEPORT" />
+                <action android:name="com.fakegps.mocklocation.ACTION_SEARCH_WIDGET_STOP" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_nowhere_joystick_info" />
+                android:resource="@xml/widget_nowhere_search_info" />
         </receiver>
 
         <!-- Home Screen App Widget: Quick Favorites & Destinations -->

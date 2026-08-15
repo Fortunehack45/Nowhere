@@ -136,6 +136,22 @@ class MainActivity : AppCompatActivity() {
                 PermissionHelper.requestOverlayPermission(this)
             }
         }
+
+        if (intent?.getBooleanExtra("focus_search", false) == true) {
+            binding.etAddressSearch.requestFocus()
+            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            imm?.showSoftInput(binding.etAddressSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra("focus_search", false)) {
+            binding.etAddressSearch.requestFocus()
+            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            imm?.showSoftInput(binding.etAddressSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        }
     }
 
     override fun onStart() {

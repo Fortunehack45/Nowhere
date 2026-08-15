@@ -95,7 +95,7 @@ class MockLocationService : Service() {
     private fun updateAllWidgets() {
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
-        com.fakegps.mocklocation.ui.widget.NowhereJoystickWidgetProvider.updateAllJoystickWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider.updateAllSearchWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
     }
 
@@ -109,6 +109,7 @@ class MockLocationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        acquireWakeLock()
         when (intent?.action) {
             ACTION_STOP -> stopSpoofing()
             ACTION_PAUSE_ROUTE -> pauseRoute()
@@ -140,6 +141,11 @@ class MockLocationService : Service() {
                 val speed = intent.getFloatExtra(EXTRA_SPEED_KMH, sessionPrefs.lastSpeedKmh)
                 startJoystick(lat, lon, speed)
             }
+            else -> {
+                if (sessionPrefs.isSessionActive) {
+                    restoreActiveSession()
+                }
+            }
         }
         return START_STICKY
     }
@@ -148,6 +154,7 @@ class MockLocationService : Service() {
         super.onTaskRemoved(rootIntent)
         Log.d(TAG, "onTaskRemoved: App swiped away or closed. Service will remain active in background.")
         if (sessionPrefs.isSessionActive) {
+            acquireWakeLock()
             val restartServiceIntent = Intent(applicationContext, MockLocationService::class.java).apply {
                 action = ACTION_RESTORE_SESSION
             }
@@ -261,7 +268,7 @@ class MockLocationService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val notification = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
+            val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
                 .setContentTitle(placeName)
                 .setContentText(coordsText)
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
@@ -269,11 +276,32 @@ class MockLocationService : Service() {
                 .setContentIntent(openAppPendingIntent)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
-                .build()
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .setBigContentTitle(placeName)
+                        .bigText("$coordsText\nGPS Mocking active in background across all apps.")
+                )
+
+            if (activeMode is SimulationMode.Route) {
+                val isPaused = (_serviceState.value as? ServiceState.Running)?.isPaused == true
+                val pauseResumeIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
+                    action = if (isPaused) ACTION_RESUME_ROUTE else ACTION_PAUSE_ROUTE
+                }
+                val pauseResumePendingIntent = PendingIntent.getService(
+                    this@MockLocationService,
+                    2,
+                    pauseResumeIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                val actionTitle = if (isPaused) "Resume" else "Pause"
+                val actionIcon = if (isPaused) R.drawable.ic_play else R.drawable.ic_pause
+                builder.addAction(actionIcon, actionTitle, pauseResumePendingIntent)
+            }
+
+            builder.addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
 
             val manager = getSystemService(NotificationManager::class.java)
-            manager.notify(NOTIFICATION_ID, notification)
+            manager.notify(NOTIFICATION_ID, builder.build())
         }
     }
 
