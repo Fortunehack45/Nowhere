@@ -39,11 +39,11 @@ class AppSettingsPreferences(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_USE_FUSED_PROVIDER, value).apply()
 
     var randomizeJitter: Boolean
-        get() = prefs.getBoolean(KEY_RANDOMIZE_JITTER, true)
+        get() = prefs.getBoolean(KEY_RANDOMIZE_JITTER, false)
         set(value) = prefs.edit().putBoolean(KEY_RANDOMIZE_JITTER, value).apply()
 
     var jitterRadiusMeters: Float
-        get() = prefs.getFloat(KEY_JITTER_RADIUS_METERS, 2.0f)
+        get() = prefs.getFloat(KEY_JITTER_RADIUS_METERS, 0.0f)
         set(value) = prefs.edit().putFloat(KEY_JITTER_RADIUS_METERS, value).apply()
 
     var truncateDecimals: Int
@@ -55,11 +55,11 @@ class AppSettingsPreferences(context: Context) {
         set(value) = prefs.edit().putFloat(KEY_DEFAULT_ALTITUDE, value).apply()
 
     var randomizeAltitude: Boolean
-        get() = prefs.getBoolean(KEY_RANDOMIZE_ALTITUDE, true)
+        get() = prefs.getBoolean(KEY_RANDOMIZE_ALTITUDE, false)
         set(value) = prefs.edit().putBoolean(KEY_RANDOMIZE_ALTITUDE, value).apply()
 
     var baseAccuracy: Float
-        get() = prefs.getFloat(KEY_BASE_ACCURACY, 2.5f)
+        get() = prefs.getFloat(KEY_BASE_ACCURACY, 1.5f)
         set(value) = prefs.edit().putFloat(KEY_BASE_ACCURACY, value).apply()
 
     var updateIntervalMovingMs: Long
@@ -67,7 +67,7 @@ class AppSettingsPreferences(context: Context) {
         set(value) = prefs.edit().putLong(KEY_UPDATE_INTERVAL_MOVING, value).apply()
 
     var updateIntervalStationaryMs: Long
-        get() = prefs.getLong(KEY_UPDATE_INTERVAL_STATIONARY, 5000L)
+        get() = prefs.getLong(KEY_UPDATE_INTERVAL_STATIONARY, 1000L)
         set(value) = prefs.edit().putLong(KEY_UPDATE_INTERVAL_STATIONARY, value).apply()
 
     // --- General, Theme, Map & Units ---

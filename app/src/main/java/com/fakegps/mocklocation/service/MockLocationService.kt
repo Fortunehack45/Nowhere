@@ -306,7 +306,7 @@ class MockLocationService : Service() {
                     altitude = altitude,
                     speed = 0.0f,
                     bearing = 0.0f,
-                    applyStationaryJitter = true
+                    applyStationaryJitter = settingsPrefs.randomizeJitter
                 )
 
                 if (result.isFailure) {
@@ -328,7 +328,7 @@ class MockLocationService : Service() {
                         )
                     }
                 }
-                delay(realismLayer.getAdaptiveIntervalMs(isMoving = false))
+                delay(settingsPrefs.updateIntervalStationaryMs.coerceIn(500L, 2000L))
             }
         }
     }

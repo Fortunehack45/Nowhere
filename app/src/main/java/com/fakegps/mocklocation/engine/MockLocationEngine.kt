@@ -31,7 +31,11 @@ class MockLocationEngine(
     private var isInitialized = false
 
     private fun getActiveProviders(): List<String> {
-        val list = mutableListOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+        val list = mutableListOf(
+            LocationManager.GPS_PROVIDER,
+            LocationManager.NETWORK_PROVIDER,
+            LocationManager.PASSIVE_PROVIDER
+        )
         if (settingsPrefs.useFusedProvider) {
             list.add(FUSED_PROVIDER_NAME)
         }
