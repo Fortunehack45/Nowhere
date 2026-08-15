@@ -80,7 +80,12 @@
             </intent-filter>
         </receiver>
 
-        <!-- Home Screen App Widget -->
+        <!-- Google Mobile Ads (AdMob) Sample App ID -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
+        <!-- Home Screen App Widget: Quick Actions -->
         <receiver
             android:name=".ui.widget.NowhereAppWidgetProvider"
             android:exported="true">
@@ -93,6 +98,21 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_nowhere_info" />
+        </receiver>
+
+        <!-- Home Screen App Widget: Live Route Simulator -->
+        <receiver
+            android:name=".ui.widget.NowhereRouteWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_ROUTE_WIDGET" />
+                <action android:name="com.fakegps.mocklocation.ACTION_ROUTE_WIDGET_PLAY_PAUSE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_ROUTE_WIDGET_STOP" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_nowhere_route_info" />
         </receiver>
 
     </application>

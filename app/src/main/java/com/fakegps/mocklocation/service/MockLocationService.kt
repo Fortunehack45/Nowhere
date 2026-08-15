@@ -360,6 +360,8 @@ class MockLocationService : Service() {
         if (waypoints.isNotEmpty()) {
             updateLocationNotification(waypoints[0].latitude, waypoints[0].longitude, "Route Active (${transportMode.title})")
         }
+        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
 
         simulationJob = serviceScope.launch {
             val stepSeconds = 1.0
@@ -410,6 +412,7 @@ class MockLocationService : Service() {
         if (current is ServiceState.Running) {
             _serviceState.value = current.copy(isPaused = true)
         }
+        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
     }
 
     fun resumeRoute() {
@@ -418,6 +421,7 @@ class MockLocationService : Service() {
         if (current is ServiceState.Running) {
             _serviceState.value = current.copy(isPaused = false)
         }
+        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
     }
 
     fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f) {
@@ -436,6 +440,7 @@ class MockLocationService : Service() {
         sessionPrefs.lastLongitude = startLon
         sessionPrefs.lastSpeedKmh = speedKmh
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
 
         startForegroundNotification(
             String.format("Joystick: %.5f, %.5f", startLat, startLon),
@@ -518,6 +523,7 @@ class MockLocationService : Service() {
         sessionPrefs.isSessionActive = false
         _serviceState.value = ServiceState.Idle
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }

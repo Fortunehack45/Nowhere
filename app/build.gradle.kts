@@ -95,6 +95,9 @@ dependencies {
     // OpenStreetMap (osmdroid)
     implementation("org.osmdroid:osmdroid-android:6.1.18")
 
+    // Google Mobile Ads (AdMob)
+    implementation("com.google.android.gms:play-services-ads:23.0.0")
+
     // Unit Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")

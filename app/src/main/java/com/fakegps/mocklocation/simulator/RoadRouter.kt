@@ -6,12 +6,19 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.math.cos
+import kotlin.math.sin
 
 object RoadRouter {
 
+    private val ROUTING_ENDPOINTS = listOf(
+        "https://router.project-osrm.org/route/v1",
+        "https://routing.openstreetmap.de/routed-car/route/v1"
+    )
+
     /**
-     * Resolves real-world street routing for local driving/walking trips, or generates
-     * smooth geodesic Great-Circle trajectory waypoints for long-distance and intercontinental routes.
+     * Resolves true real-world street & highway routing for both short and long-distance cross-country trips.
+     * Stitches real motorway coordinates together, and uses natural spline curves when completely offline.
      */
     suspend fun resolveRealWorldRoute(
         waypoints: List<RoutePoint>,
@@ -24,68 +31,149 @@ object RoadRouter {
             return@withContext interpolateLongDistanceGeodesic(waypoints, mode)
         }
 
-        // Check if any leg is ultra-long distance (> 250 km or across sea/countries)
-        var hasUltraLongLeg = false
+        val profile = if (mode == TransportMode.FOOT) "walking" else "driving"
+
+        // Try direct multi-point route first
+        val directRoute = tryFetchOsrmRoute(waypoints, profile, mode)
+        if (directRoute.size >= 2) {
+            return@withContext downsampleWaypointsIfNeeded(directRoute, maxPoints = 5000)
+        }
+
+        // If direct long-distance query fails, chunk into sequential legs (e.g. waypoint pairs)
+        val stitchedRoute = mutableListOf<RoutePoint>()
+
         for (i in 0 until waypoints.size - 1) {
-            val dist = GeoUtils.calculateDistanceMeters(
-                waypoints[i].latitude, waypoints[i].longitude,
-                waypoints[i + 1].latitude, waypoints[i + 1].longitude
-            )
-            if (dist > 250_000.0) {
-                hasUltraLongLeg = true
-                break
+            val legStart = waypoints[i]
+            val legEnd = waypoints[i + 1]
+            val legPoints = listOf(legStart, legEnd)
+
+            val legResult = tryFetchOsrmRoute(legPoints, profile, mode)
+            if (legResult.size >= 2) {
+                if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == legResult.first()) {
+                    stitchedRoute.addAll(legResult.subList(1, legResult.size))
+                } else {
+                    stitchedRoute.addAll(legResult)
+                }
+            } else {
+                // Generate natural road spline for this specific leg so it never defaults to a flat straight line!
+                val splineLeg = generateNaturalRoadSpline(legStart, legEnd, mode)
+                if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == splineLeg.first()) {
+                    stitchedRoute.addAll(splineLeg.subList(1, splineLeg.size))
+                } else {
+                    stitchedRoute.addAll(splineLeg)
+                }
             }
         }
 
-        // If ultra-long distance, OSRM public server will reject. Use smooth geodesic interpolation!
-        if (hasUltraLongLeg) {
-            return@withContext interpolateLongDistanceGeodesic(waypoints, mode)
+        if (stitchedRoute.size >= 2) {
+            return@withContext downsampleWaypointsIfNeeded(stitchedRoute, maxPoints = 5000)
         }
 
-        try {
-            val osrmProfile = if (mode == TransportMode.FOOT) "walking" else "driving"
-            val coordinatesParam = waypoints.joinToString(";") { "${it.longitude},${it.latitude}" }
-            val urlString = "https://router.project-osrm.org/route/v1/$osrmProfile/$coordinatesParam?overview=full&geometries=geojson"
+        // Offline or across water: generate natural curving road path
+        return@withContext generateNaturalRoadRoute(waypoints, mode)
+    }
 
-            val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                connectTimeout = 3500
-                readTimeout = 3500
-                setRequestProperty("User-Agent", "NowhereLocationSimulator/1.0")
-            }
+    private fun tryFetchOsrmRoute(
+        points: List<RoutePoint>,
+        profile: String,
+        mode: TransportMode
+    ): List<RoutePoint> {
+        val coordinatesParam = points.joinToString(";") { "${it.longitude},${it.latitude}" }
 
-            if (connection.responseCode == 200) {
-                val jsonStr = connection.inputStream.bufferedReader().use { it.readText() }
-                val root = JSONObject(jsonStr)
-                if (root.optString("code") == "Ok") {
-                    val routes = root.optJSONArray("routes")
-                    if (routes != null && routes.length() > 0) {
-                        val geometry = routes.getJSONObject(0).getJSONObject("geometry")
-                        val coordinates = geometry.getJSONArray("coordinates")
-                        val snappedPoints = mutableListOf<RoutePoint>()
-                        for (i in 0 until coordinates.length()) {
-                            val coordPair = coordinates.getJSONArray(i)
-                            val lon = coordPair.getDouble(0)
-                            val lat = coordPair.getDouble(1)
-                            snappedPoints.add(RoutePoint(lat, lon, mode.defaultAltitudeMeters))
-                        }
-                        if (snappedPoints.size >= 2) {
-                            return@withContext downsampleWaypointsIfNeeded(snappedPoints, maxPoints = 2500)
+        for (baseUrl in ROUTING_ENDPOINTS) {
+            try {
+                val urlString = "$baseUrl/$profile/$coordinatesParam?overview=full&geometries=geojson"
+                val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 4000
+                    readTimeout = 5000
+                    setRequestProperty("User-Agent", "NowhereLocationSimulator/1.0")
+                }
+
+                if (connection.responseCode == 200) {
+                    val jsonStr = connection.inputStream.bufferedReader().use { it.readText() }
+                    val root = JSONObject(jsonStr)
+                    if (root.optString("code") == "Ok") {
+                        val routes = root.optJSONArray("routes")
+                        if (routes != null && routes.length() > 0) {
+                            val geometry = routes.getJSONObject(0).getJSONObject("geometry")
+                            val coordinates = geometry.getJSONArray("coordinates")
+                            val snappedPoints = mutableListOf<RoutePoint>()
+                            for (i in 0 until coordinates.length()) {
+                                val coordPair = coordinates.getJSONArray(i)
+                                val lon = coordPair.getDouble(0)
+                                val lat = coordPair.getDouble(1)
+                                snappedPoints.add(RoutePoint(lat, lon, mode.defaultAltitudeMeters))
+                            }
+                            if (snappedPoints.size >= 2) {
+                                return snappedPoints
+                            }
                         }
                     }
                 }
+            } catch (ignored: Exception) {
+                // Try next endpoint
             }
-        } catch (ignored: Exception) {
-            // Graceful fallback to geodesic waypoints
         }
 
-        return@withContext interpolateLongDistanceGeodesic(waypoints, mode)
+        return emptyList()
     }
 
     /**
-     * Subdivides long straight spans into smooth spherical Great-Circle waypoints (e.g. every 20-50 km).
-     * Guarantees that cross-country simulation runs with continuous, jitter-free physics.
+     * Generates a natural curving road trajectory using sinusoidal highway curvature simulation
+     * so that even in full OFFLINE mode, routes follow realistic winding turns instead of flat lines.
      */
+    fun generateNaturalRoadSpline(
+        start: RoutePoint,
+        end: RoutePoint,
+        mode: TransportMode
+    ): List<RoutePoint> {
+        val dist = GeoUtils.calculateDistanceMeters(start.latitude, start.longitude, end.latitude, end.longitude)
+        val bearing = GeoUtils.calculateBearing(start.latitude, start.longitude, end.latitude, end.longitude)
+
+        val result = mutableListOf<RoutePoint>()
+        result.add(start)
+
+        val stepMeters = (dist / 30.0).coerceIn(100.0, 5000.0)
+        val steps = (dist / stepMeters).toInt().coerceIn(4, 60)
+
+        // Lateral highway sway amplitude
+        val swayMeters = (dist * 0.015).coerceIn(15.0, 400.0)
+
+        for (i in 1 until steps) {
+            val fraction = i.toDouble() / steps.toDouble()
+            val (baseLat, baseLon) = GeoUtils.interpolate(start.latitude, start.longitude, end.latitude, end.longitude, fraction)
+
+            // S-curve highway bend
+            val lateralOffset = sin(fraction * Math.PI * 3.0) * swayMeters
+            val lateralBearing = (bearing + 90.0f) % 360.0f
+
+            val (offsetLat, offsetLon) = GeoUtils.computeDestinationPoint(baseLat, baseLon, lateralBearing, lateralOffset)
+            val alt = start.altitude + (end.altitude - start.altitude) * fraction
+
+            result.add(RoutePoint(offsetLat, offsetLon, if (alt > 0.1) alt else mode.defaultAltitudeMeters))
+        }
+
+        result.add(end)
+        return result
+    }
+
+    private fun generateNaturalRoadRoute(
+        waypoints: List<RoutePoint>,
+        mode: TransportMode
+    ): List<RoutePoint> {
+        val result = mutableListOf<RoutePoint>()
+        for (i in 0 until waypoints.size - 1) {
+            val leg = generateNaturalRoadSpline(waypoints[i], waypoints[i + 1], mode)
+            if (result.isNotEmpty() && result.last() == leg.first()) {
+                result.addAll(leg.subList(1, leg.size))
+            } else {
+                result.addAll(leg)
+            }
+        }
+        return result
+    }
+
     private fun interpolateLongDistanceGeodesic(
         waypoints: List<RoutePoint>,
         mode: TransportMode
@@ -98,7 +186,6 @@ object RoadRouter {
 
             result.add(p1)
 
-            // If span > 10 km, create intermediate points so navigation & simulation are fluid
             if (legDistance > 10_000.0) {
                 val stepSizeMeters = (legDistance / 50.0).coerceIn(10_000.0, 50_000.0)
                 val numSubsteps = (legDistance / stepSizeMeters).toInt().coerceIn(2, 80)
@@ -120,7 +207,7 @@ object RoadRouter {
         return result
     }
 
-    private fun downsampleWaypointsIfNeeded(points: List<RoutePoint>, maxPoints: Int = 2500): List<RoutePoint> {
+    private fun downsampleWaypointsIfNeeded(points: List<RoutePoint>, maxPoints: Int = 5000): List<RoutePoint> {
         if (points.size <= maxPoints) return points
         val step = points.size.toDouble() / maxPoints.toDouble()
         val downsampled = mutableListOf<RoutePoint>()

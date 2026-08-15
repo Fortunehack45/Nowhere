@@ -129,6 +129,8 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
+        com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer)
+
         if (intent?.getBooleanExtra("open_overlay_permission", false) == true) {
             if (!PermissionHelper.canDrawOverlays(this)) {
                 PermissionHelper.requestOverlayPermission(this)
@@ -594,6 +596,7 @@ class MainActivity : AppCompatActivity() {
         }
         startService(intent)
         mockService?.stopSpoofing()
+        com.fakegps.mocklocation.ads.AdManager.showInterstitialIfReady(this)
     }
 
     private fun verifyMockAppSelected(): Boolean {

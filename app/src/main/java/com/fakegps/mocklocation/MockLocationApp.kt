@@ -27,5 +27,8 @@ class MockLocationApp : Application() {
         // Apply user selected theme on startup
         val settingsPrefs = AppSettingsPreferences(this)
         settingsPrefs.applyTheme()
+
+        // Initialize Google Mobile Ads SDK (AdMob)
+        com.fakegps.mocklocation.ads.AdManager.initialize(this)
     }
 }
