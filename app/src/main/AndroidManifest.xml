@@ -37,6 +37,7 @@
         <activity
             android:name=".ui.WelcomeActivity"
             android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:theme="@style/Theme.MockLocation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -48,12 +49,14 @@
         <activity
             android:name=".ui.MainActivity"
             android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:windowSoftInputMode="adjustPan" />
 
         <!-- Advanced Engine & Display Settings -->
         <activity
             android:name=".ui.SettingsActivity"
             android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:windowSoftInputMode="adjustPan" />
 
         <service

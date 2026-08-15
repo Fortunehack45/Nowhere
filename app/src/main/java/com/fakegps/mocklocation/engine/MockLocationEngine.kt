@@ -146,14 +146,14 @@ class MockLocationEngine(
                     this.altitude = finalAltitude
                     this.speed = speed
                     this.bearing = bearing
-                    this.accuracy = horizontalAccuracy
+                    this.accuracy = if (speed < 0.1f) 0.5f else horizontalAccuracy
                     this.time = System.currentTimeMillis()
                     this.elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        this.bearingAccuracyDegrees = bearingAccuracy
-                        this.speedAccuracyMetersPerSecond = speedAccuracy
-                        this.verticalAccuracyMeters = verticalAccuracy
+                        this.bearingAccuracyDegrees = if (speed < 0.1f) 0.1f else bearingAccuracy
+                        this.speedAccuracyMetersPerSecond = if (speed < 0.1f) 0.05f else speedAccuracy
+                        this.verticalAccuracyMeters = if (speed < 0.1f) 0.5f else verticalAccuracy
                     }
                 }
 

@@ -328,7 +328,7 @@ class MockLocationService : Service() {
                         )
                     }
                 }
-                delay(settingsPrefs.updateIntervalStationaryMs.coerceIn(500L, 2000L))
+                delay(250L) // 4Hz high-frequency continuous provider lock
             }
         }
     }
