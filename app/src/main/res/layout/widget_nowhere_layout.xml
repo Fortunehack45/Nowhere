@@ -59,7 +59,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="San Francisco, CA"
-            android:textColor="@color/white"
+            android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:textStyle="bold" />
 

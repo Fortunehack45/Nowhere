@@ -1,12 +1,17 @@
 package com.fakegps.mocklocation.ui
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.ActivitySettingsBinding
+import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
+import com.fakegps.mocklocation.util.PermissionHelper
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -25,6 +30,53 @@ class SettingsActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    override fun onResume() {
+        super.onResume()
+        refreshSystemStatus()
+    }
+
+    private fun refreshSystemStatus() {
+        // Mock Location in Developer Options
+        val isMockEnabled = PermissionHelper.isMockLocationEnabled(this)
+        if (isMockEnabled) {
+            binding.tvSettingsMockStatus.text = "Nowhere is selected as mock location app"
+            binding.tvSettingsMockStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
+            binding.btnSettingsDevOptions.text = "Configured"
+        } else {
+            binding.tvSettingsMockStatus.text = "Not selected as mock app in Developer Options"
+            binding.tvSettingsMockStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_error_text))
+            binding.btnSettingsDevOptions.text = "Select Nowhere"
+        }
+
+        // Battery Optimization
+        val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(this)
+        if (isBatteryExempt) {
+            binding.tvSettingsBatteryStatus.text = "Unrestricted background running enabled"
+            binding.tvSettingsBatteryStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
+            binding.btnSettingsBattery.text = "Active"
+            binding.btnSettingsBattery.isEnabled = false
+        } else {
+            binding.tvSettingsBatteryStatus.text = "Battery optimizer may sleep background GPS"
+            binding.tvSettingsBatteryStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_warning_text))
+            binding.btnSettingsBattery.text = "Allow Unrestricted"
+            binding.btnSettingsBattery.isEnabled = true
+        }
+
+        // Floating Window Overlay
+        val hasOverlay = PermissionHelper.canDrawOverlays(this)
+        if (hasOverlay) {
+            binding.tvSettingsOverlayStatus.text = "Overlay permission granted for floating joystick"
+            binding.tvSettingsOverlayStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
+            binding.btnSettingsOverlay.text = "Granted"
+            binding.btnSettingsOverlay.isEnabled = false
+        } else {
+            binding.tvSettingsOverlayStatus.text = "Permission needed for floating joystick overlay"
+            binding.tvSettingsOverlayStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_warning_text))
+            binding.btnSettingsOverlay.text = "Grant"
+            binding.btnSettingsOverlay.isEnabled = true
+        }
+    }
+
     private fun loadInitialValues() {
         // Advanced Simulation
         binding.switchFusedProvider.isChecked = settingsPrefs.useFusedProvider
@@ -38,26 +90,12 @@ class SettingsActivity : AppCompatActivity() {
             else -> binding.rbTruncateFull.isChecked = true
         }
 
-        // Accuracy & Altitude & Timing
-        binding.sliderAccuracy.value = settingsPrefs.baseAccuracy.coerceIn(0.5f, 20.0f)
-        binding.tvAccuracyLabel.text = String.format("Reported Accuracy: %.1f m", settingsPrefs.baseAccuracy)
-
-        binding.sliderAltitude.value = settingsPrefs.defaultAltitude.coerceIn(0.0f, 500.0f)
-        binding.tvAltitudeLabel.text = String.format("Default Altitude: %.0f m", settingsPrefs.defaultAltitude)
-
-        binding.switchRandomizeAltitude.isChecked = settingsPrefs.randomizeAltitude
-
-        binding.sliderMovingInterval.value = (settingsPrefs.updateIntervalMovingMs.toFloat()).coerceIn(200.0f, 3000.0f)
-        binding.tvMovingIntervalLabel.text = String.format("Moving Rate: %d ms", settingsPrefs.updateIntervalMovingMs)
-
         // Map Tiles & Visuals
         when (settingsPrefs.mapTileSource) {
             "TOPO" -> binding.rbTopo.isChecked = true
-            "WIKIMEDIA" -> binding.rbWikimedia.isChecked = true
             "USGS_SAT" -> binding.rbUsgsSat.isChecked = true
             else -> binding.rbMapnik.isChecked = true
         }
-        binding.switchMapAnimations.isChecked = settingsPrefs.enableMapAnimations
 
         // Theme & Units
         when (settingsPrefs.appTheme) {
@@ -71,8 +109,7 @@ class SettingsActivity : AppCompatActivity() {
             else -> binding.rbUnitMetric.isChecked = true
         }
 
-        // Haptics
-        binding.switchHaptics.isChecked = settingsPrefs.enableHapticFeedback
+        binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
     }
 
     private fun setupListeners() {
@@ -83,8 +120,39 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, "Settings reset to defaults", Toast.LENGTH_SHORT).show()
         }
 
+        // Permission & Integration buttons
+        binding.btnSettingsDevOptions.setOnClickListener {
+            SetupGuideDialog(this) {
+                PermissionHelper.openDeveloperSettings(this)
+            }.show()
+        }
+
+        binding.btnSettingsBattery.setOnClickListener {
+            PermissionHelper.requestIgnoreBatteryOptimizations(this)
+        }
+
+        binding.btnSettingsOverlay.setOnClickListener {
+            PermissionHelper.requestOverlayPermission(this)
+        }
+
+        // Developer & Social Links
+        binding.btnDeveloperPortfolio.setOnClickListener {
+            openBrowser("https://fortuneadebayo.space")
+        }
+
+        binding.btnDeveloperTwitter.setOnClickListener {
+            openBrowser("https://x.com/OnNerd_eth")
+        }
+
+        binding.btnDeveloperWhatsApp1.setOnClickListener {
+            openBrowser("https://wa.me/2347067860584")
+        }
+
+        binding.btnDeveloperWhatsApp2.setOnClickListener {
+            openBrowser("https://wa.me/2349167689200")
+        }
+
         // Persistent Location Injector
-        binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchSettingsBootInjection.setOnCheckedChangeListener { _, isChecked ->
             sessionPrefs.isPersistentBootInjectionEnabled = isChecked
             val msg = if (isChecked) "Auto-Inject on Boot: Enabled" else "Auto-Inject on Boot: Disabled"
@@ -113,37 +181,12 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        binding.sliderAccuracy.addOnChangeListener { _, value, _ ->
-            settingsPrefs.baseAccuracy = value
-            binding.tvAccuracyLabel.text = String.format("Reported Accuracy: %.1f m", value)
-        }
-
-        binding.sliderAltitude.addOnChangeListener { _, value, _ ->
-            settingsPrefs.defaultAltitude = value
-            binding.tvAltitudeLabel.text = String.format("Default Altitude: %.0f m", value)
-        }
-
-        binding.switchRandomizeAltitude.setOnCheckedChangeListener { _, isChecked ->
-            settingsPrefs.randomizeAltitude = isChecked
-        }
-
-        binding.sliderMovingInterval.addOnChangeListener { _, value, _ ->
-            val interval = value.toLong()
-            settingsPrefs.updateIntervalMovingMs = interval
-            binding.tvMovingIntervalLabel.text = String.format("Moving Rate: %d ms", interval)
-        }
-
         binding.rgMapSource.setOnCheckedChangeListener { _, checkedId ->
             settingsPrefs.mapTileSource = when (checkedId) {
                 R.id.rbTopo -> "TOPO"
-                R.id.rbWikimedia -> "WIKIMEDIA"
                 R.id.rbUsgsSat -> "USGS_SAT"
                 else -> "MAPNIK"
             }
-        }
-
-        binding.switchMapAnimations.setOnCheckedChangeListener { _, isChecked ->
-            settingsPrefs.enableMapAnimations = isChecked
         }
 
         binding.rgTheme.setOnCheckedChangeListener { _, checkedId ->
@@ -165,9 +208,16 @@ class SettingsActivity : AppCompatActivity() {
                 else -> "METRIC"
             }
         }
+    }
 
-        binding.switchHaptics.setOnCheckedChangeListener { _, isChecked ->
-            settingsPrefs.enableHapticFeedback = isChecked
+    private fun openBrowser(url: String) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Could not open link: $url", Toast.LENGTH_SHORT).show()
         }
     }
 

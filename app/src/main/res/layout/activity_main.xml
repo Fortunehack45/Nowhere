@@ -194,7 +194,7 @@
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:text="@string/warning_mock_provider_required"
-                    android:textColor="@color/white"
+                    android:textColor="@color/text_primary"
                     android:textSize="12sp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -236,7 +236,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="@color/white"
+                    android:textColor="@color/text_primary"
                     android:textSize="12sp"
                     tools:text="Error occurred" />
 
@@ -429,7 +429,7 @@
                 android:layout_weight="1"
                 android:fontFamily="monospace"
                 android:text="37.77490° N, 122.41940° W"
-                android:textColor="@color/white"
+                android:textColor="@color/text_primary"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 

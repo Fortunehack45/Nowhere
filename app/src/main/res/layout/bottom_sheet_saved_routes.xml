@@ -24,7 +24,7 @@
         android:layout_marginTop="16dp"
         android:letterSpacing="0.04"
         android:text="SAVED SIMULATION ROUTES"
-        android:textColor="@color/white"
+        android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"

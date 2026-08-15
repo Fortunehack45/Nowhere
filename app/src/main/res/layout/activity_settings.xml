@@ -24,7 +24,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/white"
+            app:tint="@color/text_primary"
             tools:ignore="ContentDescription" />
 
         <TextView
@@ -33,7 +33,7 @@
             android:layout_marginStart="8dp"
             android:letterSpacing="0.08"
             android:text="SETTINGS &amp; ENGINE"
-            android:textColor="@color/white"
+            android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -66,7 +66,178 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- SECTION 0: PERSISTENT LOCATION INJECTOR -->
+            <!-- SECTION 0: PERMISSIONS & DEVICE READINESS -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:letterSpacing="0.06"
+                android:text="SYSTEM PERMISSIONS &amp; ACCESS"
+                android:textColor="@color/primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/surface_card"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/stroke_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Mock App in Developer Options -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Mock Location App"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvSettingsMockStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Checking developer options status..."
+                                android:textColor="@color/text_muted"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSettingsDevOptions"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:backgroundTint="@color/surface_card_elevated"
+                            android:text="Configure"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp"
+                            app:cornerRadius="8dp" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/stroke_subtle" />
+
+                    <!-- Background Battery Optimization -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Background Battery Access"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvSettingsBatteryStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Allow uninterrupted background simulation"
+                                android:textColor="@color/text_muted"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSettingsBattery"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:backgroundTint="@color/surface_card_elevated"
+                            android:text="Exempt"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp"
+                            app:cornerRadius="8dp" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/stroke_subtle" />
+
+                    <!-- Floating Window Overlay -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Display Over Other Apps"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvSettingsOverlayStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Required for floating joystick overlay"
+                                android:textColor="@color/text_muted"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSettingsOverlay"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:backgroundTint="@color/surface_card_elevated"
+                            android:text="Grant"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp"
+                            app:cornerRadius="8dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- SECTION 1: PERSISTENT LOCATION INJECTOR -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -110,7 +281,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Auto-Inject on Device Boot"
-                                android:textColor="@color/white"
+                                android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
@@ -134,7 +305,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- SECTION 1: ADVANCED SIMULATION & PROVIDERS -->
+            <!-- SECTION 2: ADVANCED SIMULATION & PROVIDERS -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -179,7 +350,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Google Play Fused Provider"
-                                android:textColor="@color/white"
+                                android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
@@ -206,7 +377,7 @@
                         android:layout_marginVertical="12dp"
                         android:background="@color/stroke_subtle" />
 
-                    <!-- Fixed Position Jitter -->
+                    <!-- Natural Jitter Generation -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -222,8 +393,8 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Randomize Fixed GPS Jitter"
-                                android:textColor="@color/white"
+                                android:text="Realistic Satellite Jitter"
+                                android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
@@ -231,7 +402,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Applies micro-drift around stationary points to mimic natural GPS receiver physics."
+                                android:text="Applies Gaussian noise simulation to bypass anti-spoofing heuristic detection."
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -246,30 +417,46 @@
 
                     <!-- Jitter Radius Slider -->
                     <LinearLayout
-                        android:id="@+id/layoutJitterRadius"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="8dp"
+                        android:orientation="vertical">
 
-                        <TextView
-                            android:id="@+id/tvJitterRadiusLabel"
-                            android:layout_width="120dp"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Radius: 2.0 m"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Jitter Variance Radius"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvJitterRadiusLabel"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="monospace"
+                                android:text="Radius: 2.0 m"
+                                android:textColor="@color/primary"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
 
                         <com.google.android.material.slider.Slider
                             android:id="@+id/sliderJitterRadius"
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
+                            android:stepSize="0.5"
                             android:value="2.0"
                             android:valueFrom="0.5"
                             android:valueTo="10.0"
-                            android:stepSize="0.5" />
+                            app:thumbColor="@color/primary"
+                            app:trackColorActive="@color/primary"
+                            app:trackColorInactive="@color/stroke_subtle" />
                     </LinearLayout>
 
                     <View
@@ -278,12 +465,12 @@
                         android:layout_marginVertical="12dp"
                         android:background="@color/stroke_subtle" />
 
-                    <!-- Coordinate Truncation -->
+                    <!-- Decimal Truncation Segmented Controls -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Coordinate Precision / Truncation"
-                        android:textColor="@color/white"
+                        android:text="Coordinate Decimal Truncation"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -291,7 +478,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Round output coordinates to simulate low-precision hardware receivers."
+                        android:text="Emulate precision limits of physical GNSS hardware chips."
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
 
@@ -312,7 +499,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Full"
+                            android:text="Full (8 Dec)"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -347,307 +534,13 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- SECTION 2: ACCURACY, ALTITUDE & INTERVALS -->
+            <!-- SECTION 3: THEME, MAP TILES & VISUALS -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.06"
-                android:text="ACCURACY, ALTITUDE &amp; TIMING"
-                android:textColor="@color/primary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/surface_card"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/stroke_subtle"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <!-- Base Accuracy -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvAccuracyLabel"
-                            android:layout_width="140dp"
-                            android:layout_height="wrap_content"
-                            android:text="Reported Accuracy: 2.5 m"
-                            android:textColor="@color/white"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.slider.Slider
-                            android:id="@+id/sliderAccuracy"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:value="2.5"
-                            android:valueFrom="0.5"
-                            android:valueTo="20.0"
-                            android:stepSize="0.5" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="10dp"
-                        android:background="@color/stroke_subtle" />
-
-                    <!-- Default Altitude -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvAltitudeLabel"
-                            android:layout_width="140dp"
-                            android:layout_height="wrap_content"
-                            android:text="Default Altitude: 15 m"
-                            android:textColor="@color/white"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.slider.Slider
-                            android:id="@+id/sliderAltitude"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:value="15.0"
-                            android:valueFrom="0.0"
-                            android:valueTo="500.0"
-                            android:stepSize="5.0" />
-                    </LinearLayout>
-
-                    <!-- Randomize Altitude Variance -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Altitude Variance Drift"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchRandomizeAltitude"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:thumbTint="@color/primary"
-                            app:trackTint="@color/stroke_subtle" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="10dp"
-                        android:background="@color/stroke_subtle" />
-
-                    <!-- Moving Update Tick Rate -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvMovingIntervalLabel"
-                            android:layout_width="140dp"
-                            android:layout_height="wrap_content"
-                            android:text="Moving Rate: 1000 ms"
-                            android:textColor="@color/white"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.slider.Slider
-                            android:id="@+id/sliderMovingInterval"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:value="1000.0"
-                            android:valueFrom="200.0"
-                            android:valueTo="3000.0"
-                            android:stepSize="100.0" />
-                    </LinearLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- SECTION 3: MAP TILES & VISUALS -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:letterSpacing="0.06"
-                android:text="MAP &amp; VISUAL DISPLAY"
-                android:textColor="@color/primary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/surface_card"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/stroke_subtle"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Map Tile Source"
-                        android:textColor="@color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <!-- Map Style Selector -->
-                    <RadioGroup
-                        android:id="@+id/rgMapSource"
-                        android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_segmented_tab"
-                        android:orientation="horizontal"
-                        android:padding="2dp">
-
-                        <RadioButton
-                            android:id="@+id/rbMapnik"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_segmented_pill_item"
-                            android:button="@null"
-                            android:gravity="center"
-                            android:text="Street"
-                            android:textColor="@color/color_segmented_text"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <RadioButton
-                            android:id="@+id/rbTopo"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_segmented_pill_item"
-                            android:button="@null"
-                            android:gravity="center"
-                            android:text="Terrain"
-                            android:textColor="@color/color_segmented_text"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <RadioButton
-                            android:id="@+id/rbWikimedia"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_segmented_pill_item"
-                            android:button="@null"
-                            android:gravity="center"
-                            android:text="Vector"
-                            android:textColor="@color/color_segmented_text"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <RadioButton
-                            android:id="@+id/rbUsgsSat"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_segmented_pill_item"
-                            android:button="@null"
-                            android:gravity="center"
-                            android:text="Satellite"
-                            android:textColor="@color/color_segmented_text"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </RadioGroup>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="12dp"
-                        android:background="@color/stroke_subtle" />
-
-                    <!-- Smooth Map Animations -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Smooth Map Animations"
-                                android:textColor="@color/white"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Enables cinematic camera pan and zoom interpolation on center."
-                                android:textColor="@color/text_muted"
-                                android:textSize="11sp" />
-                        </LinearLayout>
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchMapAnimations"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:thumbTint="@color/primary"
-                            app:trackTint="@color/stroke_subtle" />
-                    </LinearLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- SECTION 4: THEME & UNITS -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:letterSpacing="0.06"
-                android:text="THEME &amp; UNITS"
+                android:text="THEME, MAP TILES &amp; VISUALS"
                 android:textColor="@color/primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -673,8 +566,8 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Application Theme"
-                        android:textColor="@color/white"
+                        android:text="App Theme Mode"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -695,7 +588,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Dark Obsidian"
+                            android:text="Dark"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -733,12 +626,76 @@
                         android:layout_marginVertical="12dp"
                         android:background="@color/stroke_subtle" />
 
+                    <!-- Map Tiles Layer -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Map Tile Source"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <RadioGroup
+                        android:id="@+id/rgMapSource"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_segmented_tab"
+                        android:orientation="horizontal"
+                        android:padding="2dp">
+
+                        <RadioButton
+                            android:id="@+id/rbMapnik"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:text="Standard"
+                            android:textColor="@color/color_segmented_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <RadioButton
+                            android:id="@+id/rbTopo"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:text="Terrain"
+                            android:textColor="@color/color_segmented_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <RadioButton
+                            android:id="@+id/rbUsgsSat"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:text="Satellite"
+                            android:textColor="@color/color_segmented_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </RadioGroup>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/stroke_subtle" />
+
                     <!-- Distance Units -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Distance &amp; Speed Units"
-                        android:textColor="@color/white"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -777,17 +734,16 @@
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </RadioGroup>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- SECTION 5: HAPTICS & NOTIFICATIONS -->
+            <!-- SECTION 4: DEVELOPER & CONTACT -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.06"
-                android:text="HAPTICS &amp; NOTIFICATIONS"
+                android:text="DEVELOPER &amp; COMMUNITY SUPPORT"
                 android:textColor="@color/primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -809,28 +765,171 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Haptic Feedback -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:text="Fortune Adebayo"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Creator &amp; Software Engineer • Nowhere Location Simulator"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/stroke_subtle" />
+
+                    <!-- Portfolio Link -->
+                    <LinearLayout
+                        android:id="@+id/btnDeveloperPortfolio"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_segmented_tab"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_globe"
+                            app:tint="@color/primary" />
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Vibrate on Teleport Engagement"
-                            android:textColor="@color/white"
-                            android:textSize="14sp"
+                            android:text="fortuneadebayo.space"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
 
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchHaptics"
+                        <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            app:thumbTint="@color/primary"
-                            app:trackTint="@color/stroke_subtle" />
+                            android:text="Visit Portfolio"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <!-- X (Twitter) Link -->
+                    <LinearLayout
+                        android:id="@+id/btnDeveloperTwitter"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_segmented_tab"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_x_twitter"
+                            app:tint="@color/text_primary" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="@OnNerd_eth"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Follow on X"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <!-- WhatsApp Line 1 -->
+                    <LinearLayout
+                        android:id="@+id/btnDeveloperWhatsApp1"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_segmented_tab"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_whatsapp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="+234 706 786 0584"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Chat on WhatsApp"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <!-- WhatsApp Line 2 -->
+                    <LinearLayout
+                        android:id="@+id/btnDeveloperWhatsApp2"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_segmented_tab"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_whatsapp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="+234 916 768 9200"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Chat on WhatsApp"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp" />
                     </LinearLayout>
 
                 </LinearLayout>

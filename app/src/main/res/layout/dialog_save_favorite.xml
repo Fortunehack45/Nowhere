@@ -74,7 +74,7 @@
             android:layout_weight="1"
             android:backgroundTint="@color/primary"
             android:text="Save"
-            android:textColor="@color/surface_dark"
+            android:textColor="@color/white"
             android:textStyle="bold"
             app:cornerRadius="10dp" />
     </LinearLayout>

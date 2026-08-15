@@ -99,6 +99,10 @@ class AppSettingsPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_NOTIFICATION_DETAILS, true)
         set(value) = prefs.edit().putBoolean(KEY_NOTIFICATION_DETAILS, value).apply()
 
+    var hasCompletedOnboarding: Boolean
+        get() = prefs.getBoolean("key_has_completed_onboarding", false)
+        set(value) = prefs.edit().putBoolean("key_has_completed_onboarding", value).apply()
+
     fun applyTheme(theme: String = appTheme) {
         when (theme) {
             "DARK" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

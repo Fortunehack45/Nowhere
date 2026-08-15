@@ -51,7 +51,7 @@
                 android:layout_marginTop="18dp"
                 android:letterSpacing="0.12"
                 android:text="NOWHERE"
-                android:textColor="@color/white"
+                android:textColor="@color/text_primary"
                 android:textSize="26sp"
                 android:textStyle="bold" />
 
@@ -118,7 +118,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="System-Wide Fixed Teleport"
-                                android:textColor="@color/white"
+                                android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
@@ -155,7 +155,7 @@
                             android:layout_width="32dp"
                             android:layout_height="32dp"
                             android:src="@drawable/ic_route"
-                            app:tint="@color/white"
+                            app:tint="@color/primary"
                             tools:ignore="ContentDescription" />
 
                         <LinearLayout
@@ -168,7 +168,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Realistic Route Simulator &amp; GPX"
-                                android:textColor="@color/white"
+                                android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
@@ -217,7 +217,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Military-Grade Radar Joystick"
-                                android:textColor="@color/white"
+                                android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
@@ -350,12 +350,12 @@
                             android:layout_width="0dp"
                             android:layout_height="40dp"
                             android:layout_weight="1"
-                            android:backgroundTint="@color/surface_dark"
+                            android:backgroundTint="@color/surface_card"
                             android:text="Dev Options"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp"
-                            app:strokeColor="@color/primary"
+                            app:strokeColor="@color/stroke_subtle"
                             app:strokeWidth="1dp" />
 
                         <com.google.android.material.button.MaterialButton
@@ -365,12 +365,12 @@
                             android:layout_height="40dp"
                             android:layout_marginStart="8dp"
                             android:layout_weight="1"
-                            android:backgroundTint="@color/surface_dark"
+                            android:backgroundTint="@color/surface_card"
                             android:text="Allow Unrestricted"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp"
-                            app:strokeColor="@color/primary"
+                            app:strokeColor="@color/stroke_subtle"
                             app:strokeWidth="1dp" />
                     </LinearLayout>
                 </LinearLayout>

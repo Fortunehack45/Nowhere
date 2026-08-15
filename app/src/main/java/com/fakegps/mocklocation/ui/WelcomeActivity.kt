@@ -8,7 +8,7 @@ import android.view.animation.DecelerateInterpolator
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.fakegps.mocklocation.R
-import com.fakegps.mocklocation.data.preferences.SessionPreferences
+import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.databinding.ActivityWelcomeBinding
 import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
 import com.fakegps.mocklocation.util.PermissionHelper
@@ -16,7 +16,7 @@ import com.fakegps.mocklocation.util.PermissionHelper
 class WelcomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityWelcomeBinding
-    private lateinit var sessionPrefs: SessionPreferences
+    private lateinit var settingsPrefs: AppSettingsPreferences
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -26,7 +26,14 @@ class WelcomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        sessionPrefs = SessionPreferences(this)
+        settingsPrefs = AppSettingsPreferences(this)
+
+        // Only show onboarding the very first time!
+        if (settingsPrefs.hasCompletedOnboarding) {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+            return
+        }
 
         binding = ActivityWelcomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -75,11 +82,11 @@ class WelcomeActivity : AppCompatActivity() {
         if (isMockEnabled) {
             binding.ivCheckMockProvider.setImageResource(R.drawable.ic_check_circle)
             binding.tvMockProviderStatus.text = "Mock Location App Active in Developer Options"
-            binding.btnFixDeveloperSettings.text = "Developer Options Configured"
+            binding.btnFixDeveloperSettings.text = "Configured"
         } else {
             binding.ivCheckMockProvider.setImageResource(R.drawable.ic_warning_circle)
             binding.tvMockProviderStatus.text = "Mock Location App Not Selected in Developer Options"
-            binding.btnFixDeveloperSettings.text = "Select Nowhere in Developer Options"
+            binding.btnFixDeveloperSettings.text = "Select Nowhere"
         }
 
         // Permissions Check
@@ -96,7 +103,7 @@ class WelcomeActivity : AppCompatActivity() {
         if (isBatteryExempt) {
             binding.ivCheckBattery.setImageResource(R.drawable.ic_check_circle)
             binding.tvBatteryStatus.text = "Unrestricted Background Running Active"
-            binding.btnFixBattery.text = "Battery Optimized (Active)"
+            binding.btnFixBattery.text = "Active"
             binding.btnFixBattery.isEnabled = false
         } else {
             binding.ivCheckBattery.setImageResource(R.drawable.ic_warning_circle)
@@ -118,6 +125,7 @@ class WelcomeActivity : AppCompatActivity() {
         }
 
         binding.btnGetStarted.setOnClickListener {
+            settingsPrefs.hasCompletedOnboarding = true
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:letterSpacing="0.04"
         android:text="SAVE ROUTE CIRCUIT"
-        android:textColor="@color/white"
+        android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold" />
 
