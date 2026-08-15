@@ -177,9 +177,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupMap() {
         binding.mapView.apply {
+            setLayerType(View.LAYER_TYPE_HARDWARE, null)
             setTileSource(settingsPrefs.getOsmTileSource())
             setMultiTouchControls(true)
             setTilesScaledToDpi(true)
+            isHorizontalMapRepetitionEnabled = true
+            isVerticalMapRepetitionEnabled = false
+            isFlingEnabled = true
             maxZoomLevel = 21.0
             minZoomLevel = 3.0
             controller.setZoom(15.5)
