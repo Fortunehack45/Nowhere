@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Red & White Brand Palette -->
+    <color name="primary">#E41B1B</color>
+    <color name="primary_bright">#FF3B3B</color>
+    <color name="primary_dark">#B91C1C</color>
+    <color name="primary_glow">#40E41B1B</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="white_soft">#F8FAFC</color>
+    <color name="white_muted">#E2E8F0</color>
+    <color name="white_translucent">#1AFFFFFF</color>
+    <color name="white_border">#33FFFFFF</color>
+
+    <!-- Obsidian & Charcoal Contrast Backgrounds -->
+    <color name="surface_dark">#0A0D14</color>
+    <color name="surface_obsidian">#0F141F</color>
+    <color name="surface_card">#141B29</color>
+    <color name="surface_card_elevated">#1A2234</color>
+    <color name="surface_glass">#EB121826</color>
+    <color name="surface_search">#1C2436</color>
+
+    <!-- Strokes & Highlights -->
+    <color name="stroke_subtle">#2A354D</color>
+    <color name="surface_card_stroke">#2A354D</color>
+    <color name="stroke_red_glow">#80E41B1B</color>
+    <color name="stroke_white_glow">#40FFFFFF</color>
+
+    <!-- Typography & Accents -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#CBD5E1</color>
+    <color name="text_muted">#94A3B8</color>
+    <color name="text_red">#FF4D4D</color>
+    <color name="text_cyan">#FFFFFF</color>
+    <color name="accent_rose">#E41B1B</color>
+
+    <!-- Real-time Status Badges -->
+    <color name="badge_active_bg">#26E41B1B</color>
+    <color name="badge_active_text">#FF4D4D</color>
+    <color name="badge_standby_bg">#1AFFFFFF</color>
+    <color name="badge_standby_text">#CBD5E1</color>
+    <color name="badge_warning_bg">#26F59E0B</color>
+    <color name="badge_warning_text">#FBBF24</color>
+    <color name="badge_error_bg">#26EF4444</color>
+    <color name="badge_error_text">#F87171</color>
+
+    <!-- Basics -->
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+</resources>

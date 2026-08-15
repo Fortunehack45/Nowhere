@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MockLocation" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorSecondary">@color/white</item>
+        <item name="android:windowBackground">@color/surface_dark</item>
+        <item name="android:statusBarColor">@color/surface_dark</item>
+        <item name="android:navigationBarColor">@color/surface_dark</item>
+        <item name="sliderStyle">@style/Widget.Nowhere.Slider</item>
+    </style>
+
+    <style name="Widget.Nowhere.Slider" parent="Widget.Material3.Slider">
+        <item name="thumbColor">@color/white</item>
+        <item name="trackColorActive">@color/primary</item>
+        <item name="trackColorInactive">@color/stroke_subtle</item>
+        <item name="haloColor">@color/primary_glow</item>
+        <item name="thumbRadius">9dp</item>
+        <item name="trackHeight">6dp</item>
+    </style>
+</resources>

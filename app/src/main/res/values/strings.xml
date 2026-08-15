@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">Precision GPS &amp; Route Simulator</string>
+    <string name="title_search_hint">Search city, coordinates, or address...</string>
+    
+    <string name="tab_fixed">Fixed</string>
+    <string name="tab_route">Route</string>
+    <string name="tab_joystick">Joystick</string>
+
+    <string name="status_mock_active">NOWHERE ACTIVE</string>
+    <string name="status_standby">STANDBY</string>
+    <string name="status_paused">PAUSED</string>
+
+    <string name="btn_start_teleport">Engage Location</string>
+    <string name="btn_stop_simulation">Stop Simulation</string>
+    <string name="btn_start_route">Start Route</string>
+    <string name="btn_pause_route">Pause</string>
+    <string name="btn_resume_route">Resume</string>
+    <string name="btn_clear_route">Clear Waypoints</string>
+    <string name="btn_import_gpx">Import GPX</string>
+    <string name="btn_save_favorite">Save Pinned Point</string>
+    <string name="btn_open_dev_options">Open Developer Options</string>
+    <string name="btn_dismiss">Dismiss</string>
+
+    <string name="warning_mock_provider_required">Mock Provider Disabled: Set Nowhere as mock location app in Developer Options to spoof system-wide GPS.</string>
+    <string name="warning_revoked_at_runtime">Mock location provider was revoked by system settings. Re-enable Nowhere in Developer Options.</string>
+    <string name="warning_battery_optimization">OEM battery saver may kill background simulation when device sleeps.</string>
+</resources>

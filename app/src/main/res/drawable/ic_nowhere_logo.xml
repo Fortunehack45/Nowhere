@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="28"
+    android:viewportHeight="28">
+    <!-- Glowing Outer Diamond in Crimson -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E41B1B"
+        android:strokeWidth="2.2"
+        android:pathData="M14,2 L26,14 L14,26 L2,14 Z"/>
+    <!-- Inner Core Radar Reticle in Pure White -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14,8.5 A5.5,5.5 0 1,0 14,19.5 A5.5,5.5 0 1,0 14,8.5 Z"/>
+    <!-- Center Dark Core -->
+    <path
+        android:fillColor="#E41B1B"
+        android:pathData="M14,11.5 A2.5,2.5 0 1,0 14,16.5 A2.5,2.5 0 1,0 14,11.5 Z"/>
+</vector>
