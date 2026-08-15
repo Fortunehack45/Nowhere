@@ -95,6 +95,11 @@ class MockLocationService : Service() {
         return binder
     }
 
+    override fun onUnbind(intent: Intent?): Boolean {
+        // Return true to allow rebind without killing the foreground service
+        return true
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> stopSpoofing()
@@ -107,6 +112,20 @@ class MockLocationService : Service() {
                 val alt = intent.getDoubleExtra(EXTRA_ALTITUDE, sessionPrefs.lastAltitude)
                 startFixed(lat, lon, alt)
             }
+            ACTION_START_ROUTE -> {
+                val waypoints = sessionPrefs.getWaypoints()
+                val speed = intent.getFloatExtra(EXTRA_SPEED_KMH, sessionPrefs.lastSpeedKmh)
+                val looping = intent.getBooleanExtra(EXTRA_IS_LOOPING, sessionPrefs.isLooping)
+                val modeName = intent.getStringExtra(EXTRA_TRANSPORT_MODE) ?: TransportMode.VEHICLE.name
+                val transportMode = try {
+                    TransportMode.valueOf(modeName)
+                } catch (e: Exception) {
+                    TransportMode.VEHICLE
+                }
+                if (waypoints.size >= 2) {
+                    startRoute(waypoints, speed, looping, transportMode)
+                }
+            }
             ACTION_START_JOYSTICK -> {
                 val lat = intent.getDoubleExtra(EXTRA_LATITUDE, sessionPrefs.lastLatitude)
                 val lon = intent.getDoubleExtra(EXTRA_LONGITUDE, sessionPrefs.lastLongitude)
@@ -115,6 +134,28 @@ class MockLocationService : Service() {
             }
         }
         return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Log.d(TAG, "onTaskRemoved: App swiped away or closed. Service will remain active in background.")
+        if (sessionPrefs.isSessionActive) {
+            val restartServiceIntent = Intent(applicationContext, MockLocationService::class.java).apply {
+                action = ACTION_RESTORE_SESSION
+            }
+            val restartPendingIntent = PendingIntent.getService(
+                applicationContext,
+                99,
+                restartServiceIntent,
+                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            alarmManager?.set(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                android.os.SystemClock.elapsedRealtime() + 1000L,
+                restartPendingIntent
+            )
+        }
     }
 
     private fun acquireWakeLock() {
