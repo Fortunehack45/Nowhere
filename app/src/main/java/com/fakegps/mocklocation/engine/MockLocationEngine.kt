@@ -12,7 +12,8 @@ import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 
 /**
  * Low-level mock location provider engine interfacing directly with Android's LocationManager.
- * Injects mock coordinates directly into GPS_PROVIDER, NETWORK_PROVIDER, PASSIVE_PROVIDER, and FUSED.
+ * Injects mock coordinates directly into GPS_PROVIDER, NETWORK_PROVIDER, PASSIVE_PROVIDER, and Google Play FUSED_PROVIDER.
+ * Ensures Google Maps, Google Play Services, WhatsApp, and games receive consistent, uninterrupted spoofed coordinates.
  */
 class MockLocationEngine(
     private val context: Context,
@@ -38,9 +39,8 @@ class MockLocationEngine(
             LocationManager.NETWORK_PROVIDER,
             LocationManager.PASSIVE_PROVIDER
         )
-        if (settingsPrefs.useFusedProvider) {
-            list.add(FUSED_PROVIDER_NAME)
-        }
+        // Always include fused provider to lock Google Play Services and Google Maps
+        list.add(FUSED_PROVIDER_NAME)
         return list
     }
 
@@ -65,11 +65,10 @@ class MockLocationEngine(
                 atLeastOneRegistered = true
                 Log.d(TAG, "Successfully registered test provider: $provider")
             } catch (e: SecurityException) {
-                Log.e(TAG, "SecurityException registering $provider: App not selected as Mock App", e)
+                Log.e(TAG, "SecurityException registering $provider: App not selected as Mock App in Developer Options", e)
                 lastSecurityException = e
             } catch (e: Exception) {
                 Log.w(TAG, "Non-fatal error registering test provider $provider: ${e.message}")
-                // Try enabling even if already registered
                 try {
                     locationManager.setTestProviderEnabled(provider, true)
                     registeredProviders.add(provider)
@@ -93,8 +92,8 @@ class MockLocationEngine(
     private fun registerTestProvider(provider: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val properties = ProviderProperties.Builder()
-                .setHasNetworkRequirement(provider == LocationManager.NETWORK_PROVIDER)
-                .setHasSatelliteRequirement(provider == LocationManager.GPS_PROVIDER)
+                .setHasNetworkRequirement(provider == LocationManager.NETWORK_PROVIDER || provider == FUSED_PROVIDER_NAME)
+                .setHasSatelliteRequirement(provider == LocationManager.GPS_PROVIDER || provider == FUSED_PROVIDER_NAME)
                 .setHasCellRequirement(false)
                 .setHasMonetaryCost(false)
                 .setHasAltitudeSupport(true)
@@ -113,8 +112,8 @@ class MockLocationEngine(
             @Suppress("DEPRECATION")
             locationManager.addTestProvider(
                 provider,
-                provider == LocationManager.NETWORK_PROVIDER,
-                provider == LocationManager.GPS_PROVIDER,
+                provider == LocationManager.NETWORK_PROVIDER || provider == FUSED_PROVIDER_NAME,
+                provider == LocationManager.GPS_PROVIDER || provider == FUSED_PROVIDER_NAME,
                 false,
                 false,
                 true,
@@ -138,8 +137,7 @@ class MockLocationEngine(
     }
 
     /**
-     * Injects a spoofed coordinate into the OS location system for all registered providers.
-     * Guaranteed fail-safe: never crashes or aborts if one auxiliary provider fails.
+     * Injects a spoofed coordinate into the OS location system for all registered providers simultaneously.
      */
     @Synchronized
     fun setLocation(
@@ -191,6 +189,9 @@ class MockLocationEngine(
                         this.speedAccuracyMetersPerSecond = speedAccuracy
                         this.verticalAccuracyMeters = verticalAccuracy
                     }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        this.elapsedRealtimeUncertaintyNanos = 0.0
+                    }
                 }
 
                 locationManager.setTestProviderLocation(provider, location)
@@ -207,7 +208,6 @@ class MockLocationEngine(
         return if (lastSuccessfulLocation != null) {
             Result.success(lastSuccessfulLocation)
         } else {
-            // Re-initialize for next tick
             isInitialized = false
             Result.failure(MockLocationError.ProviderUnavailable("all", "No test provider accepted mock coordinate"))
         }
