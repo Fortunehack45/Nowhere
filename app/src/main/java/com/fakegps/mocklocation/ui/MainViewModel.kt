@@ -82,11 +82,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun addRouteWaypoint(latitude: Double, longitude: Double) {
-        val updated = _uiState.value.routeWaypoints.toMutableList().apply {
+        val currentWaypoints = _uiState.value.routeWaypoints.toMutableList().apply {
             add(RoutePoint(latitude, longitude))
         }
-        sessionPrefs.saveWaypoints(updated)
-        _uiState.update { it.copy(routeWaypoints = updated) }
+        _uiState.update { it.copy(routeWaypoints = currentWaypoints) }
+
+        if (currentWaypoints.size >= 2 && (_uiState.value.transportMode == com.fakegps.mocklocation.simulator.TransportMode.VEHICLE || _uiState.value.transportMode == com.fakegps.mocklocation.simulator.TransportMode.FOOT)) {
+            viewModelScope.launch {
+                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(currentWaypoints, _uiState.value.transportMode)
+                sessionPrefs.saveWaypoints(resolved)
+                _uiState.update { it.copy(routeWaypoints = resolved) }
+            }
+        } else {
+            sessionPrefs.saveWaypoints(currentWaypoints)
+        }
     }
 
     fun clearRouteWaypoints() {
@@ -113,6 +122,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 routeSpeedKmh = mode.defaultSpeedKmh,
                 statusMessage = "Transport mode: ${mode.title}"
             )
+        }
+
+        val currentWaypoints = _uiState.value.routeWaypoints
+        if (currentWaypoints.size >= 2) {
+            viewModelScope.launch {
+                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(currentWaypoints, mode)
+                sessionPrefs.saveWaypoints(resolved)
+                _uiState.update { it.copy(routeWaypoints = resolved) }
+            }
         }
     }
 

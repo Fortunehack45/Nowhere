@@ -12,10 +12,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Boot & Background Resilience -->
+    <!-- Boot, Background Resilience & Floating Overlay -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!-- Network for Map Tiles & Geocoding -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -59,13 +60,20 @@
             android:exported="false"
             android:foregroundServiceType="location" />
 
+        <service
+            android:name=".service.FloatingJoystickService"
+            android:enabled="true"
+            android:exported="false" />
+
         <receiver
             android:name=".service.BootCompletedReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>

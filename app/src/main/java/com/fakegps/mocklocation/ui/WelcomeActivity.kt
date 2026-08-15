@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.animation.DecelerateInterpolator
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.ActivityWelcomeBinding
 import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
@@ -72,22 +73,36 @@ class WelcomeActivity : AppCompatActivity() {
 
         // Mock Provider Check
         if (isMockEnabled) {
-            binding.tvCheckMockProvider.text = "✅"
+            binding.ivCheckMockProvider.setImageResource(R.drawable.ic_check_circle)
             binding.tvMockProviderStatus.text = "Mock Location App Active in Developer Options"
             binding.btnFixDeveloperSettings.text = "Developer Options Configured"
         } else {
-            binding.tvCheckMockProvider.text = "⚠️"
+            binding.ivCheckMockProvider.setImageResource(R.drawable.ic_warning_circle)
             binding.tvMockProviderStatus.text = "Mock Location App Not Selected in Developer Options"
             binding.btnFixDeveloperSettings.text = "Select Nowhere in Developer Options"
         }
 
         // Permissions Check
         if (hasLocation && hasNotifications) {
-            binding.tvCheckPermissions.text = "✅"
+            binding.ivCheckPermissions.setImageResource(R.drawable.ic_check_circle)
             binding.tvPermissionStatus.text = "Location & Notification Permissions Granted"
         } else {
-            binding.tvCheckPermissions.text = "⚠️"
+            binding.ivCheckPermissions.setImageResource(R.drawable.ic_warning_circle)
             binding.tvPermissionStatus.text = "Required Runtime Permissions Incomplete"
+        }
+
+        // Battery Optimization Check
+        val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(this)
+        if (isBatteryExempt) {
+            binding.ivCheckBattery.setImageResource(R.drawable.ic_check_circle)
+            binding.tvBatteryStatus.text = "Unrestricted Background Running Active"
+            binding.btnFixBattery.text = "Battery Optimized (Active)"
+            binding.btnFixBattery.isEnabled = false
+        } else {
+            binding.ivCheckBattery.setImageResource(R.drawable.ic_warning_circle)
+            binding.tvBatteryStatus.text = "Battery Optimization may sleep background GPS"
+            binding.btnFixBattery.text = "Allow Unrestricted"
+            binding.btnFixBattery.isEnabled = true
         }
     }
 
@@ -96,6 +111,10 @@ class WelcomeActivity : AppCompatActivity() {
             SetupGuideDialog(this) {
                 PermissionHelper.openDeveloperSettings(this)
             }.show()
+        }
+
+        binding.btnFixBattery.setOnClickListener {
+            PermissionHelper.requestIgnoreBatteryOptimizations(this)
         }
 
         binding.btnGetStarted.setOnClickListener {

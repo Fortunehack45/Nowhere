@@ -179,10 +179,18 @@ class MainActivity : AppCompatActivity() {
         binding.mapView.apply {
             setTileSource(settingsPrefs.getOsmTileSource())
             setMultiTouchControls(true)
+            setTilesScaledToDpi(true)
+            maxZoomLevel = 21.0
+            minZoomLevel = 3.0
             controller.setZoom(15.5)
             val initialPoint = GeoPoint(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
             controller.setCenter(initialPoint)
         }
+
+        val rotationOverlay = org.osmdroid.views.overlay.gestures.RotationGestureOverlay(binding.mapView).apply {
+            isEnabled = true
+        }
+        binding.mapView.overlays.add(rotationOverlay)
 
         val mapEventsOverlay = MapEventsOverlay(object : MapEventsReceiver {
             override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
@@ -339,6 +347,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        binding.btnFloatingOverlayToggle.setOnClickListener {
+            if (!PermissionHelper.canDrawOverlays(this)) {
+                Toast.makeText(this, "Please allow 'Display over other apps' to enable floating joystick", Toast.LENGTH_LONG).show()
+                PermissionHelper.requestOverlayPermission(this)
+                return@setOnClickListener
+            }
+            if (com.fakegps.mocklocation.service.FloatingJoystickService.isRunning) {
+                com.fakegps.mocklocation.service.FloatingJoystickService.stop(this)
+                Toast.makeText(this, "Floating joystick closed", Toast.LENGTH_SHORT).show()
+            } else {
+                com.fakegps.mocklocation.service.FloatingJoystickService.start(this)
+                Toast.makeText(this, "Floating joystick activated", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         binding.btnBannerEnable.setOnClickListener {
             SetupGuideDialog(this) {
                 PermissionHelper.openDeveloperSettings(this)
@@ -425,6 +448,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupFloatingButtons() {
+        var is3dPerspectiveActive = false
+        binding.fab3dPerspective.setOnClickListener {
+            is3dPerspectiveActive = !is3dPerspectiveActive
+            if (is3dPerspectiveActive) {
+                binding.mapView.mapOrientation = 35.0f
+                binding.fab3dPerspective.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
+                Toast.makeText(this, "3D View Active (Pinch/twist map to rotate)", Toast.LENGTH_SHORT).show()
+            } else {
+                binding.mapView.mapOrientation = 0.0f
+                binding.fab3dPerspective.imageTintList = ContextCompat.getColorStateList(this, R.color.primary)
+                Toast.makeText(this, "2D Top-Down View Active", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         binding.fabMyLocation.setOnClickListener {
             val state = viewModel.uiState.value
             val centerLat = if (state.isServiceRunning && state.serviceState is ServiceState.Running) {

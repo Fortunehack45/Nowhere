@@ -268,13 +268,12 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/tvCheckMockProvider"
+                        <ImageView
+                            android:id="@+id/ivCheckMockProvider"
                             android:layout_width="22dp"
                             android:layout_height="22dp"
-                            android:gravity="center"
-                            android:text="⚠️"
-                            android:textSize="14sp" />
+                            android:src="@drawable/ic_warning_circle"
+                            tools:ignore="ContentDescription" />
 
                         <TextView
                             android:id="@+id/tvMockProviderStatus"
@@ -295,13 +294,12 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/tvCheckPermissions"
+                        <ImageView
+                            android:id="@+id/ivCheckPermissions"
                             android:layout_width="22dp"
                             android:layout_height="22dp"
-                            android:gravity="center"
-                            android:text="⚠️"
-                            android:textSize="14sp" />
+                            android:src="@drawable/ic_warning_circle"
+                            tools:ignore="ContentDescription" />
 
                         <TextView
                             android:id="@+id/tvPermissionStatus"
@@ -314,19 +312,67 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnFixDeveloperSettings"
-                        style="@style/Widget.Material3.Button.TonalButton"
+                    <!-- Item 3: Battery Optimization -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/ivCheckBattery"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_warning_circle"
+                            tools:ignore="ContentDescription" />
+
+                        <TextView
+                            android:id="@+id/tvBatteryStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="Unrestricted Background Battery Access"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:backgroundTint="@color/surface_dark"
-                        android:text="Open Developer Options"
-                        android:textColor="@color/primary_bright"
-                        android:textSize="12sp"
-                        app:cornerRadius="8dp"
-                        app:strokeColor="@color/primary"
-                        app:strokeWidth="1dp" />
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnFixDeveloperSettings"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="@color/surface_dark"
+                            android:text="Dev Options"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp"
+                            app:cornerRadius="8dp"
+                            app:strokeColor="@color/primary"
+                            app:strokeWidth="1dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnFixBattery"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="@color/surface_dark"
+                            android:text="Allow Unrestricted"
+                            android:textColor="@color/primary_bright"
+                            android:textSize="11sp"
+                            app:cornerRadius="8dp"
+                            app:strokeColor="@color/primary"
+                            app:strokeWidth="1dp" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

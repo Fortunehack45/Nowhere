@@ -81,6 +81,7 @@ class MockLocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        MockLocationServiceReceiver.activeService = this
         settingsPrefs = AppSettingsPreferences(this)
         realismLayer = RealismLayer(settingsPrefs)
         engine = MockLocationEngine(this, realismLayer, settingsPrefs)
@@ -447,6 +448,7 @@ class MockLocationService : Service() {
     }
 
     override fun onDestroy() {
+        MockLocationServiceReceiver.activeService = null
         stopSpoofing()
         serviceJob.cancel()
         super.onDestroy()

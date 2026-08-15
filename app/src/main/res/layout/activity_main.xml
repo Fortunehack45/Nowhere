@@ -43,7 +43,7 @@
                 android:layout_weight="1"
                 android:letterSpacing="0.08"
                 android:text="NOWHERE"
-                android:textColor="@color/white"
+                android:textColor="@color/primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -82,7 +82,7 @@
                 android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_settings"
-                app:tint="@color/white"
+                app:tint="@color/primary"
                 tools:ignore="ContentDescription" />
         </LinearLayout>
 
@@ -266,13 +266,29 @@
         app:layout_constraintVertical_bias="0.3">
 
         <ImageButton
+            android:id="@+id/fab3dPerspective"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="3D Perspective View"
+            android:src="@drawable/ic_3d"
+            app:tint="@color/primary" />
+
+        <View
+            android:layout_width="28dp"
+            android:layout_height="1dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginVertical="4dp"
+            android:background="@color/stroke_subtle" />
+
+        <ImageButton
             android:id="@+id/fabMyLocation"
             android:layout_width="42dp"
             android:layout_height="42dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Center Target"
             android:src="@drawable/ic_my_location"
-            app:tint="@color/white" />
+            app:tint="@color/text_primary" />
 
         <View
             android:layout_width="28dp"
@@ -333,7 +349,7 @@
         <RadioGroup
             android:id="@+id/rgModeTabs"
             android:layout_width="match_parent"
-            android:layout_height="42dp"
+            android:layout_height="44dp"
             android:background="@drawable/bg_segmented_tab"
             android:checkedButton="@id/rbFixedMode"
             android:orientation="horizontal"
@@ -344,11 +360,12 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:background="@drawable/bg_segmented_pill_item"
                 android:button="@null"
                 android:gravity="center"
                 android:letterSpacing="0.04"
                 android:text="@string/tab_fixed"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/color_segmented_text"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
@@ -357,11 +374,12 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:background="@drawable/bg_segmented_pill_item"
                 android:button="@null"
                 android:gravity="center"
                 android:letterSpacing="0.04"
                 android:text="@string/tab_route"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/color_segmented_text"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
@@ -370,11 +388,12 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:background="@drawable/bg_segmented_pill_item"
                 android:button="@null"
                 android:gravity="center"
                 android:letterSpacing="0.04"
                 android:text="@string/tab_joystick"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/color_segmented_text"
                 android:textSize="13sp"
                 android:textStyle="bold" />
         </RadioGroup>
@@ -481,7 +500,7 @@
             <RadioGroup
                 android:id="@+id/rgTransportMode"
                 android:layout_width="match_parent"
-                android:layout_height="34dp"
+                android:layout_height="36dp"
                 android:layout_marginTop="4dp"
                 android:background="@drawable/bg_segmented_tab"
                 android:checkedButton="@id/rbTransportVehicle"
@@ -493,10 +512,11 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:background="@drawable/bg_segmented_pill_item"
                     android:button="@null"
                     android:gravity="center"
-                    android:text="🚶 Foot"
-                    android:textColor="@color/text_primary"
+                    android:text="Foot"
+                    android:textColor="@color/color_segmented_text"
                     android:textSize="11sp"
                     android:textStyle="bold" />
 
@@ -505,10 +525,11 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:background="@drawable/bg_segmented_pill_item"
                     android:button="@null"
                     android:gravity="center"
-                    android:text="🚗 Vehicle"
-                    android:textColor="@color/text_primary"
+                    android:text="Vehicle"
+                    android:textColor="@color/color_segmented_text"
                     android:textSize="11sp"
                     android:textStyle="bold" />
 
@@ -517,10 +538,11 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:background="@drawable/bg_segmented_pill_item"
                     android:button="@null"
                     android:gravity="center"
-                    android:text="✈️ Aircraft"
-                    android:textColor="@color/text_primary"
+                    android:text="Aircraft"
+                    android:textColor="@color/color_segmented_text"
                     android:textSize="11sp"
                     android:textStyle="bold" />
 
@@ -529,10 +551,11 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:background="@drawable/bg_segmented_pill_item"
                     android:button="@null"
                     android:gravity="center"
-                    android:text="🚢 Ship"
-                    android:textColor="@color/text_primary"
+                    android:text="Ship"
+                    android:textColor="@color/color_segmented_text"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </RadioGroup>
@@ -566,75 +589,118 @@
             </LinearLayout>
 
             <!-- Route Advanced Action Bar (Saved Routes, Save Route, Reverse, GPX, Clear) -->
-            <LinearLayout
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_marginTop="6dp"
+                android:overScrollMode="never"
+                android:scrollbars="none">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSavedRoutesDrawer"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/surface_card_elevated"
-                    android:text="Routes"
-                    android:textColor="@color/white"
-                    android:textSize="11sp"
-                    app:cornerRadius="8dp" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSaveCurrentRoute"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/surface_card_elevated"
-                    android:text="Save"
-                    android:textColor="@color/white"
-                    android:textSize="11sp"
-                    app:cornerRadius="8dp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSavedRoutesDrawer"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="14dp"
+                        android:text="Routes"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_folder"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/primary" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnReverseRoute"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/surface_card_elevated"
-                    android:text="Reverse"
-                    android:textColor="@color/white"
-                    android:textSize="11sp"
-                    app:cornerRadius="8dp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSaveCurrentRoute"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="8dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="14dp"
+                        android:text="Save"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_save"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/primary" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnImportGpx"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/surface_card_elevated"
-                    android:text="GPX"
-                    android:textColor="@color/primary_bright"
-                    android:textSize="11sp"
-                    app:cornerRadius="8dp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReverseRoute"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="8dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="14dp"
+                        android:text="Reverse"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_refresh"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/primary" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnClearRoute"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/surface_card_elevated"
-                    android:text="Clear"
-                    android:textColor="@color/text_muted"
-                    android:textSize="11sp"
-                    app:cornerRadius="8dp" />
-            </LinearLayout>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnImportGpx"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="8dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="14dp"
+                        android:text="GPX"
+                        android:textColor="@color/primary_bright"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_gpx"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/primary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnClearRoute"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="8dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="14dp"
+                        android:text="Clear"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_delete"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/text_muted" />
+                </LinearLayout>
+            </HorizontalScrollView>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -705,18 +771,39 @@
                     android:stepSize="2.0" />
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnJoystickToggle"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="@color/primary"
-                android:text="Engage Joystick"
-                android:textColor="@color/white"
-                android:textStyle="bold"
-                app:cornerRadius="12dp"
-                app:icon="@drawable/ic_play"
-                app:iconTint="@color/white" />
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnJoystickToggle"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/primary"
+                    android:text="Engage Joystick"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_play"
+                    app:iconTint="@color/white" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFloatingOverlayToggle"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="@color/surface_card_elevated"
+                    android:text="Floating"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_joystick"
+                    app:iconTint="@color/primary" />
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

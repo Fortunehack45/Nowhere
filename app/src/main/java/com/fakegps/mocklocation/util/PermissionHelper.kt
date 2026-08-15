@@ -54,6 +54,29 @@ object PermissionHelper {
         }
     }
 
+    fun canDrawOverlays(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(context)
+        } else {
+            true
+        }
+    }
+
+    fun requestOverlayPermission(activity: Activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:${activity.packageName}")
+                )
+                activity.startActivity(intent)
+            } catch (e: Exception) {
+                val intent = Intent(Settings.ACTION_SETTINGS)
+                activity.startActivity(intent)
+            }
+        }
+    }
+
     /**
      * Checks if the app is currently authorized as the Mock Location provider.
      * Combines AppOpsManager check with a safe probe on LocationManager.

@@ -12,8 +12,8 @@ android {
         applicationId = "com.fakegps.mocklocation"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -21,9 +21,19 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Standard consistent debug signature for seamless updates
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug") // Ensure release can update debug seamlessly
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

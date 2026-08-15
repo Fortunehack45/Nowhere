@@ -9,10 +9,13 @@ class MockLocationApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Initialize osmdroid configuration
+        // Initialize osmdroid configuration with generous offline & disk caching
         val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
         Configuration.getInstance().load(this, sharedPrefs)
-        Configuration.getInstance().userAgentValue = packageName
+        Configuration.getInstance().userAgentValue = "NowhereLocationSimulator/1.0 (Android)"
+        Configuration.getInstance().cacheMapTileOvershoot = 4
+        Configuration.getInstance().tileFileSystemCacheMaxBytes = 300L * 1024 * 1024
+        Configuration.getInstance().tileFileSystemCacheTrimBytes = 250L * 1024 * 1024
 
         // Apply user selected theme on startup
         val settingsPrefs = AppSettingsPreferences(this)

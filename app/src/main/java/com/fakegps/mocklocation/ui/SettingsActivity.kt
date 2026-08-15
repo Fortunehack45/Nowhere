@@ -141,7 +141,11 @@ class SettingsActivity : AppCompatActivity() {
                 R.id.rbThemeSystem -> "SYSTEM"
                 else -> "DARK"
             }
-            settingsPrefs.appTheme = theme
+            if (settingsPrefs.appTheme != theme) {
+                settingsPrefs.appTheme = theme
+                settingsPrefs.applyTheme(theme)
+                Toast.makeText(this, "Theme set to $theme", Toast.LENGTH_SHORT).show()
+            }
         }
 
         binding.rgUnits.setOnCheckedChangeListener { _, checkedId ->

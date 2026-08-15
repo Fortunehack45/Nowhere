@@ -1,12 +1,12 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp"
-    android:height="48dp"
+    android:width="108dp"
+    android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Outer Red Diamond Ring -->
+    <!-- Outer Diamond Ring -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#E41B1B"
+        android:strokeColor="#FFFFFF"
         android:strokeWidth="6"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
@@ -15,7 +15,7 @@
     <!-- Corner Radar Accent Ticks -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#E41B1B"
+        android:strokeColor="#FFFFFF"
         android:strokeWidth="5"
         android:strokeLineCap="round"
         android:pathData="M 54,8 L 54,18 M 54,90 L 54,100 M 8,54 L 18,54 M 90,54 L 100,54" />
@@ -23,12 +23,12 @@
     <!-- Inner Concentric Ring -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#E41B1B"
+        android:strokeColor="#FFFFFF"
         android:strokeWidth="4"
         android:pathData="M 54,34 A 20,20 0 1,1 53.9,34 Z" />
 
     <!-- Center Precision Target Dot -->
     <path
-        android:fillColor="#E41B1B"
+        android:fillColor="#FFFFFF"
         android:pathData="M 54,46 A 8,8 0 1,1 53.9,46 Z" />
 </vector>
