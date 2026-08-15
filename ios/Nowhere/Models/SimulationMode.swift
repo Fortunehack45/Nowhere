@@ -1,11 +1,32 @@
 import Foundation
 import CoreLocation
 
+extension CLLocationCoordinate2D: Equatable {
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        abs(lhs.latitude - rhs.latitude) < 0.0000001 && abs(lhs.longitude - rhs.longitude) < 0.0000001
+    }
+}
+
 enum SimulationMode: Equatable {
     case idle
     case fixed(coordinate: CLLocationCoordinate2D, altitude: Double)
     case route(waypoints: [RoutePoint], speedKmh: Double, isLooping: Bool = true, mode: TransportMode)
     case joystick(coordinate: CLLocationCoordinate2D, speedKmh: Double)
+
+    public static func == (lhs: SimulationMode, rhs: SimulationMode) -> Bool {
+        switch (lhs, rhs) {
+        case (.idle, .idle):
+            return true
+        case (.fixed(let c1, let a1), .fixed(let c2, let a2)):
+            return c1 == c2 && a1 == a2
+        case (.route(let w1, let s1, let l1, let m1), .route(let w2, let s2, let l2, let m2)):
+            return w1 == w2 && s1 == s2 && l1 == l2 && m1 == m2
+        case (.joystick(let c1, let s1), .joystick(let c2, let s2)):
+            return c1 == c2 && s1 == s2
+        default:
+            return false
+        }
+    }
 }
 
 enum TransportMode: String, CaseIterable, Identifiable, Codable {
