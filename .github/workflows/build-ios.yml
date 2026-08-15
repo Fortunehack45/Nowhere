@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-ios:
-    name: Build & Package iOS App
+    name: Build & Package iOS App (.ipa & .app)
     runs-on: macos-14
 
     steps:
@@ -19,7 +19,7 @@ jobs:
       - name: Select Xcode Version
         run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
 
-      - name: Build iOS App for Generic iOS Device
+      - name: Build iOS App for Device
         run: |
           cd ios
           xcodebuild clean build \
@@ -33,15 +33,26 @@ jobs:
             PROVISIONING_PROFILE="" \
             SYMROOT=build
 
-      - name: Package .app into Zip
+      - name: Package Native iOS .ipa and .zip
         run: |
           cd ios/build/Release-iphoneos
+          mkdir -p Payload
+          cp -r Nowhere.app Payload/
+          zip -r Nowhere.ipa Payload
           zip -r Nowhere-iOS-Release.zip Nowhere.app
 
-      - name: Upload iOS App Artifact
+      - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Nowhere-iOS-App
+          name: Nowhere-iOS-IPA
+          path: ios/build/Release-iphoneos/Nowhere.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload iOS App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nowhere-iOS-App-Bundle
           path: ios/build/Release-iphoneos/Nowhere-iOS-Release.zip
           if-no-files-found: error
           retention-days: 14
