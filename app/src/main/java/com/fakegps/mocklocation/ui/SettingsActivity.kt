@@ -6,6 +6,9 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
@@ -259,6 +262,10 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        binding.btnPinShortcut.setOnClickListener {
+            pinNowhereShortcut()
+        }
+
         // Widget Slot Customization Buttons
         binding.btnEditWidgetSlot1.setOnClickListener { showEditSlotDialog(1) }
         binding.btnEditWidgetSlot2.setOnClickListener { showEditSlotDialog(2) }
@@ -385,5 +392,25 @@ class SettingsActivity : AppCompatActivity() {
         loadInitialValues()
         refreshWidgetSlotsUI()
         com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
+    }
+
+    private fun pinNowhereShortcut() {
+        if (ShortcutManagerCompat.isRequestPinShortcutSupported(this)) {
+            val shortcutIntent = Intent(this, MainActivity::class.java).apply {
+                action = Intent.ACTION_VIEW
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pinShortcutInfo = ShortcutInfoCompat.Builder(this, "nowhere_main_launcher_shortcut")
+                .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
+                .setShortLabel("Nowhere")
+                .setLongLabel("Nowhere Location Simulator")
+                .setIntent(shortcutIntent)
+                .build()
+
+            ShortcutManagerCompat.requestPinShortcut(this, pinShortcutInfo, null)
+            Toast.makeText(this, "Nowhere icon added to home screen!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Home screen shortcut pinning not supported on this launcher", Toast.LENGTH_SHORT).show()
+        }
     }
 }

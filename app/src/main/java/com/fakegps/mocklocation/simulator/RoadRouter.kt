@@ -17,8 +17,10 @@ object RoadRouter {
     )
 
     /**
-     * Resolves true real-world street & highway routing for both short and long-distance cross-country trips.
-     * Stitches real motorway coordinates together, and uses natural spline curves when completely offline.
+     * Resolves true real-world routing based on transport mode:
+     * - VEHICLE / FOOT: Follows real motorways, streets, and avenues via OSRM with smooth road splines.
+     * - AIRCRAFT: Follows realistic high-altitude Great-Circle flight paths with climb, cruise (9500m), and descent curves.
+     * - SHIP: Follows marine waterways and ocean geodesic corridors locked strictly to sea level (0m) and nautical speed.
      */
     suspend fun resolveRealWorldRoute(
         waypoints: List<RoutePoint>,
@@ -26,9 +28,14 @@ object RoadRouter {
     ): List<RoutePoint> = withContext(Dispatchers.IO) {
         if (waypoints.size < 2) return@withContext waypoints
 
-        // For Aircraft and Ship, generate smooth great-circle flight/marine paths
-        if (mode == TransportMode.AIRCRAFT || mode == TransportMode.SHIP) {
-            return@withContext interpolateLongDistanceGeodesic(waypoints, mode)
+        // For Aircraft, generate Great-Circle flight corridor with climb and descent profile
+        if (mode == TransportMode.AIRCRAFT) {
+            return@withContext generateFlightCorridor(waypoints)
+        }
+
+        // For Ship, generate marine waterway geodesic route locked strictly to sea level (0.0m)
+        if (mode == TransportMode.SHIP) {
+            return@withContext generateMarineWaterwayRoute(waypoints)
         }
 
         val profile = if (mode == TransportMode.FOOT) "walking" else "driving"
@@ -71,6 +78,97 @@ object RoadRouter {
 
         // Offline or across water: generate natural curving road path
         return@withContext generateNaturalRoadRoute(waypoints, mode)
+    }
+
+    /**
+     * Generates a realistic flight corridor with 3-phase altitude simulation:
+     * 1. Climb Phase (from ground to cruising altitude of 9,500m)
+     * 2. Cruise Phase (trans-continental Great-Circle navigation at FL310)
+     * 3. Descent Phase (glide slope landing down to destination elevation)
+     */
+    private fun generateFlightCorridor(waypoints: List<RoutePoint>): List<RoutePoint> {
+        val totalFlightPoints = mutableListOf<RoutePoint>()
+        val cruiseAltitudeMeters = 9500.0 // Cruising Flight Level (approx 31,000 ft)
+
+        for (i in 0 until waypoints.size - 1) {
+            val start = waypoints[i]
+            val end = waypoints[i + 1]
+            val legDistance = GeoUtils.calculateDistanceMeters(start.latitude, start.longitude, end.latitude, end.longitude)
+
+            val stepSizeMeters = (legDistance / 60.0).coerceIn(5_000.0, 40_000.0)
+            val numSteps = (legDistance / stepSizeMeters).toInt().coerceIn(4, 120)
+
+            val isFirstLeg = (i == 0)
+            val isLastLeg = (i == waypoints.size - 2)
+
+            for (step in 0 until numSteps) {
+                val fraction = step.toDouble() / numSteps.toDouble()
+                val (lat, lon) = GeoUtils.interpolateGreatCircle(
+                    start.latitude, start.longitude,
+                    end.latitude, end.longitude,
+                    fraction
+                )
+
+                val alt = when {
+                    isFirstLeg && fraction < 0.25 -> {
+                        // Climb
+                        val climbFraction = fraction / 0.25
+                        start.altitude + (cruiseAltitudeMeters - start.altitude) * sin(climbFraction * Math.PI / 2.0)
+                    }
+                    isLastLeg && fraction > 0.75 -> {
+                        // Descent
+                        val descentFraction = (fraction - 0.75) / 0.25
+                        cruiseAltitudeMeters - (cruiseAltitudeMeters - end.altitude) * sin(descentFraction * Math.PI / 2.0)
+                    }
+                    else -> cruiseAltitudeMeters
+                }
+
+                totalFlightPoints.add(RoutePoint(lat, lon, alt))
+            }
+        }
+
+        if (waypoints.isNotEmpty()) {
+            val last = waypoints.last()
+            totalFlightPoints.add(RoutePoint(last.latitude, last.longitude, last.altitude))
+        }
+
+        return totalFlightPoints
+    }
+
+    /**
+     * Generates a marine waterway route strictly locked to sea level (altitude 0.0m)
+     * with ocean Great-Circle interpolation between maritime coordinates.
+     */
+    private fun generateMarineWaterwayRoute(waypoints: List<RoutePoint>): List<RoutePoint> {
+        val result = mutableListOf<RoutePoint>()
+        for (i in 0 until waypoints.size - 1) {
+            val p1 = waypoints[i]
+            val p2 = waypoints[i + 1]
+            val legDistance = GeoUtils.calculateDistanceMeters(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
+
+            // Force altitude to exactly 0.0m (Sea Level)
+            result.add(RoutePoint(p1.latitude, p1.longitude, 0.0))
+
+            val stepSizeMeters = (legDistance / 40.0).coerceIn(1_000.0, 20_000.0)
+            val numSteps = (legDistance / stepSizeMeters).toInt().coerceIn(2, 60)
+
+            for (step in 1 until numSteps) {
+                val fraction = step.toDouble() / numSteps.toDouble()
+                val (interLat, interLon) = GeoUtils.interpolateGreatCircle(
+                    p1.latitude, p1.longitude,
+                    p2.latitude, p2.longitude,
+                    fraction
+                )
+                result.add(RoutePoint(interLat, interLon, 0.0))
+            }
+        }
+
+        if (waypoints.isNotEmpty()) {
+            val last = waypoints.last()
+            result.add(RoutePoint(last.latitude, last.longitude, 0.0))
+        }
+
+        return result
     }
 
     private fun tryFetchOsrmRoute(
@@ -119,10 +217,6 @@ object RoadRouter {
         return emptyList()
     }
 
-    /**
-     * Generates a natural curving road trajectory using sinusoidal highway curvature simulation
-     * so that even in full OFFLINE mode, routes follow realistic winding turns instead of flat lines.
-     */
     fun generateNaturalRoadSpline(
         start: RoutePoint,
         end: RoutePoint,
@@ -137,14 +231,12 @@ object RoadRouter {
         val stepMeters = (dist / 30.0).coerceIn(100.0, 5000.0)
         val steps = (dist / stepMeters).toInt().coerceIn(4, 60)
 
-        // Lateral highway sway amplitude
         val swayMeters = (dist * 0.015).coerceIn(15.0, 400.0)
 
         for (i in 1 until steps) {
             val fraction = i.toDouble() / steps.toDouble()
             val (baseLat, baseLon) = GeoUtils.interpolate(start.latitude, start.longitude, end.latitude, end.longitude, fraction)
 
-            // S-curve highway bend
             val lateralOffset = sin(fraction * Math.PI * 3.0) * swayMeters
             val lateralBearing = (bearing + 90.0f) % 360.0f
 
@@ -170,39 +262,6 @@ object RoadRouter {
             } else {
                 result.addAll(leg)
             }
-        }
-        return result
-    }
-
-    private fun interpolateLongDistanceGeodesic(
-        waypoints: List<RoutePoint>,
-        mode: TransportMode
-    ): List<RoutePoint> {
-        val result = mutableListOf<RoutePoint>()
-        for (i in 0 until waypoints.size - 1) {
-            val p1 = waypoints[i]
-            val p2 = waypoints[i + 1]
-            val legDistance = GeoUtils.calculateDistanceMeters(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
-
-            result.add(p1)
-
-            if (legDistance > 10_000.0) {
-                val stepSizeMeters = (legDistance / 50.0).coerceIn(10_000.0, 50_000.0)
-                val numSubsteps = (legDistance / stepSizeMeters).toInt().coerceIn(2, 80)
-                for (step in 1 until numSubsteps) {
-                    val fraction = step.toDouble() / numSubsteps.toDouble()
-                    val (interLat, interLon) = GeoUtils.interpolateGreatCircle(
-                        p1.latitude, p1.longitude,
-                        p2.latitude, p2.longitude,
-                        fraction
-                    )
-                    val interAlt = p1.altitude + (p2.altitude - p1.altitude) * fraction
-                    result.add(RoutePoint(interLat, interLon, if (interAlt > 0.1) interAlt else mode.defaultAltitudeMeters))
-                }
-            }
-        }
-        if (waypoints.isNotEmpty()) {
-            result.add(waypoints.last())
         }
         return result
     }

@@ -205,14 +205,14 @@ class MainActivity : AppCompatActivity() {
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
             setTileSource(settingsPrefs.getOsmTileSource())
             setMultiTouchControls(true)
-            setTilesScaledToDpi(true)
+            setTilesScaledToDpi(false) // Ultra-crisp high-DPI retina map rendering (eliminates blurriness)
             isHorizontalMapRepetitionEnabled = true
             isVerticalMapRepetitionEnabled = false
             isFlingEnabled = true
             maxZoomLevel = 21.0
             minZoomLevel = 3.0
             zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
-            controller.setZoom(15.5)
+            controller.setZoom(16.0)
             val initialPoint = GeoPoint(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
             controller.setCenter(initialPoint)
         }
