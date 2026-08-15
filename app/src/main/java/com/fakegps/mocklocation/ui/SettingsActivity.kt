@@ -128,6 +128,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
+        refreshWidgetSlotsUI()
     }
 
     private fun setupListeners() {
@@ -249,6 +250,90 @@ class SettingsActivity : AppCompatActivity() {
                 else -> "METRIC"
             }
         }
+
+        // Widget Slot Customization Buttons
+        binding.btnEditWidgetSlot1.setOnClickListener { showEditSlotDialog(1) }
+        binding.btnEditWidgetSlot2.setOnClickListener { showEditSlotDialog(2) }
+        binding.btnEditWidgetSlot3.setOnClickListener { showEditSlotDialog(3) }
+    }
+
+    private fun refreshWidgetSlotsUI() {
+        binding.tvWidgetSlot1Title.text = "Slot 1: ${settingsPrefs.widgetSlot1Name}"
+        binding.tvWidgetSlot1Coords.text = String.format("%.4f°, %.4f°", settingsPrefs.widgetSlot1Lat, settingsPrefs.widgetSlot1Lon)
+
+        binding.tvWidgetSlot2Title.text = "Slot 2: ${settingsPrefs.widgetSlot2Name}"
+        binding.tvWidgetSlot2Coords.text = String.format("%.4f°, %.4f°", settingsPrefs.widgetSlot2Lat, settingsPrefs.widgetSlot2Lon)
+
+        binding.tvWidgetSlot3Title.text = "Slot 3: ${settingsPrefs.widgetSlot3Name}"
+        binding.tvWidgetSlot3Coords.text = String.format("%.4f°, %.4f°", settingsPrefs.widgetSlot3Lat, settingsPrefs.widgetSlot3Lon)
+    }
+
+    private fun showEditSlotDialog(slotIndex: Int) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_widget_slot, null)
+        val tvTitle = dialogView.findViewById<android.widget.TextView>(R.id.tvDialogSlotTitle)
+        val etName = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSlotName)
+        val etLat = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSlotLat)
+        val etLon = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSlotLon)
+        val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancelSlot)
+        val btnSave = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSaveSlot)
+
+        tvTitle.text = "EDIT WIDGET DESTINATION (SLOT $slotIndex)"
+
+        when (slotIndex) {
+            1 -> {
+                etName.setText(settingsPrefs.widgetSlot1Name)
+                etLat.setText(settingsPrefs.widgetSlot1Lat.toString())
+                etLon.setText(settingsPrefs.widgetSlot1Lon.toString())
+            }
+            2 -> {
+                etName.setText(settingsPrefs.widgetSlot2Name)
+                etLat.setText(settingsPrefs.widgetSlot2Lat.toString())
+                etLon.setText(settingsPrefs.widgetSlot2Lon.toString())
+            }
+            3 -> {
+                etName.setText(settingsPrefs.widgetSlot3Name)
+                etLat.setText(settingsPrefs.widgetSlot3Lat.toString())
+                etLon.setText(settingsPrefs.widgetSlot3Lon.toString())
+            }
+        }
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+            val name = etName.text.toString().trim().ifBlank { "Destination $slotIndex" }
+            val lat = etLat.text.toString().toDoubleOrNull() ?: 0.0
+            val lon = etLon.text.toString().toDoubleOrNull() ?: 0.0
+
+            when (slotIndex) {
+                1 -> {
+                    settingsPrefs.widgetSlot1Name = name
+                    settingsPrefs.widgetSlot1Lat = lat
+                    settingsPrefs.widgetSlot1Lon = lon
+                }
+                2 -> {
+                    settingsPrefs.widgetSlot2Name = name
+                    settingsPrefs.widgetSlot2Lat = lat
+                    settingsPrefs.widgetSlot2Lon = lon
+                }
+                3 -> {
+                    settingsPrefs.widgetSlot3Name = name
+                    settingsPrefs.widgetSlot3Lat = lat
+                    settingsPrefs.widgetSlot3Lon = lon
+                }
+            }
+
+            refreshWidgetSlotsUI()
+            com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
+            Toast.makeText(this, "Slot $slotIndex updated to $name", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun openBrowser(url: String) {
@@ -277,6 +362,20 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.distanceUnit = "METRIC"
         settingsPrefs.enableHapticFeedback = true
 
+        settingsPrefs.widgetSlot1Name = "Paris"
+        settingsPrefs.widgetSlot1Lat = 48.8566
+        settingsPrefs.widgetSlot1Lon = 2.3522
+
+        settingsPrefs.widgetSlot2Name = "Tokyo"
+        settingsPrefs.widgetSlot2Lat = 35.6762
+        settingsPrefs.widgetSlot2Lon = 139.6503
+
+        settingsPrefs.widgetSlot3Name = "New York"
+        settingsPrefs.widgetSlot3Lat = 40.7128
+        settingsPrefs.widgetSlot3Lon = -74.0060
+
         loadInitialValues()
+        refreshWidgetSlotsUI()
+        com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
     }
 }

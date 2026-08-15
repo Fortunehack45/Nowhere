@@ -11,10 +11,13 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.fakegps.mocklocation.R
-import com.fakegps.mocklocation.data.db.AppDatabase
+import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
+import com.fakegps.mocklocation.engine.GeoUtils
 import com.fakegps.mocklocation.service.MockLocationService
 import com.fakegps.mocklocation.ui.MainActivity
+import com.fakegps.mocklocation.ui.SettingsActivity
+import com.fakegps.mocklocation.util.LocationNameResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -101,20 +104,71 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
     private fun updateFavoritesWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
         val views = RemoteViews(context.packageName, R.layout.widget_nowhere_favorites_layout)
         val sessionPrefs = SessionPreferences(context)
+        val settingsPrefs = AppSettingsPreferences(context)
 
         val isActive = sessionPrefs.isSessionActive
+        val curLat = sessionPrefs.lastLatitude
+        val curLon = sessionPrefs.lastLongitude
+
+        val s1Name = settingsPrefs.widgetSlot1Name
+        val s1Lat = settingsPrefs.widgetSlot1Lat
+        val s1Lon = settingsPrefs.widgetSlot1Lon
+
+        val s2Name = settingsPrefs.widgetSlot2Name
+        val s2Lat = settingsPrefs.widgetSlot2Lat
+        val s2Lon = settingsPrefs.widgetSlot2Lon
+
+        val s3Name = settingsPrefs.widgetSlot3Name
+        val s3Lat = settingsPrefs.widgetSlot3Lat
+        val s3Lon = settingsPrefs.widgetSlot3Lon
+
+        // Determine which slot is actively matched
+        val matchSlot1 = isActive && GeoUtils.calculateDistanceMeters(curLat, curLon, s1Lat, s1Lon) < 150.0
+        val matchSlot2 = isActive && GeoUtils.calculateDistanceMeters(curLat, curLon, s2Lat, s2Lon) < 150.0
+        val matchSlot3 = isActive && GeoUtils.calculateDistanceMeters(curLat, curLon, s3Lat, s3Lon) < 150.0
+
+        // Configure Active Pill Indicator
         if (isActive) {
-            views.setTextViewText(R.id.tvFavWidgetStatus, "ACTIVE")
+            val activeName = when {
+                matchSlot1 -> s1Name.uppercase()
+                matchSlot2 -> s2Name.uppercase()
+                matchSlot3 -> s3Name.uppercase()
+                else -> "ACTIVE"
+            }
+            views.setTextViewText(R.id.tvFavWidgetStatus, "📍 $activeName")
             views.setTextColor(R.id.tvFavWidgetStatus, ContextCompat.getColor(context, R.color.badge_active_text))
         } else {
             views.setTextViewText(R.id.tvFavWidgetStatus, "STANDBY")
             views.setTextColor(R.id.tvFavWidgetStatus, ContextCompat.getColor(context, R.color.text_muted))
         }
 
-        views.setTextViewText(
-            R.id.tvFavCurrentLocation,
-            String.format("%.5f°, %.5f°", sessionPrefs.lastLatitude, sessionPrefs.lastLongitude)
-        )
+        // Bind Slots
+        fun bindSlot(viewId: Int, reqCode: Int, name: String, lat: Double, lon: Double, isMatched: Boolean) {
+            views.setTextViewText(viewId, if (isMatched) "✓ $name" else name)
+            if (isMatched) {
+                views.setInt(viewId, "setBackgroundResource", R.drawable.bg_widget_button_primary)
+                views.setTextColor(viewId, ContextCompat.getColor(context, R.color.white))
+            } else {
+                views.setInt(viewId, "setBackgroundResource", R.drawable.bg_widget_button)
+                views.setTextColor(viewId, ContextCompat.getColor(context, R.color.text_primary))
+            }
+
+            val teleIntent = Intent(context, NowhereFavoritesWidgetProvider::class.java).apply {
+                action = ACTION_FAV_TELEPORT
+                putExtra(EXTRA_FAV_LAT, lat)
+                putExtra(EXTRA_FAV_LON, lon)
+                putExtra(EXTRA_FAV_NAME, name)
+                setPackage(context.packageName)
+            }
+            views.setOnClickPendingIntent(
+                viewId,
+                PendingIntent.getBroadcast(context, reqCode, teleIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            )
+        }
+
+        bindSlot(R.id.btnFavSlot1, 310, s1Name, s1Lat, s1Lon, matchSlot1)
+        bindSlot(R.id.btnFavSlot2, 311, s2Name, s2Lat, s2Lon, matchSlot2)
+        bindSlot(R.id.btnFavSlot3, 312, s3Name, s3Lat, s3Lon, matchSlot3)
 
         // Open App Intent
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
@@ -124,6 +178,17 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
         views.setOnClickPendingIntent(
             R.id.favoritesWidgetRoot,
             PendingIntent.getActivity(context, 301, openAppIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        )
+
+        // Edit Destinations Action (Opens Settings Screen)
+        val editIntent = Intent(context, SettingsActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("open_widget_config", true)
+            setPackage(context.packageName)
+        }
+        views.setOnClickPendingIntent(
+            R.id.btnFavWidgetEdit,
+            PendingIntent.getActivity(context, 303, editIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         )
 
         // Stop Intent
@@ -136,51 +201,14 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
             PendingIntent.getBroadcast(context, 302, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         )
 
-        // Load Top 3 Favorites Asynchronously
+        // Asynchronously resolve active location name or country for coordinates readout
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val db = AppDatabase.getInstance(context)
-                val favorites = db.favoriteDao().getAllFavoritesList()
-
-                val slot1 = favorites.getOrNull(0)
-                val slot2 = favorites.getOrNull(1)
-                val slot3 = favorites.getOrNull(2)
-
-                fun bindSlot(viewId: Int, reqCode: Int, name: String, lat: Double, lon: Double) {
-                    views.setTextViewText(viewId, name)
-                    val teleIntent = Intent(context, NowhereFavoritesWidgetProvider::class.java).apply {
-                        action = ACTION_FAV_TELEPORT
-                        putExtra(EXTRA_FAV_LAT, lat)
-                        putExtra(EXTRA_FAV_LON, lon)
-                        putExtra(EXTRA_FAV_NAME, name)
-                        setPackage(context.packageName)
-                    }
-                    views.setOnClickPendingIntent(
-                        viewId,
-                        PendingIntent.getBroadcast(context, reqCode, teleIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-                    )
-                }
-
-                if (slot1 != null) {
-                    bindSlot(R.id.btnFavSlot1, 310, slot1.name, slot1.latitude, slot1.longitude)
-                } else {
-                    bindSlot(R.id.btnFavSlot1, 310, "Paris", 48.8566, 2.3522)
-                }
-
-                if (slot2 != null) {
-                    bindSlot(R.id.btnFavSlot2, 311, slot2.name, slot2.latitude, slot2.longitude)
-                } else {
-                    bindSlot(R.id.btnFavSlot2, 311, "Tokyo", 35.6762, 139.6503)
-                }
-
-                if (slot3 != null) {
-                    bindSlot(R.id.btnFavSlot3, 312, slot3.name, slot3.latitude, slot3.longitude)
-                } else {
-                    bindSlot(R.id.btnFavSlot3, 312, "New York", 40.7128, -74.0060)
-                }
-
+                val locText = LocationNameResolver.resolveLocationName(context, curLat, curLon)
+                views.setTextViewText(R.id.tvFavCurrentLocation, locText)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             } catch (e: Exception) {
+                views.setTextViewText(R.id.tvFavCurrentLocation, String.format("%.4f°, %.4f°", curLat, curLon))
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
         }

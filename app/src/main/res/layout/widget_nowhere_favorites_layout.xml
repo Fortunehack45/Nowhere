@@ -5,9 +5,9 @@
     android:layout_height="wrap_content"
     android:background="@drawable/bg_widget_glass"
     android:orientation="vertical"
-    android:padding="14dp">
+    android:padding="12dp">
 
-    <!-- Header: Logo, Title, Live Status -->
+    <!-- Header: Logo, Title, Active Pill -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -23,7 +23,7 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:letterSpacing="0.08"
             android:text="QUICK DESTINATIONS"
@@ -31,6 +31,7 @@
             android:textSize="11sp"
             android:textStyle="bold" />
 
+        <!-- Glowing Active Indicator Pill -->
         <TextView
             android:id="@+id/tvFavWidgetStatus"
             android:layout_width="wrap_content"
@@ -44,11 +45,11 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Top 3 Quick Teleport Buttons -->
+    <!-- 3 Quick Destination Buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="36dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal">
 
         <TextView
@@ -90,11 +91,11 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Footer: Active Location Coords & Stop Button -->
+    <!-- Bottom Bar: Coordinates Readout, Edit Destinations, Stop -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -103,21 +104,38 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:ellipsize="end"
             android:fontFamily="monospace"
+            android:maxLines="1"
             android:text="37.77490°, -122.41940°"
             android:textColor="@color/text_secondary"
-            android:textSize="11sp" />
+            android:textSize="10sp" />
 
+        <!-- Edit Destinations Button (Opens Settings to Customize Countries) -->
+        <TextView
+            android:id="@+id/btnFavWidgetEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_widget_button"
+            android:gravity="center"
+            android:paddingHorizontal="8dp"
+            android:text="Edit"
+            android:textColor="@color/primary_bright"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <!-- Stop Simulation Button -->
         <TextView
             android:id="@+id/btnFavWidgetStop"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="6dp"
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
-            android:paddingHorizontal="14dp"
+            android:paddingHorizontal="10dp"
             android:text="Stop"
-            android:textColor="@color/text_primary"
-            android:textSize="11sp"
+            android:textColor="@color/primary"
+            android:textSize="10sp"
             android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>

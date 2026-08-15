@@ -143,6 +143,44 @@ class AppSettingsPreferences(context: Context) {
         return String.format("%dh %02dm remaining", hours, minutes)
     }
 
+    // --- Customizable Quick Destination Widget Slots ---
+
+    var widgetSlot1Name: String
+        get() = prefs.getString("widget_slot_1_name", "Paris") ?: "Paris"
+        set(value) = prefs.edit().putString("widget_slot_1_name", value).apply()
+
+    var widgetSlot1Lat: Double
+        get() = prefs.getString("widget_slot_1_lat", "48.8566")?.toDoubleOrNull() ?: 48.8566
+        set(value) = prefs.edit().putString("widget_slot_1_lat", value.toString()).apply()
+
+    var widgetSlot1Lon: Double
+        get() = prefs.getString("widget_slot_1_lon", "2.3522")?.toDoubleOrNull() ?: 2.3522
+        set(value) = prefs.edit().putString("widget_slot_1_lon", value.toString()).apply()
+
+    var widgetSlot2Name: String
+        get() = prefs.getString("widget_slot_2_name", "Tokyo") ?: "Tokyo"
+        set(value) = prefs.edit().putString("widget_slot_2_name", value).apply()
+
+    var widgetSlot2Lat: Double
+        get() = prefs.getString("widget_slot_2_lat", "35.6762")?.toDoubleOrNull() ?: 35.6762
+        set(value) = prefs.edit().putString("widget_slot_2_lat", value.toString()).apply()
+
+    var widgetSlot2Lon: Double
+        get() = prefs.getString("widget_slot_2_lon", "139.6503")?.toDoubleOrNull() ?: 139.6503
+        set(value) = prefs.edit().putString("widget_slot_2_lon", value.toString()).apply()
+
+    var widgetSlot3Name: String
+        get() = prefs.getString("widget_slot_3_name", "New York") ?: "New York"
+        set(value) = prefs.edit().putString("widget_slot_3_name", value).apply()
+
+    var widgetSlot3Lat: Double
+        get() = prefs.getString("widget_slot_3_lat", "40.7128")?.toDoubleOrNull() ?: 40.7128
+        set(value) = prefs.edit().putString("widget_slot_3_lat", value.toString()).apply()
+
+    var widgetSlot3Lon: Double
+        get() = prefs.getString("widget_slot_3_lon", "-74.0060")?.toDoubleOrNull() ?: -74.0060
+        set(value) = prefs.edit().putString("widget_slot_3_lon", value.toString()).apply()
+
     fun applyTheme(theme: String = appTheme) {
         when (theme) {
             "DARK" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
