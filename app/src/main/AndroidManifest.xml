@@ -80,10 +80,10 @@
             </intent-filter>
         </receiver>
 
-        <!-- Google Mobile Ads (AdMob) Sample App ID -->
+        <!-- Google Mobile Ads (AdMob) App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-5191202278112313~3868363285" />
 
         <!-- Home Screen App Widget: Quick Actions -->
         <receiver

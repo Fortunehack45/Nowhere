@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
+import com.fakegps.mocklocation.BuildConfig
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -17,7 +18,10 @@ object AdManager {
 
     private const val TAG = "AdManager"
 
-    // Official Google Test Ad Unit IDs for safe development & QA
+    // Production AdMob Ad Unit IDs
+    const val PROD_BANNER_AD_UNIT_ID = "ca-app-pub-5191202278112313/8553859547"
+
+    // Official Google Test Ad Unit IDs for safe debug & QA
     const val TEST_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
     const val TEST_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
 
@@ -38,8 +42,9 @@ object AdManager {
 
     fun loadBanner(activity: Activity, container: FrameLayout) {
         try {
+            val adUnit = if (BuildConfig.DEBUG) TEST_BANNER_AD_UNIT_ID else PROD_BANNER_AD_UNIT_ID
             val adView = AdView(activity).apply {
-                adUnitId = TEST_BANNER_AD_UNIT_ID
+                adUnitId = adUnit
                 setAdSize(AdSize.BANNER)
             }
             container.removeAllViews()
