@@ -346,11 +346,10 @@ class MockLocationService : Service() {
                 )
 
                 if (result.isFailure) {
-                    val error = result.exceptionOrNull() as? com.fakegps.mocklocation.engine.MockLocationError
-                        ?: com.fakegps.mocklocation.engine.MockLocationError.InternalError("Failed setting location")
-                    _serviceState.value = ServiceState.Error(error)
-                    stopSpoofing()
-                    break
+                    val error = result.exceptionOrNull()
+                    Log.w(TAG, "Transient injection error: ${error?.message}, retrying...")
+                    delay(500L)
+                    continue
                 } else {
                     val loc = result.getOrNull()
                     if (loc != null) {
@@ -364,7 +363,7 @@ class MockLocationService : Service() {
                         )
                     }
                 }
-                delay(250L) // 4Hz high-frequency continuous provider lock
+                delay(300L) // Continuous background provider lock
             }
         }
     }
@@ -413,11 +412,8 @@ class MockLocationService : Service() {
                     )
 
                     if (result.isFailure) {
-                        val error = result.exceptionOrNull() as? com.fakegps.mocklocation.engine.MockLocationError
-                            ?: com.fakegps.mocklocation.engine.MockLocationError.InternalError("Location injection failed")
-                        _serviceState.value = ServiceState.Error(error)
-                        stopSpoofing()
-                        break
+                        val error = result.exceptionOrNull()
+                        Log.w(TAG, "Transient route injection error: ${error?.message}, retrying...")
                     } else {
                         _serviceState.value = ServiceState.Running(
                             mode = activeMode,

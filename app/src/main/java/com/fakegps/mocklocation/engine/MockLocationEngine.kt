@@ -12,7 +12,7 @@ import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 
 /**
  * Low-level mock location provider engine interfacing directly with Android's LocationManager.
- * Supports GPS_PROVIDER, NETWORK_PROVIDER, and Google Play FUSED_PROVIDER.
+ * Injects mock coordinates directly into GPS_PROVIDER, NETWORK_PROVIDER, PASSIVE_PROVIDER, and FUSED.
  */
 class MockLocationEngine(
     private val context: Context,
@@ -30,7 +30,9 @@ class MockLocationEngine(
     @Volatile
     private var isInitialized = false
 
-    private fun getActiveProviders(): List<String> {
+    private val registeredProviders = mutableSetOf<String>()
+
+    private fun getTargetProviders(): List<String> {
         val list = mutableListOf(
             LocationManager.GPS_PROVIDER,
             LocationManager.NETWORK_PROVIDER,
@@ -43,29 +45,49 @@ class MockLocationEngine(
     }
 
     /**
-     * Initializes the test providers.
+     * Initializes all test providers with fail-safe recovery.
      */
     @Synchronized
     fun initialize(): Result<Unit> {
-        if (isInitialized) return Result.success(Unit)
+        val providers = getTargetProviders()
+        var atLeastOneRegistered = false
+        var lastSecurityException: SecurityException? = null
 
-        val providers = getActiveProviders()
         for (provider in providers) {
             try {
+                // Safely remove any stale test provider instance first
+                try {
+                    locationManager.removeTestProvider(provider)
+                } catch (ignored: Exception) {}
+
                 registerTestProvider(provider)
+                registeredProviders.add(provider)
+                atLeastOneRegistered = true
+                Log.d(TAG, "Successfully registered test provider: $provider")
             } catch (e: SecurityException) {
-                Log.e(TAG, "SecurityException registering test provider $provider: not set as mock app", e)
-                isInitialized = false
-                return Result.failure(MockLocationError.NotSelectedAsMockApp(cause = e))
-            } catch (e: IllegalArgumentException) {
-                Log.w(TAG, "Provider $provider cannot be registered or already exists: ${e.message}")
+                Log.e(TAG, "SecurityException registering $provider: App not selected as Mock App", e)
+                lastSecurityException = e
             } catch (e: Exception) {
-                Log.e(TAG, "Unexpected error registering $provider", e)
+                Log.w(TAG, "Non-fatal error registering test provider $provider: ${e.message}")
+                // Try enabling even if already registered
+                try {
+                    locationManager.setTestProviderEnabled(provider, true)
+                    registeredProviders.add(provider)
+                    atLeastOneRegistered = true
+                } catch (ignored: Exception) {}
             }
         }
 
-        isInitialized = true
-        return Result.success(Unit)
+        return if (atLeastOneRegistered) {
+            isInitialized = true
+            Result.success(Unit)
+        } else {
+            isInitialized = false
+            Result.failure(
+                lastSecurityException?.let { MockLocationError.NotSelectedAsMockApp(cause = it) }
+                    ?: MockLocationError.ProviderUnavailable("all", "Could not register any test provider")
+            )
+        }
     }
 
     private fun registerTestProvider(provider: String) {
@@ -104,10 +126,20 @@ class MockLocationEngine(
         }
 
         locationManager.setTestProviderEnabled(provider, true)
+        try {
+            @Suppress("DEPRECATION")
+            locationManager.setTestProviderStatus(
+                provider,
+                android.location.LocationProvider.AVAILABLE,
+                null,
+                System.currentTimeMillis()
+            )
+        } catch (ignored: Exception) {}
     }
 
     /**
      * Injects a spoofed coordinate into the OS location system for all registered providers.
+     * Guaranteed fail-safe: never crashes or aborts if one auxiliary provider fails.
      */
     @Synchronized
     fun setLocation(
@@ -118,9 +150,9 @@ class MockLocationEngine(
         bearing: Float = 0.0f,
         applyStationaryJitter: Boolean = false
     ): Result<Location> {
-        val initResult = if (!isInitialized) initialize() else Result.success(Unit)
-        if (initResult.isFailure) {
-            return Result.failure(initResult.exceptionOrNull() ?: MockLocationError.InternalError("Init failed"))
+        if (!isInitialized || registeredProviders.isEmpty()) {
+            val initRes = initialize()
+            if (initRes.isFailure) return Result.failure(initRes.exceptionOrNull() ?: MockLocationError.InternalError("Init failed"))
         }
 
         val isMoving = speed >= 0.1f
@@ -136,10 +168,13 @@ class MockLocationEngine(
         val speedAccuracy = realismLayer.generateSpeedAccuracy(isMoving)
         val bearingAccuracy = realismLayer.generateBearingAccuracy(isMoving)
 
-        var lastLocation: Location? = null
-        val providers = getActiveProviders()
+        var lastSuccessfulLocation: Location? = null
+        val nowMs = System.currentTimeMillis()
+        val nowNanos = SystemClock.elapsedRealtimeNanos()
 
-        for (provider in providers) {
+        val providersToUse = if (registeredProviders.isNotEmpty()) registeredProviders.toList() else getTargetProviders()
+
+        for (provider in providersToUse) {
             try {
                 val location = Location(provider).apply {
                     this.latitude = finalLat
@@ -148,8 +183,8 @@ class MockLocationEngine(
                     this.speed = speed
                     this.bearing = bearing
                     this.accuracy = horizontalAccuracy
-                    this.time = System.currentTimeMillis()
-                    this.elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
+                    this.time = nowMs
+                    this.elapsedRealtimeNanos = nowNanos
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         this.bearingAccuracyDegrees = bearingAccuracy
@@ -159,39 +194,38 @@ class MockLocationEngine(
                 }
 
                 locationManager.setTestProviderLocation(provider, location)
-                lastLocation = location
+                lastSuccessfulLocation = location
             } catch (e: SecurityException) {
                 Log.e(TAG, "SecurityException setting mock location for $provider: permission revoked", e)
                 isInitialized = false
                 return Result.failure(MockLocationError.NotSelectedAsMockApp(cause = e))
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to set location for provider $provider: ${e.message}")
+                Log.w(TAG, "Non-fatal error injecting location into $provider: ${e.message}")
             }
         }
 
-        return if (lastLocation != null) {
-            Result.success(lastLocation)
+        return if (lastSuccessfulLocation != null) {
+            Result.success(lastSuccessfulLocation)
         } else {
-            Result.failure(MockLocationError.ProviderUnavailable("all", "No providers accepted test location"))
+            // Re-initialize for next tick
+            isInitialized = false
+            Result.failure(MockLocationError.ProviderUnavailable("all", "No test provider accepted mock coordinate"))
         }
     }
 
     /**
-     * Tears down test providers, disabling them and returning the device to real location hardware.
+     * Tears down test providers cleanly.
      */
     @Synchronized
     fun stop() {
-        if (!isInitialized) return
-
-        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, FUSED_PROVIDER_NAME)
+        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER, FUSED_PROVIDER_NAME)
         for (provider in providers) {
             try {
                 locationManager.setTestProviderEnabled(provider, false)
                 locationManager.removeTestProvider(provider)
-            } catch (e: Exception) {
-                Log.w(TAG, "Error cleaning up test provider $provider: ${e.message}")
-            }
+            } catch (ignored: Exception) {}
         }
+        registeredProviders.clear()
         isInitialized = false
     }
 
