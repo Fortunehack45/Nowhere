@@ -39,18 +39,21 @@ jobs:
       - name: Build Debug & Release APKs
         run: ./gradlew assembleDebug assembleRelease --stacktrace
 
+      - name: List Generated APK Files
+        run: ls -la app/build/outputs/apk/debug/ || true
+
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Nowhere-Debug-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload Release APK Artifact (Unsigned)
+      - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Nowhere-Release-Unsigned-APK
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 14
