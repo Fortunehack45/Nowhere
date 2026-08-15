@@ -1,31 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widgetIconRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="4dp">
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="2dp">
 
-    <!-- App Icon Centerpiece -->
-    <ImageView
-        android:id="@+id/ivWidgetAppIcon"
+    <!-- App Icon Centerpiece (100% Matching Launcher Icon) -->
+    <FrameLayout
+        android:id="@+id/flIconContainer"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:layout_gravity="center"
-        android:src="@mipmap/ic_launcher" />
+        android:background="@drawable/bg_app_icon_squircle">
 
-    <!-- Functional Glowing Active Indicator Badge -->
+        <!-- Nowhere Pin Foreground -->
+        <ImageView
+            android:id="@+id/ivWidgetAppIcon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="6dp"
+            android:src="@drawable/ic_launcher_foreground" />
+
+        <!-- Status Dot in Corner -->
+        <ImageView
+            android:id="@+id/ivIconStatusDot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
+            android:src="@drawable/bg_dot_emerald"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- App Name Label (Matching Android Home Screen Icon Title) -->
     <TextView
-        android:id="@+id/tvIconWidgetBadge"
+        android:id="@+id/tvWidgetAppName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="2dp"
-        android:background="@drawable/bg_status_pill"
-        android:paddingHorizontal="5dp"
-        android:paddingVertical="1dp"
-        android:text="OFF"
-        android:textColor="@color/text_muted"
-        android:textSize="8sp"
-        android:textStyle="bold" />
-</FrameLayout>
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:shadowColor="#CC000000"
+        android:shadowDx="1.0"
+        android:shadowDy="1.0"
+        android:shadowRadius="3.0"
+        android:text="Nowhere"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="normal" />
+
+</LinearLayout>

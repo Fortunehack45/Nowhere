@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -88,13 +89,17 @@ class NowhereIconWidgetProvider : AppWidgetProvider() {
         val sessionPrefs = SessionPreferences(context)
         val isActive = sessionPrefs.isSessionActive
 
+        // Dynamic Icon Appearance & Status Dot
         if (isActive) {
-            views.setTextViewText(R.id.tvIconWidgetBadge, "ON")
-            views.setTextColor(R.id.tvIconWidgetBadge, ContextCompat.getColor(context, R.color.badge_active_text))
+            views.setInt(R.id.flIconContainer, "setBackgroundResource", R.drawable.bg_app_icon_squircle_active)
+            views.setViewVisibility(R.id.ivIconStatusDot, View.VISIBLE)
         } else {
-            views.setTextViewText(R.id.tvIconWidgetBadge, "OFF")
-            views.setTextColor(R.id.tvIconWidgetBadge, ContextCompat.getColor(context, R.color.text_muted))
+            views.setInt(R.id.flIconContainer, "setBackgroundResource", R.drawable.bg_app_icon_squircle)
+            views.setViewVisibility(R.id.ivIconStatusDot, View.GONE)
         }
+
+        // Title under the icon
+        views.setTextViewText(R.id.tvWidgetAppName, "Nowhere")
 
         val clickIntent = Intent(context, NowhereIconWidgetProvider::class.java).apply {
             action = ACTION_ICON_WIDGET_CLICK
