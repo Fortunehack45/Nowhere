@@ -280,6 +280,9 @@ class MainActivity : AppCompatActivity() {
 
                 binding.rvSearchResults.visibility = View.GONE
                 binding.etAddressSearch.clearFocus()
+                val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(binding.etAddressSearch.windowToken, 0)
+                Toast.makeText(this@MainActivity, "Target: $title", Toast.LENGTH_SHORT).show()
             },
             onDeleteHistoryClicked = { item ->
                 viewModel.deleteSearchHistoryItem(item)

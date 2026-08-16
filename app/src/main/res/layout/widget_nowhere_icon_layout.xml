@@ -8,31 +8,27 @@
     android:orientation="vertical"
     android:padding="2dp">
 
-    <!-- App Icon Centerpiece (100% Matching Material You Launcher Shortcut / Adaptive Icon) -->
+    <!-- App Icon Centerpiece (100% Exact Matching App Icon) -->
     <FrameLayout
         android:id="@+id/flIconContainer"
         android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:background="@drawable/bg_app_icon_squircle">
+        android:layout_height="56dp">
 
-        <!-- Nowhere Dynamic Themed Pin Icon Silhouette -->
         <ImageView
             android:id="@+id/ivWidgetAppIcon"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="8dp"
-            android:src="@drawable/ic_launcher_monochrome"
-            android:tint="@color/widget_icon_fg"
-            tools:ignore="UseAppTint" />
+            android:scaleType="fitCenter"
+            android:src="@mipmap/ic_launcher" />
 
         <!-- Live Simulation Active Pulse Dot Indicator -->
         <ImageView
             android:id="@+id/ivIconStatusDot"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
             android:layout_gravity="top|end"
-            android:layout_marginTop="3dp"
-            android:layout_marginEnd="3dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="2dp"
             android:src="@drawable/bg_dot_emerald"
             android:visibility="gone" />
     </FrameLayout>
@@ -46,7 +42,7 @@
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:shadowColor="#80000000"
+        android:shadowColor="#CC000000"
         android:shadowDx="1.0"
         android:shadowDy="1.0"
         android:shadowRadius="2.0"

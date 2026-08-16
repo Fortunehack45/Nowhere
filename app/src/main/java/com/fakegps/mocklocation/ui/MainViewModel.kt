@@ -167,36 +167,120 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Search & History ---
 
+    private var searchJob: kotlinx.coroutines.Job? = null
+
     fun searchAddress(query: String) {
-        if (query.isBlank()) {
+        searchJob?.cancel()
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) {
+            _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
+            return
+        }
+
+        // Direct Coordinate match check: "37.7749, -122.4194" or "37.7749 -122.4194"
+        val coordMatch = parseCoordinates(trimmed)
+        if (coordMatch != null) {
+            val (lat, lon) = coordMatch
+            val result = AddressSearchResult(
+                title = String.format(Locale.US, "Coordinates: %.5f, %.5f", lat, lon),
+                snippet = "Direct Lat/Lon Navigation Target",
+                latitude = lat,
+                longitude = lon
+            )
+            _uiState.update { it.copy(searchResults = listOf(result), isSearching = false) }
+            return
+        }
+
+        if (trimmed.length < 2) {
             _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
             return
         }
 
         _uiState.update { it.copy(isSearching = true) }
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val geocoder = Geocoder(getApplication(), Locale.getDefault())
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    geocoder.getFromLocationName(query, 6) { addresses ->
-                        val mapped = addresses.mapNotNull { it.toSearchResult() }
-                        _uiState.update { it.copy(searchResults = mapped, isSearching = false) }
-                    }
-                } else {
-                    @Suppress("DEPRECATION")
-                    val addresses = geocoder.getFromLocationName(query, 6) ?: emptyList()
+        searchJob = viewModelScope.launch(Dispatchers.IO) {
+            kotlinx.coroutines.delay(250) // Debounce rapid keystrokes
+
+            val results = performGeocodingWithFallback(trimmed)
+            _uiState.update { it.copy(searchResults = results, isSearching = false) }
+        }
+    }
+
+    private suspend fun performGeocodingWithFallback(query: String): List<AddressSearchResult> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<AddressSearchResult>()
+
+        // 1. Try Android Native Geocoder
+        try {
+            val geocoder = Geocoder(getApplication(), Locale.getDefault())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val deferred = kotlinx.coroutines.CompletableDeferred<List<AddressSearchResult>>()
+                geocoder.getFromLocationName(query, 6) { addresses ->
                     val mapped = addresses.mapNotNull { it.toSearchResult() }
-                    _uiState.update { it.copy(searchResults = mapped, isSearching = false) }
+                    deferred.complete(mapped)
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        searchResults = emptyList(),
-                        isSearching = false
+                val res = kotlinx.coroutines.withTimeoutOrNull(2500) { deferred.await() }
+                if (!res.isNullOrEmpty()) {
+                    list.addAll(res)
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                val addresses = geocoder.getFromLocationName(query, 6) ?: emptyList()
+                val mapped = addresses.mapNotNull { it.toSearchResult() }
+                if (mapped.isNotEmpty()) {
+                    list.addAll(mapped)
+                }
+            }
+        } catch (ignored: Exception) {}
+
+        if (list.isNotEmpty()) return@withContext list
+
+        // 2. High-reliability OpenStreetMap Nominatim Search Fallback
+        try {
+            val encoded = java.net.URLEncoder.encode(query, "UTF-8")
+            val urlString = "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&q=$encoded"
+            val connection = (java.net.URL(urlString).openConnection() as java.net.HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 3000
+                readTimeout = 4000
+                setRequestProperty("User-Agent", "NowhereLocationSimulator/1.0 (Android Search)")
+            }
+
+            if (connection.responseCode == 200) {
+                val jsonStr = connection.inputStream.bufferedReader().use { it.readText() }
+                val jsonArray = JSONArray(jsonStr)
+                for (i in 0 until jsonArray.length()) {
+                    val obj = jsonArray.getJSONObject(i)
+                    val lat = obj.getDouble("lat")
+                    val lon = obj.getDouble("lon")
+                    val displayName = obj.getString("display_name")
+                    val title = displayName.split(",").firstOrNull()?.trim() ?: displayName
+                    val snippet = displayName.split(",").drop(1).joinToString(",").trim().ifBlank { displayName }
+
+                    list.add(
+                        AddressSearchResult(
+                            title = title,
+                            snippet = snippet,
+                            latitude = lat,
+                            longitude = lon
+                        )
                     )
                 }
             }
+        } catch (ignored: Exception) {}
+
+        return@withContext list
+    }
+
+    private fun parseCoordinates(input: String): Pair<Double, Double>? {
+        val clean = input.replace(",", " ").replace(";", " ").trim()
+        val parts = clean.split("\\s+".toRegex())
+        if (parts.size == 2) {
+            val lat = parts[0].toDoubleOrNull()
+            val lon = parts[1].toDoubleOrNull()
+            if (lat != null && lon != null && lat in -90.0..90.0 && lon in -180.0..180.0) {
+                return Pair(lat, lon)
+            }
         }
+        return null
     }
 
     fun recordSearchHistory(query: String, title: String, snippet: String, latitude: Double, longitude: Double) {

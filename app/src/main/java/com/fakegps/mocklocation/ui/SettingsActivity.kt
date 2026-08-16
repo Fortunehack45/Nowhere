@@ -247,16 +247,12 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        binding.rgMapSource.setOnCheckedChangeListener { _, checkedId ->
-            settingsPrefs.mapTileSource = when (checkedId) {
-                R.id.rbCartoDark -> "CARTO_DARK"
-                R.id.rbCartoPositron -> "CARTO_POSITRON"
-                R.id.rbCartoVoyager -> "CARTO_VOYAGER"
-                R.id.rbTopo -> "TOPO"
-                R.id.rbUsgsSat -> "USGS_SAT"
-                else -> "MAPNIK"
-            }
-        }
+        binding.rbCartoDark.setOnClickListener { selectTileSource("CARTO_DARK") }
+        binding.rbCartoPositron.setOnClickListener { selectTileSource("CARTO_POSITRON") }
+        binding.rbCartoVoyager.setOnClickListener { selectTileSource("CARTO_VOYAGER") }
+        binding.rbMapnik.setOnClickListener { selectTileSource("MAPNIK") }
+        binding.rbTopo.setOnClickListener { selectTileSource("TOPO") }
+        binding.rbUsgsSat.setOnClickListener { selectTileSource("USGS_SAT") }
 
         binding.rgTheme.setOnCheckedChangeListener { _, checkedId ->
             val theme = when (checkedId) {
@@ -408,6 +404,26 @@ class SettingsActivity : AppCompatActivity() {
         loadInitialValues()
         refreshWidgetSlotsUI()
         com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
+    }
+
+    private fun selectTileSource(source: String) {
+        settingsPrefs.mapTileSource = source
+        binding.rbCartoDark.isChecked = (source == "CARTO_DARK")
+        binding.rbCartoPositron.isChecked = (source == "CARTO_POSITRON")
+        binding.rbCartoVoyager.isChecked = (source == "CARTO_VOYAGER")
+        binding.rbMapnik.isChecked = (source == "MAPNIK")
+        binding.rbTopo.isChecked = (source == "TOPO")
+        binding.rbUsgsSat.isChecked = (source == "USGS_SAT")
+
+        val label = when (source) {
+            "CARTO_DARK" -> "Dark Mode (HD)"
+            "CARTO_POSITRON" -> "Light Mode (HD)"
+            "CARTO_VOYAGER" -> "Voyager (HD)"
+            "TOPO" -> "Terrain Topographic"
+            "USGS_SAT" -> "USGS Satellite"
+            else -> "Standard OpenStreetMap"
+        }
+        Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()
     }
 
     private fun pinNowhereShortcut() {
