@@ -48,6 +48,8 @@ class MockLocationService : Service() {
         const val EXTRA_SPEED_KMH = "extra_speed_kmh"
         const val EXTRA_IS_LOOPING = "extra_is_looping"
         const val EXTRA_TRANSPORT_MODE = "extra_transport_mode"
+        private const val WAKE_LOCK_TIMEOUT_MS = 24 * 60 * 60 * 1000L // 24 hours max safeguard
+        private const val WAKE_LOCK_RENEWAL_INTERVAL_MS = 20 * 60 * 60 * 1000L // Renew every 20 hours
     }
 
     inner class LocalBinder : Binder() {
@@ -65,6 +67,7 @@ class MockLocationService : Service() {
     private val serviceScope = CoroutineScope(serviceJob + Dispatchers.Default)
 
     private var wakeLock: PowerManager.WakeLock? = null
+    private var wakeLockRenewalJob: Job? = null
 
     private val _serviceState = MutableStateFlow<ServiceState>(ServiceState.Idle)
     val serviceState: StateFlow<ServiceState> = _serviceState.asStateFlow()
@@ -79,6 +82,8 @@ class MockLocationService : Service() {
     private var joystickSpeedKmh: Float = 5.0f
     private var joystickAngleDeg: Float = 0.0f
     private var joystickMagnitude: Float = 0.0f
+
+    internal fun isWakeLockHeld(): Boolean = wakeLock?.isHeld == true
 
     override fun onCreate() {
         super.onCreate()
@@ -179,18 +184,48 @@ class MockLocationService : Service() {
                 val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
                 wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Nowhere::MockLocationLock").apply {
                     setReferenceCounted(false)
-                    acquire(24 * 60 * 60 * 1000L) // 24 hours max safeguard
+                    acquire(WAKE_LOCK_TIMEOUT_MS)
                 }
+                Log.d(TAG, "WakeLock acquired with 24h safeguard.")
             }
+            startWakeLockRenewalTimer()
         } catch (e: Exception) {
             Log.w(TAG, "Could not acquire WakeLock: ${e.message}")
         }
     }
 
+    private fun startWakeLockRenewalTimer() {
+        if (wakeLockRenewalJob?.isActive == true) return
+        wakeLockRenewalJob = serviceScope.launch {
+            try {
+                while (isActive) {
+                    delay(WAKE_LOCK_RENEWAL_INTERVAL_MS)
+                    if (sessionPrefs.isSessionActive && wakeLock?.isHeld == true) {
+                        Log.i(TAG, "Periodic wake lock renewal: refreshing 24h hold for active session.")
+                        try {
+                            wakeLock?.release()
+                            wakeLock?.acquire(WAKE_LOCK_TIMEOUT_MS)
+                            Log.i(TAG, "WakeLock successfully renewed.")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to renew WakeLock: ${e.message}", e)
+                        }
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                Log.w(TAG, "Wake lock renewal timer encountered error: ${t.message}")
+            }
+        }
+    }
+
     private fun releaseWakeLock() {
         try {
+            wakeLockRenewalJob?.cancel()
+            wakeLockRenewalJob = null
             if (wakeLock?.isHeld == true) {
                 wakeLock?.release()
+                Log.d(TAG, "WakeLock released.")
             }
             wakeLock = null
         } catch (ignored: Exception) {}
@@ -241,67 +276,73 @@ class MockLocationService : Service() {
 
     private fun updateLocationNotification(lat: Double, lon: Double, modeDescription: String = "Active") {
         serviceScope.launch {
-            val placeName = com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
-                this@MockLocationService,
-                lat,
-                lon
-            )
-            val coordsText = String.format("%.5f°, %.5f° • %s", lat, lon, modeDescription)
-
-            val stopIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
-                action = ACTION_STOP
-            }
-            val stopPendingIntent = PendingIntent.getService(
-                this@MockLocationService,
-                1,
-                stopIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val openAppIntent = Intent(this@MockLocationService, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-            val openAppPendingIntent = PendingIntent.getActivity(
-                this@MockLocationService,
-                0,
-                openAppIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
-                .setContentTitle(placeName)
-                .setContentText(coordsText)
-                .setSmallIcon(R.drawable.ic_launcher_monochrome)
-                .setColor(ContextCompat.getColor(this@MockLocationService, R.color.primary))
-                .setContentIntent(openAppPendingIntent)
-                .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .setBigContentTitle(placeName)
-                        .bigText("$coordsText\nGPS Mocking active in background across all apps.")
-                )
-
-            if (activeMode is SimulationMode.Route) {
-                val isPaused = (_serviceState.value as? ServiceState.Running)?.isPaused == true
-                val pauseResumeIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
-                    action = if (isPaused) ACTION_RESUME_ROUTE else ACTION_PAUSE_ROUTE
-                }
-                val pauseResumePendingIntent = PendingIntent.getService(
+            try {
+                val placeName = com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
                     this@MockLocationService,
-                    2,
-                    pauseResumeIntent,
+                    lat,
+                    lon
+                )
+                val coordsText = String.format("%.5f°, %.5f° • %s", lat, lon, modeDescription)
+
+                val stopIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
+                    action = ACTION_STOP
+                }
+                val stopPendingIntent = PendingIntent.getService(
+                    this@MockLocationService,
+                    1,
+                    stopIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-                val actionTitle = if (isPaused) "Resume" else "Pause"
-                val actionIcon = if (isPaused) R.drawable.ic_play else R.drawable.ic_pause
-                builder.addAction(actionIcon, actionTitle, pauseResumePendingIntent)
+
+                val openAppIntent = Intent(this@MockLocationService, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+                val openAppPendingIntent = PendingIntent.getActivity(
+                    this@MockLocationService,
+                    0,
+                    openAppIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
+                    .setContentTitle(placeName)
+                    .setContentText(coordsText)
+                    .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                    .setColor(ContextCompat.getColor(this@MockLocationService, R.color.primary))
+                    .setContentIntent(openAppPendingIntent)
+                    .setOngoing(true)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
+                    .setStyle(
+                        NotificationCompat.BigTextStyle()
+                            .setBigContentTitle(placeName)
+                            .bigText("$coordsText\nGPS Mocking active in background across all apps.")
+                    )
+
+                if (activeMode is SimulationMode.Route) {
+                    val isPaused = (_serviceState.value as? ServiceState.Running)?.isPaused == true
+                    val pauseResumeIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
+                        action = if (isPaused) ACTION_RESUME_ROUTE else ACTION_PAUSE_ROUTE
+                    }
+                    val pauseResumePendingIntent = PendingIntent.getService(
+                        this@MockLocationService,
+                        2,
+                        pauseResumeIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    val actionTitle = if (isPaused) "Resume" else "Pause"
+                    val actionIcon = if (isPaused) R.drawable.ic_play else R.drawable.ic_pause
+                    builder.addAction(actionIcon, actionTitle, pauseResumePendingIntent)
+                }
+
+                builder.addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
+
+                val manager = getSystemService(NotificationManager::class.java)
+                manager?.notify(NOTIFICATION_ID, builder.build())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Non-fatal error updating notification: ${e.message}")
             }
-
-            builder.addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
-
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.notify(NOTIFICATION_ID, builder.build())
         }
     }
 
@@ -316,7 +357,7 @@ class MockLocationService : Service() {
                 setShowBadge(false)
             }
             val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+            manager?.createNotificationChannel(channel)
         }
     }
 
@@ -335,35 +376,42 @@ class MockLocationService : Service() {
         updateLocationNotification(latitude, longitude, "Teleported / Fixed")
 
         simulationJob = serviceScope.launch {
-            while (isActive) {
-                val result = engine.setLocation(
-                    latitude = latitude,
-                    longitude = longitude,
-                    altitude = altitude,
-                    speed = 0.0f,
-                    bearing = 0.0f,
-                    applyStationaryJitter = settingsPrefs.randomizeJitter
-                )
+            try {
+                while (isActive) {
+                    val result = engine.setLocation(
+                        latitude = latitude,
+                        longitude = longitude,
+                        altitude = altitude,
+                        speed = 0.0f,
+                        bearing = 0.0f,
+                        applyStationaryJitter = settingsPrefs.randomizeJitter
+                    )
 
-                if (result.isFailure) {
-                    val error = result.exceptionOrNull()
-                    Log.w(TAG, "Transient injection error: ${error?.message}, retrying...")
-                    delay(500L)
-                    continue
-                } else {
-                    val loc = result.getOrNull()
-                    if (loc != null) {
-                        _serviceState.value = ServiceState.Running(
-                            mode = activeMode,
-                            latitude = loc.latitude,
-                            longitude = loc.longitude,
-                            altitude = loc.altitude,
-                            speedMps = 0.0f,
-                            bearingDegrees = 0.0f
-                        )
+                    if (result.isFailure) {
+                        val error = result.exceptionOrNull()
+                        Log.w(TAG, "Transient injection error: ${error?.message}, retrying...")
+                        delay(500L)
+                        continue
+                    } else {
+                        val loc = result.getOrNull()
+                        if (loc != null) {
+                            _serviceState.value = ServiceState.Running(
+                                mode = activeMode,
+                                latitude = loc.latitude,
+                                longitude = loc.longitude,
+                                altitude = loc.altitude,
+                                speedMps = 0.0f,
+                                bearingDegrees = 0.0f
+                            )
+                        }
                     }
+                    delay(300L) // Continuous background provider lock
                 }
-                delay(300L) // Continuous background provider lock
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                Log.e(TAG, "Uncaught fatal error in fixed simulation loop: ${t.message}", t)
+                stopSpoofing()
             }
         }
     }
@@ -398,41 +446,48 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         simulationJob = serviceScope.launch {
-            val stepSeconds = 1.0
-            while (isActive) {
-                val simLoc = simulator.tick(stepSeconds)
-                if (simLoc != null) {
-                    val result = engine.setLocation(
-                        latitude = simLoc.latitude,
-                        longitude = simLoc.longitude,
-                        altitude = simLoc.altitude,
-                        speed = simLoc.speedMps,
-                        bearing = simLoc.bearingDegrees,
-                        applyStationaryJitter = false
-                    )
-
-                    if (result.isFailure) {
-                        val error = result.exceptionOrNull()
-                        Log.w(TAG, "Transient route injection error: ${error?.message}, retrying...")
-                    } else {
-                        _serviceState.value = ServiceState.Running(
-                            mode = activeMode,
+            try {
+                val stepSeconds = 1.0
+                while (isActive) {
+                    val simLoc = simulator.tick(stepSeconds)
+                    if (simLoc != null) {
+                        val result = engine.setLocation(
                             latitude = simLoc.latitude,
                             longitude = simLoc.longitude,
                             altitude = simLoc.altitude,
-                            speedMps = simLoc.speedMps,
-                            bearingDegrees = simLoc.bearingDegrees,
-                            isPaused = simulator.isPaused()
+                            speed = simLoc.speedMps,
+                            bearing = simLoc.bearingDegrees,
+                            applyStationaryJitter = false
                         )
-                    }
 
-                    if (simLoc.isCompleted) {
-                        Log.d(TAG, "Route simulation completed.")
-                        stopSpoofing()
-                        break
+                        if (result.isFailure) {
+                            val error = result.exceptionOrNull()
+                            Log.w(TAG, "Transient route injection error: ${error?.message}, retrying...")
+                        } else {
+                            _serviceState.value = ServiceState.Running(
+                                mode = activeMode,
+                                latitude = simLoc.latitude,
+                                longitude = simLoc.longitude,
+                                altitude = simLoc.altitude,
+                                speedMps = simLoc.speedMps,
+                                bearingDegrees = simLoc.bearingDegrees,
+                                isPaused = simulator.isPaused()
+                            )
+                        }
+
+                        if (simLoc.isCompleted) {
+                            Log.d(TAG, "Route simulation completed.")
+                            stopSpoofing()
+                            break
+                        }
                     }
+                    delay(realismLayer.getAdaptiveIntervalMs(isMoving = true))
                 }
-                delay(realismLayer.getAdaptiveIntervalMs(isMoving = true))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                Log.e(TAG, "Uncaught fatal error in route simulation loop: ${t.message}", t)
+                stopSpoofing()
             }
         }
     }
@@ -479,52 +534,59 @@ class MockLocationService : Service() {
         updateLocationNotification(startLat, startLon, "Joystick Active")
 
         simulationJob = serviceScope.launch {
-            val deltaSeconds = 0.1
-            while (isActive) {
-                if (joystickMagnitude > 0.01f) {
-                    val speedMps = (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude
-                    val distanceMeters = speedMps * deltaSeconds
+            try {
+                val deltaSeconds = 0.1
+                while (isActive) {
+                    if (joystickMagnitude > 0.01f) {
+                        val speedMps = (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude
+                        val distanceMeters = speedMps * deltaSeconds
 
-                    val (newLat, newLon) = GeoUtils.computeDestinationPoint(
-                        joystickLat,
-                        joystickLon,
-                        joystickAngleDeg,
-                        distanceMeters
-                    )
-                    joystickLat = newLat
-                    joystickLon = newLon
+                        val (newLat, newLon) = GeoUtils.computeDestinationPoint(
+                            joystickLat,
+                            joystickLon,
+                            joystickAngleDeg,
+                            distanceMeters
+                        )
+                        joystickLat = newLat
+                        joystickLon = newLon
 
-                    val result = engine.setLocation(
-                        latitude = newLat,
-                        longitude = newLon,
-                        altitude = 15.0,
-                        speed = speedMps,
-                        bearing = joystickAngleDeg,
-                        applyStationaryJitter = false
-                    )
-
-                    if (result.isSuccess) {
-                        _serviceState.value = ServiceState.Running(
-                            mode = activeMode,
+                        val result = engine.setLocation(
                             latitude = newLat,
                             longitude = newLon,
                             altitude = 15.0,
-                            speedMps = speedMps,
-                            bearingDegrees = joystickAngleDeg
+                            speed = speedMps,
+                            bearing = joystickAngleDeg,
+                            applyStationaryJitter = false
+                        )
+
+                        if (result.isSuccess) {
+                            _serviceState.value = ServiceState.Running(
+                                mode = activeMode,
+                                latitude = newLat,
+                                longitude = newLon,
+                                altitude = 15.0,
+                                speedMps = speedMps,
+                                bearingDegrees = joystickAngleDeg
+                            )
+                        }
+                    } else {
+                        engine.setLocation(
+                            latitude = joystickLat,
+                            longitude = joystickLon,
+                            altitude = 15.0,
+                            speed = 0.0f,
+                            bearing = joystickAngleDeg,
+                            applyStationaryJitter = false
                         )
                     }
-                } else {
-                    engine.setLocation(
-                        latitude = joystickLat,
-                        longitude = joystickLon,
-                        altitude = 15.0,
-                        speed = 0.0f,
-                        bearing = joystickAngleDeg,
-                        applyStationaryJitter = false
-                    )
-                }
 
-                delay(100L)
+                    delay(100L)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                Log.e(TAG, "Uncaught fatal error in joystick simulation loop: ${t.message}", t)
+                stopSpoofing()
             }
         }
     }
@@ -538,6 +600,7 @@ class MockLocationService : Service() {
     }
 
     fun stopSpoofing() {
+        Log.i(TAG, "stopSpoofing called. Terminating simulation and releasing resources.")
         stopCurrentLoop()
         releaseWakeLock()
         engine.stop()

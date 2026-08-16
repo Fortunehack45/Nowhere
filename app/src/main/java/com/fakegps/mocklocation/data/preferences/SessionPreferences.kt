@@ -21,6 +21,7 @@ class SessionPreferences(context: Context) {
         private const val KEY_IS_LOOPING = "key_is_looping"
         private const val KEY_WAYPOINTS_JSON = "key_waypoints_json"
         private const val KEY_BATTERY_PROMPTED = "key_battery_prompted"
+        private const val KEY_OEM_WIDGET_NUDGE_PROMPTED = "key_oem_widget_nudge_prompted"
     }
 
     var isSessionActive: Boolean
@@ -54,6 +55,10 @@ class SessionPreferences(context: Context) {
     var hasPromptedBatteryOptimization: Boolean
         get() = prefs.getBoolean(KEY_BATTERY_PROMPTED, false)
         set(value) = prefs.edit().putBoolean(KEY_BATTERY_PROMPTED, value).apply()
+
+    var hasPromptedOemWidgetNudge: Boolean
+        get() = prefs.getBoolean(KEY_OEM_WIDGET_NUDGE_PROMPTED, false)
+        set(value) = prefs.edit().putBoolean(KEY_OEM_WIDGET_NUDGE_PROMPTED, value).apply()
 
     var isPersistentBootInjectionEnabled: Boolean
         get() = prefs.getBoolean("key_persistent_boot_injection", true)

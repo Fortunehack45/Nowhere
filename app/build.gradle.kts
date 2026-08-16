@@ -63,7 +63,14 @@ android {
     }
 
     testOptions {
-        unitTests.isReturnDefaultValues = true
+        unitTests {
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperty("robolectric.offline", "true")
+                it.systemProperty("robolectric.dependency.dir", file("robolectric-deps").absolutePath)
+            }
+        }
     }
 }
 
@@ -103,4 +110,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     testImplementation("org.json:json:20231013")
+    testImplementation("org.robolectric:robolectric:4.12.1")
+    testImplementation("org.robolectric:android-all:14-robolectric-10818077")
+    testImplementation("androidx.test:core:1.5.0")
 }

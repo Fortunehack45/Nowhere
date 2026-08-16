@@ -169,14 +169,31 @@ class RouteSimulator(
 
         // Cornering speed reduction for land vehicles and ships (aircraft maintain bank speed)
         if (transportMode != TransportMode.AIRCRAFT) {
+            // 1. Check if we just came out of a sharp turn (exit zone speed hold)
+            if (currentSegmentIndex in segments.indices) {
+                val currentSegment = segments[currentSegmentIndex]
+                if (currentSegment.turnAngleDeg > 35f) {
+                    val distFromTurn = currentDistanceAlongRoute - currentSegment.startCumulativeDistance
+                    val severity = (currentSegment.turnAngleDeg / 180.0).coerceIn(0.0, 1.0)
+                    val cornerSpeed = baseTargetSpeed * (1.0 - 0.55 * severity).toFloat()
+                    val exitDistance = max(15.0, (baseTargetSpeed * 1.0).toDouble())
+                    if (distFromTurn in 0.0..exitDistance) {
+                        return max(1.5f, cornerSpeed)
+                    }
+                }
+            }
+
+            // 2. Check if approaching an upcoming sharp turn (braking zone with speed-derived distance)
             val nextSegmentIndex = currentSegmentIndex + 1
             if (nextSegmentIndex < segments.size) {
                 val nextSegment = segments[nextSegmentIndex]
                 if (nextSegment.turnAngleDeg > 35f) {
                     val distToTurn = nextSegment.startCumulativeDistance - currentDistanceAlongRoute
-                    if (distToTurn in 0.0..25.0) {
-                        val severity = (nextSegment.turnAngleDeg / 180.0).coerceIn(0.0, 1.0)
-                        val cornerSpeed = baseTargetSpeed * (1.0 - 0.55 * severity).toFloat()
+                    val severity = (nextSegment.turnAngleDeg / 180.0).coerceIn(0.0, 1.0)
+                    val cornerSpeed = baseTargetSpeed * (1.0 - 0.55 * severity).toFloat()
+                    val brakingDistance = (currentSpeedMps.pow(2) - cornerSpeed.pow(2)) / (2 * maxDeceleration)
+                    val effectiveBrakingDistance = max(0.0, brakingDistance) + 5.0
+                    if (distToTurn in 0.0..effectiveBrakingDistance) {
                         return max(1.5f, cornerSpeed)
                     }
                 }
@@ -264,13 +281,62 @@ class RouteSimulator(
             transportMode.defaultAltitudeMeters
         }
 
+        val calculatedBearing = calculateSmoothedBearing(segIndex, clampedDist)
+
         return SimulatedLocation(
             latitude = lat,
             longitude = lon,
             altitude = baseAltitude,
             speedMps = currentSpeedMps,
-            bearingDegrees = seg.bearing,
+            bearingDegrees = calculatedBearing,
             isCompleted = isCompleted
         )
+    }
+
+    private fun calculateSmoothedBearing(segIndex: Int, distance: Double): Float {
+        if (segments.isEmpty()) return 0f
+        val seg = segments[segIndex]
+        val distFromStart = distance - seg.startCumulativeDistance
+        val distToEnd = (seg.startCumulativeDistance + seg.distanceMeters) - distance
+
+        val maxHalfWindow = 7.5
+
+        // Check incoming vertex transition (start of segment)
+        val prevSeg = when {
+            segIndex > 0 -> segments[segIndex - 1]
+            isLooping && segments.size >= 2 -> segments.last()
+            else -> null
+        }
+        if (prevSeg != null) {
+            val halfWindow = min(maxHalfWindow, min(seg.distanceMeters, prevSeg.distanceMeters) / 2.0)
+            if (distFromStart in 0.0..halfWindow && halfWindow > 0.001) {
+                val blendFraction = ((distFromStart + halfWindow) / (2.0 * halfWindow)).toFloat().coerceIn(0.5f, 1.0f)
+                return interpolateBearing(prevSeg.bearing, seg.bearing, blendFraction)
+            }
+        }
+
+        // Check outgoing vertex transition (end of segment)
+        val nextSeg = when {
+            segIndex < segments.lastIndex -> segments[segIndex + 1]
+            isLooping && segments.size >= 2 -> segments.first()
+            else -> null
+        }
+        if (nextSeg != null) {
+            val halfWindow = min(maxHalfWindow, min(seg.distanceMeters, nextSeg.distanceMeters) / 2.0)
+            if (distToEnd in 0.0..halfWindow && halfWindow > 0.001) {
+                val blendFraction = ((halfWindow - distToEnd) / (2.0 * halfWindow)).toFloat().coerceIn(0.0f, 0.5f)
+                return interpolateBearing(seg.bearing, nextSeg.bearing, blendFraction)
+            }
+        }
+
+        return seg.bearing
+    }
+
+    private fun interpolateBearing(b1: Float, b2: Float, fraction: Float): Float {
+        var diff = (b2 - b1) % 360f
+        if (diff > 180f) diff -= 360f
+        if (diff < -180f) diff += 360f
+        val res = (b1 + diff * fraction) % 360f
+        return if (res < 0f) res + 360f else res
     }
 }

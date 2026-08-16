@@ -139,6 +139,10 @@ object PermissionHelper {
     }
 
     private fun checkSuBinary(): Boolean {
+        val osName = System.getProperty("os.name")?.lowercase() ?: ""
+        if (osName.contains("windows") || osName.contains("mac")) {
+            return false
+        }
         return try {
             val process = Runtime.getRuntime().exec(arrayOf("which", "su"))
             val reader = process.inputStream.bufferedReader()
