@@ -154,10 +154,11 @@
             android:id="@+id/rvSearchResults"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/bg_card_glass"
-            android:elevation="12dp"
-            android:maxHeight="220dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_search_dropdown"
+            android:elevation="16dp"
+            android:maxHeight="260dp"
+            android:padding="4dp"
             android:visibility="gone" />
 
         <!-- Mock App Setup Banner -->

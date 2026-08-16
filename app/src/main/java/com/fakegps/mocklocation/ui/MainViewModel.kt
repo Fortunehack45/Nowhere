@@ -205,6 +205,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun clearSearchResults() {
+        searchJob?.cancel()
+        _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
+    }
+
     private suspend fun performGeocodingWithFallback(query: String): List<AddressSearchResult> = withContext(Dispatchers.IO) {
         val list = mutableListOf<AddressSearchResult>()
 

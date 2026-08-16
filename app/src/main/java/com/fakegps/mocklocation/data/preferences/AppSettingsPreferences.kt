@@ -191,41 +191,7 @@ class AppSettingsPreferences(context: Context) {
 
     fun getOsmTileSource(): ITileSource {
         return when (mapTileSource) {
-            "CARTO_DARK" -> TileSourceFactory.getTileSource("CartoDBDark") ?: org.osmdroid.tileprovider.tilesource.XYTileSource(
-                "CartoDBDark",
-                1, 20, 256, ".png",
-                arrayOf(
-                    "https://a.basemaps.cartocdn.com/rastertiles/dark_all/",
-                    "https://b.basemaps.cartocdn.com/rastertiles/dark_all/",
-                    "https://c.basemaps.cartocdn.com/rastertiles/dark_all/",
-                    "https://d.basemaps.cartocdn.com/rastertiles/dark_all/"
-                ),
-                "© CARTO, © OpenStreetMap contributors"
-            )
-            "CARTO_POSITRON" -> TileSourceFactory.getTileSource("CartoDBPositron") ?: org.osmdroid.tileprovider.tilesource.XYTileSource(
-                "CartoDBPositron",
-                1, 20, 256, ".png",
-                arrayOf(
-                    "https://a.basemaps.cartocdn.com/rastertiles/light_all/",
-                    "https://b.basemaps.cartocdn.com/rastertiles/light_all/",
-                    "https://c.basemaps.cartocdn.com/rastertiles/light_all/",
-                    "https://d.basemaps.cartocdn.com/rastertiles/light_all/"
-                ),
-                "© CARTO, © OpenStreetMap contributors"
-            )
-            "CARTO_VOYAGER" -> TileSourceFactory.getTileSource("CartoDBVoyager") ?: org.osmdroid.tileprovider.tilesource.XYTileSource(
-                "CartoDBVoyager",
-                1, 20, 256, ".png",
-                arrayOf(
-                    "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://c.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://d.basemaps.cartocdn.com/rastertiles/voyager/"
-                ),
-                "© CARTO, © OpenStreetMap contributors"
-            )
             "TOPO" -> TileSourceFactory.OpenTopo
-            "WIKIMEDIA" -> TileSourceFactory.WIKIMEDIA
             "USGS_SAT" -> TileSourceFactory.USGS_SAT
             else -> TileSourceFactory.MAPNIK
         }

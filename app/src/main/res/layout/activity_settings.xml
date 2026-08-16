@@ -956,102 +956,50 @@
                     <RadioGroup
                         android:id="@+id/rgMapSource"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="38dp"
                         android:layout_marginTop="10dp"
                         android:background="@drawable/bg_segmented_tab"
-                        android:orientation="vertical"
-                        android:padding="3dp">
+                        android:orientation="horizontal"
+                        android:padding="2dp">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="36dp"
-                            android:orientation="horizontal">
+                        <RadioButton
+                            android:id="@+id/rbMapnik"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:text="Standard"
+                            android:textColor="@color/color_segmented_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
-                            <RadioButton
-                                android:id="@+id/rbCartoDark"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_segmented_pill_item"
-                                android:button="@null"
-                                android:gravity="center"
-                                android:text="Dark (HD)"
-                                android:textColor="@color/color_segmented_text"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
+                        <RadioButton
+                            android:id="@+id/rbTopo"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:text="Terrain"
+                            android:textColor="@color/color_segmented_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
-                            <RadioButton
-                                android:id="@+id/rbCartoPositron"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_segmented_pill_item"
-                                android:button="@null"
-                                android:gravity="center"
-                                android:text="Light (HD)"
-                                android:textColor="@color/color_segmented_text"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-
-                            <RadioButton
-                                android:id="@+id/rbMapnik"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_segmented_pill_item"
-                                android:button="@null"
-                                android:gravity="center"
-                                android:text="Standard"
-                                android:textColor="@color/color_segmented_text"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="36dp"
-                            android:layout_marginTop="3dp"
-                            android:orientation="horizontal">
-
-                            <RadioButton
-                                android:id="@+id/rbCartoVoyager"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_segmented_pill_item"
-                                android:button="@null"
-                                android:gravity="center"
-                                android:text="Voyager (HD)"
-                                android:textColor="@color/color_segmented_text"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-
-                            <RadioButton
-                                android:id="@+id/rbTopo"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_segmented_pill_item"
-                                android:button="@null"
-                                android:gravity="center"
-                                android:text="Terrain"
-                                android:textColor="@color/color_segmented_text"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-
-                            <RadioButton
-                                android:id="@+id/rbUsgsSat"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_segmented_pill_item"
-                                android:button="@null"
-                                android:gravity="center"
-                                android:text="Satellite"
-                                android:textColor="@color/color_segmented_text"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
+                        <RadioButton
+                            android:id="@+id/rbUsgsSat"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_segmented_pill_item"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:text="Satellite"
+                            android:textColor="@color/color_segmented_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </RadioGroup>
 
                     <View

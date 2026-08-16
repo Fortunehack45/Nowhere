@@ -242,6 +242,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onMapTapped(latitude: Double, longitude: Double) {
+        // If search dropdown is visible, dismiss it cleanly on map tap
+        if (binding.rvSearchResults.visibility == View.VISIBLE || binding.etAddressSearch.hasFocus()) {
+            binding.rvSearchResults.visibility = View.GONE
+            binding.etAddressSearch.clearFocus()
+            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            imm?.hideSoftInputFromWindow(binding.etAddressSearch.windowToken, 0)
+        }
+
         when (viewModel.uiState.value.selectedTab) {
             SelectedModeTab.FIXED -> {
                 viewModel.setFixedCoordinates(latitude, longitude)
@@ -279,6 +287,8 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 binding.rvSearchResults.visibility = View.GONE
+                binding.etAddressSearch.setText(title)
+                binding.etAddressSearch.setSelection(title.length)
                 binding.etAddressSearch.clearFocus()
                 val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
                 imm?.hideSoftInputFromWindow(binding.etAddressSearch.windowToken, 0)
@@ -302,6 +312,7 @@ class MainActivity : AppCompatActivity() {
             if (query.isNotEmpty()) {
                 viewModel.searchAddress(query)
             } else {
+                viewModel.clearSearchResults()
                 showRecentHistory()
             }
         }
@@ -315,12 +326,15 @@ class MainActivity : AppCompatActivity() {
         binding.etAddressSearch.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 viewModel.searchAddress(binding.etAddressSearch.text.toString().trim())
+                val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(binding.etAddressSearch.windowToken, 0)
                 true
             } else false
         }
 
         binding.btnClearSearch.setOnClickListener {
             binding.etAddressSearch.setText("")
+            viewModel.clearSearchResults()
             showRecentHistory()
         }
 

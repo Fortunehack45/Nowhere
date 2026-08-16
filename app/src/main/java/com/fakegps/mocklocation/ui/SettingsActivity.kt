@@ -113,9 +113,6 @@ class SettingsActivity : AppCompatActivity() {
 
         // Map Tiles & Visuals
         when (settingsPrefs.mapTileSource) {
-            "CARTO_DARK" -> binding.rbCartoDark.isChecked = true
-            "CARTO_POSITRON" -> binding.rbCartoPositron.isChecked = true
-            "CARTO_VOYAGER" -> binding.rbCartoVoyager.isChecked = true
             "TOPO" -> binding.rbTopo.isChecked = true
             "USGS_SAT" -> binding.rbUsgsSat.isChecked = true
             else -> binding.rbMapnik.isChecked = true
@@ -247,12 +244,20 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        binding.rbCartoDark.setOnClickListener { selectTileSource("CARTO_DARK") }
-        binding.rbCartoPositron.setOnClickListener { selectTileSource("CARTO_POSITRON") }
-        binding.rbCartoVoyager.setOnClickListener { selectTileSource("CARTO_VOYAGER") }
-        binding.rbMapnik.setOnClickListener { selectTileSource("MAPNIK") }
-        binding.rbTopo.setOnClickListener { selectTileSource("TOPO") }
-        binding.rbUsgsSat.setOnClickListener { selectTileSource("USGS_SAT") }
+        binding.rgMapSource.setOnCheckedChangeListener { _, checkedId ->
+            val source = when (checkedId) {
+                R.id.rbTopo -> "TOPO"
+                R.id.rbUsgsSat -> "USGS_SAT"
+                else -> "MAPNIK"
+            }
+            settingsPrefs.mapTileSource = source
+            val label = when (source) {
+                "TOPO" -> "Terrain Topographic"
+                "USGS_SAT" -> "USGS Satellite"
+                else -> "Standard OpenStreetMap"
+            }
+            Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()
+        }
 
         binding.rgTheme.setOnCheckedChangeListener { _, checkedId ->
             val theme = when (checkedId) {
@@ -404,26 +409,6 @@ class SettingsActivity : AppCompatActivity() {
         loadInitialValues()
         refreshWidgetSlotsUI()
         com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
-    }
-
-    private fun selectTileSource(source: String) {
-        settingsPrefs.mapTileSource = source
-        binding.rbCartoDark.isChecked = (source == "CARTO_DARK")
-        binding.rbCartoPositron.isChecked = (source == "CARTO_POSITRON")
-        binding.rbCartoVoyager.isChecked = (source == "CARTO_VOYAGER")
-        binding.rbMapnik.isChecked = (source == "MAPNIK")
-        binding.rbTopo.isChecked = (source == "TOPO")
-        binding.rbUsgsSat.isChecked = (source == "USGS_SAT")
-
-        val label = when (source) {
-            "CARTO_DARK" -> "Dark Mode (HD)"
-            "CARTO_POSITRON" -> "Light Mode (HD)"
-            "CARTO_VOYAGER" -> "Voyager (HD)"
-            "TOPO" -> "Terrain Topographic"
-            "USGS_SAT" -> "USGS Satellite"
-            else -> "Standard OpenStreetMap"
-        }
-        Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()
     }
 
     private fun pinNowhereShortcut() {
