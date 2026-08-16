@@ -26,4 +26,9 @@
     <string name="warning_mock_provider_required">Mock Provider Disabled: Set Nowhere as mock location app in Developer Options to spoof system-wide GPS.</string>
     <string name="warning_revoked_at_runtime">Mock location provider was revoked by system settings. Re-enable Nowhere in Developer Options.</string>
     <string name="warning_battery_optimization">OEM battery saver may kill background simulation when device sleeps.</string>
+    <string name="widget_icon_description">Dynamic 1x1 App Icon &amp; Quick Teleport Shortcut</string>
+    <string name="widget_quick_actions_description">Quick teleport and joystick overlay launcher</string>
+    <string name="widget_route_description">Live route simulator and controls</string>
+    <string name="widget_search_description">Instant address search and teleporter</string>
+    <string name="widget_favorites_description">Instant bookmarks and saved coordinates</string>
 </resources>

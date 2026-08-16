@@ -41,8 +41,11 @@ import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
 import com.fakegps.mocklocation.ui.favorites.FavoritesBottomSheet
 import com.fakegps.mocklocation.ui.routes.SavedRoutesBottomSheet
 import com.fakegps.mocklocation.util.PermissionHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.MapEventsOverlay
@@ -205,7 +208,7 @@ class MainActivity : AppCompatActivity() {
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
             setTileSource(settingsPrefs.getOsmTileSource())
             setMultiTouchControls(true)
-            setTilesScaledToDpi(false) // Ultra-crisp high-DPI retina map rendering (eliminates blurriness)
+            setTilesScaledToDpi(true) // Crisp retina high-DPI map rendering
             isHorizontalMapRepetitionEnabled = true
             isVerticalMapRepetitionEnabled = false
             isFlingEnabled = true
@@ -580,6 +583,31 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        if (state.transportMode == com.fakegps.mocklocation.simulator.TransportMode.SHIP) {
+            Toast.makeText(this, "Validating marine waters...", Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch(Dispatchers.IO) {
+                val (isValid, reason) = com.fakegps.mocklocation.simulator.RoadRouter.validateMarineRoute(this@MainActivity, state.routeWaypoints)
+                withContext(Dispatchers.Main) {
+                    if (!isValid) {
+                        MaterialAlertDialogBuilder(this@MainActivity)
+                            .setTitle("⚓ Ship Cannot Sail on Land")
+                            .setMessage("Ships and marine vessels can only operate in water (oceans, seas, lakes, rivers).\n\n${reason ?: "One or more route waypoints are on land."}\n\nPlease reposition your waypoints into a water body or switch to Vehicle / Foot / Aircraft mode.")
+                            .setPositiveButton("Reposition Waypoints", null)
+                            .setNegativeButton("Switch to Vehicle") { _, _ ->
+                                viewModel.setTransportMode(com.fakegps.mocklocation.simulator.TransportMode.VEHICLE)
+                            }
+                            .show()
+                    } else {
+                        launchRouteService(state)
+                    }
+                }
+            }
+        } else {
+            launchRouteService(state)
+        }
+    }
+
+    private fun launchRouteService(state: MainUiState) {
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_ROUTE
             putExtra(MockLocationService.EXTRA_SPEED_KMH, state.routeSpeedKmh)

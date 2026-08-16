@@ -13,6 +13,8 @@ import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
+import java.io.DataOutputStream
+import java.io.File
 
 object PermissionHelper {
 
@@ -122,6 +124,53 @@ object PermissionHelper {
             true
         } catch (e: SecurityException) {
             false
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun isDeviceRooted(): Boolean {
+        val paths = arrayOf(
+            "/system/bin/su", "/system/xbin/su", "/sbin/su",
+            "/system/su", "/system/bin/.ext/.su", "/system/usr/we-need-root/su-backup"
+        )
+        if (paths.any { File(it).exists() }) return true
+        return checkSuBinary()
+    }
+
+    private fun checkSuBinary(): Boolean {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("which", "su"))
+            val reader = process.inputStream.bufferedReader()
+            val output = reader.readLine()
+            process.waitFor() == 0 && !output.isNullOrBlank()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Attempts to automatically grant mock location appops and permissions via Root (su).
+     */
+    fun tryAutoGrantRootMockPermission(context: Context): Boolean {
+        return try {
+            val pkg = context.packageName
+            val commands = arrayOf(
+                "cmd appops set $pkg android:mock_location allow",
+                "cmd appops set $pkg MOCK_LOCATION allow",
+                "appops set $pkg android:mock_location allow",
+                "pm grant $pkg android.permission.ACCESS_MOCK_LOCATION",
+                "settings put secure mock_location 1"
+            )
+            val process = Runtime.getRuntime().exec("su")
+            val outputStream = DataOutputStream(process.outputStream)
+            for (cmd in commands) {
+                outputStream.writeBytes("$cmd\n")
+            }
+            outputStream.writeBytes("exit\n")
+            outputStream.flush()
+            val exitCode = process.waitFor()
+            exitCode == 0 && isMockLocationEnabled(context)
         } catch (e: Exception) {
             false
         }

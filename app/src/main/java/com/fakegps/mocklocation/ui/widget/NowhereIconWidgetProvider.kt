@@ -6,8 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
-import android.graphics.Color
 import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
@@ -100,8 +98,8 @@ class NowhereIconWidgetProvider : AppWidgetProvider() {
             views.setViewVisibility(R.id.ivIconStatusDot, View.GONE)
         }
 
-        // Title under the icon with high-contrast text shadow
-        views.setTextViewText(R.id.tvWidgetAppName, "Nowhere")
+        // Title under the icon with high-contrast text shadow matching launcher styling
+        views.setTextViewText(R.id.tvWidgetAppName, context.getString(R.string.app_name))
 
         val clickIntent = Intent(context, NowhereIconWidgetProvider::class.java).apply {
             action = ACTION_ICON_WIDGET_CLICK

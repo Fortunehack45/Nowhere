@@ -1,6 +1,8 @@
 package com.fakegps.mocklocation.simulator
 
+import android.content.Context
 import com.fakegps.mocklocation.engine.GeoUtils
+import com.fakegps.mocklocation.util.LocationNameResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -15,6 +17,25 @@ object RoadRouter {
         "https://router.project-osrm.org/route/v1",
         "https://routing.openstreetmap.de/routed-car/route/v1"
     )
+
+    /**
+     * Validates whether waypoints for Ship mode are placed on water rather than land.
+     * Returns Pair(isValid, errorMessageIfInvalid).
+     */
+    suspend fun validateMarineRoute(context: Context, waypoints: List<RoutePoint>): Pair<Boolean, String?> =
+        withContext(Dispatchers.IO) {
+            if (waypoints.isEmpty()) return@withContext Pair(false, "No waypoints plotted.")
+            for ((idx, wp) in waypoints.withIndex()) {
+                val isWater = LocationNameResolver.isWaterCoordinate(context, wp.latitude, wp.longitude)
+                if (!isWater) {
+                    return@withContext Pair(
+                        false,
+                        "Ship navigation is restricted to water bodies (oceans, seas, lakes, rivers). Waypoint #${idx + 1} (${String.format("%.4f", wp.latitude)}, ${String.format("%.4f", wp.longitude)}) is on dry land."
+                    )
+                }
+            }
+            return@withContext Pair(true, null)
+        }
 
     /**
      * Resolves true real-world routing based on transport mode:
@@ -76,13 +97,13 @@ object RoadRouter {
             return@withContext downsampleWaypointsIfNeeded(stitchedRoute, maxPoints = 5000)
         }
 
-        // Offline or across water: generate natural curving road path
+        // Offline or across terrain: generate natural curving road path
         return@withContext generateNaturalRoadRoute(waypoints, mode)
     }
 
     /**
      * Generates a realistic flight corridor with 3-phase altitude simulation:
-     * 1. Climb Phase (from ground to cruising altitude of 9,500m)
+     * 1. Climb Phase (from ground to cruising altitude of 9,500m FL310)
      * 2. Cruise Phase (trans-continental Great-Circle navigation at FL310)
      * 3. Descent Phase (glide slope landing down to destination elevation)
      */
@@ -111,12 +132,12 @@ object RoadRouter {
 
                 val alt = when {
                     isFirstLeg && fraction < 0.25 -> {
-                        // Climb
+                        // Smooth aerodynamic climb
                         val climbFraction = fraction / 0.25
                         start.altitude + (cruiseAltitudeMeters - start.altitude) * sin(climbFraction * Math.PI / 2.0)
                     }
                     isLastLeg && fraction > 0.75 -> {
-                        // Descent
+                        // Smooth aerodynamic glide slope descent
                         val descentFraction = (fraction - 0.75) / 0.25
                         cruiseAltitudeMeters - (cruiseAltitudeMeters - end.altitude) * sin(descentFraction * Math.PI / 2.0)
                     }

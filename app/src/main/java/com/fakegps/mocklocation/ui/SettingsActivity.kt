@@ -113,6 +113,9 @@ class SettingsActivity : AppCompatActivity() {
 
         // Map Tiles & Visuals
         when (settingsPrefs.mapTileSource) {
+            "CARTO_DARK" -> binding.rbCartoDark.isChecked = true
+            "CARTO_POSITRON" -> binding.rbCartoPositron.isChecked = true
+            "CARTO_VOYAGER" -> binding.rbCartoVoyager.isChecked = true
             "TOPO" -> binding.rbTopo.isChecked = true
             "USGS_SAT" -> binding.rbUsgsSat.isChecked = true
             else -> binding.rbMapnik.isChecked = true
@@ -166,6 +169,16 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         // Permission & Integration buttons
+        binding.btnSettingsAutoGrantRoot.setOnClickListener {
+            val granted = PermissionHelper.tryAutoGrantRootMockPermission(this)
+            if (granted) {
+                Toast.makeText(this, "Root Mock Location Granted Successfully! 🎉", Toast.LENGTH_LONG).show()
+                refreshSystemStatus()
+            } else {
+                Toast.makeText(this, "Root auto-grant failed or device is not rooted. Use Configure to set manually.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         binding.btnSettingsDevOptions.setOnClickListener {
             SetupGuideDialog(this) {
                 PermissionHelper.openDeveloperSettings(this)
@@ -236,6 +249,9 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.rgMapSource.setOnCheckedChangeListener { _, checkedId ->
             settingsPrefs.mapTileSource = when (checkedId) {
+                R.id.rbCartoDark -> "CARTO_DARK"
+                R.id.rbCartoPositron -> "CARTO_POSITRON"
+                R.id.rbCartoVoyager -> "CARTO_VOYAGER"
                 R.id.rbTopo -> "TOPO"
                 R.id.rbUsgsSat -> "USGS_SAT"
                 else -> "MAPNIK"

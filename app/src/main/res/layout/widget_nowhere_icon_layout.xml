@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widgetIconRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,34 +8,36 @@
     android:orientation="vertical"
     android:padding="2dp">
 
-    <!-- App Icon Centerpiece (100% Matching Launcher Icon) -->
+    <!-- App Icon Centerpiece (100% Matching Material You Launcher Shortcut / Adaptive Icon) -->
     <FrameLayout
         android:id="@+id/flIconContainer"
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:background="@drawable/bg_app_icon_squircle">
 
-        <!-- Nowhere Pin Foreground -->
+        <!-- Nowhere Dynamic Themed Pin Icon Silhouette -->
         <ImageView
             android:id="@+id/ivWidgetAppIcon"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="6dp"
-            android:src="@drawable/ic_launcher_foreground" />
+            android:padding="8dp"
+            android:src="@drawable/ic_launcher_monochrome"
+            android:tint="@color/widget_icon_fg"
+            tools:ignore="UseAppTint" />
 
-        <!-- Status Dot in Corner -->
+        <!-- Live Simulation Active Pulse Dot Indicator -->
         <ImageView
             android:id="@+id/ivIconStatusDot"
             android:layout_width="10dp"
             android:layout_height="10dp"
             android:layout_gravity="top|end"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginEnd="3dp"
             android:src="@drawable/bg_dot_emerald"
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- App Name Label (Matching Android Home Screen Icon Title) -->
+    <!-- App Name Label (Matching Android Home Screen Shortcut Title) -->
     <TextView
         android:id="@+id/tvWidgetAppName"
         android:layout_width="wrap_content"
@@ -43,12 +46,12 @@
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:shadowColor="#CC000000"
+        android:shadowColor="#80000000"
         android:shadowDx="1.0"
         android:shadowDy="1.0"
-        android:shadowRadius="3.0"
-        android:text="Nowhere"
-        android:textColor="#FFFFFF"
+        android:shadowRadius="2.0"
+        android:text="@string/app_name"
+        android:textColor="@color/widget_icon_text"
         android:textSize="12sp"
         android:textStyle="normal" />
 

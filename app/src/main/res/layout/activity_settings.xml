@@ -424,16 +424,35 @@
                                 android:textSize="11sp" />
                         </LinearLayout>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnSettingsDevOptions"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                        <LinearLayout
                             android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Configure"
-                            android:textColor="@color/primary_bright"
-                            android:textSize="11sp"
-                            app:cornerRadius="8dp" />
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnSettingsAutoGrantRoot"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:layout_marginEnd="6dp"
+                                android:backgroundTint="@color/surface_card_elevated"
+                                android:text="⚡ Auto Root"
+                                android:textColor="@color/primary_bright"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                app:cornerRadius="8dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnSettingsDevOptions"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:backgroundTint="@color/surface_card_elevated"
+                                android:text="Configure"
+                                android:textColor="@color/primary_bright"
+                                android:textSize="11sp"
+                                app:cornerRadius="8dp" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <View
@@ -937,50 +956,102 @@
                     <RadioGroup
                         android:id="@+id/rgMapSource"
                         android:layout_width="match_parent"
-                        android:layout_height="38dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:background="@drawable/bg_segmented_tab"
-                        android:orientation="horizontal"
-                        android:padding="2dp">
+                        android:orientation="vertical"
+                        android:padding="3dp">
 
-                        <RadioButton
-                            android:id="@+id/rbMapnik"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_segmented_pill_item"
-                            android:button="@null"
-                            android:gravity="center"
-                            android:text="Standard"
-                            android:textColor="@color/color_segmented_text"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:orientation="horizontal">
 
-                        <RadioButton
-                            android:id="@+id/rbTopo"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_segmented_pill_item"
-                            android:button="@null"
-                            android:gravity="center"
-                            android:text="Terrain"
-                            android:textColor="@color/color_segmented_text"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            <RadioButton
+                                android:id="@+id/rbCartoDark"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_segmented_pill_item"
+                                android:button="@null"
+                                android:gravity="center"
+                                android:text="Dark (HD)"
+                                android:textColor="@color/color_segmented_text"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
 
-                        <RadioButton
-                            android:id="@+id/rbUsgsSat"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_segmented_pill_item"
-                            android:button="@null"
-                            android:gravity="center"
-                            android:text="Satellite"
-                            android:textColor="@color/color_segmented_text"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            <RadioButton
+                                android:id="@+id/rbCartoPositron"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_segmented_pill_item"
+                                android:button="@null"
+                                android:gravity="center"
+                                android:text="Light (HD)"
+                                android:textColor="@color/color_segmented_text"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <RadioButton
+                                android:id="@+id/rbMapnik"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_segmented_pill_item"
+                                android:button="@null"
+                                android:gravity="center"
+                                android:text="Standard"
+                                android:textColor="@color/color_segmented_text"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:layout_marginTop="3dp"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:id="@+id/rbCartoVoyager"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_segmented_pill_item"
+                                android:button="@null"
+                                android:gravity="center"
+                                android:text="Voyager (HD)"
+                                android:textColor="@color/color_segmented_text"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <RadioButton
+                                android:id="@+id/rbTopo"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_segmented_pill_item"
+                                android:button="@null"
+                                android:gravity="center"
+                                android:text="Terrain"
+                                android:textColor="@color/color_segmented_text"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <RadioButton
+                                android:id="@+id/rbUsgsSat"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_segmented_pill_item"
+                                android:button="@null"
+                                android:gravity="center"
+                                android:text="Satellite"
+                                android:textColor="@color/color_segmented_text"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
                     </RadioGroup>
 
                     <View

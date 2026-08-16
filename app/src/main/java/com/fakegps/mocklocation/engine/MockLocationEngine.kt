@@ -6,9 +6,11 @@ import android.location.Location
 import android.location.LocationManager
 import android.location.provider.ProviderProperties
 import android.os.Build
+import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
+import com.fakegps.mocklocation.util.PermissionHelper
 
 /**
  * Low-level mock location provider engine interfacing directly with Android's LocationManager.
@@ -45,10 +47,16 @@ class MockLocationEngine(
     }
 
     /**
-     * Initializes all test providers with fail-safe recovery.
+     * Initializes all test providers with fail-safe recovery and root auto-grant attempt.
      */
     @Synchronized
     fun initialize(): Result<Unit> {
+        // If not mock authorized and device is rooted, attempt automatic root grant
+        if (!PermissionHelper.isMockLocationEnabled(context) && PermissionHelper.isDeviceRooted()) {
+            Log.d(TAG, "Device rooted: attempting automated root mock permission grant...")
+            PermissionHelper.tryAutoGrantRootMockPermission(context)
+        }
+
         val providers = getTargetProviders()
         var atLeastOneRegistered = false
         var lastSecurityException: SecurityException? = null
@@ -183,6 +191,12 @@ class MockLocationEngine(
                     this.accuracy = horizontalAccuracy
                     this.time = nowMs
                     this.elapsedRealtimeNanos = nowNanos
+
+                    val extras = Bundle().apply {
+                        putInt("satellites", 18)
+                        putInt("maxSatellites", 24)
+                    }
+                    this.extras = extras
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         this.bearingAccuracyDegrees = bearingAccuracy
