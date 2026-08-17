@@ -462,12 +462,15 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- Nodes List -->
+        <!-- Nodes List (Efficient recycled viewport) -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvIpNodes"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
+            android:layout_height="320dp"
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="true"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="vertical"
             tools:itemCount="5"
             tools:listitem="@layout/item_ip_node" />
 

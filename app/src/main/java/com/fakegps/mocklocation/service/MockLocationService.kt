@@ -472,6 +472,13 @@ class MockLocationService : Service() {
         sessionPrefs.lastLongitude = longitude
         sessionPrefs.lastAltitude = altitude
         updateAllWidgets()
+
+        // Automatically activate VPN matching closest country/server to target mock location
+        val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
+        sessionPrefs.activeIpNodeId = bestNode.id
+        sessionPrefs.isIpMaskingEnabled = true
+        com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+
         serviceScope.launch(Dispatchers.IO) {
             com.fakegps.mocklocation.weather.WeatherManager.fetchWeather(this@MockLocationService, latitude, longitude)
         }
@@ -539,6 +546,14 @@ class MockLocationService : Service() {
         sessionPrefs.lastSpeedKmh = speedKmh
         sessionPrefs.isLooping = isLooping
         sessionPrefs.saveWaypoints(waypoints)
+
+        // Automatically activate VPN matching closest country/server to route starting location
+        if (waypoints.isNotEmpty()) {
+            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(waypoints[0].latitude, waypoints[0].longitude)
+            sessionPrefs.activeIpNodeId = bestNode.id
+            sessionPrefs.isIpMaskingEnabled = true
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+        }
 
         startForegroundNotification(
             String.format("Route: %d waypoints", waypoints.size),
@@ -680,6 +695,12 @@ class MockLocationService : Service() {
         sessionPrefs.lastLongitude = startLon
         sessionPrefs.lastSpeedKmh = speedKmh
         updateAllWidgets()
+
+        // Automatically activate VPN matching closest country/server to joystick location
+        val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(startLat, startLon)
+        sessionPrefs.activeIpNodeId = bestNode.id
+        sessionPrefs.isIpMaskingEnabled = true
+        com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
 
         startForegroundNotification(
             String.format("Joystick: %.5f, %.5f", startLat, startLon),

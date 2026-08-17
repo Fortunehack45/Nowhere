@@ -22,11 +22,26 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class IpChangerBottomSheet(
-    private val currentMockLat: Double? = null,
-    private val currentMockLon: Double? = null,
-    private val onShieldStateChanged: (() -> Unit)? = null
+class IpChangerBottomSheet @JvmOverloads constructor(
+    private var currentMockLat: Double? = null,
+    private var currentMockLon: Double? = null,
+    private var onShieldStateChanged: (() -> Unit)? = null
 ) : BottomSheetDialogFragment() {
+
+    companion object {
+        const val TAG = "IpChangerBottomSheet"
+        private const val ARG_LAT = "arg_lat"
+        private const val ARG_LON = "arg_lon"
+
+        fun newInstance(lat: Double? = null, lon: Double? = null): IpChangerBottomSheet {
+            return IpChangerBottomSheet(lat, lon).apply {
+                arguments = Bundle().apply {
+                    if (lat != null) putDouble(ARG_LAT, lat)
+                    if (lon != null) putDouble(ARG_LON, lon)
+                }
+            }
+        }
+    }
 
     private var _binding: LayoutDialogIpChangerBinding? = null
     private val binding get() = _binding!!
@@ -43,7 +58,19 @@ class IpChangerBottomSheet(
                 startVpnTunnel(node)
             }
         } else {
-            Toast.makeText(requireContext(), "VPN Permission was denied", Toast.LENGTH_SHORT).show()
+            context?.let { ctx ->
+                Toast.makeText(ctx, "VPN Permission was denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (currentMockLat == null && arguments?.containsKey(ARG_LAT) == true) {
+            currentMockLat = arguments?.getDouble(ARG_LAT)
+        }
+        if (currentMockLon == null && arguments?.containsKey(ARG_LON) == true) {
+            currentMockLon = arguments?.getDouble(ARG_LON)
         }
     }
 
@@ -78,6 +105,8 @@ class IpChangerBottomSheet(
         }
 
         binding.rvIpNodes.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvIpNodes.setHasFixedSize(true)
+        binding.rvIpNodes.itemAnimator = null
         binding.rvIpNodes.adapter = adapter
     }
 
@@ -88,6 +117,7 @@ class IpChangerBottomSheet(
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val query = s?.toString().orEmpty()
+                if (_binding == null) return
                 binding.btnClearIpSearch.visibility = if (query.isNotEmpty()) View.VISIBLE else View.GONE
                 val countMatched = adapter.filter(query)
                 binding.tvNodeCountBadge.text = "$countMatched NODES"
@@ -106,8 +136,10 @@ class IpChangerBottomSheet(
         binding.btnClearIpSearch.setOnClickListener {
             binding.etIpSearch.text?.clear()
             binding.etIpSearch.clearFocus()
-            val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-            imm?.hideSoftInputFromWindow(binding.etIpSearch.windowToken, 0)
+            val imm = context?.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            _binding?.etIpSearch?.windowToken?.let { token ->
+                imm?.hideSoftInputFromWindow(token, 0)
+            }
         }
 
         binding.btnRefreshIp.setOnClickListener {
@@ -117,11 +149,15 @@ class IpChangerBottomSheet(
         binding.switchAutoMatchGps.isChecked = sessionPrefs.autoMatchIpWithGps
         binding.switchAutoMatchGps.setOnCheckedChangeListener { _, isChecked ->
             sessionPrefs.autoMatchIpWithGps = isChecked
-            if (isChecked && currentMockLat != null && currentMockLon != null) {
-                val bestNode = IpManager.findClosestNodeForCoordinates(currentMockLat, currentMockLon)
+            val lat = currentMockLat
+            val lon = currentMockLon
+            if (isChecked && lat != null && lon != null) {
+                val bestNode = IpManager.findClosestNodeForCoordinates(lat, lon)
                 sessionPrefs.activeIpNodeId = bestNode.id
                 adapter.setSelectedNodeId(bestNode.id)
-                Toast.makeText(requireContext(), "Auto-matched to ${bestNode.country} (${bestNode.city})", Toast.LENGTH_SHORT).show()
+                context?.let { ctx ->
+                    Toast.makeText(ctx, "Auto-matched to ${bestNode.country} (${bestNode.city})", Toast.LENGTH_SHORT).show()
+                }
                 if (NowhereVpnService.isRunning) {
                     requestConnectVpn(bestNode)
                 }
@@ -130,8 +166,9 @@ class IpChangerBottomSheet(
 
         binding.btnToggleShield.setOnClickListener {
             if (NowhereVpnService.isRunning) {
-                NowhereVpnService.stop(requireContext())
-                Toast.makeText(requireContext(), "IP Shield Disconnected", Toast.LENGTH_SHORT).show()
+                val ctx = context ?: return@setOnClickListener
+                NowhereVpnService.stop(ctx)
+                Toast.makeText(ctx, "IP Shield Disconnected", Toast.LENGTH_SHORT).show()
                 onShieldStateChanged?.invoke()
             } else {
                 val node = IpManager.getNodeById(sessionPrefs.activeIpNodeId)
@@ -141,8 +178,9 @@ class IpChangerBottomSheet(
     }
 
     private fun requestConnectVpn(node: IpNode) {
+        val ctx = context ?: return
         pendingNodeToConnect = node
-        val vpnIntent = VpnService.prepare(requireContext())
+        val vpnIntent = VpnService.prepare(ctx)
         if (vpnIntent != null) {
             vpnPrepareLauncher.launch(vpnIntent)
         } else {
@@ -151,8 +189,9 @@ class IpChangerBottomSheet(
     }
 
     private fun startVpnTunnel(node: IpNode) {
-        NowhereVpnService.start(requireContext(), node.id)
-        Toast.makeText(requireContext(), "Connecting to ${node.name}...", Toast.LENGTH_SHORT).show()
+        val ctx = context ?: return
+        NowhereVpnService.start(ctx, node.id)
+        Toast.makeText(ctx, "Connecting to ${node.name}...", Toast.LENGTH_SHORT).show()
         onShieldStateChanged?.invoke()
     }
 
@@ -170,12 +209,14 @@ class IpChangerBottomSheet(
     private fun observeVpnState() {
         viewLifecycleOwner.lifecycleScope.launch {
             NowhereVpnService.vpnState.collectLatest { state ->
-                renderVpnState(state)
+                if (_binding != null && isAdded) {
+                    renderVpnState(state)
+                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             NowhereVpnService.trafficStats.collectLatest { stats ->
-                if (_binding != null && NowhereVpnService.isRunning) {
+                if (_binding != null && isAdded && NowhereVpnService.isRunning) {
                     binding.tvVpnDownloadData.text = stats.formatDownload()
                     binding.tvVpnDownloadRate.text = stats.formatDownloadRate()
                     binding.tvVpnUploadData.text = stats.formatUpload()
@@ -188,6 +229,8 @@ class IpChangerBottomSheet(
 
     private fun renderVpnState(state: NowhereVpnService.VpnState) {
         val context = context ?: return
+        if (_binding == null) return
+
         when (state) {
             is NowhereVpnService.VpnState.Connected -> {
                 binding.cardVpnTraffic.visibility = View.VISIBLE
@@ -232,12 +275,15 @@ class IpChangerBottomSheet(
     }
 
     private fun refreshIpTelemetry() {
+        val ctx = context?.applicationContext ?: return
         viewLifecycleOwner.lifecycleScope.launch {
-            val ipInfo = IpManager.fetchPublicIpInfo(requireContext())
-            if (!NowhereVpnService.isRunning && _binding != null) {
-                binding.tvCurrentIp.text = ipInfo.ip
-                binding.tvIpDetails.text = "${ipInfo.city}, ${ipInfo.country} • ${ipInfo.isp}"
-            }
+            try {
+                val ipInfo = IpManager.fetchPublicIpInfo(ctx)
+                if (!NowhereVpnService.isRunning && _binding != null && isAdded) {
+                    binding.tvCurrentIp.text = ipInfo.ip
+                    binding.tvIpDetails.text = "${ipInfo.city}, ${ipInfo.country} • ${ipInfo.isp}"
+                }
+            } catch (ignored: Exception) {}
         }
     }
 

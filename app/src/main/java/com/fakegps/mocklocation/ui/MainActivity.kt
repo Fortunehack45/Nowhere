@@ -282,33 +282,22 @@ class MainActivity : AppCompatActivity() {
             imm?.hideSoftInputFromWindow(binding.etAddressSearch.windowToken, 0)
         }
 
+        // Screen taps while mock simulation is running must NOT change or disrupt active mock location
+        if (viewModel.uiState.value.isServiceRunning) {
+            return
+        }
+
         when (viewModel.uiState.value.selectedTab) {
             SelectedModeTab.FIXED -> {
                 viewModel.setFixedCoordinates(latitude, longitude)
                 updateFixedPinMarker(latitude, longitude)
-                if (viewModel.uiState.value.isServiceRunning) {
-                    mockService?.startFixed(latitude, longitude)
-                    val intent = Intent(this, MockLocationService::class.java).apply {
-                        action = MockLocationService.ACTION_START_FIXED
-                        putExtra(MockLocationService.EXTRA_LATITUDE, latitude)
-                        putExtra(MockLocationService.EXTRA_LONGITUDE, longitude)
-                    }
-                    startForegroundServiceCompat(intent)
-                }
             }
             SelectedModeTab.ROUTE -> {
-                if (viewModel.uiState.value.isServiceRunning) {
-                    Toast.makeText(this, "Route simulation in progress. Stop simulation to edit waypoints.", Toast.LENGTH_SHORT).show()
-                } else {
-                    viewModel.addRouteWaypoint(latitude, longitude)
-                }
+                viewModel.addRouteWaypoint(latitude, longitude)
             }
             SelectedModeTab.JOYSTICK -> {
                 viewModel.setFixedCoordinates(latitude, longitude)
                 updateFixedPinMarker(latitude, longitude)
-                if (viewModel.uiState.value.isServiceRunning) {
-                    mockService?.startJoystick(latitude, longitude, viewModel.uiState.value.joystickSpeedKmh)
-                }
             }
         }
     }
@@ -714,12 +703,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
+        try {
+            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
+            val sessionPrefs = SessionPreferences(this)
+            sessionPrefs.activeIpNodeId = bestNode.id
+            sessionPrefs.isIpMaskingEnabled = true
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+        } catch (ignored: Exception) {}
+    }
+
     private fun startFixedSpoofing() {
         if (!verifyMockAppSelected()) return
         performHapticFeedbackIfEnabled()
 
         val state = viewModel.uiState.value
         viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "TELEPORT")
+        autoEngageVpnForLocation(state.fixedLatitude, state.fixedLongitude)
 
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_FIXED
@@ -786,6 +786,10 @@ class MainActivity : AppCompatActivity() {
             transportMode = state.transportMode.name
         )
 
+        if (state.routeWaypoints.isNotEmpty()) {
+            autoEngageVpnForLocation(state.routeWaypoints[0].latitude, state.routeWaypoints[0].longitude)
+        }
+
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_ROUTE
             putExtra(MockLocationService.EXTRA_SPEED_KMH, state.routeSpeedKmh)
@@ -802,6 +806,7 @@ class MainActivity : AppCompatActivity() {
 
         val state = viewModel.uiState.value
         viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "JOYSTICK")
+        autoEngageVpnForLocation(state.fixedLatitude, state.fixedLongitude)
 
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_JOYSTICK

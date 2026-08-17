@@ -26,10 +26,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class HistoryBottomSheet(
-    private val onReuseLocation: (Double, Double, String) -> Unit,
-    private val onReuseRoute: (MockRouteHistory) -> Unit
+class HistoryBottomSheet @JvmOverloads constructor(
+    private var onReuseLocation: ((Double, Double, String) -> Unit)? = null,
+    private var onReuseRoute: ((MockRouteHistory) -> Unit)? = null
 ) : BottomSheetDialogFragment() {
+
+    companion object {
+        const val TAG = "HistoryBottomSheet"
+    }
 
     private var _binding: LayoutDialogHistoryBinding? = null
     private val binding get() = _binding!!
@@ -62,7 +66,7 @@ class HistoryBottomSheet(
     private fun setupAdapters() {
         locationAdapter = LocationHistoryAdapter(
             onReuse = { item ->
-                onReuseLocation(item.latitude, item.longitude, item.locationName)
+                onReuseLocation?.invoke(item.latitude, item.longitude, item.locationName)
                 dismiss()
             },
             onDelete = { item ->
@@ -78,7 +82,7 @@ class HistoryBottomSheet(
             formatDistance = { meters -> settingsPrefs.formatDistance(meters) },
             formatSpeed = { speed -> settingsPrefs.formatSpeed(speed) },
             onReuse = { item ->
-                onReuseRoute(item)
+                onReuseRoute?.invoke(item)
                 dismiss()
             },
             onDelete = { item ->

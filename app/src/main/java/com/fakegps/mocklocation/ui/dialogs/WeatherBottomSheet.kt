@@ -14,14 +14,39 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class WeatherBottomSheet(
-    private val latitude: Double,
-    private val longitude: Double
+class WeatherBottomSheet @JvmOverloads constructor(
+    private var latitude: Double = 0.0,
+    private var longitude: Double = 0.0
 ) : BottomSheetDialogFragment() {
+
+    companion object {
+        const val TAG = "WeatherBottomSheet"
+        private const val ARG_LAT = "arg_lat"
+        private const val ARG_LON = "arg_lon"
+
+        fun newInstance(lat: Double, lon: Double): WeatherBottomSheet {
+            return WeatherBottomSheet(lat, lon).apply {
+                arguments = Bundle().apply {
+                    putDouble(ARG_LAT, lat)
+                    putDouble(ARG_LON, lon)
+                }
+            }
+        }
+    }
 
     private var _binding: LayoutDialogWeatherBinding? = null
     private val binding get() = _binding!!
     private lateinit var settingsPrefs: AppSettingsPreferences
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (latitude == 0.0 && arguments?.containsKey(ARG_LAT) == true) {
+            latitude = arguments?.getDouble(ARG_LAT) ?: 0.0
+        }
+        if (longitude == 0.0 && arguments?.containsKey(ARG_LON) == true) {
+            longitude = arguments?.getDouble(ARG_LON) ?: 0.0
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,15 +62,16 @@ class WeatherBottomSheet(
         settingsPrefs = AppSettingsPreferences(requireContext())
 
         binding.btnRefreshWeather.setOnClickListener {
+            val ctx = context?.applicationContext ?: return@setOnClickListener
             viewLifecycleOwner.lifecycleScope.launch {
-                WeatherManager.fetchWeather(requireContext(), latitude, longitude, forceRefresh = true)
+                WeatherManager.fetchWeather(ctx, latitude, longitude, forceRefresh = true)
             }
         }
 
         // Reactively observe live weather flow
         viewLifecycleOwner.lifecycleScope.launch {
             WeatherManager.weatherFlow.collectLatest { report ->
-                if (report != null) {
+                if (report != null && _binding != null && isAdded) {
                     renderWeatherReport(report)
                 }
             }
@@ -56,9 +82,12 @@ class WeatherBottomSheet(
     }
 
     private fun loadWeatherReport() {
+        val ctx = context?.applicationContext ?: return
         viewLifecycleOwner.lifecycleScope.launch {
-            val report = WeatherManager.fetchWeather(requireContext(), latitude, longitude)
-            renderWeatherReport(report)
+            val report = WeatherManager.fetchWeather(ctx, latitude, longitude)
+            if (_binding != null && isAdded) {
+                renderWeatherReport(report)
+            }
         }
     }
 

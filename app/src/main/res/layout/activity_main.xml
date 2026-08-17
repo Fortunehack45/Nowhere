@@ -514,16 +514,16 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Floating Radar Joystick Overlay -->
+    <!-- Floating Radar Joystick Overlay (Resized & anchored to lower-left to avoid right menu overlap) -->
     <com.fakegps.mocklocation.ui.custom.JoystickView
         android:id="@+id/joystickOverlay"
-        android:layout_width="160dp"
-        android:layout_height="160dp"
-        android:layout_marginEnd="16dp"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:layout_marginStart="18dp"
         android:layout_marginBottom="16dp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/cardBottomContainer"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Bottom Map Edge Blur & Depth Gradient Overlay -->
     <View

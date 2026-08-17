@@ -167,7 +167,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="Powered by Open-Meteo High-Resolution Global Forecast Model"
+            android:text="Powered by Nowhere Meteorological Engine • High-Precision Global Radar &amp; Forecasts"
             android:textColor="@color/text_muted"
             android:textSize="10sp" />
 

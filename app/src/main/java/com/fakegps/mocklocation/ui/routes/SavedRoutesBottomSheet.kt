@@ -18,9 +18,13 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class SavedRoutesBottomSheet(
-    private val onRouteSelected: (SavedRoute) -> Unit
+class SavedRoutesBottomSheet @JvmOverloads constructor(
+    private var onRouteSelected: ((SavedRoute) -> Unit)? = null
 ) : BottomSheetDialogFragment() {
+
+    companion object {
+        const val TAG = "SavedRoutesBottomSheet"
+    }
 
     private var _binding: BottomSheetSavedRoutesBinding? = null
     private val binding get() = _binding!!
@@ -41,7 +45,7 @@ class SavedRoutesBottomSheet(
 
         adapter = SavedRoutesAdapter(
             onItemClick = { route ->
-                onRouteSelected(route)
+                onRouteSelected?.invoke(route)
                 dismiss()
             },
             onDeleteClick = { route ->
@@ -63,10 +67,6 @@ class SavedRoutesBottomSheet(
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    companion object {
-        const val TAG = "SavedRoutesBottomSheet"
     }
 }
 

@@ -27,9 +27,13 @@ import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-class FavoritesBottomSheet(
-    private val onLocationSelected: (FavoriteLocation) -> Unit
+class FavoritesBottomSheet @JvmOverloads constructor(
+    private var onLocationSelected: ((FavoriteLocation) -> Unit)? = null
 ) : BottomSheetDialogFragment() {
+
+    companion object {
+        const val TAG = "FavoritesBottomSheet"
+    }
 
     private var _binding: BottomSheetFavoritesBinding? = null
     private val binding get() = _binding!!
@@ -83,7 +87,7 @@ class FavoritesBottomSheet(
     private fun setupRecyclerView() {
         adapter = FavoritesAdapter(
             onItemClick = { location ->
-                onLocationSelected(location)
+                onLocationSelected?.invoke(location)
                 dismiss()
             },
             onDeleteClick = { location ->
@@ -197,9 +201,5 @@ class FavoritesBottomSheet(
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    companion object {
-        const val TAG = "FavoritesBottomSheet"
     }
 }
