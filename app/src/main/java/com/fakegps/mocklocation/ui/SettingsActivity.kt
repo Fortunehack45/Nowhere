@@ -232,6 +232,10 @@ class SettingsActivity : AppCompatActivity() {
             openBrowser("https://wa.me/2349167689200")
         }
 
+        binding.btnOpenDisclaimer.setOnClickListener {
+            showDisclaimerDialog()
+        }
+
         // Persistent Location Injector
         binding.switchSettingsBootInjection.setOnCheckedChangeListener { _, isChecked ->
             sessionPrefs.isPersistentBootInjectionEnabled = isChecked
@@ -446,5 +450,10 @@ class SettingsActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "Home screen shortcut pinning not supported on this launcher", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showDisclaimerDialog() {
+        val disclaimerSheet = com.fakegps.mocklocation.ui.dialogs.DisclaimerBottomSheet()
+        disclaimerSheet.show(supportFragmentManager, "DisclaimerBottomSheet")
     }
 }
