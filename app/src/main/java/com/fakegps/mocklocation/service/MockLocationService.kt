@@ -501,9 +501,9 @@ class MockLocationService : Service() {
                         if (loc != null) {
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
-                                latitude = loc.latitude,
-                                longitude = loc.longitude,
-                                altitude = loc.altitude,
+                                latitude = latitude,
+                                longitude = longitude,
+                                altitude = altitude,
                                 speedMps = 0.0f,
                                 bearingDegrees = 0.0f
                             )
@@ -642,6 +642,28 @@ class MockLocationService : Service() {
         updateAllWidgets()
     }
 
+    fun updateRouteSpeed(speedKmh: Float) {
+        routeSimulator?.targetSpeedKmh = speedKmh
+        sessionPrefs.lastSpeedKmh = speedKmh
+        val current = _serviceState.value
+        if (current is ServiceState.Running && activeMode is SimulationMode.Route) {
+            val routeMode = activeMode as SimulationMode.Route
+            activeMode = routeMode.copy(speedKmh = speedKmh)
+            _serviceState.value = current.copy(mode = activeMode)
+        }
+    }
+
+    fun updateRouteLooping(isLooping: Boolean) {
+        routeSimulator?.isLooping = isLooping
+        sessionPrefs.isLooping = isLooping
+        val current = _serviceState.value
+        if (current is ServiceState.Running && activeMode is SimulationMode.Route) {
+            val routeMode = activeMode as SimulationMode.Route
+            activeMode = routeMode.copy(isLooping = isLooping)
+            _serviceState.value = current.copy(mode = activeMode)
+        }
+    }
+
     fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f) {
         stopCurrentLoop()
         acquireWakeLock()
@@ -726,7 +748,7 @@ class MockLocationService : Service() {
                             altitude = 15.0,
                             speed = 0.0f,
                             bearing = joystickAngleDeg,
-                            applyStationaryJitter = true
+                            applyStationaryJitter = settingsPrefs.randomizeJitter
                         )
                         if (result.isSuccess) {
                             _serviceState.value = ServiceState.Running(

@@ -132,25 +132,33 @@ class HistoryBottomSheet(
 
     private fun switchTab(isLocation: Boolean) {
         isLocationTabActive = isLocation
+        val white = ContextCompat.getColor(requireContext(), R.color.white)
+        val muted = ContextCompat.getColor(requireContext(), R.color.text_muted)
+        val whiteSoft = ContextCompat.getColor(requireContext(), R.color.white_soft)
+
         if (isLocation) {
             binding.tabLocationHistory.setBackgroundResource(R.drawable.bg_pill_active)
-            binding.tvLocationTabText.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
-            binding.tvLocationHistoryCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.white_soft))
+            binding.tvLocationTabText.setTextColor(white)
+            binding.ivLocationIcon.imageTintList = android.content.res.ColorStateList.valueOf(white)
+            binding.tvLocationHistoryCount.setTextColor(whiteSoft)
 
             binding.tabRouteHistory.background = null
-            binding.tvRouteTabText.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
-            binding.tvRouteHistoryCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
+            binding.tvRouteTabText.setTextColor(muted)
+            binding.ivRouteIcon.imageTintList = android.content.res.ColorStateList.valueOf(muted)
+            binding.tvRouteHistoryCount.setTextColor(muted)
 
             binding.containerLocationHistory.visibility = View.VISIBLE
             binding.containerRouteHistory.visibility = View.GONE
         } else {
             binding.tabRouteHistory.setBackgroundResource(R.drawable.bg_pill_active)
-            binding.tvRouteTabText.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
-            binding.tvRouteHistoryCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.white_soft))
+            binding.tvRouteTabText.setTextColor(white)
+            binding.ivRouteIcon.imageTintList = android.content.res.ColorStateList.valueOf(white)
+            binding.tvRouteHistoryCount.setTextColor(whiteSoft)
 
             binding.tabLocationHistory.background = null
-            binding.tvLocationTabText.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
-            binding.tvLocationHistoryCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
+            binding.tvLocationTabText.setTextColor(muted)
+            binding.ivLocationIcon.imageTintList = android.content.res.ColorStateList.valueOf(muted)
+            binding.tvLocationHistoryCount.setTextColor(muted)
 
             binding.containerLocationHistory.visibility = View.GONE
             binding.containerRouteHistory.visibility = View.VISIBLE

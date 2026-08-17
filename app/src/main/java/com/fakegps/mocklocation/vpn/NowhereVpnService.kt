@@ -325,7 +325,7 @@ class NowhereVpnService : VpnService() {
         val contentSubtitle = "${node.flagEmoji} ${node.name} • ${node.virtualIp}\n$statsSummary\nDuration: ${stats.formatDuration()}"
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("🛡️ Nowhere IP Shield Active")
+            .setContentTitle("Nowhere IP Shield Active")
             .setContentText("${node.flagEmoji} ${node.virtualIp} • ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()}")
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setColor(ContextCompat.getColor(this, R.color.primary))
@@ -335,7 +335,7 @@ class NowhereVpnService : VpnService() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .setBigContentTitle("🛡️ Nowhere IP Shield: ${node.name}")
+                    .setBigContentTitle("Nowhere IP Shield: ${node.name}")
                     .bigText(contentSubtitle)
             )
             .addAction(R.drawable.ic_stop, "Disconnect", stopPendingIntent)

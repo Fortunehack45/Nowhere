@@ -286,13 +286,29 @@ class MainActivity : AppCompatActivity() {
             SelectedModeTab.FIXED -> {
                 viewModel.setFixedCoordinates(latitude, longitude)
                 updateFixedPinMarker(latitude, longitude)
+                if (viewModel.uiState.value.isServiceRunning) {
+                    mockService?.startFixed(latitude, longitude)
+                    val intent = Intent(this, MockLocationService::class.java).apply {
+                        action = MockLocationService.ACTION_START_FIXED
+                        putExtra(MockLocationService.EXTRA_LATITUDE, latitude)
+                        putExtra(MockLocationService.EXTRA_LONGITUDE, longitude)
+                    }
+                    startForegroundServiceCompat(intent)
+                }
             }
             SelectedModeTab.ROUTE -> {
-                viewModel.addRouteWaypoint(latitude, longitude)
+                if (viewModel.uiState.value.isServiceRunning) {
+                    Toast.makeText(this, "Route simulation in progress. Stop simulation to edit waypoints.", Toast.LENGTH_SHORT).show()
+                } else {
+                    viewModel.addRouteWaypoint(latitude, longitude)
+                }
             }
             SelectedModeTab.JOYSTICK -> {
                 viewModel.setFixedCoordinates(latitude, longitude)
                 updateFixedPinMarker(latitude, longitude)
+                if (viewModel.uiState.value.isServiceRunning) {
+                    mockService?.startJoystick(latitude, longitude, viewModel.uiState.value.joystickSpeedKmh)
+                }
             }
         }
     }
@@ -309,6 +325,16 @@ class MainActivity : AppCompatActivity() {
                 binding.mapView.controller.setZoom(16.5)
                 viewModel.setFixedCoordinates(lat, lon)
                 updateFixedPinMarker(lat, lon)
+
+                if (viewModel.uiState.value.isServiceRunning && viewModel.uiState.value.selectedTab == SelectedModeTab.FIXED) {
+                    mockService?.startFixed(lat, lon)
+                    val intent = Intent(this@MainActivity, MockLocationService::class.java).apply {
+                        action = MockLocationService.ACTION_START_FIXED
+                        putExtra(MockLocationService.EXTRA_LATITUDE, lat)
+                        putExtra(MockLocationService.EXTRA_LONGITUDE, lon)
+                    }
+                    startForegroundServiceCompat(intent)
+                }
 
                 viewModel.recordSearchHistory(
                     query = binding.etAddressSearch.text.toString().trim().ifBlank { title },
@@ -409,12 +435,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.sliderRouteSpeed.addOnChangeListener { _, value, _ ->
-            viewModel.setRouteSpeed(value)
+        binding.sliderRouteSpeed.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                viewModel.setRouteSpeed(value)
+                mockService?.updateRouteSpeed(value)
+            }
         }
 
-        binding.switchLoopRoute.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.setRouteLooping(isChecked)
+        binding.switchLoopRoute.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (buttonView.isPressed) {
+                viewModel.setRouteLooping(isChecked)
+                mockService?.updateRouteLooping(isChecked)
+            }
         }
 
         binding.sliderJoystickSpeed.addOnChangeListener { _, value, _ ->
@@ -550,6 +582,27 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
+        // Floating Tools Hide/Unhide Toggle
+        val isExpanded = settingsPrefs.isSideMenuExpanded
+        binding.layoutSideButtons.visibility = if (isExpanded) View.VISIBLE else View.GONE
+        binding.dividerSideMenuToggle.visibility = if (isExpanded) View.VISIBLE else View.GONE
+        binding.btnToggleSideMenu.setImageResource(if (isExpanded) R.drawable.ic_chevron_right else R.drawable.ic_chevron_left)
+        binding.btnToggleSideMenu.contentDescription = if (isExpanded) "Collapse Floating Tools" else "Expand Floating Tools"
+
+        binding.btnToggleSideMenu.setOnClickListener {
+            val currentlyExpanded = binding.layoutSideButtons.visibility == View.VISIBLE
+            val willBeExpanded = !currentlyExpanded
+            settingsPrefs.isSideMenuExpanded = willBeExpanded
+
+            binding.layoutSideButtons.visibility = if (willBeExpanded) View.VISIBLE else View.GONE
+            binding.dividerSideMenuToggle.visibility = if (willBeExpanded) View.VISIBLE else View.GONE
+            binding.btnToggleSideMenu.setImageResource(if (willBeExpanded) R.drawable.ic_chevron_right else R.drawable.ic_chevron_left)
+            binding.btnToggleSideMenu.contentDescription = if (willBeExpanded) "Collapse Floating Tools" else "Expand Floating Tools"
+            
+            val msg = if (willBeExpanded) "Floating tools expanded" else "Floating tools collapsed"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
         binding.fabZoomIn.setOnClickListener {
             binding.mapView.controller.zoomIn()
         }
@@ -649,6 +702,9 @@ class MainActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
                 vibratorManager?.defaultVibrator?.vibrate(VibrationEffect.createOneShot(40, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                vibrator?.vibrate(VibrationEffect.createOneShot(40, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 @Suppress("DEPRECATION")
                 val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
@@ -962,6 +1018,8 @@ class MainActivity : AppCompatActivity() {
             val isPaused = runningState?.isPaused == true
             binding.btnRoutePause.text = if (isPaused) getString(R.string.btn_resume_route) else getString(R.string.btn_pause_route)
             binding.btnRoutePause.setIconResource(if (isPaused) R.drawable.ic_play else R.drawable.ic_pause)
+            binding.btnRoutePause.iconTint = ContextCompat.getColorStateList(this, if (isPaused) R.color.badge_success_text else R.color.primary_bright)
+            binding.btnRoutePause.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
 
             if (runningState != null && runningState.totalDistanceMeters > 0) {
                 binding.layoutRouteTelemetry.visibility = View.VISIBLE

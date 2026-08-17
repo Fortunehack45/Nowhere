@@ -82,6 +82,34 @@ class IpChangerBottomSheet(
     }
 
     private fun setupListeners() {
+        binding.tvNodeCountBadge.text = "${IpManager.GLOBAL_PRIVACY_NODES.size} NODES"
+
+        binding.etIpSearch.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val query = s?.toString().orEmpty()
+                binding.btnClearIpSearch.visibility = if (query.isNotEmpty()) View.VISIBLE else View.GONE
+                val countMatched = adapter.filter(query)
+                binding.tvNodeCountBadge.text = "$countMatched NODES"
+                if (countMatched == 0) {
+                    binding.layoutNoIpNodes.visibility = View.VISIBLE
+                    binding.rvIpNodes.visibility = View.GONE
+                    binding.tvNoNodesMessage.text = "No country or city matching \"$query\""
+                } else {
+                    binding.layoutNoIpNodes.visibility = View.GONE
+                    binding.rvIpNodes.visibility = View.VISIBLE
+                }
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+
+        binding.btnClearIpSearch.setOnClickListener {
+            binding.etIpSearch.text?.clear()
+            binding.etIpSearch.clearFocus()
+            val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            imm?.hideSoftInputFromWindow(binding.etIpSearch.windowToken, 0)
+        }
+
         binding.btnRefreshIp.setOnClickListener {
             refreshIpTelemetry()
         }
@@ -152,7 +180,7 @@ class IpChangerBottomSheet(
                     binding.tvVpnDownloadRate.text = stats.formatDownloadRate()
                     binding.tvVpnUploadData.text = stats.formatUpload()
                     binding.tvVpnUploadRate.text = stats.formatUploadRate()
-                    binding.tvVpnSessionDuration.text = "⏱️ ${stats.formatDuration()}"
+                    binding.tvVpnSessionDuration.text = stats.formatDuration()
                 }
             }
         }

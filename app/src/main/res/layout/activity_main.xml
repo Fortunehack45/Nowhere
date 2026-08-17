@@ -391,100 +391,126 @@
         app:layout_constraintVertical_bias="0.3">
 
         <LinearLayout
-            android:id="@+id/layoutSideButtons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
             android:orientation="vertical"
             android:padding="6dp">
 
+            <!-- Toggle Button to hide/unhide the floating menu tools -->
             <ImageButton
-                android:id="@+id/fabZoomIn"
+                android:id="@+id/btnToggleSideMenu"
                 android:layout_width="42dp"
                 android:layout_height="42dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Zoom In"
-                android:src="@drawable/ic_add"
-                app:tint="@color/text_primary" />
-
-            <View
-                android:layout_width="28dp"
-                android:layout_height="1dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginVertical="4dp"
-                android:background="@color/stroke_subtle" />
-
-            <ImageButton
-                android:id="@+id/fabZoomOut"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Zoom Out"
-                android:src="@drawable/ic_remove"
-                app:tint="@color/text_primary" />
-
-            <View
-                android:layout_width="28dp"
-                android:layout_height="1dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginVertical="4dp"
-                android:background="@color/stroke_subtle" />
-
-            <ImageButton
-                android:id="@+id/fabMyLocation"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Center Target"
-                android:src="@drawable/ic_my_location"
-                app:tint="@color/text_primary" />
-
-            <View
-                android:layout_width="28dp"
-                android:layout_height="1dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginVertical="4dp"
-                android:background="@color/stroke_subtle" />
-
-            <ImageButton
-                android:id="@+id/fabSaveFavorite"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Save Location Bookmark"
-                android:src="@drawable/ic_favorite"
-                app:tint="@color/badge_warning_text" />
-
-            <View
-                android:layout_width="28dp"
-                android:layout_height="1dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginVertical="4dp"
-                android:background="@color/stroke_subtle" />
-
-            <ImageButton
-                android:id="@+id/fabOpenFavorites"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Saved Destinations"
-                android:src="@drawable/ic_favorite"
+                android:contentDescription="Collapse Floating Tools"
+                android:src="@drawable/ic_chevron_right"
                 app:tint="@color/primary" />
 
-            <View
-                android:layout_width="28dp"
-                android:layout_height="1dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginVertical="4dp"
-                android:background="@color/stroke_subtle" />
+            <LinearLayout
+                android:id="@+id/layoutSideButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
-            <ImageButton
-                android:id="@+id/fabOpenHistory"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Simulation History"
-                android:src="@drawable/ic_restore"
-                app:tint="@color/primary" />
+                <View
+                    android:id="@+id/dividerSideMenuToggle"
+                    android:layout_width="28dp"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="4dp"
+                    android:background="@color/stroke_subtle" />
+
+                <ImageButton
+                    android:id="@+id/fabZoomIn"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Zoom In"
+                    android:src="@drawable/ic_add"
+                    app:tint="@color/text_primary" />
+
+                <View
+                    android:layout_width="28dp"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="4dp"
+                    android:background="@color/stroke_subtle" />
+
+                <ImageButton
+                    android:id="@+id/fabZoomOut"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Zoom Out"
+                    android:src="@drawable/ic_remove"
+                    app:tint="@color/text_primary" />
+
+                <View
+                    android:layout_width="28dp"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="4dp"
+                    android:background="@color/stroke_subtle" />
+
+                <ImageButton
+                    android:id="@+id/fabMyLocation"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Center Target"
+                    android:src="@drawable/ic_my_location"
+                    app:tint="@color/text_primary" />
+
+                <View
+                    android:layout_width="28dp"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="4dp"
+                    android:background="@color/stroke_subtle" />
+
+                <ImageButton
+                    android:id="@+id/fabSaveFavorite"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Save Location Bookmark"
+                    android:src="@drawable/ic_favorite"
+                    app:tint="@color/badge_warning_text" />
+
+                <View
+                    android:layout_width="28dp"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="4dp"
+                    android:background="@color/stroke_subtle" />
+
+                <ImageButton
+                    android:id="@+id/fabOpenFavorites"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Saved Destinations"
+                    android:src="@drawable/ic_favorite"
+                    app:tint="@color/primary" />
+
+                <View
+                    android:layout_width="28dp"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="4dp"
+                    android:background="@color/stroke_subtle" />
+
+                <ImageButton
+                    android:id="@+id/fabOpenHistory"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Simulation History"
+                    android:src="@drawable/ic_restore"
+                    app:tint="@color/primary" />
+            </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -1010,16 +1036,18 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRoutePause"
+                    style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="wrap_content"
                     android:layout_height="50dp"
                     android:layout_marginStart="8dp"
                     android:backgroundTint="@color/surface_card_elevated"
                     android:text="Pause"
-                    android:textColor="@color/white"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold"
                     android:visibility="gone"
                     app:cornerRadius="12dp"
                     app:icon="@drawable/ic_pause"
-                    app:iconTint="@color/white" />
+                    app:iconTint="@color/primary_bright" />
             </LinearLayout>
         </LinearLayout>
 

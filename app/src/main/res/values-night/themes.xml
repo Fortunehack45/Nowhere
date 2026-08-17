@@ -5,13 +5,13 @@
         <item name="colorPrimaryVariant">@color/primary_dark</item>
         <item name="colorSecondary">@color/primary</item>
         <item name="colorSecondaryContainer">@color/surface_card_elevated</item>
-        <item name="colorOnSecondaryContainer">@color/primary</item>
+        <item name="colorOnSecondaryContainer">@color/primary_bright</item>
         <item name="colorTertiary">@color/primary_bright</item>
         <item name="android:windowBackground">@color/surface_dark</item>
         <item name="android:statusBarColor">@color/surface_dark</item>
         <item name="android:navigationBarColor">@color/surface_dark</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
         <item name="sliderStyle">@style/Widget.Nowhere.Slider</item>
         <item name="materialSwitchStyle">@style/Widget.Nowhere.Switch</item>
         <item name="bottomSheetDialogTheme">@style/Theme.Nowhere.BottomSheetDialog</item>

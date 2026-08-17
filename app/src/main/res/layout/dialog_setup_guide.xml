@@ -42,10 +42,12 @@
         android:layout_marginTop="16dp"
         android:backgroundTint="@color/surface_card_elevated"
         android:letterSpacing="0.03"
-        android:text="⚡ Auto-Grant via Root (1-Tap)"
+        android:text="Auto-Grant via Root (1-Tap)"
         android:textColor="@color/primary_bright"
         android:textStyle="bold"
         app:cornerRadius="12dp"
+        app:icon="@drawable/ic_bolt"
+        app:iconTint="@color/primary_bright"
         app:strokeColor="@color/stroke_red_glow"
         app:strokeWidth="1dp" />
 

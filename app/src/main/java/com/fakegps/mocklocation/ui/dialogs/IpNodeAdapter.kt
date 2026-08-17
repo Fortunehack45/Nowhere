@@ -10,14 +10,35 @@ import com.fakegps.mocklocation.databinding.ItemIpNodeBinding
 import com.fakegps.mocklocation.vpn.IpNode
 
 class IpNodeAdapter(
-    private val nodes: List<IpNode>,
+    private val allNodes: List<IpNode>,
     private var selectedNodeId: String,
     private val onNodeSelected: (IpNode) -> Unit
 ) : RecyclerView.Adapter<IpNodeAdapter.ViewHolder>() {
 
+    private val displayedNodes = mutableListOf<IpNode>().apply { addAll(allNodes) }
+
     fun setSelectedNodeId(nodeId: String) {
         selectedNodeId = nodeId
         notifyDataSetChanged()
+    }
+
+    fun filter(query: String): Int {
+        val trimmed = query.trim().lowercase()
+        displayedNodes.clear()
+        if (trimmed.isEmpty()) {
+            displayedNodes.addAll(allNodes)
+        } else {
+            val matches = allNodes.filter { node ->
+                node.country.lowercase().contains(trimmed) ||
+                node.city.lowercase().contains(trimmed) ||
+                node.countryCode.lowercase().contains(trimmed) ||
+                node.name.lowercase().contains(trimmed) ||
+                node.virtualIp.contains(trimmed)
+            }
+            displayedNodes.addAll(matches)
+        }
+        notifyDataSetChanged()
+        return displayedNodes.size
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -26,10 +47,10 @@ class IpNodeAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(nodes[position])
+        holder.bind(displayedNodes[position])
     }
 
-    override fun getItemCount(): Int = nodes.size
+    override fun getItemCount(): Int = displayedNodes.size
 
     inner class ViewHolder(private val binding: ItemIpNodeBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(node: IpNode) {

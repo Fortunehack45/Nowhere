@@ -436,10 +436,13 @@
                                 android:layout_height="36dp"
                                 android:layout_marginEnd="6dp"
                                 android:backgroundTint="@color/surface_card_elevated"
-                                android:text="⚡ Auto Root"
+                                android:text="Auto Root"
                                 android:textColor="@color/primary_bright"
                                 android:textSize="11sp"
                                 android:textStyle="bold"
+                                app:icon="@drawable/ic_bolt"
+                                app:iconTint="@color/primary_bright"
+                                app:iconSize="14dp"
                                 app:cornerRadius="8dp" />
 
                             <com.google.android.material.button.MaterialButton

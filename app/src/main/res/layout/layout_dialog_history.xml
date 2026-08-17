@@ -84,12 +84,13 @@
             android:orientation="horizontal"
             android:paddingHorizontal="10dp">
 
-            <TextView
-                android:id="@+id/tvLocationIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📍 "
-                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/ivLocationIcon"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="6dp"
+                android:src="@drawable/ic_location_pin"
+                app:tint="@color/white" />
 
             <TextView
                 android:id="@+id/tvLocationTabText"
@@ -124,12 +125,13 @@
             android:orientation="horizontal"
             android:paddingHorizontal="10dp">
 
-            <TextView
-                android:id="@+id/tvRouteIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🛣️ "
-                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/ivRouteIcon"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="6dp"
+                android:src="@drawable/ic_route"
+                app:tint="@color/text_muted" />
 
             <TextView
                 android:id="@+id/tvRouteTabText"

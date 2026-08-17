@@ -203,17 +203,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun recordLocationHistory(latitude: Double, longitude: Double, name: String = "", mode: String = "TELEPORT") {
         viewModelScope.launch(Dispatchers.IO) {
             val resolvedName = if (name.isNotBlank()) name else {
-                try {
-                    val app = getApplication<Application>()
-                    val geocoder = Geocoder(app, Locale.getDefault())
-                    val list = geocoder.getFromLocation(latitude, longitude, 1)
-                    if (!list.isNullOrEmpty()) {
-                        val addr = list[0]
-                        addr.locality ?: addr.subAdminArea ?: addr.adminArea ?: addr.countryName ?: "Mock Point"
-                    } else "Mock Point"
-                } catch (e: Exception) {
-                    "Mock Point"
-                }
+                com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(getApplication(), latitude, longitude)
             }
             mockHistoryDao.insertLocationHistory(
                 com.fakegps.mocklocation.data.db.MockLocationHistory(
@@ -555,11 +545,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     activeError = null
                 )
                 is ServiceState.Running -> {
-                    val isModeFixed = state.mode is com.fakegps.mocklocation.simulator.SimulationMode.Fixed
-                    val updatedLat = if (isModeFixed) state.latitude else current.fixedLatitude
-                    val updatedLon = if (isModeFixed) state.longitude else current.fixedLongitude
                     val wasRouting = current.serviceState is ServiceState.Running && current.serviceState.mode is com.fakegps.mocklocation.simulator.SimulationMode.Route
-                    val statusMsg = if (wasRouting && isModeFixed) "🚩 Route completed! Location locked at destination." else current.statusMessage
+                    val isNowFixed = state.mode is com.fakegps.mocklocation.simulator.SimulationMode.Fixed
+                    val isJoystick = state.mode is com.fakegps.mocklocation.simulator.SimulationMode.Joystick
+
+                    val updatedLat = when {
+                        wasRouting && isNowFixed -> state.latitude
+                        isJoystick -> state.latitude
+                        else -> current.fixedLatitude
+                    }
+                    val updatedLon = when {
+                        wasRouting && isNowFixed -> state.longitude
+                        isJoystick -> state.longitude
+                        else -> current.fixedLongitude
+                    }
+                    val statusMsg = if (wasRouting && isNowFixed) "Route completed! Location locked at destination." else current.statusMessage
 
                     current.copy(
                         isServiceRunning = true,

@@ -121,6 +121,10 @@ class AppSettingsPreferences(context: Context) {
         get() = prefs.getBoolean("key_has_completed_onboarding", false)
         set(value) = prefs.edit().putBoolean("key_has_completed_onboarding", value).apply()
 
+    var isSideMenuExpanded: Boolean
+        get() = prefs.getBoolean("key_is_side_menu_expanded", true)
+        set(value) = prefs.edit().putBoolean("key_is_side_menu_expanded", value).apply()
+
     // --- 24-Hour Rewarded Ad-Free Pass ---
 
     var watchedRewardAdsCount: Int

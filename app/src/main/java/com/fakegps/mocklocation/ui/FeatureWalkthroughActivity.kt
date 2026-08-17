@@ -31,25 +31,25 @@ class FeatureWalkthroughActivity : AppCompatActivity() {
 
     private val slides = listOf(
         WalkthroughSlide(
-            badgeText = "MODE 01 • TELEPORT",
+            badgeText = "MODE 01 â€¢ TELEPORT",
             title = "Instant Precision Teleport",
             description = "Instantly spoof your device GPS coordinates anywhere on Earth with customizable altitude, accuracy, and realistic satellite jitter.",
             iconResId = R.drawable.ic_teleport
         ),
         WalkthroughSlide(
-            badgeText = "MODE 02 • ROUTE SIMULATION",
+            badgeText = "MODE 02 â€¢ ROUTE SIMULATION",
             title = "Dynamic Multi-Point Routing",
             description = "Plot realistic paths across roads, marine waters, or flight corridors with real-time speed controls, auto-looping, and live telemetry.",
             iconResId = R.drawable.ic_route
         ),
         WalkthroughSlide(
-            badgeText = "MODE 03 • RADAR JOYSTICK",
-            title = "360° Floating Radar Joystick",
+            badgeText = "MODE 03 â€¢ RADAR JOYSTICK",
+            title = "360Â° Floating Radar Joystick",
             description = "Steer and navigate your mock position interactively in real time with an overlay joystick that floats directly over your favorite apps.",
             iconResId = R.drawable.ic_joystick
         ),
         WalkthroughSlide(
-            badgeText = "MODE 04 • PRIVACY & TOOLS",
+            badgeText = "MODE 04 â€¢ PRIVACY & TOOLS",
             title = "IP Shield & Location Weather",
             description = "Mask your virtual network identity and explore real-time weather radars, live forecasts, and convenient home screen widgets.",
             iconResId = R.drawable.ic_shield
@@ -93,12 +93,6 @@ class FeatureWalkthroughActivity : AppCompatActivity() {
 
     private fun setupDotIndicators(currentPosition: Int) {
         binding.layoutDotsIndicator.removeAllViews()
-        val dotParams = LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply {
-            setMargins(8, 0, 8, 0)
-        }
 
         for (i in slides.indices) {
             val dot = ImageView(this).apply {

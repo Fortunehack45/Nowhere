@@ -44,10 +44,23 @@ class RouteSimulator(
         val segmentList = mutableListOf<RouteSegment>()
         var cumulativeDist = 0.0
 
-        if (rawWaypoints.size >= 2) {
-            for (i in 0 until rawWaypoints.size - 1) {
-                val p1 = rawWaypoints[i]
-                val p2 = rawWaypoints[i + 1]
+        val effectiveWaypoints = if (isLooping && rawWaypoints.size >= 2) {
+            val pFirst = rawWaypoints.first()
+            val pLast = rawWaypoints.last()
+            val closingDist = GeoUtils.calculateDistanceMeters(pLast.latitude, pLast.longitude, pFirst.latitude, pFirst.longitude)
+            if (closingDist > 25.0) {
+                rawWaypoints + pFirst
+            } else {
+                rawWaypoints
+            }
+        } else {
+            rawWaypoints
+        }
+
+        if (effectiveWaypoints.size >= 2) {
+            for (i in 0 until effectiveWaypoints.size - 1) {
+                val p1 = effectiveWaypoints[i]
+                val p2 = effectiveWaypoints[i + 1]
                 val dist = GeoUtils.calculateDistanceMeters(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
                 val bearing = GeoUtils.calculateBearing(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
 

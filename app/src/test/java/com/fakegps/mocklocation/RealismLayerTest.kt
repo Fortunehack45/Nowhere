@@ -14,8 +14,14 @@ class RealismLayerTest {
         val lat = 37.7749
         val lon = -122.4194
 
+        // Without forceJitter (default), stationary coordinates remain perfectly stable
+        val (stableLat, stableLon) = realismLayer.applyJitter(lat, lon)
+        assertEquals(lat, stableLat, 0.0000001)
+        assertEquals(lon, stableLon, 0.0000001)
+
+        // When jitter is active, verify destination stays within bounds
         for (i in 0 until 50) {
-            val (jitterLat, jitterLon) = realismLayer.applyJitter(lat, lon)
+            val (jitterLat, jitterLon) = realismLayer.applyJitter(lat, lon, forceJitter = true)
             val distance = GeoUtils.calculateDistanceMeters(lat, lon, jitterLat, jitterLon)
             assertTrue("Distance was $distance", distance in 0.05..10.0)
         }

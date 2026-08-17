@@ -15,10 +15,10 @@ class RealismLayer(
     private val random: Random = Random()
 ) {
     /**
-     * Applies realistic 2D polar/Gaussian jitter.
+     * Applies realistic 2D polar/Gaussian jitter when explicitly enabled.
      */
-    fun applyJitter(latitude: Double, longitude: Double): Pair<Double, Double> {
-        val shouldJitter = settingsPrefs?.randomizeJitter ?: true
+    fun applyJitter(latitude: Double, longitude: Double, forceJitter: Boolean = false): Pair<Double, Double> {
+        val shouldJitter = forceJitter || (settingsPrefs?.randomizeJitter == true)
         if (!shouldJitter) {
             return truncateIfNeeded(latitude, longitude)
         }

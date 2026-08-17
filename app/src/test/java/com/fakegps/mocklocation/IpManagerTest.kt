@@ -10,12 +10,13 @@ class IpManagerTest {
     fun testGlobalPrivacyNodes_populated() {
         val nodes = IpManager.GLOBAL_PRIVACY_NODES
         assertTrue("Global privacy nodes list should not be empty", nodes.isNotEmpty())
-        assertEquals(10, nodes.size)
+        assertTrue("Expected at least 170 global privacy nodes, actual: ${nodes.size}", nodes.size >= 170)
 
         for (node in nodes) {
             assertNotNull(node.id)
             assertNotNull(node.virtualIp)
             assertNotNull(node.country)
+            assertNotNull(node.city)
             assertTrue(node.pingMs > 0)
         }
     }
@@ -45,5 +46,26 @@ class IpManagerTest {
         // New York coordinates (40.7128, -74.0060) -> US East node
         val nycMatch = IpManager.findClosestNodeForCoordinates(40.7580, -73.9855)
         assertEquals("us_nyc", nycMatch.id)
+    }
+
+    @Test
+    fun testSearchFiltering() {
+        val allNodes = IpManager.GLOBAL_PRIVACY_NODES
+        val adapter = com.fakegps.mocklocation.ui.dialogs.IpNodeAdapter(allNodes, "us_nyc") {}
+
+        val countFrance = adapter.filter("France")
+        assertTrue("Expected at least 2 nodes for France, actual: $countFrance", countFrance >= 2)
+
+        val countTokyo = adapter.filter("Tokyo")
+        assertEquals(1, countTokyo)
+
+        val countUs = adapter.filter("US")
+        assertTrue(countUs >= 6)
+
+        val countNone = adapter.filter("NonExistentCountryXYZ")
+        assertEquals(0, countNone)
+
+        val countAll = adapter.filter("")
+        assertEquals(allNodes.size, countAll)
     }
 }
