@@ -538,9 +538,13 @@ class MockLocationService : Service() {
 
         simulationJob = serviceScope.launch {
             try {
-                val stepSeconds = 1.0
+                var lastTickTime = android.os.SystemClock.elapsedRealtime()
                 while (isActive) {
-                    val simLoc = simulator.tick(stepSeconds)
+                    val now = android.os.SystemClock.elapsedRealtime()
+                    val dt = ((now - lastTickTime) / 1000.0).coerceIn(0.05, 3.0)
+                    lastTickTime = now
+
+                    val simLoc = simulator.tick(dt)
                     if (simLoc != null) {
                         val result = engine.setLocation(
                             latitude = simLoc.latitude,

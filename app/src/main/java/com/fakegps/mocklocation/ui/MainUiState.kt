@@ -19,6 +19,7 @@ data class MainUiState(
     val serviceState: ServiceState = ServiceState.Idle,
     val fixedLatitude: Double = 37.7749,
     val fixedLongitude: Double = -122.4194,
+    val userKeypoints: List<RoutePoint> = emptyList(),
     val routeWaypoints: List<RoutePoint> = emptyList(),
     val routeSpeedKmh: Float = 20.0f,
     val isRouteLooping: Boolean = true,

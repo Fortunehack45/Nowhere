@@ -629,6 +629,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun launchRouteService(state: MainUiState) {
+        val sessionPrefs = SessionPreferences(this)
+        sessionPrefs.saveWaypoints(state.routeWaypoints)
+        sessionPrefs.lastSpeedKmh = state.routeSpeedKmh
+        sessionPrefs.isLooping = state.isRouteLooping
+
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_ROUTE
             putExtra(MockLocationService.EXTRA_SPEED_KMH, state.routeSpeedKmh)
@@ -923,7 +928,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 binding.mapView.overlays.add(routePolyline)
 
-                val waypointsToMark = if (state.routeWaypoints.size <= 25) {
+                val waypointsToMark = if (state.userKeypoints.isNotEmpty()) {
+                    state.userKeypoints.mapIndexed { idx, pt -> Pair(idx + 1, pt) }
+                } else if (state.routeWaypoints.size <= 25) {
                     state.routeWaypoints.mapIndexed { idx, pt -> Pair(idx + 1, pt) }
                 } else {
                     val sampled = mutableListOf<Pair<Int, com.fakegps.mocklocation.simulator.RoutePoint>>()

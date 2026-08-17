@@ -82,31 +82,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun addRouteWaypoint(latitude: Double, longitude: Double) {
-        val currentWaypoints = _uiState.value.routeWaypoints.toMutableList().apply {
-            add(RoutePoint(latitude, longitude))
-        }
-        _uiState.update { it.copy(routeWaypoints = currentWaypoints) }
+        val newPoint = RoutePoint(latitude, longitude)
+        val currentKeys = _uiState.value.userKeypoints.toMutableList().apply { add(newPoint) }
+        _uiState.update { it.copy(userKeypoints = currentKeys) }
 
-        if (currentWaypoints.size >= 2 && (_uiState.value.transportMode == com.fakegps.mocklocation.simulator.TransportMode.VEHICLE || _uiState.value.transportMode == com.fakegps.mocklocation.simulator.TransportMode.FOOT)) {
-            viewModelScope.launch {
-                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(currentWaypoints, _uiState.value.transportMode)
+        if (currentKeys.size == 1) {
+            _uiState.update { it.copy(routeWaypoints = currentKeys) }
+            sessionPrefs.saveWaypoints(currentKeys)
+        } else if (currentKeys.size >= 2) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(currentKeys, _uiState.value.transportMode)
                 sessionPrefs.saveWaypoints(resolved)
                 _uiState.update { it.copy(routeWaypoints = resolved) }
             }
-        } else {
-            sessionPrefs.saveWaypoints(currentWaypoints)
         }
     }
 
     fun clearRouteWaypoints() {
         sessionPrefs.saveWaypoints(emptyList())
-        _uiState.update { it.copy(routeWaypoints = emptyList()) }
+        _uiState.update { it.copy(routeWaypoints = emptyList(), userKeypoints = emptyList()) }
     }
 
     fun reverseRouteWaypoints() {
-        val reversed = _uiState.value.routeWaypoints.reversed()
-        sessionPrefs.saveWaypoints(reversed)
-        _uiState.update { it.copy(routeWaypoints = reversed, statusMessage = "Route reversed.") }
+        val reversedKeys = _uiState.value.userKeypoints.reversed()
+        _uiState.update { it.copy(userKeypoints = reversedKeys) }
+        if (reversedKeys.size >= 2) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(reversedKeys, _uiState.value.transportMode)
+                sessionPrefs.saveWaypoints(resolved)
+                _uiState.update { it.copy(routeWaypoints = resolved, statusMessage = "Route reversed.") }
+            }
+        } else {
+            val reversedAll = _uiState.value.routeWaypoints.reversed()
+            sessionPrefs.saveWaypoints(reversedAll)
+            _uiState.update { it.copy(routeWaypoints = reversedAll, statusMessage = "Route reversed.") }
+        }
     }
 
     fun setRouteSpeed(speedKmh: Float) {
@@ -124,10 +134,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
 
-        val currentWaypoints = _uiState.value.routeWaypoints
-        if (currentWaypoints.size >= 2) {
-            viewModelScope.launch {
-                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(currentWaypoints, mode)
+        val keys = if (_uiState.value.userKeypoints.size >= 2) _uiState.value.userKeypoints else _uiState.value.routeWaypoints
+        if (keys.size >= 2) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(keys, mode)
                 sessionPrefs.saveWaypoints(resolved)
                 _uiState.update { it.copy(routeWaypoints = resolved) }
             }
