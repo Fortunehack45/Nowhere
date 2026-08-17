@@ -23,222 +23,243 @@
         android:paddingBottom="8dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- App Brand Header & Action Tools -->
-        <LinearLayout
+        <!-- App Brand Header & Action Tools (Elevated Card with Shadow) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardTopBrandBar"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="10dp"
+            app:strokeColor="@color/stroke_subtle"
+            app:strokeWidth="1dp">
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:src="@drawable/ic_nowhere_logo"
-                tools:ignore="ContentDescription" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
 
-            <!-- Horizontal Scrollable Container for Badges so it NEVER overflows on small screens -->
-            <HorizontalScrollView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:fadingEdge="horizontal"
-                android:requiresFadingEdge="horizontal"
-                android:scrollbars="none">
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_nowhere_logo"
+                    tools:ignore="ContentDescription" />
 
+                <!-- Horizontal Scrollable Container for Badges so it NEVER overflows on small screens -->
+                <HorizontalScrollView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:fadingEdge="horizontal"
+                    android:requiresFadingEdge="horizontal"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <!-- Weather HUD Pill (Solid Opaque) -->
+                        <LinearLayout
+                            android:id="@+id/layoutWeatherBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_status_pill"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp">
+
+                            <TextView
+                                android:id="@+id/tvWeatherEmojiBadge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⛅"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvWeatherBadgeText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:letterSpacing="0.04"
+                                android:text="--°C"
+                                android:textColor="@color/text_primary"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- IP Shield HUD Pill (Solid Opaque) -->
+                        <LinearLayout
+                            android:id="@+id/layoutIpShieldBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_status_pill"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp">
+
+                            <ImageView
+                                android:id="@+id/ivShieldIcon"
+                                android:layout_width="13dp"
+                                android:layout_height="13dp"
+                                android:src="@drawable/ic_launcher_monochrome"
+                                app:tint="@color/text_primary"
+                                tools:ignore="ContentDescription" />
+
+                            <TextView
+                                android:id="@+id/tvIpShieldBadge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:letterSpacing="0.04"
+                                android:text="DIRECT"
+                                android:textColor="@color/text_primary"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Status Badge Pill (Solid Opaque) -->
+                        <LinearLayout
+                            android:id="@+id/layoutStatusBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:background="@drawable/bg_status_pill"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp">
+
+                            <View
+                                android:id="@+id/viewStatusDot"
+                                android:layout_width="7dp"
+                                android:layout_height="7dp"
+                                android:background="@drawable/bg_status_pill"
+                                android:backgroundTint="@color/text_muted" />
+
+                            <TextView
+                                android:id="@+id/tvStatusBadge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:letterSpacing="0.05"
+                                android:text="STANDBY"
+                                android:textColor="@color/text_muted"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <!-- Fixed Action Buttons Anchored to Right (Never cut off!) -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <!-- Weather HUD Pill (Solid Opaque) -->
-                    <LinearLayout
-                        android:id="@+id/layoutWeatherBadge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="28dp"
-                        android:layout_marginEnd="6dp"
+                    <ImageButton
+                        android:id="@+id/btnHeaderWidgets"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
                         android:background="@drawable/bg_status_pill"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:paddingHorizontal="8dp">
+                        android:padding="6dp"
+                        android:src="@drawable/ic_widgets"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
 
-                        <TextView
-                            android:id="@+id/tvWeatherEmojiBadge"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="⛅"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:id="@+id/tvWeatherBadgeText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="4dp"
-                            android:letterSpacing="0.04"
-                            android:text="--°C"
-                            android:textColor="@color/text_primary"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- IP Shield HUD Pill (Solid Opaque) -->
-                    <LinearLayout
-                        android:id="@+id/layoutIpShieldBadge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="28dp"
-                        android:layout_marginEnd="6dp"
+                    <ImageButton
+                        android:id="@+id/btnHeaderSettings"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_marginStart="6dp"
                         android:background="@drawable/bg_status_pill"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:paddingHorizontal="8dp">
-
-                        <ImageView
-                            android:id="@+id/ivShieldIcon"
-                            android:layout_width="13dp"
-                            android:layout_height="13dp"
-                            android:src="@drawable/ic_launcher_monochrome"
-                            app:tint="@color/text_primary"
-                            tools:ignore="ContentDescription" />
-
-                        <TextView
-                            android:id="@+id/tvIpShieldBadge"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="4dp"
-                            android:letterSpacing="0.04"
-                            android:text="DIRECT"
-                            android:textColor="@color/text_primary"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- Status Badge Pill (Solid Opaque) -->
-                    <LinearLayout
-                        android:id="@+id/layoutStatusBadge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="28dp"
-                        android:background="@drawable/bg_status_pill"
-                        android:gravity="center"
-                        android:paddingHorizontal="8dp">
-
-                        <View
-                            android:id="@+id/viewStatusDot"
-                            android:layout_width="7dp"
-                            android:layout_height="7dp"
-                            android:background="@drawable/bg_status_pill"
-                            android:backgroundTint="@color/text_muted" />
-
-                        <TextView
-                            android:id="@+id/tvStatusBadge"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="5dp"
-                            android:letterSpacing="0.05"
-                            android:text="STANDBY"
-                            android:textColor="@color/text_muted"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                        android:padding="6dp"
+                        android:src="@drawable/ic_settings"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
                 </LinearLayout>
-            </HorizontalScrollView>
-
-            <!-- Fixed Action Buttons Anchored to Right (Never cut off!) -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageButton
-                    android:id="@+id/btnHeaderWidgets"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_status_pill"
-                    android:padding="6dp"
-                    android:src="@drawable/ic_widgets"
-                    app:tint="@color/primary"
-                    tools:ignore="ContentDescription" />
-
-                <ImageButton
-                    android:id="@+id/btnHeaderSettings"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_status_pill"
-                    android:padding="6dp"
-                    android:src="@drawable/ic_settings"
-                    app:tint="@color/primary"
-                    tools:ignore="ContentDescription" />
             </LinearLayout>
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- Search Bar (Solid Opaque Card) -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layoutSearchBar"
+        <!-- Search Bar (Solid Opaque Elevated Card) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSearchBar"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_elevated"
-            android:elevation="4dp"
-            android:paddingHorizontal="14dp">
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="10dp"
+            app:strokeColor="@color/stroke_subtle"
+            app:strokeWidth="1dp">
 
-            <ImageView
-                android:id="@+id/ivSearchIcon"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_search"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/text_muted"
-                tools:ignore="ContentDescription" />
-
-            <EditText
-                android:id="@+id/etAddressSearch"
-                android:layout_width="0dp"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/layoutSearchBar"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="8dp"
-                android:background="@null"
-                android:hint="@string/title_search_hint"
-                android:imeOptions="actionSearch"
-                android:inputType="text"
-                android:maxLines="1"
-                android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_muted"
-                android:textSize="13sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/btnClearSearch"
-                app:layout_constraintStart_toEndOf="@id/ivSearchIcon"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:paddingHorizontal="14dp">
 
-            <ImageButton
-                android:id="@+id/btnClearSearch"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_clear"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:ignore="ContentDescription" />
+                <ImageView
+                    android:id="@+id/ivSearchIcon"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_search"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="@color/text_muted"
+                    tools:ignore="ContentDescription" />
 
-            <ProgressBar
-                android:id="@+id/pbSearchLoading"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:indeterminate="true"
-                android:indeterminateTint="@color/primary"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <EditText
+                    android:id="@+id/etAddressSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@null"
+                    android:hint="@string/title_search_hint"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="13sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnClearSearch"
+                    app:layout_constraintStart_toEndOf="@id/ivSearchIcon"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageButton
+                    android:id="@+id/btnClearSearch"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_clear"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:ignore="ContentDescription" />
+
+                <ProgressBar
+                    android:id="@+id/pbSearchLoading"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/primary"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- Unified Search & History Dropdown -->
         <androidx.recyclerview.widget.RecyclerView
@@ -343,109 +364,119 @@
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
-    <!-- Right Quick Floating Tools Stack -->
-    <LinearLayout
-        android:id="@+id/layoutSideButtons"
+    <!-- Right Quick Floating Tools Stack (Elevated Card with Drop Shadow) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardSideButtons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:background="@drawable/bg_card_glass"
-        android:orientation="vertical"
-        android:padding="6dp"
-        app:layout_constraintBottom_toTopOf="@id/layoutBottomContainer"
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="14dp"
+        app:strokeColor="@color/stroke_subtle"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toTopOf="@id/cardBottomContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutTopHeader"
         app:layout_constraintVertical_bias="0.3">
 
-        <ImageButton
-            android:id="@+id/fabZoomIn"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Zoom In"
-            android:src="@drawable/ic_add"
-            app:tint="@color/text_primary" />
+        <LinearLayout
+            android:id="@+id/layoutSideButtons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="6dp">
 
-        <View
-            android:layout_width="28dp"
-            android:layout_height="1dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="4dp"
-            android:background="@color/stroke_subtle" />
+            <ImageButton
+                android:id="@+id/fabZoomIn"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Zoom In"
+                android:src="@drawable/ic_add"
+                app:tint="@color/text_primary" />
 
-        <ImageButton
-            android:id="@+id/fabZoomOut"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Zoom Out"
-            android:src="@drawable/ic_remove"
-            app:tint="@color/text_primary" />
+            <View
+                android:layout_width="28dp"
+                android:layout_height="1dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginVertical="4dp"
+                android:background="@color/stroke_subtle" />
 
-        <View
-            android:layout_width="28dp"
-            android:layout_height="1dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="4dp"
-            android:background="@color/stroke_subtle" />
+            <ImageButton
+                android:id="@+id/fabZoomOut"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Zoom Out"
+                android:src="@drawable/ic_remove"
+                app:tint="@color/text_primary" />
 
-        <ImageButton
-            android:id="@+id/fabMyLocation"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Center Target"
-            android:src="@drawable/ic_my_location"
-            app:tint="@color/text_primary" />
+            <View
+                android:layout_width="28dp"
+                android:layout_height="1dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginVertical="4dp"
+                android:background="@color/stroke_subtle" />
 
-        <View
-            android:layout_width="28dp"
-            android:layout_height="1dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="4dp"
-            android:background="@color/stroke_subtle" />
+            <ImageButton
+                android:id="@+id/fabMyLocation"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Center Target"
+                android:src="@drawable/ic_my_location"
+                app:tint="@color/text_primary" />
 
-        <ImageButton
-            android:id="@+id/fabSaveFavorite"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Save Location Bookmark"
-            android:src="@drawable/ic_favorite"
-            app:tint="@color/badge_warning_text" />
+            <View
+                android:layout_width="28dp"
+                android:layout_height="1dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginVertical="4dp"
+                android:background="@color/stroke_subtle" />
 
-        <View
-            android:layout_width="28dp"
-            android:layout_height="1dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="4dp"
-            android:background="@color/stroke_subtle" />
+            <ImageButton
+                android:id="@+id/fabSaveFavorite"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Save Location Bookmark"
+                android:src="@drawable/ic_favorite"
+                app:tint="@color/badge_warning_text" />
 
-        <ImageButton
-            android:id="@+id/fabOpenFavorites"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Saved Destinations"
-            android:src="@drawable/ic_favorite"
-            app:tint="@color/primary" />
+            <View
+                android:layout_width="28dp"
+                android:layout_height="1dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginVertical="4dp"
+                android:background="@color/stroke_subtle" />
 
-        <View
-            android:layout_width="28dp"
-            android:layout_height="1dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="4dp"
-            android:background="@color/stroke_subtle" />
+            <ImageButton
+                android:id="@+id/fabOpenFavorites"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Saved Destinations"
+                android:src="@drawable/ic_favorite"
+                app:tint="@color/primary" />
 
-        <ImageButton
-            android:id="@+id/fabOpenHistory"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Simulation History"
-            android:src="@drawable/ic_restore"
-            app:tint="@color/primary" />
-    </LinearLayout>
+            <View
+                android:layout_width="28dp"
+                android:layout_height="1dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginVertical="4dp"
+                android:background="@color/stroke_subtle" />
+
+            <ImageButton
+                android:id="@+id/fabOpenHistory"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Simulation History"
+                android:src="@drawable/ic_restore"
+                app:tint="@color/primary" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Floating Radar Joystick Overlay -->
     <com.fakegps.mocklocation.ui.custom.JoystickView
@@ -455,19 +486,27 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/layoutBottomContainer"
+        app:layout_constraintBottom_toTopOf="@id/cardBottomContainer"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Bottom HUD Controls Container -->
-    <LinearLayout
-        android:id="@+id/layoutBottomContainer"
+    <!-- Bottom HUD Controls Container (Elevated Card with Drop Shadow) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardBottomContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_card_glass"
-        android:elevation="12dp"
-        android:orientation="vertical"
-        android:padding="16dp"
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="18dp"
+        app:strokeColor="@color/stroke_subtle"
+        app:strokeWidth="1dp"
         app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layoutBottomContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
         <!-- Mode Switcher Tabs -->
         <RadioGroup
@@ -1042,6 +1081,7 @@
             android:layout_marginTop="8dp"
             android:visibility="gone" />
 
-    </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

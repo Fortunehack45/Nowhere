@@ -102,6 +102,7 @@ class MockLocationService : Service() {
         com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider.updateAllSearchWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider.updateAllWeatherWidgets(this)
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -471,6 +472,9 @@ class MockLocationService : Service() {
         sessionPrefs.lastLongitude = longitude
         sessionPrefs.lastAltitude = altitude
         updateAllWidgets()
+        serviceScope.launch(Dispatchers.IO) {
+            com.fakegps.mocklocation.weather.WeatherManager.fetchWeather(this@MockLocationService, latitude, longitude)
+        }
 
         startForegroundNotification(String.format("Fixed: %.5f, %.5f", latitude, longitude))
         updateLocationNotification(latitude, longitude, "Teleported / Fixed")
@@ -548,6 +552,9 @@ class MockLocationService : Service() {
         simulationJob = serviceScope.launch {
             try {
                 var lastTickTime = android.os.SystemClock.elapsedRealtime()
+                var lastWidgetUpdateTime = 0L
+                var lastNotificationUpdateTime = 0L
+
                 while (isActive) {
                     val now = android.os.SystemClock.elapsedRealtime()
                     val dt = ((now - lastTickTime) / 1000.0).coerceIn(0.05, 3.0)
@@ -580,13 +587,28 @@ class MockLocationService : Service() {
                                 distanceCoveredMeters = simLoc.distanceCoveredMeters,
                                 distanceRemainingMeters = simLoc.distanceRemainingMeters
                             )
+                            sessionPrefs.lastLatitude = simLoc.latitude
+                            sessionPrefs.lastLongitude = simLoc.longitude
                             sessionPrefs.routeTotalDistanceMeters = simLoc.totalDistanceMeters
                             sessionPrefs.routeCoveredDistanceMeters = simLoc.distanceCoveredMeters
                             sessionPrefs.routeRemainingDistanceMeters = simLoc.distanceRemainingMeters
+
+                            // Real-time home screen widget update in background
+                            if (now - lastWidgetUpdateTime >= 1500L) {
+                                lastWidgetUpdateTime = now
+                                updateAllWidgets()
+                            }
+
+                            // Real-time foreground notification progress update in background
+                            if (now - lastNotificationUpdateTime >= 2000L) {
+                                lastNotificationUpdateTime = now
+                                updateLocationNotification(simLoc.latitude, simLoc.longitude, "Route Active (${transportMode.title})")
+                            }
                         }
 
                         if (simLoc.isCompleted) {
                             Log.i(TAG, "Route completed: automatically transitioning to Fixed mock location at destination: (${simLoc.latitude}, ${simLoc.longitude})")
+                            updateAllWidgets()
                             startFixed(simLoc.latitude, simLoc.longitude, simLoc.altitude)
                             break
                         }
@@ -646,7 +668,11 @@ class MockLocationService : Service() {
         simulationJob = serviceScope.launch {
             try {
                 val deltaSeconds = 0.1
+                var lastWidgetUpdateTime = 0L
+                var lastNotificationUpdateTime = 0L
+
                 while (isActive) {
+                    val now = android.os.SystemClock.elapsedRealtime()
                     if (joystickMagnitude > 0.01f) {
                         val speedMps = (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude
                         val distanceMeters = speedMps * deltaSeconds
@@ -680,6 +706,18 @@ class MockLocationService : Service() {
                                 speedMps = speedMps,
                                 bearingDegrees = joystickAngleDeg
                             )
+
+                            // Real-time home screen widget update during joystick movement
+                            if (now - lastWidgetUpdateTime >= 1500L) {
+                                lastWidgetUpdateTime = now
+                                updateAllWidgets()
+                            }
+
+                            // Real-time notification update during joystick movement
+                            if (now - lastNotificationUpdateTime >= 2500L) {
+                                lastNotificationUpdateTime = now
+                                updateLocationNotification(newLat, newLon, "Joystick Active (${String.format(java.util.Locale.US, "%.1f km/h", joystickSpeedKmh * joystickMagnitude)})")
+                            }
                         }
                     } else {
                         val result = engine.setLocation(

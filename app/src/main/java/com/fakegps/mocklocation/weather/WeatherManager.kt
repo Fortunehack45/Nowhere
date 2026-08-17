@@ -2,8 +2,12 @@ package com.fakegps.mocklocation.weather
 
 import android.content.Context
 import android.util.Log
+import com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider
 import com.fakegps.mocklocation.util.LocationNameResolver
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -11,11 +15,19 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 
 object WeatherManager {
 
     private const val TAG = "WeatherManager"
     private var cachedReport: LocationWeatherReport? = null
+    private var lastFetchTimestamp: Long = 0L
+
+    private val _weatherFlow = MutableStateFlow<LocationWeatherReport?>(null)
+    val weatherFlow: StateFlow<LocationWeatherReport?> = _weatherFlow.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     fun getCachedReport(): LocationWeatherReport? = cachedReport
 
@@ -44,8 +56,23 @@ object WeatherManager {
     suspend fun fetchWeather(
         context: Context,
         latitude: Double,
-        longitude: Double
+        longitude: Double,
+        forceRefresh: Boolean = false
     ): LocationWeatherReport = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        val currentCached = cachedReport
+
+        // Check if cached report is recent (< 10 mins) and close (< 500m)
+        if (!forceRefresh && currentCached != null && (now - lastFetchTimestamp < 10 * 60 * 1000L)) {
+            val dLat = abs(currentCached.latitude - latitude)
+            val dLon = abs(currentCached.longitude - longitude)
+            if (dLat < 0.005 && dLon < 0.005) {
+                _weatherFlow.value = currentCached
+                return@withContext currentCached
+            }
+        }
+
+        _isLoading.value = true
         val placeName = LocationNameResolver.resolveLocationName(context, latitude, longitude)
 
         try {
@@ -58,8 +85,8 @@ object WeatherManager {
 
             val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
-                connectTimeout = 4000
-                readTimeout = 4000
+                connectTimeout = 4500
+                readTimeout = 4500
                 setRequestProperty("User-Agent", "NowhereWeatherService/1.0 (Android)")
             }
 
@@ -137,10 +164,19 @@ object WeatherManager {
                     forecast = forecastList
                 )
                 cachedReport = report
+                lastFetchTimestamp = System.currentTimeMillis()
+                _weatherFlow.value = report
+                _isLoading.value = false
+
+                // Real-time widget update broadcast
+                NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
+
                 return@withContext report
             }
         } catch (e: Exception) {
             Log.w(TAG, "Weather fetch note: ${e.message}")
+        } finally {
+            _isLoading.value = false
         }
 
         // Resilient fallback report if offline
@@ -169,6 +205,8 @@ object WeatherManager {
             forecast = fallbackForecast
         )
         cachedReport = fallbackReport
+        lastFetchTimestamp = System.currentTimeMillis()
+        _weatherFlow.value = fallbackReport
         return@withContext fallbackReport
     }
 }

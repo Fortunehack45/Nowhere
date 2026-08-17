@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.Color
 import android.net.Uri
+import java.util.Locale
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -196,23 +197,7 @@ class MainActivity : AppCompatActivity() {
         binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
         viewModel.refreshPermissionStates()
         checkBatteryOptimizationOnFirstLaunch()
-        updateWeatherBadge(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
-    }
-
-    private fun updateWeatherBadge(latitude: Double, longitude: Double) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val report = WeatherManager.fetchWeather(this@MainActivity, latitude, longitude)
-            withContext(Dispatchers.Main) {
-                if (!isFinishing && !isDestroyed) {
-                    binding.tvWeatherEmojiBadge.text = report.current.conditionEmoji
-                    if (settingsPrefs.useImperialUnits) {
-                        binding.tvWeatherBadgeText.text = String.format("%.0f°F", report.current.temperatureF)
-                    } else {
-                        binding.tvWeatherBadgeText.text = String.format("%.0f°C", report.current.temperatureC)
-                    }
-                }
-            }
-        }
+        viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
     }
 
     override fun onPause() {
@@ -837,6 +822,21 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
                 renderUiState(state)
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.weatherReport.collectLatest { report ->
+                if (report != null && !isFinishing && !isDestroyed) {
+                    binding.tvWeatherEmojiBadge.text = report.current.conditionEmoji
+                    val tempStr = if (settingsPrefs.useImperialUnits) {
+                        String.format(Locale.US, "%.0f°F", report.current.temperatureF)
+                    } else {
+                        String.format(Locale.US, "%.0f°C", report.current.temperatureC)
+                    }
+                    binding.tvWeatherBadgeText.text = tempStr
+                    binding.layoutWeatherBadge.contentDescription = "${report.locationName}: ${report.current.conditionName}, $tempStr"
+                }
             }
         }
     }

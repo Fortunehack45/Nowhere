@@ -11,6 +11,7 @@ import com.fakegps.mocklocation.databinding.LayoutDialogWeatherBinding
 import com.fakegps.mocklocation.weather.LocationWeatherReport
 import com.fakegps.mocklocation.weather.WeatherManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class WeatherBottomSheet(
@@ -36,9 +37,21 @@ class WeatherBottomSheet(
         settingsPrefs = AppSettingsPreferences(requireContext())
 
         binding.btnRefreshWeather.setOnClickListener {
-            loadWeatherReport()
+            viewLifecycleOwner.lifecycleScope.launch {
+                WeatherManager.fetchWeather(requireContext(), latitude, longitude, forceRefresh = true)
+            }
         }
 
+        // Reactively observe live weather flow
+        viewLifecycleOwner.lifecycleScope.launch {
+            WeatherManager.weatherFlow.collectLatest { report ->
+                if (report != null) {
+                    renderWeatherReport(report)
+                }
+            }
+        }
+
+        // Initial fetch
         loadWeatherReport()
     }
 

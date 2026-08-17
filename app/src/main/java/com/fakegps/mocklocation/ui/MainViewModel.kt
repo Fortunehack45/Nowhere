@@ -17,6 +17,8 @@ import com.fakegps.mocklocation.service.ServiceState
 import com.fakegps.mocklocation.simulator.GpxParser
 import com.fakegps.mocklocation.simulator.RoutePoint
 import com.fakegps.mocklocation.util.PermissionHelper
+import com.fakegps.mocklocation.weather.LocationWeatherReport
+import com.fakegps.mocklocation.weather.WeatherManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -49,6 +51,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    val weatherReport: StateFlow<LocationWeatherReport?> = WeatherManager.weatherFlow
+    val isWeatherLoading: StateFlow<Boolean> = WeatherManager.isLoading
+
     val allFavorites: Flow<List<FavoriteLocation>> = favoriteDao.getAllFavoritesFlow()
     val allTags: Flow<List<String>> = favoriteDao.getAllTagsFlow()
     val recentSearches: Flow<List<SearchHistoryItem>> = searchHistoryDao.getRecentSearchesFlow()
@@ -56,6 +61,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         refreshPermissionStates()
+        requestWeatherUpdate(sessionPrefs.lastLatitude, sessionPrefs.lastLongitude)
+    }
+
+    fun requestWeatherUpdate(latitude: Double, longitude: Double, forceRefresh: Boolean = false) {
+        viewModelScope.launch(Dispatchers.IO) {
+            WeatherManager.fetchWeather(getApplication(), latitude, longitude, forceRefresh)
+        }
     }
 
     fun refreshPermissionStates() {
@@ -83,6 +95,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sessionPrefs.lastLatitude = latitude
         sessionPrefs.lastLongitude = longitude
         _uiState.update { it.copy(fixedLatitude = latitude, fixedLongitude = longitude) }
+        requestWeatherUpdate(latitude, longitude)
     }
 
     // --- Route Waypoint Management with Undo & Redo ---
@@ -530,6 +543,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // --- Service Lifecycle & Errors ---
 
     fun onServiceStateUpdated(state: ServiceState) {
+        if (state is ServiceState.Running && state.mode is com.fakegps.mocklocation.simulator.SimulationMode.Fixed) {
+            requestWeatherUpdate(state.latitude, state.longitude)
+        }
+
         _uiState.update { current ->
             when (state) {
                 is ServiceState.Idle -> current.copy(
