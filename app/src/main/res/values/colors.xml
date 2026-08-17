@@ -15,12 +15,20 @@
     <!-- Surfaces (Light Mode) -->
     <color name="surface_dark">#F1F5F9</color>
     <color name="surface_obsidian">#FFFFFF</color>
-    <color name="surface_card">#F2FFFFFF</color>
+    <color name="surface_card">#FFFFFF</color>
     <color name="surface_card_elevated">#F8FAFC</color>
     <color name="surface_elevated">#FFFFFF</color>
-    <color name="surface_glass">#F2FFFFFF</color>
+    <color name="surface_glass">#FFFFFF</color>
     <color name="surface_search">#F1F5F9</color>
     <color name="card_dark">#F8FAFC</color>
+
+    <!-- Edge Blur Depth Gradient Scrims -->
+    <color name="edge_blur_top_start">#E6F1F5F9</color>
+    <color name="edge_blur_top_mid">#80F1F5F9</color>
+    <color name="edge_blur_top_end">#00F1F5F9</color>
+    <color name="edge_blur_bottom_start">#00F1F5F9</color>
+    <color name="edge_blur_bottom_mid">#99F1F5F9</color>
+    <color name="edge_blur_bottom_end">#F2F1F5F9</color>
 
     <!-- Strokes & Highlights -->
     <color name="stroke_subtle">#CBD5E1</color>

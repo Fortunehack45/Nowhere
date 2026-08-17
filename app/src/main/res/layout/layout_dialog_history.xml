@@ -61,38 +61,95 @@
             tools:ignore="ContentDescription" />
     </LinearLayout>
 
+    <!-- Modern Segmented Pill Indicator Options -->
     <LinearLayout
+        android:id="@+id/layoutHistoryTabContainer"
         android:layout_width="match_parent"
-        android:layout_height="38dp"
+        android:layout_height="42dp"
         android:layout_marginTop="12dp"
-        android:background="@drawable/bg_segmented_tab"
+        android:background="@drawable/bg_pill_container"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="2dp">
+        android:padding="3dp">
 
-        <TextView
+        <LinearLayout
             android:id="@+id/tabLocationHistory"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/bg_segmented_pill_item"
+            android:background="@drawable/bg_pill_active"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
-            android:text="Mock Locations"
-            android:textColor="@color/white"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp">
 
-        <TextView
+            <TextView
+                android:id="@+id/tvLocationIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📍 "
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvLocationTabText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mock Locations"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvLocationHistoryCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text=""
+                android:textColor="@color/white_soft"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/tabRouteHistory"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="2dp"
+            android:layout_marginStart="3dp"
             android:layout_weight="1"
             android:background="@null"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
-            android:text="Route Paths"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp">
+
+            <TextView
+                android:id="@+id/tvRouteIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🛣️ "
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvRouteTabText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Route Paths"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvRouteHistoryCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text=""
+                android:textColor="@color/text_muted"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
     <FrameLayout

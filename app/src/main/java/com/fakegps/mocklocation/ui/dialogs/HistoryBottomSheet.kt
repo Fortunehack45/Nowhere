@@ -133,17 +133,25 @@ class HistoryBottomSheet(
     private fun switchTab(isLocation: Boolean) {
         isLocationTabActive = isLocation
         if (isLocation) {
-            binding.tabLocationHistory.setBackgroundResource(R.drawable.bg_segmented_pill_item)
-            binding.tabLocationHistory.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            binding.tabLocationHistory.setBackgroundResource(R.drawable.bg_pill_active)
+            binding.tvLocationTabText.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            binding.tvLocationHistoryCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.white_soft))
+
             binding.tabRouteHistory.background = null
-            binding.tabRouteHistory.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+            binding.tvRouteTabText.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
+            binding.tvRouteHistoryCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
+
             binding.containerLocationHistory.visibility = View.VISIBLE
             binding.containerRouteHistory.visibility = View.GONE
         } else {
-            binding.tabRouteHistory.setBackgroundResource(R.drawable.bg_segmented_pill_item)
-            binding.tabRouteHistory.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            binding.tabRouteHistory.setBackgroundResource(R.drawable.bg_pill_active)
+            binding.tvRouteTabText.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            binding.tvRouteHistoryCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.white_soft))
+
             binding.tabLocationHistory.background = null
-            binding.tabLocationHistory.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+            binding.tvLocationTabText.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
+            binding.tvLocationHistoryCount.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
+
             binding.containerLocationHistory.visibility = View.GONE
             binding.containerRouteHistory.visibility = View.VISIBLE
         }
@@ -153,6 +161,7 @@ class HistoryBottomSheet(
         viewLifecycleOwner.lifecycleScope.launch {
             db.mockHistoryDao().getAllLocationHistoryFlow().collectLatest { list ->
                 locationAdapter.submitList(list)
+                binding.tvLocationHistoryCount.text = if (list.isNotEmpty()) "(${list.size})" else ""
                 binding.tvEmptyLocationHistory.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
                 binding.rvLocationHistory.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
             }
@@ -161,6 +170,7 @@ class HistoryBottomSheet(
         viewLifecycleOwner.lifecycleScope.launch {
             db.mockHistoryDao().getAllRouteHistoryFlow().collectLatest { list ->
                 routeAdapter.submitList(list)
+                binding.tvRouteHistoryCount.text = if (list.isNotEmpty()) "(${list.size})" else ""
                 binding.tvEmptyRouteHistory.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
                 binding.rvRouteHistory.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
             }
