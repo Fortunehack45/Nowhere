@@ -33,6 +33,7 @@ import com.fakegps.mocklocation.service.MockLocationService
 import com.fakegps.mocklocation.service.MockLocationServiceReceiver
 import com.fakegps.mocklocation.service.ServiceState
 import com.fakegps.mocklocation.simulator.RoutePoint
+import com.fakegps.mocklocation.simulator.SimulationMode
 import com.fakegps.mocklocation.ui.custom.JoystickView
 import com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog
 import com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet
@@ -537,7 +538,7 @@ class MainActivity : AppCompatActivity() {
         binding.joystickOverlay.setOnJoystickMoveListener(object : JoystickView.OnJoystickMoveListener {
             override fun onJoystickMoved(angleDegrees: Float, magnitude: Float) {
                 val speedKmh = viewModel.uiState.value.joystickSpeedKmh
-                if (!viewModel.uiState.value.isServiceRunning && magnitude > 0.05f) {
+                if (!viewModel.uiState.value.isServiceRunning && magnitude > 0.02f) {
                     startJoystickSpoofing()
                 }
                 mockService?.updateJoystickVector(angleDegrees, magnitude, speedKmh)
@@ -912,20 +913,26 @@ class MainActivity : AppCompatActivity() {
         // Joystick Controls State
         binding.tvJoystickSpeedLabel.text = "MAX: " + settingsPrefs.formatSpeed(state.joystickSpeedKmh)
         binding.sliderJoystickSpeed.value = state.joystickSpeedKmh.coerceIn(2.0f, 60.0f)
+        binding.joystickOverlay.visibility = if (state.selectedTab == SelectedModeTab.JOYSTICK) View.VISIBLE else View.GONE
+
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.JOYSTICK) {
             binding.btnJoystickToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnJoystickToggle.setIconResource(R.drawable.ic_stop)
             binding.btnJoystickToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_error_bg)
             binding.btnJoystickToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnJoystickToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
-            binding.joystickOverlay.visibility = View.VISIBLE
+
+            val running = state.serviceState as? ServiceState.Running
+            if (running != null && running.mode is SimulationMode.Joystick) {
+                updateFixedPinMarker(running.latitude, running.longitude)
+                binding.mapView.controller.setCenter(GeoPoint(running.latitude, running.longitude))
+            }
         } else {
             binding.btnJoystickToggle.text = "Engage Joystick"
             binding.btnJoystickToggle.setIconResource(R.drawable.ic_play)
             binding.btnJoystickToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)
             binding.btnJoystickToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnJoystickToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
-            binding.joystickOverlay.visibility = View.GONE
         }
 
         // Live Search Results

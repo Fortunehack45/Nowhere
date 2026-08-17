@@ -23,7 +23,7 @@
         android:paddingBottom="8dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- App Brand Header & Live Status Pill -->
+        <!-- App Brand Header & Action Tools -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="44dp"
@@ -31,136 +31,159 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@drawable/ic_nowhere_logo"
                 tools:ignore="ContentDescription" />
 
-            <View
+            <!-- Horizontal Scrollable Container for Badges so it NEVER overflows on small screens -->
+            <HorizontalScrollView
                 android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
-
-            <!-- IP Shield HUD Pill -->
-            <!-- Weather HUD Pill -->
-            <LinearLayout
-                android:id="@+id/layoutWeatherBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
                 android:layout_marginEnd="6dp"
-                android:background="@drawable/bg_status_pill"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingHorizontal="8dp">
+                android:layout_weight="1"
+                android:fadingEdge="horizontal"
+                android:requiresFadingEdge="horizontal"
+                android:scrollbars="none">
 
-                <TextView
-                    android:id="@+id/tvWeatherEmojiBadge"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⛅"
-                    android:textSize="12sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvWeatherBadgeText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:letterSpacing="0.04"
-                    android:text="--°C"
-                    android:textColor="@color/text_muted"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                    <!-- Weather HUD Pill (Solid Opaque) -->
+                    <LinearLayout
+                        android:id="@+id/layoutWeatherBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="28dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_status_pill"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:paddingHorizontal="8dp">
 
-            <!-- IP Shield HUD Pill -->
+                        <TextView
+                            android:id="@+id/tvWeatherEmojiBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⛅"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvWeatherBadgeText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:letterSpacing="0.04"
+                            android:text="--°C"
+                            android:textColor="@color/text_primary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- IP Shield HUD Pill (Solid Opaque) -->
+                    <LinearLayout
+                        android:id="@+id/layoutIpShieldBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="28dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_status_pill"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:paddingHorizontal="8dp">
+
+                        <ImageView
+                            android:id="@+id/ivShieldIcon"
+                            android:layout_width="13dp"
+                            android:layout_height="13dp"
+                            android:src="@drawable/ic_launcher_monochrome"
+                            app:tint="@color/text_primary"
+                            tools:ignore="ContentDescription" />
+
+                        <TextView
+                            android:id="@+id/tvIpShieldBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:letterSpacing="0.04"
+                            android:text="DIRECT"
+                            android:textColor="@color/text_primary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Status Badge Pill (Solid Opaque) -->
+                    <LinearLayout
+                        android:id="@+id/layoutStatusBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="28dp"
+                        android:background="@drawable/bg_status_pill"
+                        android:gravity="center"
+                        android:paddingHorizontal="8dp">
+
+                        <View
+                            android:id="@+id/viewStatusDot"
+                            android:layout_width="7dp"
+                            android:layout_height="7dp"
+                            android:background="@drawable/bg_status_pill"
+                            android:backgroundTint="@color/text_muted" />
+
+                        <TextView
+                            android:id="@+id/tvStatusBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:letterSpacing="0.05"
+                            android:text="STANDBY"
+                            android:textColor="@color/text_muted"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- Fixed Action Buttons Anchored to Right (Never cut off!) -->
             <LinearLayout
-                android:id="@+id/layoutIpShieldBadge"
                 android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/bg_status_pill"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingHorizontal="8dp">
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-                <ImageView
-                    android:id="@+id/ivShieldIcon"
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@drawable/ic_launcher_monochrome"
-                    app:tint="@color/text_muted"
+                <ImageButton
+                    android:id="@+id/btnHeaderWidgets"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_status_pill"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_widgets"
+                    app:tint="@color/primary"
                     tools:ignore="ContentDescription" />
 
-                <TextView
-                    android:id="@+id/tvIpShieldBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:letterSpacing="0.04"
-                    android:text="IP: DIRECT"
-                    android:textColor="@color/text_muted"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Status Badge Pill -->
-            <LinearLayout
-                android:id="@+id/layoutStatusBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:background="@drawable/bg_status_pill"
-                android:gravity="center"
-                android:paddingHorizontal="10dp">
-
-                <View
-                    android:id="@+id/viewStatusDot"
-                    android:layout_width="7dp"
-                    android:layout_height="7dp"
-                    android:background="@drawable/bg_status_pill"
-                    android:backgroundTint="@color/text_muted" />
-
-                <TextView
-                    android:id="@+id/tvStatusBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageButton
+                    android:id="@+id/btnHeaderSettings"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
                     android:layout_marginStart="6dp"
-                    android:letterSpacing="0.06"
-                    android:text="STANDBY"
-                    android:textColor="@color/text_muted"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:background="@drawable/bg_status_pill"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_settings"
+                    app:tint="@color/primary"
+                    tools:ignore="ContentDescription" />
             </LinearLayout>
-
-            <ImageButton
-                android:id="@+id/btnHeaderWidgets"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_widgets"
-                app:tint="@color/primary"
-                tools:ignore="ContentDescription" />
-
-            <ImageButton
-                android:id="@+id/btnHeaderSettings"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="2dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_settings"
-                app:tint="@color/primary"
-                tools:ignore="ContentDescription" />
         </LinearLayout>
 
-        <!-- Search Bar -->
+        <!-- Search Bar (Solid Opaque Card) -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layoutSearchBar"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_glass"
+            android:background="@drawable/bg_card_elevated"
+            android:elevation="4dp"
             android:paddingHorizontal="14dp">
 
             <ImageView

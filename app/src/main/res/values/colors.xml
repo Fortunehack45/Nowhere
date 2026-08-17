@@ -18,8 +18,8 @@
     <color name="surface_card">#FFFFFF</color>
     <color name="surface_card_elevated">#F8FAFC</color>
     <color name="surface_elevated">#FFFFFF</color>
-    <color name="surface_glass">#F5FFFFFF</color>
-    <color name="surface_search">#E2E8F0</color>
+    <color name="surface_glass">#FFFFFF</color>
+    <color name="surface_search">#F1F5F9</color>
     <color name="card_dark">#F8FAFC</color>
 
     <!-- Strokes & Highlights -->
@@ -37,14 +37,16 @@
     <color name="text_cyan">#0F172A</color>
     <color name="accent_rose">#E41B1B</color>
 
-    <!-- Status Badges -->
-    <color name="badge_active_bg">#20E41B1B</color>
+    <!-- Status Badges (100% Opaque Solid Surfaces) -->
+    <color name="badge_active_bg">#FEE2E2</color>
     <color name="badge_active_text">#E41B1B</color>
-    <color name="badge_standby_bg">#1A64748B</color>
+    <color name="badge_success_bg">#D1FAE5</color>
+    <color name="badge_success_text">#059669</color>
+    <color name="badge_standby_bg">#F1F5F9</color>
     <color name="badge_standby_text">#475569</color>
-    <color name="badge_warning_bg">#26F59E0B</color>
+    <color name="badge_warning_bg">#FEF3C7</color>
     <color name="badge_warning_text">#D97706</color>
-    <color name="badge_error_bg">#26EF4444</color>
+    <color name="badge_error_bg">#FEE2E2</color>
     <color name="badge_error_text">#DC2626</color>
 
     <!-- Widget Dynamic Themed Icon Tokens (Light Mode Fallback) -->

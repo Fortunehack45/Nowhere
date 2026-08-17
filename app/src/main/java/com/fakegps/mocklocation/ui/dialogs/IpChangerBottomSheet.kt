@@ -128,10 +128,32 @@ class IpChangerBottomSheet(
         onShieldStateChanged?.invoke()
     }
 
+    override fun onStart() {
+        super.onStart()
+        val dialog = dialog as? com.google.android.material.bottomsheet.BottomSheetDialog
+        val bottomSheet = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.let {
+            val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(it)
+            behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            behavior.skipCollapsed = true
+        }
+    }
+
     private fun observeVpnState() {
         viewLifecycleOwner.lifecycleScope.launch {
             NowhereVpnService.vpnState.collectLatest { state ->
                 renderVpnState(state)
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            NowhereVpnService.trafficStats.collectLatest { stats ->
+                if (_binding != null && NowhereVpnService.isRunning) {
+                    binding.tvVpnDownloadData.text = stats.formatDownload()
+                    binding.tvVpnDownloadRate.text = stats.formatDownloadRate()
+                    binding.tvVpnUploadData.text = stats.formatUpload()
+                    binding.tvVpnUploadRate.text = stats.formatUploadRate()
+                    binding.tvVpnSessionDuration.text = "⏱️ ${stats.formatDuration()}"
+                }
             }
         }
     }
@@ -140,6 +162,7 @@ class IpChangerBottomSheet(
         val context = context ?: return
         when (state) {
             is NowhereVpnService.VpnState.Connected -> {
+                binding.cardVpnTraffic.visibility = View.VISIBLE
                 binding.layoutShieldStatus.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_active_bg)
                 binding.viewShieldDot.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_active_text)
                 binding.tvShieldStatus.text = "SHIELD ACTIVE"
@@ -157,10 +180,12 @@ class IpChangerBottomSheet(
                 binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.badge_error_text)
             }
             is NowhereVpnService.VpnState.Connecting -> {
+                binding.cardVpnTraffic.visibility = View.VISIBLE
                 binding.tvShieldStatus.text = "CONNECTING..."
                 binding.btnToggleShield.text = "Connecting..."
             }
             else -> {
+                binding.cardVpnTraffic.visibility = View.GONE
                 binding.layoutShieldStatus.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_standby_bg)
                 binding.viewShieldDot.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_standby_text)
                 binding.tvShieldStatus.text = "DIRECT IP"

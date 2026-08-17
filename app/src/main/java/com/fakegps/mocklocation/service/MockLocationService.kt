@@ -344,6 +344,15 @@ class MockLocationService : Service() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
+                val runningState = _serviceState.value as? ServiceState.Running
+                val routeDetails = if (runningState != null && runningState.totalDistanceMeters > 0) {
+                    val covered = String.format("%.2f km", runningState.distanceCoveredMeters / 1000.0)
+                    val total = String.format("%.2f km", runningState.totalDistanceMeters / 1000.0)
+                    val remaining = String.format("%.2f km", runningState.distanceRemainingMeters / 1000.0)
+                    val progress = ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt()
+                    "\n📍 Route Progress: $covered / $total ($progress% • $remaining left)"
+                } else ""
+
                 val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
                     .setContentTitle(placeName)
                     .setContentText(coordsText)
@@ -357,7 +366,7 @@ class MockLocationService : Service() {
                     .setStyle(
                         NotificationCompat.BigTextStyle()
                             .setBigContentTitle(placeName)
-                            .bigText("$coordsText\nGPS Mocking active in background across all apps.")
+                            .bigText("$coordsText$routeDetails\nGPS Mocking active in background across all apps.")
                     )
 
                 if (activeMode is SimulationMode.Route) {
@@ -650,6 +659,8 @@ class MockLocationService : Service() {
                         )
                         joystickLat = newLat
                         joystickLon = newLon
+                        sessionPrefs.lastLatitude = newLat
+                        sessionPrefs.lastLongitude = newLon
 
                         val result = engine.setLocation(
                             latitude = newLat,
@@ -671,14 +682,24 @@ class MockLocationService : Service() {
                             )
                         }
                     } else {
-                        engine.setLocation(
+                        val result = engine.setLocation(
                             latitude = joystickLat,
                             longitude = joystickLon,
                             altitude = 15.0,
                             speed = 0.0f,
                             bearing = joystickAngleDeg,
-                            applyStationaryJitter = false
+                            applyStationaryJitter = true
                         )
+                        if (result.isSuccess) {
+                            _serviceState.value = ServiceState.Running(
+                                mode = activeMode,
+                                latitude = joystickLat,
+                                longitude = joystickLon,
+                                altitude = 15.0,
+                                speedMps = 0.0f,
+                                bearingDegrees = joystickAngleDeg
+                            )
+                        }
                     }
 
                     delay(100L)

@@ -75,6 +75,19 @@
             android:text="IP: 198.51.100.45 • 28ms"
             android:textColor="@color/text_secondary"
             android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tvWidgetVpnData"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:fontFamily="monospace"
+            android:maxLines="1"
+            android:text="↓ 0.00 KB  ↑ 0.00 KB"
+            android:textColor="@color/primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <!-- Bottom Controls -->

@@ -66,18 +66,21 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
         val isRunning = NowhereVpnService.isRunning
         val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_NODES.first()
 
+        val stats = NowhereVpnService.trafficStats.value
         if (isRunning) {
             views.setTextViewText(R.id.tvWidgetVpnStatus, "ACTIVE")
             views.setTextColor(R.id.tvWidgetVpnStatus, ContextCompat.getColor(context, R.color.badge_active_text))
             views.setTextViewText(R.id.btnWidgetVpnToggle, "Disconnect Shield")
             views.setTextViewText(R.id.tvWidgetVpnNode, "${node.flagEmoji} ${node.city}, ${node.country}")
             views.setTextViewText(R.id.tvWidgetVpnIp, "Virtual IP: ${node.virtualIp} • Protected")
+            views.setTextViewText(R.id.tvWidgetVpnData, "↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
         } else {
             views.setTextViewText(R.id.tvWidgetVpnStatus, "DIRECT")
             views.setTextColor(R.id.tvWidgetVpnStatus, ContextCompat.getColor(context, R.color.text_muted))
             views.setTextViewText(R.id.btnWidgetVpnToggle, "Activate Shield")
             views.setTextViewText(R.id.tvWidgetVpnNode, "${node.flagEmoji} ${node.name} (Ready)")
             views.setTextViewText(R.id.tvWidgetVpnIp, "Direct Connection • Tap to Mask IP")
+            views.setTextViewText(R.id.tvWidgetVpnData, "↓ 0.00 KB  ↑ 0.00 KB (Standby)")
         }
 
         // Open App Intent
