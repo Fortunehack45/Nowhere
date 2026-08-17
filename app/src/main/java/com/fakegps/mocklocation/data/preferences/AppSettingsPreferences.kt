@@ -2,9 +2,22 @@ package com.fakegps.mocklocation.data.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatDelegate
 import org.osmdroid.tileprovider.tilesource.ITileSource
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.tileprovider.tilesource.XYTileSource
+
+val ESRI_SATELLITE: ITileSource = XYTileSource(
+    "EsriSatellite",
+    0,
+    19,
+    256,
+    ".jpg",
+    arrayOf(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/",
+        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"
+    ),
+    "© Esri, Maxar, Earthstar Geographics, CNES/Airbus DS, USDA FSA, USGS, Aerogrid, IGN, IGP, and the GIS User Community"
+)
 
 class AppSettingsPreferences(context: Context) {
 
@@ -12,6 +25,8 @@ class AppSettingsPreferences(context: Context) {
         context.getSharedPreferences("nowhere_app_settings_prefs", Context.MODE_PRIVATE)
 
     companion object {
+        const val KEY_HAS_COMPLETED_FEATURE_WALKTHROUGH = "key_has_completed_feature_walkthrough"
+
         // Advanced Location Simulation Keys
         const val KEY_USE_FUSED_PROVIDER = "key_use_fused_provider"
         const val KEY_RANDOMIZE_JITTER = "key_randomize_jitter"
@@ -184,18 +199,22 @@ class AppSettingsPreferences(context: Context) {
         get() = prefs.getString("widget_slot_3_lon", "-74.0060")?.toDoubleOrNull() ?: -74.0060
         set(value) = prefs.edit().putString("widget_slot_3_lon", value.toString()).apply()
 
+    var hasCompletedFeatureWalkthrough: Boolean
+        get() = prefs.getBoolean(KEY_HAS_COMPLETED_FEATURE_WALKTHROUGH, false)
+        set(value) = prefs.edit().putBoolean(KEY_HAS_COMPLETED_FEATURE_WALKTHROUGH, value).apply()
+
     fun applyTheme(theme: String = appTheme) {
         when (theme) {
-            "DARK" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            "LIGHT" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+            "DARK" -> androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES)
+            "LIGHT" -> androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO)
+            else -> androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
     }
 
     fun getOsmTileSource(): ITileSource {
         return when (mapTileSource) {
             "TOPO" -> TileSourceFactory.OpenTopo
-            "USGS_SAT" -> TileSourceFactory.USGS_SAT
+            "USGS_SAT", "SATELLITE", "ESRI_SAT" -> ESRI_SATELLITE
             else -> TileSourceFactory.MAPNIK
         }
     }

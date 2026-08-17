@@ -32,7 +32,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val favoriteDao = db.favoriteDao()
     private val searchHistoryDao = db.searchHistoryDao()
     private val savedRouteDao = db.savedRouteDao()
+    private val mockHistoryDao = db.mockHistoryDao()
     private val sessionPrefs = SessionPreferences(application)
+
+    private val undoStack = java.util.ArrayDeque<List<RoutePoint>>()
+    private val redoStack = java.util.ArrayDeque<List<RoutePoint>>()
 
     private val _uiState = MutableStateFlow(
         MainUiState(
@@ -81,41 +85,154 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(fixedLatitude = latitude, fixedLongitude = longitude) }
     }
 
-    fun addRouteWaypoint(latitude: Double, longitude: Double) {
-        val newPoint = RoutePoint(latitude, longitude)
-        val currentKeys = _uiState.value.userKeypoints.toMutableList().apply { add(newPoint) }
-        _uiState.update { it.copy(userKeypoints = currentKeys) }
+    // --- Route Waypoint Management with Undo & Redo ---
 
-        if (currentKeys.size == 1) {
-            _uiState.update { it.copy(routeWaypoints = currentKeys) }
-            sessionPrefs.saveWaypoints(currentKeys)
-        } else if (currentKeys.size >= 2) {
+    fun addRouteWaypoint(latitude: Double, longitude: Double) {
+        val currentKeys = _uiState.value.userKeypoints
+        undoStack.push(currentKeys)
+        redoStack.clear()
+
+        val newPoint = RoutePoint(latitude, longitude)
+        val nextKeys = currentKeys.toMutableList().apply { add(newPoint) }
+        applyKeypoints(nextKeys)
+    }
+
+    fun undoRouteWaypoint() {
+        if (undoStack.isNotEmpty()) {
+            val previousKeys = undoStack.pop()
+            redoStack.push(_uiState.value.userKeypoints)
+            applyKeypoints(previousKeys)
+        }
+    }
+
+    fun redoRouteWaypoint() {
+        if (redoStack.isNotEmpty()) {
+            val nextKeys = redoStack.pop()
+            undoStack.push(_uiState.value.userKeypoints)
+            applyKeypoints(nextKeys)
+        }
+    }
+
+    private fun applyKeypoints(keys: List<RoutePoint>) {
+        _uiState.update {
+            it.copy(
+                userKeypoints = keys,
+                canUndoRoute = undoStack.isNotEmpty(),
+                canRedoRoute = redoStack.isNotEmpty()
+            )
+        }
+
+        if (keys.isEmpty()) {
+            sessionPrefs.saveWaypoints(emptyList())
+            _uiState.update { it.copy(routeWaypoints = emptyList()) }
+        } else if (keys.size == 1) {
+            sessionPrefs.saveWaypoints(keys)
+            _uiState.update { it.copy(routeWaypoints = keys) }
+        } else {
             viewModelScope.launch(Dispatchers.IO) {
-                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(currentKeys, _uiState.value.transportMode)
+                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(keys, _uiState.value.transportMode)
                 sessionPrefs.saveWaypoints(resolved)
                 _uiState.update { it.copy(routeWaypoints = resolved) }
             }
         }
     }
 
+    fun setLoadedRoute(waypoints: List<RoutePoint>, transportMode: com.fakegps.mocklocation.simulator.TransportMode? = null, speed: Float? = null) {
+        undoStack.clear()
+        redoStack.clear()
+        sessionPrefs.saveWaypoints(waypoints)
+        if (speed != null) sessionPrefs.lastSpeedKmh = speed
+        _uiState.update {
+            it.copy(
+                userKeypoints = waypoints,
+                routeWaypoints = waypoints,
+                transportMode = transportMode ?: it.transportMode,
+                routeSpeedKmh = speed ?: it.routeSpeedKmh,
+                canUndoRoute = false,
+                canRedoRoute = false,
+                selectedTab = SelectedModeTab.ROUTE
+            )
+        }
+    }
+
     fun clearRouteWaypoints() {
+        if (_uiState.value.userKeypoints.isNotEmpty() || _uiState.value.routeWaypoints.isNotEmpty()) {
+            undoStack.push(_uiState.value.userKeypoints)
+            redoStack.clear()
+        }
         sessionPrefs.saveWaypoints(emptyList())
-        _uiState.update { it.copy(routeWaypoints = emptyList(), userKeypoints = emptyList()) }
+        _uiState.update {
+            it.copy(
+                routeWaypoints = emptyList(),
+                userKeypoints = emptyList(),
+                canUndoRoute = undoStack.isNotEmpty(),
+                canRedoRoute = false
+            )
+        }
     }
 
     fun reverseRouteWaypoints() {
-        val reversedKeys = _uiState.value.userKeypoints.reversed()
-        _uiState.update { it.copy(userKeypoints = reversedKeys) }
-        if (reversedKeys.size >= 2) {
-            viewModelScope.launch(Dispatchers.IO) {
-                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(reversedKeys, _uiState.value.transportMode)
-                sessionPrefs.saveWaypoints(resolved)
-                _uiState.update { it.copy(routeWaypoints = resolved, statusMessage = "Route reversed.") }
-            }
+        val current = _uiState.value.userKeypoints
+        if (current.isNotEmpty()) {
+            undoStack.push(current)
+            redoStack.clear()
+            val reversedKeys = current.reversed()
+            applyKeypoints(reversedKeys)
         } else {
             val reversedAll = _uiState.value.routeWaypoints.reversed()
             sessionPrefs.saveWaypoints(reversedAll)
             _uiState.update { it.copy(routeWaypoints = reversedAll, statusMessage = "Route reversed.") }
+        }
+    }
+
+    // --- History Recording ---
+
+    fun recordLocationHistory(latitude: Double, longitude: Double, name: String = "", mode: String = "TELEPORT") {
+        viewModelScope.launch(Dispatchers.IO) {
+            val resolvedName = if (name.isNotBlank()) name else {
+                try {
+                    val app = getApplication<Application>()
+                    val geocoder = Geocoder(app, Locale.getDefault())
+                    val list = geocoder.getFromLocation(latitude, longitude, 1)
+                    if (!list.isNullOrEmpty()) {
+                        val addr = list[0]
+                        addr.locality ?: addr.subAdminArea ?: addr.adminArea ?: addr.countryName ?: "Mock Point"
+                    } else "Mock Point"
+                } catch (e: Exception) {
+                    "Mock Point"
+                }
+            }
+            mockHistoryDao.insertLocationHistory(
+                com.fakegps.mocklocation.data.db.MockLocationHistory(
+                    latitude = latitude,
+                    longitude = longitude,
+                    locationName = resolvedName,
+                    mode = mode
+                )
+            )
+        }
+    }
+
+    fun recordRouteHistory(routeName: String, waypoints: List<RoutePoint>, totalDistanceMeters: Double, speedKmh: Float, isLooping: Boolean, transportMode: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val array = JSONArray()
+            waypoints.forEach {
+                val obj = JSONObject()
+                obj.put("lat", it.latitude)
+                obj.put("lon", it.longitude)
+                array.put(obj)
+            }
+            mockHistoryDao.insertRouteHistory(
+                com.fakegps.mocklocation.data.db.MockRouteHistory(
+                    routeName = routeName.ifBlank { "Route (${waypoints.size} waypoints)" },
+                    waypointsJson = array.toString(),
+                    waypointsCount = waypoints.size,
+                    totalDistanceMeters = totalDistanceMeters,
+                    speedKmh = speedKmh,
+                    isLooping = isLooping,
+                    transportMode = transportMode
+                )
+            )
         }
     }
 

@@ -269,8 +269,8 @@ class SettingsActivity : AppCompatActivity() {
             }
             settingsPrefs.mapTileSource = source
             val label = when (source) {
-                "TOPO" -> "Terrain Topographic"
-                "USGS_SAT" -> "USGS Satellite"
+                "TOPO" -> "Terrain Topographic (OpenTopoMap)"
+                "USGS_SAT" -> "High-Resolution Satellite (Esri World Imagery)"
                 else -> "Standard OpenStreetMap"
             }
             Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()

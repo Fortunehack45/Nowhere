@@ -429,6 +429,22 @@
             android:contentDescription="Saved Destinations"
             android:src="@drawable/ic_favorite"
             app:tint="@color/primary" />
+
+        <View
+            android:layout_width="28dp"
+            android:layout_height="1dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginVertical="4dp"
+            android:background="@color/stroke_subtle" />
+
+        <ImageButton
+            android:id="@+id/fabOpenHistory"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Simulation History"
+            android:src="@drawable/ic_restore"
+            app:tint="@color/primary" />
     </LinearLayout>
 
     <!-- Floating Radar Joystick Overlay -->
@@ -615,6 +631,28 @@
                     android:text="0 Waypoints (Tap map to plot)"
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
+
+                <!-- Undo Waypoint Button -->
+                <ImageButton
+                    android:id="@+id/btnRouteUndo"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Undo waypoint"
+                    android:src="@drawable/ic_undo"
+                    app:tint="@color/text_primary" />
+
+                <!-- Redo Waypoint Button -->
+                <ImageButton
+                    android:id="@+id/btnRouteRedo"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Redo waypoint"
+                    android:src="@drawable/ic_redo"
+                    app:tint="@color/text_primary" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchLoopRoute"

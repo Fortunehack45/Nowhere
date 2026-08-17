@@ -27,6 +27,8 @@ data class MainUiState(
     val joystickSpeedKmh: Float = 10.0f,
     val searchResults: List<AddressSearchResult> = emptyList(),
     val isSearching: Boolean = false,
+    val canUndoRoute: Boolean = false,
+    val canRedoRoute: Boolean = false,
     val activeError: MockLocationError? = null,
     val statusMessage: String? = null
 )

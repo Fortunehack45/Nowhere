@@ -36,6 +36,7 @@ import com.fakegps.mocklocation.simulator.RoutePoint
 import com.fakegps.mocklocation.simulator.SimulationMode
 import com.fakegps.mocklocation.ui.custom.JoystickView
 import com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog
+import com.fakegps.mocklocation.ui.dialogs.HistoryBottomSheet
 import com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet
 import com.fakegps.mocklocation.ui.dialogs.SaveFavoriteDialog
 import com.fakegps.mocklocation.ui.dialogs.SaveRouteDialog
@@ -484,6 +485,14 @@ class MainActivity : AppCompatActivity() {
             gpxPickerLauncher.launch("*/*")
         }
 
+        binding.btnRouteUndo.setOnClickListener {
+            viewModel.undoRouteWaypoint()
+        }
+
+        binding.btnRouteRedo.setOnClickListener {
+            viewModel.redoRouteWaypoint()
+        }
+
         binding.btnClearRoute.setOnClickListener {
             viewModel.clearRouteWaypoints()
         }
@@ -605,6 +614,48 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Target set: ${favorite.name}", Toast.LENGTH_SHORT).show()
             }.show(supportFragmentManager, FavoritesBottomSheet.TAG)
         }
+
+        binding.fabOpenHistory.setOnClickListener {
+            HistoryBottomSheet(
+                onReuseLocation = { lat, lon, name ->
+                    viewModel.setFixedCoordinates(lat, lon)
+                    updateFixedPinMarker(lat, lon)
+                    val geoPoint = GeoPoint(lat, lon)
+                    if (settingsPrefs.enableMapAnimations) {
+                        binding.mapView.controller.animateTo(geoPoint)
+                    } else {
+                        binding.mapView.controller.setCenter(geoPoint)
+                    }
+                    viewModel.setSelectedTab(SelectedModeTab.FIXED)
+                    startFixedSpoofing()
+                    Toast.makeText(this, "Teleporting to $name", Toast.LENGTH_SHORT).show()
+                },
+                onReuseRoute = { routeHistory ->
+                    try {
+                        val array = org.json.JSONArray(routeHistory.waypointsJson)
+                        val pts = mutableListOf<RoutePoint>()
+                        for (i in 0 until array.length()) {
+                            val obj = array.getJSONObject(i)
+                            pts.add(RoutePoint(obj.getDouble("lat"), obj.getDouble("lon")))
+                        }
+                        val mode = try {
+                            com.fakegps.mocklocation.simulator.TransportMode.valueOf(routeHistory.transportMode)
+                        } catch (e: Exception) {
+                            com.fakegps.mocklocation.simulator.TransportMode.VEHICLE
+                        }
+                        viewModel.setLoadedRoute(pts, mode, routeHistory.speedKmh)
+                        if (pts.isNotEmpty()) {
+                            val geoPoint = GeoPoint(pts.first().latitude, pts.first().longitude)
+                            binding.mapView.controller.setCenter(geoPoint)
+                            binding.mapView.controller.setZoom(15.0)
+                        }
+                        Toast.makeText(this, "Loaded route: ${routeHistory.routeName}", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(this, "Failed to load route: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            ).show(supportFragmentManager, "HISTORY_DIALOG")
+        }
     }
 
     private fun performHapticFeedbackIfEnabled() {
@@ -627,6 +678,8 @@ class MainActivity : AppCompatActivity() {
         performHapticFeedbackIfEnabled()
 
         val state = viewModel.uiState.value
+        viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "TELEPORT")
+
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_FIXED
             putExtra(MockLocationService.EXTRA_LATITUDE, state.fixedLatitude)
@@ -676,6 +729,22 @@ class MainActivity : AppCompatActivity() {
         sessionPrefs.lastSpeedKmh = state.routeSpeedKmh
         sessionPrefs.isLooping = state.isRouteLooping
 
+        var totalDist = 0.0
+        for (i in 0 until state.routeWaypoints.size - 1) {
+            totalDist += GeoUtils.calculateDistanceMeters(
+                state.routeWaypoints[i].latitude, state.routeWaypoints[i].longitude,
+                state.routeWaypoints[i + 1].latitude, state.routeWaypoints[i + 1].longitude
+            )
+        }
+        viewModel.recordRouteHistory(
+            routeName = "Route (${state.routeWaypoints.size} pts • ${state.transportMode.name})",
+            waypoints = state.routeWaypoints,
+            totalDistanceMeters = totalDist,
+            speedKmh = state.routeSpeedKmh,
+            isLooping = state.isRouteLooping,
+            transportMode = state.transportMode.name
+        )
+
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_ROUTE
             putExtra(MockLocationService.EXTRA_SPEED_KMH, state.routeSpeedKmh)
@@ -691,6 +760,8 @@ class MainActivity : AppCompatActivity() {
         performHapticFeedbackIfEnabled()
 
         val state = viewModel.uiState.value
+        viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "JOYSTICK")
+
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_JOYSTICK
             putExtra(MockLocationService.EXTRA_LATITUDE, state.fixedLatitude)
@@ -860,6 +931,11 @@ class MainActivity : AppCompatActivity() {
         }
         val formattedDist = settingsPrefs.formatDistance(totalRouteDist)
         binding.tvWaypointsCount.text = "${state.routeWaypoints.size} Waypoints ($formattedDist)"
+        binding.btnRouteUndo.isEnabled = state.canUndoRoute
+        binding.btnRouteUndo.alpha = if (state.canUndoRoute) 1.0f else 0.35f
+        binding.btnRouteRedo.isEnabled = state.canRedoRoute
+        binding.btnRouteRedo.alpha = if (state.canRedoRoute) 1.0f else 0.35f
+
         binding.tvRouteSpeedLabel.text = settingsPrefs.formatSpeed(state.routeSpeedKmh)
 
         binding.sliderRouteSpeed.valueFrom = state.transportMode.minSpeedKmh

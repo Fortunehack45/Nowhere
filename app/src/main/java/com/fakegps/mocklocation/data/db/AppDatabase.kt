@@ -9,9 +9,11 @@ import androidx.room.RoomDatabase
     entities = [
         FavoriteLocation::class,
         SearchHistoryItem::class,
-        SavedRoute::class
+        SavedRoute::class,
+        MockLocationHistory::class,
+        MockRouteHistory::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -19,6 +21,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun favoriteDao(): FavoriteDao
     abstract fun searchHistoryDao(): SearchHistoryDao
     abstract fun savedRouteDao(): SavedRouteDao
+    abstract fun mockHistoryDao(): MockHistoryDao
 
     companion object {
         @Volatile
