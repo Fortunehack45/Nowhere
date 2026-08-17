@@ -138,6 +138,12 @@ object IpManager {
         )
     )
 
+    val GLOBAL_NODES get() = GLOBAL_PRIVACY_NODES
+
+    fun findNodeById(id: String?): IpNode? {
+        return GLOBAL_PRIVACY_NODES.find { it.id == id }
+    }
+
     fun getNodeById(id: String?): IpNode {
         return GLOBAL_PRIVACY_NODES.find { it.id == id } ?: GLOBAL_PRIVACY_NODES[0]
     }

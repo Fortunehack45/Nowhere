@@ -128,15 +128,45 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Route Progress Bar & Waypoint Count -->
+    <!-- Live Distance Telemetry (Covered / Total / Remaining) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvWidgetRouteDistance"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Covered: 0.0 km / 0.0 km"
+            android:textColor="@color/text_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvWidgetRouteRemaining"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.0 km left"
+            android:textColor="@color/primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Route Progress Bar -->
     <ProgressBar
         android:id="@+id/pbWidgetRoute"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="5dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:max="100"
-        android:progress="45"
+        android:progress="0"
         android:progressTint="@color/primary" />
 
     <!-- Bottom Controls & Coordinates -->

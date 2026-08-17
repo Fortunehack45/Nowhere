@@ -150,11 +150,11 @@ class IpChangerBottomSheet(
 
                 binding.btnToggleShield.text = "Disconnect IP Shield"
                 binding.btnToggleShield.setIconResource(R.drawable.ic_clear)
-                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.card_dark)
-                binding.btnToggleShield.strokeColor = ContextCompat.getColorStateList(context, R.color.primary)
-                binding.btnToggleShield.strokeWidth = 2
-                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.primary))
-                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.primary)
+                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_error_bg)
+                binding.btnToggleShield.strokeColor = ContextCompat.getColorStateList(context, R.color.badge_error_text)
+                binding.btnToggleShield.strokeWidth = (1.5f * context.resources.displayMetrics.density).toInt()
+                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.badge_error_text))
+                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.badge_error_text)
             }
             is NowhereVpnService.VpnState.Connecting -> {
                 binding.tvShieldStatus.text = "CONNECTING..."

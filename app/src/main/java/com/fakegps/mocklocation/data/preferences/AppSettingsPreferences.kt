@@ -87,6 +87,9 @@ class AppSettingsPreferences(context: Context) {
         get() = prefs.getString(KEY_DISTANCE_UNIT, "METRIC") ?: "METRIC"
         set(value) = prefs.edit().putString(KEY_DISTANCE_UNIT, value).apply()
 
+    val useImperialUnits: Boolean
+        get() = distanceUnit == "IMPERIAL"
+
     var enableMapAnimations: Boolean
         get() = prefs.getBoolean(KEY_MAP_ANIMATIONS, true)
         set(value) = prefs.edit().putBoolean(KEY_MAP_ANIMATIONS, value).apply()

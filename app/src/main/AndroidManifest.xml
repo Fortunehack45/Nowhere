@@ -179,6 +179,33 @@
                 android:resource="@xml/widget_nowhere_icon_info" />
         </receiver>
 
+        <!-- Home Screen App Widget: IP Privacy Shield Widget -->
+        <receiver
+            android:name=".ui.widget.NowhereVpnWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_VPN_WIDGET" />
+                <action android:name="com.fakegps.mocklocation.ACTION_VPN_WIDGET_TOGGLE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_nowhere_vpn_info" />
+        </receiver>
+
+        <!-- Home Screen App Widget: Location Weather Radar Widget -->
+        <receiver
+            android:name=".ui.widget.NowhereWeatherWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_WEATHER_WIDGET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_nowhere_weather_info" />
+        </receiver>
+
     </application>
 
 </manifest>

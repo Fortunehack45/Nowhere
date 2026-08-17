@@ -20,7 +20,7 @@
     <color name="surface_elevated">#FFFFFF</color>
     <color name="surface_glass">#F5FFFFFF</color>
     <color name="surface_search">#E2E8F0</color>
-    <color name="card_dark">#0F172A</color>
+    <color name="card_dark">#F8FAFC</color>
 
     <!-- Strokes & Highlights -->
     <color name="stroke_subtle">#CBD5E1</color>

@@ -51,11 +51,19 @@ class NowhereVpnService : VpnService() {
             }
         }
 
+        fun startVpn(context: Context, node: IpNode) {
+            start(context, node.id)
+        }
+
         fun stop(context: Context) {
             val intent = Intent(context, NowhereVpnService::class.java).apply {
                 action = ACTION_DISCONNECT
             }
             context.startService(intent)
+        }
+
+        fun stopVpn(context: Context) {
+            stop(context)
         }
     }
 

@@ -17,11 +17,14 @@
     <color name="surface_obsidian">#0F141F</color>
     <color name="surface_card">#141B29</color>
     <color name="surface_card_elevated">#1A2234</color>
+    <color name="surface_elevated">#1A2234</color>
     <color name="surface_glass">#EB121826</color>
     <color name="surface_search">#1C2436</color>
+    <color name="card_dark">#141B29</color>
 
     <!-- Strokes & Highlights -->
     <color name="stroke_subtle">#2A354D</color>
+    <color name="border_subtle">#2A354D</color>
     <color name="surface_card_stroke">#2A354D</color>
     <color name="stroke_red_glow">#80E41B1B</color>
     <color name="stroke_white_glow">#40FFFFFF</color>

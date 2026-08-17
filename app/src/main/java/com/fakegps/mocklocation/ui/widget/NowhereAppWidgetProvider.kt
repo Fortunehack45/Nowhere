@@ -34,6 +34,12 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
                 setPackage(context.packageName)
             }
             context.sendBroadcast(intent)
+            NowhereRouteWidgetProvider.updateAllRouteWidgets(context)
+            NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(context)
+            NowhereSearchWidgetProvider.updateAllSearchWidgets(context)
+            NowhereIconWidgetProvider.updateAllIconWidgets(context)
+            NowhereVpnWidgetProvider.updateAllVpnWidgets(context)
+            NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
         }
     }
 

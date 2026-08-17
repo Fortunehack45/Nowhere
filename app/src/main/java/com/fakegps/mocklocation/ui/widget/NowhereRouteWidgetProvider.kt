@@ -106,17 +106,48 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
         val waypoints = sessionPrefs.getWaypoints()
         val speedKmh = sessionPrefs.lastSpeedKmh
 
+        val totalDistMeters = sessionPrefs.routeTotalDistanceMeters
+        val coveredDistMeters = sessionPrefs.routeCoveredDistanceMeters
+        val remainingDistMeters = sessionPrefs.routeRemainingDistanceMeters
+
+        val useImperial = settingsPrefs.useImperialUnits
+        val totalFormatted: String
+        val coveredFormatted: String
+        val remainingFormatted: String
+
+        if (useImperial) {
+            val totalMiles = totalDistMeters * 0.000621371
+            val coveredMiles = coveredDistMeters * 0.000621371
+            val remainingMiles = remainingDistMeters * 0.000621371
+            totalFormatted = String.format("%.2f mi", totalMiles)
+            coveredFormatted = String.format("%.2f mi", coveredMiles)
+            remainingFormatted = String.format("%.2f mi left", remainingMiles)
+        } else {
+            val totalKm = totalDistMeters / 1000.0
+            val coveredKm = coveredDistMeters / 1000.0
+            val remainingKm = remainingDistMeters / 1000.0
+            totalFormatted = String.format("%.2f km", totalKm)
+            coveredFormatted = String.format("%.2f km", coveredKm)
+            remainingFormatted = String.format("%.2f km left", remainingKm)
+        }
+
+        val progressPercent = if (totalDistMeters > 0) ((coveredDistMeters / totalDistMeters) * 100).toInt().coerceIn(0, 100) else 0
+
         if (isActive) {
             views.setTextViewText(R.id.tvWidgetRouteStatus, "RUNNING")
             views.setTextColor(R.id.tvWidgetRouteStatus, ContextCompat.getColor(context, R.color.badge_active_text))
             views.setTextViewText(R.id.btnWidgetRoutePlayPause, "Pause")
-            views.setTextViewText(R.id.tvWidgetRouteWaypoints, "${waypoints.size} Waypoints • Active Route")
-            views.setProgressBar(R.id.pbWidgetRoute, 100, 60, false)
+            views.setTextViewText(R.id.tvWidgetRouteWaypoints, "${waypoints.size} Waypoints • $progressPercent%")
+            views.setTextViewText(R.id.tvWidgetRouteDistance, "Covered: $coveredFormatted / $totalFormatted")
+            views.setTextViewText(R.id.tvWidgetRouteRemaining, remainingFormatted)
+            views.setProgressBar(R.id.pbWidgetRoute, 100, progressPercent, false)
         } else {
             views.setTextViewText(R.id.tvWidgetRouteStatus, "STANDBY")
             views.setTextColor(R.id.tvWidgetRouteStatus, ContextCompat.getColor(context, R.color.text_muted))
             views.setTextViewText(R.id.btnWidgetRoutePlayPause, "Start")
             views.setTextViewText(R.id.tvWidgetRouteWaypoints, "${waypoints.size} Waypoints • Ready")
+            views.setTextViewText(R.id.tvWidgetRouteDistance, "Total: $totalFormatted")
+            views.setTextViewText(R.id.tvWidgetRouteRemaining, "Ready to start")
             views.setProgressBar(R.id.pbWidgetRoute, 100, 0, false)
         }
 

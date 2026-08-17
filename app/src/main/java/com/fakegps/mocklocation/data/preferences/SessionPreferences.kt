@@ -80,6 +80,18 @@ class SessionPreferences(context: Context) {
         get() = prefs.getBoolean("key_auto_match_ip_with_gps", true)
         set(value) = prefs.edit().putBoolean("key_auto_match_ip_with_gps", value).apply()
 
+    var routeTotalDistanceMeters: Double
+        get() = Double.fromBits(prefs.getLong("key_route_total_distance", 0L))
+        set(value) = prefs.edit().putLong("key_route_total_distance", value.toBits()).apply()
+
+    var routeCoveredDistanceMeters: Double
+        get() = Double.fromBits(prefs.getLong("key_route_covered_distance", 0L))
+        set(value) = prefs.edit().putLong("key_route_covered_distance", value.toBits()).apply()
+
+    var routeRemainingDistanceMeters: Double
+        get() = Double.fromBits(prefs.getLong("key_route_remaining_distance", 0L))
+        set(value) = prefs.edit().putLong("key_route_remaining_distance", value.toBits()).apply()
+
     fun saveWaypoints(waypoints: List<RoutePoint>) {
         val jsonArray = JSONArray()
         for (wp in waypoints) {

@@ -35,12 +35,16 @@ import com.fakegps.mocklocation.service.ServiceState
 import com.fakegps.mocklocation.simulator.RoutePoint
 import com.fakegps.mocklocation.ui.custom.JoystickView
 import com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog
+import com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet
 import com.fakegps.mocklocation.ui.dialogs.SaveFavoriteDialog
 import com.fakegps.mocklocation.ui.dialogs.SaveRouteDialog
 import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
+import com.fakegps.mocklocation.ui.dialogs.WeatherBottomSheet
+import com.fakegps.mocklocation.ui.dialogs.WidgetGalleryBottomSheet
 import com.fakegps.mocklocation.ui.favorites.FavoritesBottomSheet
 import com.fakegps.mocklocation.ui.routes.SavedRoutesBottomSheet
 import com.fakegps.mocklocation.util.PermissionHelper
+import com.fakegps.mocklocation.weather.WeatherManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -129,33 +133,53 @@ class MainActivity : AppCompatActivity() {
         requestInitialPermissions()
         observeUiState()
 
+        binding.btnHeaderWidgets.setOnClickListener {
+            WidgetGalleryBottomSheet().show(supportFragmentManager, "WIDGET_GALLERY")
+        }
+
         binding.btnHeaderSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
+        binding.layoutWeatherBadge.setOnClickListener {
+            val state = viewModel.uiState.value
+            WeatherBottomSheet(state.fixedLatitude, state.fixedLongitude).show(supportFragmentManager, "WEATHER_DIALOG")
+        }
+
         com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer)
 
-        if (intent?.getBooleanExtra("open_overlay_permission", false) == true) {
+        handleIncomingIntents(intent)
+    }
+
+    private fun handleIncomingIntents(intent: Intent?) {
+        if (intent == null) return
+
+        if (intent.getBooleanExtra("open_overlay_permission", false)) {
             if (!PermissionHelper.canDrawOverlays(this)) {
                 PermissionHelper.requestOverlayPermission(this)
             }
         }
 
-        if (intent?.getBooleanExtra("focus_search", false) == true) {
+        if (intent.getBooleanExtra("focus_search", false)) {
             binding.etAddressSearch.requestFocus()
             val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
             imm?.showSoftInput(binding.etAddressSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        }
+
+        if (intent.getBooleanExtra("OPEN_WEATHER_DIALOG", false)) {
+            val state = viewModel.uiState.value
+            WeatherBottomSheet(state.fixedLatitude, state.fixedLongitude).show(supportFragmentManager, "WEATHER_DIALOG")
+        }
+
+        if (intent.getBooleanExtra("OPEN_VPN_DIALOG", false)) {
+            IpChangerBottomSheet().show(supportFragmentManager, "IP_CHANGER_DIALOG")
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.getBooleanExtra("focus_search", false)) {
-            binding.etAddressSearch.requestFocus()
-            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-            imm?.showSoftInput(binding.etAddressSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
-        }
+        handleIncomingIntents(intent)
     }
 
     override fun onStart() {
@@ -170,6 +194,23 @@ class MainActivity : AppCompatActivity() {
         binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
         viewModel.refreshPermissionStates()
         checkBatteryOptimizationOnFirstLaunch()
+        updateWeatherBadge(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
+    }
+
+    private fun updateWeatherBadge(latitude: Double, longitude: Double) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val report = WeatherManager.fetchWeather(this@MainActivity, latitude, longitude)
+            withContext(Dispatchers.Main) {
+                if (!isFinishing && !isDestroyed) {
+                    binding.tvWeatherEmojiBadge.text = report.current.conditionEmoji
+                    if (settingsPrefs.useImperialUnits) {
+                        binding.tvWeatherBadgeText.text = String.format("%.0f°F", report.current.temperatureF)
+                    } else {
+                        binding.tvWeatherBadgeText.text = String.format("%.0f°C", report.current.temperatureC)
+                    }
+                }
+            }
+        }
     }
 
     override fun onPause() {
@@ -832,6 +873,7 @@ class MainActivity : AppCompatActivity() {
             else -> binding.rbTransportVehicle.isChecked = true
         }
 
+        val runningState = state.serviceState as? ServiceState.Running
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.ROUTE) {
             binding.btnRouteToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnRouteToggle.setIconResource(R.drawable.ic_stop)
@@ -840,10 +882,25 @@ class MainActivity : AppCompatActivity() {
             binding.btnRouteToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
             binding.btnRoutePause.visibility = View.VISIBLE
 
-            val isPaused = (state.serviceState as? ServiceState.Running)?.isPaused == true
+            val isPaused = runningState?.isPaused == true
             binding.btnRoutePause.text = if (isPaused) getString(R.string.btn_resume_route) else getString(R.string.btn_pause_route)
             binding.btnRoutePause.setIconResource(if (isPaused) R.drawable.ic_play else R.drawable.ic_pause)
+
+            if (runningState != null && runningState.totalDistanceMeters > 0) {
+                binding.layoutRouteTelemetry.visibility = View.VISIBLE
+                val covered = settingsPrefs.formatDistance(runningState.distanceCoveredMeters)
+                val total = settingsPrefs.formatDistance(runningState.totalDistanceMeters)
+                val remaining = settingsPrefs.formatDistance(runningState.distanceRemainingMeters)
+                val progress = ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt().coerceIn(0, 100)
+
+                binding.tvRouteDistanceCovered.text = "Covered: $covered / $total"
+                binding.tvRouteDistanceRemaining.text = "$remaining left ($progress%)"
+                binding.pbRouteLiveProgress.progress = progress
+            } else {
+                binding.layoutRouteTelemetry.visibility = View.GONE
+            }
         } else {
+            binding.layoutRouteTelemetry.visibility = View.GONE
             binding.btnRouteToggle.text = getString(R.string.btn_start_route)
             binding.btnRouteToggle.setIconResource(R.drawable.ic_play)
             binding.btnRouteToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)

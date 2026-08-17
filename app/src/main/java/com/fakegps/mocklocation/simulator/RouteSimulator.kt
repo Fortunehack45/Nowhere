@@ -9,7 +9,10 @@ data class SimulatedLocation(
     val altitude: Double,
     val speedMps: Float,
     val bearingDegrees: Float,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val totalDistanceMeters: Double = 0.0,
+    val distanceCoveredMeters: Double = 0.0,
+    val distanceRemainingMeters: Double = 0.0
 )
 
 class RouteSimulator(
@@ -146,11 +149,23 @@ class RouteSimulator(
                 currentDistanceAlongRoute = totalDistanceMeters
                 isCompleted = true
                 val endLoc = getLocationAtDistance(totalDistanceMeters)
-                return endLoc.copy(speedMps = 0.0f, isCompleted = true)
+                return endLoc.copy(
+                    speedMps = 0.0f,
+                    isCompleted = true,
+                    totalDistanceMeters = totalDistanceMeters,
+                    distanceCoveredMeters = totalDistanceMeters,
+                    distanceRemainingMeters = 0.0
+                )
             }
         }
 
-        return getLocationAtDistance(currentDistanceAlongRoute)
+        val loc = getLocationAtDistance(currentDistanceAlongRoute)
+        val remaining = max(0.0, totalDistanceMeters - currentDistanceAlongRoute)
+        return loc.copy(
+            totalDistanceMeters = totalDistanceMeters,
+            distanceCoveredMeters = currentDistanceAlongRoute,
+            distanceRemainingMeters = remaining
+        )
     }
 
     private fun calculateDesiredSpeed(

@@ -42,6 +42,38 @@
                 android:layout_weight="1" />
 
             <!-- IP Shield HUD Pill -->
+            <!-- Weather HUD Pill -->
+            <LinearLayout
+                android:id="@+id/layoutWeatherBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_status_pill"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingHorizontal="8dp">
+
+                <TextView
+                    android:id="@+id/tvWeatherEmojiBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⛅"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvWeatherBadgeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:letterSpacing="0.04"
+                    android:text="--°C"
+                    android:textColor="@color/text_muted"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- IP Shield HUD Pill -->
             <LinearLayout
                 android:id="@+id/layoutIpShieldBadge"
                 android:layout_width="wrap_content"
@@ -51,7 +83,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
-                android:paddingHorizontal="10dp">
+                android:paddingHorizontal="8dp">
 
                 <ImageView
                     android:id="@+id/ivShieldIcon"
@@ -80,7 +112,7 @@
                 android:layout_height="28dp"
                 android:background="@drawable/bg_status_pill"
                 android:gravity="center"
-                android:paddingHorizontal="12dp">
+                android:paddingHorizontal="10dp">
 
                 <View
                     android:id="@+id/viewStatusDot"
@@ -102,10 +134,20 @@
             </LinearLayout>
 
             <ImageButton
+                android:id="@+id/btnHeaderWidgets"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_widgets"
+                app:tint="@color/primary"
+                tools:ignore="ContentDescription" />
+
+            <ImageButton
                 android:id="@+id/btnHeaderSettings"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginStart="8dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="2dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_settings"
                 app:tint="@color/primary"
@@ -561,6 +603,54 @@
                     android:textSize="12sp"
                     app:thumbTint="@color/primary"
                     app:trackTint="@color/stroke_subtle" />
+            </LinearLayout>
+
+            <!-- Live Route Distance Telemetry -->
+            <LinearLayout
+                android:id="@+id/layoutRouteTelemetry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_card_elevated"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvRouteDistanceCovered"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Covered: 0.00 km / 0.00 km"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvRouteDistanceRemaining"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0.00 km left"
+                        android:textColor="@color/primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <ProgressBar
+                    android:id="@+id/pbRouteLiveProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:layout_marginTop="4dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressTint="@color/primary" />
             </LinearLayout>
 
             <!-- Transport Mode Selector (Foot, Vehicle, Aircraft, Ship) -->

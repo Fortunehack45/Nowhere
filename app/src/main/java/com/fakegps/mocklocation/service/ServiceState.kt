@@ -13,7 +13,10 @@ sealed class ServiceState {
         val altitude: Double,
         val speedMps: Float,
         val bearingDegrees: Float,
-        val isPaused: Boolean = false
+        val isPaused: Boolean = false,
+        val totalDistanceMeters: Double = 0.0,
+        val distanceCoveredMeters: Double = 0.0,
+        val distanceRemainingMeters: Double = 0.0
     ) : ServiceState()
 
     data class Error(

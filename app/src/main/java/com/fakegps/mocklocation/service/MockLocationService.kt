@@ -566,8 +566,14 @@ class MockLocationService : Service() {
                                 altitude = simLoc.altitude,
                                 speedMps = simLoc.speedMps,
                                 bearingDegrees = simLoc.bearingDegrees,
-                                isPaused = simulator.isPaused()
+                                isPaused = simulator.isPaused(),
+                                totalDistanceMeters = simLoc.totalDistanceMeters,
+                                distanceCoveredMeters = simLoc.distanceCoveredMeters,
+                                distanceRemainingMeters = simLoc.distanceRemainingMeters
                             )
+                            sessionPrefs.routeTotalDistanceMeters = simLoc.totalDistanceMeters
+                            sessionPrefs.routeCoveredDistanceMeters = simLoc.distanceCoveredMeters
+                            sessionPrefs.routeRemainingDistanceMeters = simLoc.distanceRemainingMeters
                         }
 
                         if (simLoc.isCompleted) {
