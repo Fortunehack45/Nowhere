@@ -27,6 +27,8 @@ import com.google.android.gms.ads.nativead.NativeAdView
 import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
 import com.google.android.material.button.MaterialButton
 
 object AdManager {
@@ -39,15 +41,18 @@ object AdManager {
     const val PROD_APP_OPEN_AD_UNIT_ID = "ca-app-pub-5191202278112313/3576719243"
     const val PROD_NATIVE_AD_UNIT_ID = "ca-app-pub-5191202278112313/5736124511"
     const val PROD_REWARDED_AD_UNIT_ID = "ca-app-pub-5191202278112313/1933445026"
+    const val PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-5191202278112313/6932394336"
 
     // Official Google Test Ad Unit IDs for safe debug & QA
     const val TEST_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
     const val TEST_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
     const val TEST_NATIVE_AD_UNIT_ID = "ca-app-pub-3940256099942544/2247696110"
     const val TEST_REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
+    const val TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/5354046379"
 
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd? = null
+    private var rewardedInterstitialAd: RewardedInterstitialAd? = null
     private var lastInterstitialShowTime: Long = 0
     private const val INTERSTITIAL_COOLDOWN_MS = 180_000L // 3 minutes cooldown
 
@@ -58,6 +63,7 @@ object AdManager {
             }
             preloadInterstitial(context)
             preloadRewardedAd(context)
+            preloadRewardedInterstitialAd(context)
         } catch (e: Exception) {
             Log.w(TAG, "AdMob initialization skipped: ${e.message}")
         }
@@ -217,7 +223,7 @@ object AdManager {
 
         // Media
         nativeAd.mediaContent?.let { mediaContent ->
-            (adView.mediaView as? MediaView)?.setMediaContent(mediaContent)
+            adView.mediaView?.setMediaContent(mediaContent)
             adView.mediaView?.visibility = View.VISIBLE
         } ?: run {
             adView.mediaView?.visibility = View.GONE
@@ -327,6 +333,68 @@ object AdManager {
             }
         } ?: run {
             preloadRewardedAd(activity)
+            onAdClosed()
+        }
+    }
+
+    // --- Rewarded Interstitial Ads (Rewarded Interstitial Unit: 6932394336) ---
+
+    fun preloadRewardedInterstitialAd(context: Context) {
+        val prefs = AppSettingsPreferences(context)
+        if (prefs.isAdFreeActive) return
+
+        try {
+            val adUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
+            val adRequest = AdRequest.Builder().build()
+
+            RewardedInterstitialAd.load(
+                context,
+                adUnit,
+                adRequest,
+                object : RewardedInterstitialAdLoadCallback() {
+                    override fun onAdLoaded(ad: RewardedInterstitialAd) {
+                        rewardedInterstitialAd = ad
+                        Log.d(TAG, "Rewarded Interstitial ad preloaded successfully.")
+                    }
+
+                    override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                        rewardedInterstitialAd = null
+                        Log.w(TAG, "Rewarded Interstitial ad failed to load: ${loadAdError.message}")
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Preload rewarded interstitial error: ${e.message}")
+        }
+    }
+
+    fun isRewardedInterstitialAdReady(): Boolean = rewardedInterstitialAd != null
+
+    fun showRewardedInterstitialAd(
+        activity: Activity,
+        onUserEarnedReward: (RewardItem) -> Unit,
+        onAdClosed: () -> Unit
+    ) {
+        rewardedInterstitialAd?.let { ad ->
+            ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedInterstitialAd = null
+                    preloadRewardedInterstitialAd(activity)
+                    onAdClosed()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                    rewardedInterstitialAd = null
+                    preloadRewardedInterstitialAd(activity)
+                    onAdClosed()
+                }
+            }
+
+            ad.show(activity) { rewardItem ->
+                onUserEarnedReward(rewardItem)
+            }
+        } ?: run {
+            preloadRewardedInterstitialAd(activity)
             onAdClosed()
         }
     }

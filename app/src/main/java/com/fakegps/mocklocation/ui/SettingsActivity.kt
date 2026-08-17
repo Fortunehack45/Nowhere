@@ -143,7 +143,23 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.btnWatchRewardedAd.setOnClickListener {
-            if (com.fakegps.mocklocation.ads.AdManager.isRewardedAdReady()) {
+            if (com.fakegps.mocklocation.ads.AdManager.isRewardedInterstitialAdReady()) {
+                com.fakegps.mocklocation.ads.AdManager.showRewardedInterstitialAd(
+                    this,
+                    onUserEarnedReward = {
+                        val (newCount, unlocked) = settingsPrefs.recordRewardedAdWatched()
+                        if (unlocked) {
+                            Toast.makeText(this, "24-Hour Ad-Free Pass Unlocked! All ads are removed.", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this, "Video $newCount / 5 complete! Watch ${5 - newCount} more to unlock 24h Ad-Free.", Toast.LENGTH_SHORT).show()
+                        }
+                        refreshSystemStatus()
+                    },
+                    onAdClosed = {
+                        refreshSystemStatus()
+                    }
+                )
+            } else if (com.fakegps.mocklocation.ads.AdManager.isRewardedAdReady()) {
                 com.fakegps.mocklocation.ads.AdManager.showRewardedAd(
                     this,
                     onUserEarnedReward = {
@@ -160,6 +176,7 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 )
             } else {
+                com.fakegps.mocklocation.ads.AdManager.preloadRewardedInterstitialAd(this)
                 com.fakegps.mocklocation.ads.AdManager.preloadRewardedAd(this)
                 Toast.makeText(this, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
             }

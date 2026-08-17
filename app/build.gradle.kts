@@ -66,10 +66,6 @@ android {
         unitTests {
             isReturnDefaultValues = true
             isIncludeAndroidResources = true
-            all {
-                it.systemProperty("robolectric.offline", "true")
-                it.systemProperty("robolectric.dependency.dir", file("robolectric-deps").absolutePath)
-            }
         }
     }
 }

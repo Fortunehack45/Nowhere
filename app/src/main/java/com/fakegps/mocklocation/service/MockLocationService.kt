@@ -170,12 +170,33 @@ class MockLocationService : Service() {
                 PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
             )
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-            alarmManager?.set(
-                AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                android.os.SystemClock.elapsedRealtime() + 1000L,
-                restartPendingIntent
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager?.setAndAllowWhileIdle(
+                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    android.os.SystemClock.elapsedRealtime() + 1000L,
+                    restartPendingIntent
+                )
+            } else {
+                alarmManager?.set(
+                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    android.os.SystemClock.elapsedRealtime() + 1000L,
+                    restartPendingIntent
+                )
+            }
         }
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_RUNNING_LOW) {
+            Log.w(TAG, "System low memory signal ($level). Preserving core simulation loop and location engine.")
+            System.gc()
+        }
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        Log.w(TAG, "onLowMemory received. Ensuring location simulation remains active.")
     }
 
     private fun acquireWakeLock() {

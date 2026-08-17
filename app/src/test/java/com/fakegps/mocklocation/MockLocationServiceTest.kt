@@ -1,4 +1,4 @@
-﻿package com.fakegps.mocklocation
+package com.fakegps.mocklocation
 
 import android.content.Context
 import android.content.Intent
@@ -155,7 +155,7 @@ class MockLocationServiceTest {
 
     @Test
     fun testService_restoreSessionAction() {
-        val sessionPrefs = SessionPreferences(context).apply {
+        SessionPreferences(context).apply {
             isSessionActive = true
             activeMode = "FIXED"
             lastLatitude = 51.5074
