@@ -410,11 +410,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     serviceState = state,
                     activeError = null
                 )
-                is ServiceState.Running -> current.copy(
-                    isServiceRunning = true,
-                    serviceState = state,
-                    activeError = null
-                )
+                is ServiceState.Running -> {
+                    val isModeFixed = state.mode is com.fakegps.mocklocation.simulator.SimulationMode.Fixed
+                    val updatedLat = if (isModeFixed) state.latitude else current.fixedLatitude
+                    val updatedLon = if (isModeFixed) state.longitude else current.fixedLongitude
+                    val wasRouting = current.serviceState is ServiceState.Running && current.serviceState.mode is com.fakegps.mocklocation.simulator.SimulationMode.Route
+                    val statusMsg = if (wasRouting && isModeFixed) "🚩 Route completed! Location locked at destination." else current.statusMessage
+
+                    current.copy(
+                        isServiceRunning = true,
+                        serviceState = state,
+                        activeError = null,
+                        fixedLatitude = updatedLat,
+                        fixedLongitude = updatedLon,
+                        statusMessage = statusMsg
+                    )
+                }
                 is ServiceState.Error -> current.copy(
                     isServiceRunning = false,
                     serviceState = state,

@@ -125,6 +125,7 @@ class MainActivity : AppCompatActivity() {
         setupRouteActions()
         setupJoystick()
         setupFloatingButtons()
+        setupIpShield()
         requestInitialPermissions()
         observeUiState()
 
@@ -199,7 +200,10 @@ class MainActivity : AppCompatActivity() {
         val prefs = SessionPreferences(this)
         if (!prefs.hasPromptedBatteryOptimization && !PermissionHelper.isIgnoringBatteryOptimizations(this)) {
             prefs.hasPromptedBatteryOptimization = true
-            BatteryOptimizationDialog(this).show()
+            com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
+        } else if (!prefs.hasPromptedExactAlarmPermission && !PermissionHelper.canScheduleExactAlarms(this)) {
+            prefs.hasPromptedExactAlarmPermission = true
+            com.fakegps.mocklocation.ui.dialogs.ExactAlarmPermissionDialog(this).show()
         }
     }
 
@@ -676,6 +680,38 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.startForegroundService(this, intent)
         } else {
             startService(intent)
+        }
+    }
+
+    private fun setupIpShield() {
+        binding.layoutIpShieldBadge.setOnClickListener {
+            val bottomSheet = com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet(
+                currentMockLat = viewModel.uiState.value.fixedLatitude,
+                currentMockLon = viewModel.uiState.value.fixedLongitude
+            )
+            bottomSheet.show(supportFragmentManager, "IpChangerBottomSheet")
+        }
+
+        lifecycleScope.launch {
+            com.fakegps.mocklocation.vpn.NowhereVpnService.vpnState.collectLatest { vpnState ->
+                when (vpnState) {
+                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connected -> {
+                        binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
+                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_text)
+                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_active_text))
+                        binding.tvIpShieldBadge.text = "${vpnState.node.flagEmoji} ${vpnState.node.countryCode}"
+                    }
+                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connecting -> {
+                        binding.tvIpShieldBadge.text = "IP: ..."
+                    }
+                    else -> {
+                        binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
+                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_muted)
+                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_muted))
+                        binding.tvIpShieldBadge.text = "IP: DIRECT"
+                    }
+                }
+            }
         }
     }
 

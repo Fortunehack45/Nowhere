@@ -170,14 +170,30 @@ class MockLocationService : Service() {
                 PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
             )
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager?.setAndAllowWhileIdle(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager?.canScheduleExactAlarms() == true) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        android.os.SystemClock.elapsedRealtime() + 1000L,
+                        restartPendingIntent
+                    )
+                } else {
+                    Log.w(TAG, "Exact alarm permission not granted — restart-on-kill will not reliably work on this session.")
+                    // Fall back to inexact as better-than-nothing; do not pretend this will reliably fire.
+                    alarmManager?.setAndAllowWhileIdle(
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        android.os.SystemClock.elapsedRealtime() + 1000L,
+                        restartPendingIntent
+                    )
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager?.setExactAndAllowWhileIdle(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     android.os.SystemClock.elapsedRealtime() + 1000L,
                     restartPendingIntent
                 )
             } else {
-                alarmManager?.set(
+                alarmManager?.setExact(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     android.os.SystemClock.elapsedRealtime() + 1000L,
                     restartPendingIntent
@@ -280,6 +296,8 @@ class MockLocationService : Service() {
             .setColor(ContextCompat.getColor(this, R.color.primary))
             .setContentIntent(openAppPendingIntent)
             .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
             .build()
@@ -293,6 +311,7 @@ class MockLocationService : Service() {
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
+        scheduleWatchdog()
     }
 
     private fun updateLocationNotification(lat: Double, lon: Double, modeDescription: String = "Active") {
@@ -332,6 +351,8 @@ class MockLocationService : Service() {
                     .setColor(ContextCompat.getColor(this@MockLocationService, R.color.primary))
                     .setContentIntent(openAppPendingIntent)
                     .setOngoing(true)
+                    .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                     .setPriority(NotificationCompat.PRIORITY_LOW)
                     .setStyle(
                         NotificationCompat.BigTextStyle()
@@ -367,6 +388,54 @@ class MockLocationService : Service() {
         }
     }
 
+    private fun scheduleWatchdog() {
+        if (!sessionPrefs.isSessionActive) return
+        try {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            val watchdogIntent = Intent(applicationContext, MockLocationService::class.java).apply {
+                action = ACTION_RESTORE_SESSION
+            }
+            val pendingIntent = PendingIntent.getService(
+                applicationContext,
+                999,
+                watchdogIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val triggerTime = android.os.SystemClock.elapsedRealtime() + 60_000L
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager?.setExactAndAllowWhileIdle(
+                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            } else {
+                alarmManager?.set(
+                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not schedule watchdog alarm: ${e.message}")
+        }
+    }
+
+    private fun cancelWatchdog() {
+        try {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            val watchdogIntent = Intent(applicationContext, MockLocationService::class.java).apply {
+                action = ACTION_RESTORE_SESSION
+            }
+            val pendingIntent = PendingIntent.getService(
+                applicationContext,
+                999,
+                watchdogIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager?.cancel(pendingIntent)
+        } catch (ignored: Exception) {}
+    }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -376,6 +445,7 @@ class MockLocationService : Service() {
             ).apply {
                 description = "Notifies when Nowhere GPS simulation is actively running"
                 setShowBadge(false)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(channel)
@@ -497,8 +567,8 @@ class MockLocationService : Service() {
                         }
 
                         if (simLoc.isCompleted) {
-                            Log.d(TAG, "Route simulation completed.")
-                            stopSpoofing()
+                            Log.i(TAG, "Route completed: automatically transitioning to Fixed mock location at destination: (${simLoc.latitude}, ${simLoc.longitude})")
+                            startFixed(simLoc.latitude, simLoc.longitude, simLoc.altitude)
                             break
                         }
                     }
@@ -622,6 +692,7 @@ class MockLocationService : Service() {
 
     fun stopSpoofing() {
         Log.i(TAG, "stopSpoofing called. Terminating simulation and releasing resources.")
+        cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()
         engine.stop()

@@ -17,6 +17,8 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:ignore="ProtectedPermissions" />
 
     <!-- Network for Map Tiles & Geocoding -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -69,6 +71,16 @@
             android:name=".service.FloatingJoystickService"
             android:enabled="true"
             android:exported="false" />
+
+        <service
+            android:name=".vpn.NowhereVpnService"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
 
         <receiver
             android:name=".service.BootCompletedReceiver"

@@ -54,6 +54,12 @@ class BatteryOptimizationDialog(
             binding.layoutOemWidgetNudge.visibility = View.GONE
         }
 
+        fun checkNextStep() {
+            if (!sessionPrefs.hasPromptedExactAlarmPermission && !PermissionHelper.canScheduleExactAlarms(activity)) {
+                ExactAlarmPermissionDialog(activity).show()
+            }
+        }
+
         binding.btnDisableOptimization.setOnClickListener {
             if (isAggressiveOem) {
                 sessionPrefs.hasPromptedOemWidgetNudge = true
@@ -64,6 +70,7 @@ class BatteryOptimizationDialog(
                 PermissionHelper.requestIgnoreBatteryOptimizations(activity)
             }
             dialog.dismiss()
+            checkNextStep()
         }
 
         binding.btnDismissBattery.setOnClickListener {
@@ -71,6 +78,11 @@ class BatteryOptimizationDialog(
                 sessionPrefs.hasPromptedOemWidgetNudge = true
             }
             dialog.dismiss()
+            checkNextStep()
+        }
+
+        dialog.setOnDismissListener {
+            checkNextStep()
         }
 
         dialog.show()

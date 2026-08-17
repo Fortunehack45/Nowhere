@@ -47,6 +47,38 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
+            <!-- IP Shield HUD Pill -->
+            <LinearLayout
+                android:id="@+id/layoutIpShieldBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_status_pill"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingHorizontal="10dp">
+
+                <ImageView
+                    android:id="@+id/ivShieldIcon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_launcher_monochrome"
+                    app:tint="@color/text_muted"
+                    tools:ignore="ContentDescription" />
+
+                <TextView
+                    android:id="@+id/tvIpShieldBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:letterSpacing="0.04"
+                    android:text="IP: DIRECT"
+                    android:textColor="@color/text_muted"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
             <!-- Status Badge Pill -->
             <LinearLayout
                 android:id="@+id/layoutStatusBadge"

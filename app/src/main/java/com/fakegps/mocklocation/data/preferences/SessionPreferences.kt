@@ -60,9 +60,25 @@ class SessionPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_OEM_WIDGET_NUDGE_PROMPTED, false)
         set(value) = prefs.edit().putBoolean(KEY_OEM_WIDGET_NUDGE_PROMPTED, value).apply()
 
+    var hasPromptedExactAlarmPermission: Boolean
+        get() = prefs.getBoolean("key_exact_alarm_prompted", false)
+        set(value) = prefs.edit().putBoolean("key_exact_alarm_prompted", value).apply()
+
     var isPersistentBootInjectionEnabled: Boolean
         get() = prefs.getBoolean("key_persistent_boot_injection", true)
         set(value) = prefs.edit().putBoolean("key_persistent_boot_injection", value).apply()
+
+    var isIpMaskingEnabled: Boolean
+        get() = prefs.getBoolean("key_ip_masking_enabled", false)
+        set(value) = prefs.edit().putBoolean("key_ip_masking_enabled", value).apply()
+
+    var activeIpNodeId: String
+        get() = prefs.getString("key_active_ip_node_id", "us_nyc") ?: "us_nyc"
+        set(value) = prefs.edit().putString("key_active_ip_node_id", value).apply()
+
+    var autoMatchIpWithGps: Boolean
+        get() = prefs.getBoolean("key_auto_match_ip_with_gps", true)
+        set(value) = prefs.edit().putBoolean("key_auto_match_ip_with_gps", value).apply()
 
     fun saveWaypoints(waypoints: List<RoutePoint>) {
         val jsonArray = JSONArray()

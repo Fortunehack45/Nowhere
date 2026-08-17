@@ -170,4 +170,18 @@ class MockLocationServiceTest {
 
         assertTrue("Restored session should hold WakeLock", service.isWakeLockHeld())
     }
+
+    @Test
+    fun testService_onTaskRemoved_schedulesRestartAlarm() {
+        val sessionPrefs = SessionPreferences(context)
+        sessionPrefs.isSessionActive = true
+        sessionPrefs.activeMode = "FIXED"
+        sessionPrefs.lastLatitude = 37.7749
+        sessionPrefs.lastLongitude = -122.4194
+
+        val rootIntent = Intent(context, MockLocationService::class.java)
+        service.onTaskRemoved(rootIntent)
+
+        assertTrue("WakeLock should be re-acquired during onTaskRemoved", service.isWakeLockHeld())
+    }
 }
