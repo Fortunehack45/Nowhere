@@ -226,7 +226,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkBatteryOptimizationOnFirstLaunch() {
         val prefs = SessionPreferences(this)
-        if (!prefs.hasPromptedBatteryOptimization && !PermissionHelper.isIgnoringBatteryOptimizations(this)) {
+        if (!settingsPrefs.hasCompletedFeatureWalkthrough) {
+            settingsPrefs.hasCompletedFeatureWalkthrough = true
+            com.fakegps.mocklocation.ui.dialogs.AppTutorialDialog(this) {
+                if (!prefs.hasPromptedBatteryOptimization && !PermissionHelper.isIgnoringBatteryOptimizations(this)) {
+                    prefs.hasPromptedBatteryOptimization = true
+                    com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
+                }
+            }.show()
+        } else if (!prefs.hasPromptedBatteryOptimization && !PermissionHelper.isIgnoringBatteryOptimizations(this)) {
             prefs.hasPromptedBatteryOptimization = true
             com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
         } else if (!prefs.hasPromptedExactAlarmPermission && !PermissionHelper.canScheduleExactAlarms(this)) {
@@ -682,6 +690,10 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             ).show(supportFragmentManager, "HISTORY_DIALOG")
+        }
+
+        binding.fabAppTutorial.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.AppTutorialDialog(this).show()
         }
     }
 

@@ -14,7 +14,8 @@ val ESRI_SATELLITE: ITileSource = XYTileSource(
     ".jpg",
     arrayOf(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/",
-        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"
+        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/",
+        "https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/"
     ),
     "© Esri, Maxar, Earthstar Geographics, CNES/Airbus DS, USDA FSA, USGS, Aerogrid, IGN, IGP, and the GIS User Community"
 )

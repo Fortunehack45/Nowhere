@@ -232,6 +232,10 @@ class SettingsActivity : AppCompatActivity() {
             openBrowser("https://wa.me/2349167689200")
         }
 
+        binding.btnOpenAppTutorial.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.AppTutorialDialog(this).show()
+        }
+
         binding.btnOpenDisclaimer.setOnClickListener {
             showDisclaimerDialog()
         }

@@ -510,6 +510,22 @@
                     android:contentDescription="Simulation History"
                     android:src="@drawable/ic_restore"
                     app:tint="@color/primary" />
+
+                <View
+                    android:layout_width="28dp"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="4dp"
+                    android:background="@color/stroke_subtle" />
+
+                <ImageButton
+                    android:id="@+id/fabAppTutorial"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Interactive App Guide"
+                    android:src="@drawable/ic_help"
+                    app:tint="@color/primary" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

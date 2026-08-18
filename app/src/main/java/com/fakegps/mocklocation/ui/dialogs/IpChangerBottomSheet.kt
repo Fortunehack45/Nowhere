@@ -167,9 +167,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         binding.btnToggleShield.setOnClickListener {
             if (NowhereVpnService.isRunning) {
                 val ctx = context ?: return@setOnClickListener
-                NowhereVpnService.stop(ctx)
-                Toast.makeText(ctx, "IP Shield Disconnected", Toast.LENGTH_SHORT).show()
-                onShieldStateChanged?.invoke()
+                Toast.makeText(ctx, "Privacy Shield is locked to Mock GPS to preserve background operation. Tap any country node to switch servers.", Toast.LENGTH_LONG).show()
             } else {
                 val node = IpManager.getNodeById(sessionPrefs.activeIpNodeId)
                 requestConnectVpn(node)
@@ -191,7 +189,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
     private fun startVpnTunnel(node: IpNode) {
         val ctx = context ?: return
         NowhereVpnService.start(ctx, node.id)
-        Toast.makeText(ctx, "Connecting to ${node.name}...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(ctx, "Switched Privacy Node to ${node.country} (${node.city})", Toast.LENGTH_SHORT).show()
         onShieldStateChanged?.invoke()
     }
 
@@ -242,13 +240,12 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 binding.tvCurrentIp.text = state.node.virtualIp
                 binding.tvIpDetails.text = "${state.node.flagEmoji} ${state.node.city}, ${state.node.country} • Nowhere Privacy Tunnel"
 
-                binding.btnToggleShield.text = "Disconnect IP Shield"
-                binding.btnToggleShield.setIconResource(R.drawable.ic_clear)
-                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_error_bg)
-                binding.btnToggleShield.strokeColor = ContextCompat.getColorStateList(context, R.color.badge_error_text)
-                binding.btnToggleShield.strokeWidth = (1.5f * context.resources.displayMetrics.density).toInt()
-                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.badge_error_text))
-                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.badge_error_text)
+                binding.btnToggleShield.text = "🔒 Privacy Shield Active • Tap Any Node to Switch"
+                binding.btnToggleShield.setIconResource(R.drawable.ic_shield_check)
+                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.primary)
+                binding.btnToggleShield.strokeWidth = 0
+                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.white))
+                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.white)
             }
             is NowhereVpnService.VpnState.Connecting -> {
                 binding.cardVpnTraffic.visibility = View.VISIBLE
@@ -259,11 +256,11 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 binding.cardVpnTraffic.visibility = View.GONE
                 binding.layoutShieldStatus.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_standby_bg)
                 binding.viewShieldDot.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_standby_text)
-                binding.tvShieldStatus.text = "DIRECT IP"
+                binding.tvShieldStatus.text = "AUTO-ACTIVATES WITH MOCK GPS"
                 binding.tvShieldStatus.setTextColor(ContextCompat.getColor(context, R.color.badge_standby_text))
 
-                binding.btnToggleShield.text = "Activate IP Shield"
-                binding.btnToggleShield.setIconResource(R.drawable.ic_check)
+                binding.btnToggleShield.text = "🔒 Start Privacy Tunnel"
+                binding.btnToggleShield.setIconResource(R.drawable.ic_shield_check)
                 binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.primary)
                 binding.btnToggleShield.strokeWidth = 0
                 binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.white))

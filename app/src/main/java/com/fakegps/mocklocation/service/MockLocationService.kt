@@ -531,9 +531,18 @@ class MockLocationService : Service() {
         waypoints: List<RoutePoint>,
         speedKmh: Float = 20.0f,
         isLooping: Boolean = true,
-        transportMode: TransportMode = TransportMode.VEHICLE
+        transportMode: TransportMode = TransportMode.VEHICLE,
+        forceRestart: Boolean = false
     ) {
         if (waypoints.size < 2) return
+
+        val currentMode = activeMode
+        if (!forceRestart && currentMode is SimulationMode.Route && currentMode.waypoints == waypoints && simulationJob?.isActive == true) {
+            updateRouteSpeed(speedKmh)
+            updateRouteLooping(isLooping)
+            return
+        }
+
         stopCurrentLoop()
         acquireWakeLock()
 

@@ -63,6 +63,58 @@
             android:textColor="@color/text_muted"
             android:textSize="12sp" />
 
+        <!-- Persistence & Tunnel Transparency Disclaimer Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/surface_elevated"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/border_subtle"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_shield_check"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:letterSpacing="0.04"
+                        android:text="BACKGROUND KEEP-ALIVE &amp; PRIVACY ENGINE"
+                        android:textColor="@color/primary"
+                        android:textSize="10.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingMultiplier="1.2"
+                    android:text="The Nowhere Privacy Tunnel runs a dedicated foreground loopback network service. This provides IP obfuscation and acts as an unbreakable system-level keep-alive lock to prevent OEM battery management from terminating your background mock GPS simulations. Tapping any country node below immediately routes and locks your privacy profile."
+                    android:textColor="@color/text_muted"
+                    android:textSize="11sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Live IP Telemetry Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -474,7 +526,7 @@
             tools:itemCount="5"
             tools:listitem="@layout/item_ip_node" />
 
-        <!-- Connect / Disconnect Action Button -->
+        <!-- Connect / Switch Action Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnToggleShield"
             android:layout_width="match_parent"
@@ -482,12 +534,12 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
             android:backgroundTint="@color/primary"
-            android:text="Activate IP Shield"
+            android:text="🔒 Privacy Shield Active • Tap Any Node to Switch"
             android:textColor="@color/white"
-            android:textSize="15sp"
+            android:textSize="13.5sp"
             android:textStyle="bold"
             app:cornerRadius="14dp"
-            app:icon="@drawable/ic_check"
+            app:icon="@drawable/ic_shield_check"
             app:iconGravity="textStart"
             app:iconTint="@color/white" />
 
