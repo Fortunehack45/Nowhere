@@ -9,12 +9,16 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import androidx.lifecycle.lifecycleScope
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.ActivitySettingsBinding
 import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
 import com.fakegps.mocklocation.util.PermissionHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -240,6 +244,26 @@ class SettingsActivity : AppCompatActivity() {
             showDisclaimerDialog()
         }
 
+        binding.tvAppVersionTitle.text = "Nowhere Version v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME}"
+        binding.btnCheckAppUpdates.setOnClickListener {
+            binding.tvCheckUpdateStatus.text = "Checking..."
+            binding.btnCheckAppUpdates.isEnabled = false
+            lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.checkForUpdates(this@SettingsActivity, forceCheck = true)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    binding.btnCheckAppUpdates.isEnabled = true
+                    if (updateInfo.isUpdateAvailable) {
+                        binding.tvCheckUpdateStatus.text = "Update Available!"
+                        val bottomSheet = com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.newInstance(updateInfo)
+                        bottomSheet.show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.TAG)
+                    } else {
+                        binding.tvCheckUpdateStatus.text = "Up to date"
+                        Toast.makeText(this@SettingsActivity, "🎉 You're running the latest version (v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME})", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
         // Persistent Location Injector
         binding.switchSettingsBootInjection.setOnCheckedChangeListener { _, isChecked ->
             sessionPrefs.isPersistentBootInjectionEnabled = isChecked
@@ -278,7 +302,7 @@ class SettingsActivity : AppCompatActivity() {
             settingsPrefs.mapTileSource = source
             val label = when (source) {
                 "TOPO" -> "Terrain Topographic (OpenTopoMap)"
-                "USGS_SAT" -> "High-Resolution Satellite (Esri World Imagery)"
+                "USGS_SAT" -> "High-Resolution Satellite Imagery"
                 else -> "Standard OpenStreetMap"
             }
             Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()

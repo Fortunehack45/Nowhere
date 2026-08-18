@@ -157,6 +157,17 @@ class MainActivity : AppCompatActivity() {
 
         com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer)
 
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            kotlinx.coroutines.delay(2000L)
+            val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.checkForUpdates(this@MainActivity, forceCheck = false)
+            if (updateInfo.isUpdateAvailable && !isFinishing && !isDestroyed) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    val bottomSheet = com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.newInstance(updateInfo)
+                    bottomSheet.show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.TAG)
+                }
+            }
+        }
+
         handleIncomingIntents(intent)
     }
 
