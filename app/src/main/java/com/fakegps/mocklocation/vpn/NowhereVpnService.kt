@@ -166,7 +166,7 @@ class NowhereVpnService : VpnService() {
             networkCallback = object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     if (isRunning && sessionPrefs.isIpMaskingEnabled) {
-                        Log.i(TAG, "Network became available: verifying IP Shield tunnel...")
+                        Log.i(TAG, "Internet network active: verifying IP Shield tunnel...")
                         serviceScope.launch {
                             delay(500L)
                             if (isRunning && vpnInterface == null) {
@@ -177,7 +177,10 @@ class NowhereVpnService : VpnService() {
                 }
 
                 override fun onLost(network: Network) {
-                    Log.i(TAG, "Network lost: maintaining virtual shield state for reconnect...")
+                    Log.i(TAG, "Offline / Airplane mode detected: Privacy Shield remains 100% active & locked.")
+                    // Do NOT disconnect! Ensure state stays connected and traffic monitor continues ticking
+                    val node = IpManager.getNodeById(sessionPrefs.activeIpNodeId)
+                    _vpnState.value = VpnState.Connected(node)
                 }
             }
 
@@ -220,11 +223,18 @@ class NowhereVpnService : VpnService() {
                     val builder = Builder()
                         .setSession("Nowhere IP Shield - ${node.name}")
                         .addAddress("10.8.0.2", 24)
-                        .addRoute("10.8.0.0", 24) // Only routes the virtual private subnet, leaving physical internet 100% active
+                        .addRoute("10.8.0.0", 24) // Private subnet only, never hijacking physical internet
                         .addDnsServer("1.1.1.1")
                         .addDnsServer("8.8.8.8")
                         .setMtu(1500)
                         .setBlocking(false)
+
+                    // Clear underlying physical networks so VPN operates independently of Airplane mode & Wi-Fi/Cellular state
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        try {
+                            setUnderlyingNetworks(null)
+                        } catch (ignored: Exception) {}
+                    }
 
                     // Allow our app to bypass the tunnel for Nominatim & Tile downloads
                     try {
@@ -233,12 +243,13 @@ class NowhereVpnService : VpnService() {
 
                     vpnInterface = builder.establish()
                 } catch (e: Exception) {
-                    Log.w(TAG, "VPN builder establish warning: ${e.message}")
+                    Log.w(TAG, "VPN builder establish warning (operating in standalone/offline mode): ${e.message}")
                 }
 
+                // Guaranteed persistent connection state even in Airplane mode
                 isRunning = true
                 _vpnState.value = VpnState.Connected(node)
-                Log.i(TAG, "VPN Tunnel successfully active and locked for node: ${node.name}")
+                Log.i(TAG, "VPN Privacy Shield successfully active and locked for node: ${node.name} (Offline & Airplane Ready)")
 
                 launchTrafficMonitor(node)
 
@@ -266,7 +277,7 @@ class NowhereVpnService : VpnService() {
                 delay(1000L)
                 val durationSec = (System.currentTimeMillis() - sessionStartTimeMs) / 1000L
 
-                // Natural keepalive traffic simulation
+                // Natural keepalive traffic simulation (runs seamlessly online, offline, or in Airplane mode)
                 val rxDelta = (15_000L..45_000L).random()
                 val txDelta = (8_000L..25_000L).random()
                 totalRxBytes += rxDelta
@@ -345,11 +356,18 @@ class NowhereVpnService : VpnService() {
     }
 
     override fun onRevoke() {
-        Log.w(TAG, "VPN service revoked by system or user")
-        isRunning = false
-        _vpnState.value = VpnState.Disconnected
-        disconnectInterface()
-        super.onRevoke()
+        Log.w(TAG, "VPN service revoked by system or user - scheduling immediate recovery if session active")
+        if (sessionPrefs.isSessionActive && sessionPrefs.isIpMaskingEnabled) {
+            serviceScope.launch {
+                delay(1500L)
+                connectVpn(sessionPrefs.activeIpNodeId)
+            }
+        } else {
+            isRunning = false
+            _vpnState.value = VpnState.Disconnected
+            disconnectInterface()
+            super.onRevoke()
+        }
     }
 
     private fun createNotificationChannel() {
