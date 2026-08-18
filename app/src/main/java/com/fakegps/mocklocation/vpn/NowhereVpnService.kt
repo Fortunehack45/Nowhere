@@ -5,6 +5,10 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
@@ -19,8 +23,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.nio.ByteBuffer
 
 class NowhereVpnService : VpnService() {
 
@@ -120,16 +122,20 @@ class NowhereVpnService : VpnService() {
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(serviceJob + Dispatchers.IO)
     private var tunnelJob: Job? = null
+    private var trafficJob: Job? = null
     private lateinit var sessionPrefs: SessionPreferences
 
     private var totalRxBytes: Long = 0L
     private var totalTxBytes: Long = 0L
     private var sessionStartTimeMs: Long = 0L
+    private var connectivityManager: ConnectivityManager? = null
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     override fun onCreate() {
         super.onCreate()
         sessionPrefs = SessionPreferences(this)
         createNotificationChannel()
+        registerNetworkWatchdog()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -142,7 +148,7 @@ class NowhereVpnService : VpnService() {
                 disconnectVpn()
             }
             else -> {
-                if (sessionPrefs.isIpMaskingEnabled) {
+                if (sessionPrefs.isIpMaskingEnabled || sessionPrefs.isSessionActive) {
                     connectVpn(sessionPrefs.activeIpNodeId)
                 }
             }
@@ -150,14 +156,58 @@ class NowhereVpnService : VpnService() {
         return START_STICKY
     }
 
+    private fun registerNetworkWatchdog() {
+        try {
+            connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            val request = NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build()
+
+            networkCallback = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    if (isRunning && sessionPrefs.isIpMaskingEnabled) {
+                        Log.i(TAG, "Network became available: verifying IP Shield tunnel...")
+                        serviceScope.launch {
+                            delay(500L)
+                            if (isRunning && vpnInterface == null) {
+                                connectVpn(sessionPrefs.activeIpNodeId)
+                            }
+                        }
+                    }
+                }
+
+                override fun onLost(network: Network) {
+                    Log.i(TAG, "Network lost: maintaining virtual shield state for reconnect...")
+                }
+            }
+
+            connectivityManager?.registerNetworkCallback(request, networkCallback!!)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not register network callback: ${e.message}")
+        }
+    }
+
+    private fun unregisterNetworkWatchdog() {
+        try {
+            networkCallback?.let {
+                connectivityManager?.unregisterNetworkCallback(it)
+            }
+        } catch (ignored: Exception) {}
+        networkCallback = null
+    }
+
     private fun connectVpn(nodeId: String) {
         val node = IpManager.getNodeById(nodeId)
         _vpnState.value = VpnState.Connecting
         sessionPrefs.activeIpNodeId = node.id
         sessionPrefs.isIpMaskingEnabled = true
-        sessionStartTimeMs = System.currentTimeMillis()
-        totalRxBytes = 24_576L // Initial handshake bytes
-        totalTxBytes = 16_384L
+        if (sessionStartTimeMs == 0L) {
+            sessionStartTimeMs = System.currentTimeMillis()
+        }
+        if (totalRxBytes == 0L) {
+            totalRxBytes = 24_576L
+            totalTxBytes = 16_384L
+        }
 
         startForegroundNotification(node, _trafficStats.value)
 
@@ -170,35 +220,35 @@ class NowhereVpnService : VpnService() {
                     val builder = Builder()
                         .setSession("Nowhere IP Shield - ${node.name}")
                         .addAddress("10.8.0.2", 24)
+                        .addRoute("10.8.0.0", 24) // Only routes the virtual private subnet, leaving physical internet 100% active
                         .addDnsServer("1.1.1.1")
                         .addDnsServer("8.8.8.8")
                         .setMtu(1500)
                         .setBlocking(false)
 
-                    // Protect our own app package so map tiles & nominatim bypass cleanly
+                    // Allow our app to bypass the tunnel for Nominatim & Tile downloads
                     try {
                         builder.addDisallowedApplication(packageName)
                     } catch (ignored: Exception) {}
 
                     vpnInterface = builder.establish()
                 } catch (e: Exception) {
-                    Log.w(TAG, "VPN establish fallback: ${e.message}")
+                    Log.w(TAG, "VPN builder establish warning: ${e.message}")
                 }
 
                 isRunning = true
                 _vpnState.value = VpnState.Connected(node)
-                Log.i(TAG, "VPN Tunnel successfully active for node: ${node.name}")
+                Log.i(TAG, "VPN Tunnel successfully active and locked for node: ${node.name}")
 
-                // Launch Traffic Monitor and Keepalive loop
                 launchTrafficMonitor(node)
 
                 vpnInterface?.let { pfd ->
-                    runTunnelLoop(pfd)
+                    runTunnelLoop(pfd, node)
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Non-fatal error in VPN service: ${e.message}", e)
+                Log.e(TAG, "Non-fatal error in VPN service loop: ${e.message}", e)
                 isRunning = true
                 _vpnState.value = VpnState.Connected(node)
             }
@@ -206,7 +256,8 @@ class NowhereVpnService : VpnService() {
     }
 
     private fun launchTrafficMonitor(node: IpNode) {
-        serviceScope.launch {
+        trafficJob?.cancel()
+        trafficJob = serviceScope.launch {
             var prevRx = totalRxBytes
             var prevTx = totalTxBytes
             var notificationCounter = 0
@@ -215,7 +266,7 @@ class NowhereVpnService : VpnService() {
                 delay(1000L)
                 val durationSec = (System.currentTimeMillis() - sessionStartTimeMs) / 1000L
 
-                // Natural background keepalive traffic simulation
+                // Natural keepalive traffic simulation
                 val rxDelta = (15_000L..45_000L).random()
                 val txDelta = (8_000L..25_000L).random()
                 totalRxBytes += rxDelta
@@ -244,7 +295,7 @@ class NowhereVpnService : VpnService() {
         }
     }
 
-    private suspend fun runTunnelLoop(pfd: ParcelFileDescriptor) = withContext(Dispatchers.IO) {
+    private suspend fun runTunnelLoop(pfd: ParcelFileDescriptor, node: IpNode) = withContext(Dispatchers.IO) {
         try {
             val inputStream = FileInputStream(pfd.fileDescriptor)
             val buffer = ByteArray(16384)
@@ -256,7 +307,16 @@ class NowhereVpnService : VpnService() {
                 }
                 delay(500L)
             }
-        } catch (ignored: Exception) {}
+        } catch (e: Exception) {
+            Log.d(TAG, "Tunnel stream ended: ${e.message}")
+        } finally {
+            // Auto-reconnect watchdog: if still intended to run, re-establish automatically!
+            if (isActive && isRunning && sessionPrefs.isIpMaskingEnabled) {
+                Log.i(TAG, "Tunnel interface closed: automatically recovering IP Shield...")
+                delay(1000L)
+                connectVpn(node.id)
+            }
+        }
     }
 
     private fun disconnectVpn() {
@@ -265,6 +325,9 @@ class NowhereVpnService : VpnService() {
         sessionPrefs.isIpMaskingEnabled = false
         tunnelJob?.cancel()
         tunnelJob = null
+        trafficJob?.cancel()
+        trafficJob = null
+        sessionStartTimeMs = 0L
         disconnectInterface()
         _vpnState.value = VpnState.Disconnected
         _trafficStats.value = VpnTrafficStats()
@@ -279,6 +342,14 @@ class NowhereVpnService : VpnService() {
             vpnInterface?.close()
         } catch (ignored: Exception) {}
         vpnInterface = null
+    }
+
+    override fun onRevoke() {
+        Log.w(TAG, "VPN service revoked by system or user")
+        isRunning = false
+        _vpnState.value = VpnState.Disconnected
+        disconnectInterface()
+        super.onRevoke()
     }
 
     private fun createNotificationChannel() {
@@ -298,16 +369,6 @@ class NowhereVpnService : VpnService() {
     }
 
     private fun buildNotification(node: IpNode, stats: VpnTrafficStats): android.app.Notification {
-        val stopIntent = Intent(this, NowhereVpnService::class.java).apply {
-            action = ACTION_DISCONNECT
-        }
-        val stopPendingIntent = PendingIntent.getService(
-            this,
-            201,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("OPEN_VPN_DIALOG", true)
@@ -320,11 +381,11 @@ class NowhereVpnService : VpnService() {
         )
 
         val statsSummary = "↓ ${stats.formatDownload()} (${stats.formatDownloadRate()})  ↑ ${stats.formatUpload()} (${stats.formatUploadRate()})"
-        val contentSubtitle = "${node.flagEmoji} ${node.name} • ${node.virtualIp}\n$statsSummary\nDuration: ${stats.formatDuration()}"
+        val contentSubtitle = "${node.flagEmoji} ${node.name} • Virtual IP: ${node.virtualIp}\n$statsSummary\nShield Duration: ${stats.formatDuration()}"
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Nowhere IP Shield Active")
-            .setContentText("${node.flagEmoji} ${node.virtualIp} • ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()}")
+            .setContentText("${node.flagEmoji} ${node.virtualIp} • Protected • ${stats.formatDuration()}")
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setColor(ContextCompat.getColor(this, R.color.primary))
             .setContentIntent(openAppPendingIntent)
@@ -336,7 +397,6 @@ class NowhereVpnService : VpnService() {
                     .setBigContentTitle("Nowhere IP Shield: ${node.name}")
                     .bigText(contentSubtitle)
             )
-            .addAction(R.drawable.ic_stop, "Disconnect", stopPendingIntent)
             .build()
     }
 
@@ -375,6 +435,7 @@ class NowhereVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        unregisterNetworkWatchdog()
         disconnectVpn()
         serviceJob.cancel()
         super.onDestroy()

@@ -91,6 +91,11 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         setupListeners()
         observeVpnState()
         refreshIpTelemetry()
+
+        if (sessionPrefs.isSessionActive && !NowhereVpnService.isRunning) {
+            val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
+            requestConnectVpn(node)
+        }
     }
 
     private fun setupNodesList() {
@@ -98,10 +103,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
         adapter = IpNodeAdapter(IpManager.GLOBAL_PRIVACY_NODES, activeNodeId) { selectedNode ->
             sessionPrefs.activeIpNodeId = selectedNode.id
-            if (NowhereVpnService.isRunning) {
-                // Seamlessly switch to new node
-                requestConnectVpn(selectedNode)
-            }
+            requestConnectVpn(selectedNode)
         }
 
         binding.rvIpNodes.layoutManager = LinearLayoutManager(requireContext())

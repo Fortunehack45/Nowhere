@@ -15,7 +15,7 @@ import com.fakegps.mocklocation.util.PermissionHelper
 /**
  * Low-level mock location provider engine interfacing directly with Android's LocationManager.
  * Injects mock coordinates directly into GPS_PROVIDER, NETWORK_PROVIDER, PASSIVE_PROVIDER, and Google Play FUSED_PROVIDER.
- * Ensures Google Maps, Google Play Services, WhatsApp, and games receive consistent, uninterrupted spoofed coordinates.
+ * Ensures Google Maps, Google Play Services, WhatsApp, and games receive consistent, rock-solid, uninterrupted spoofed coordinates.
  */
 class MockLocationEngine(
     private val context: Context,
@@ -41,8 +41,9 @@ class MockLocationEngine(
             LocationManager.NETWORK_PROVIDER,
             LocationManager.PASSIVE_PROVIDER
         )
-        // Always include fused provider to lock Google Play Services and Google Maps
-        list.add(FUSED_PROVIDER_NAME)
+        if (settingsPrefs.useFusedProvider) {
+            list.add(FUSED_PROVIDER_NAME)
+        }
         return list
     }
 
@@ -51,7 +52,6 @@ class MockLocationEngine(
      */
     @Synchronized
     fun initialize(): Result<Unit> {
-        // If not mock authorized and device is rooted, attempt automatic root grant
         if (!PermissionHelper.isMockLocationEnabled(context) && PermissionHelper.isDeviceRooted()) {
             Log.d(TAG, "Device rooted: attempting automated root mock permission grant...")
             PermissionHelper.tryAutoGrantRootMockPermission(context)
@@ -63,7 +63,6 @@ class MockLocationEngine(
 
         for (provider in providers) {
             try {
-                // Safely remove any stale test provider instance first
                 try {
                     locationManager.removeTestProvider(provider)
                 } catch (ignored: Exception) {}
@@ -146,6 +145,7 @@ class MockLocationEngine(
 
     /**
      * Injects a spoofed coordinate into the OS location system for all registered providers simultaneously.
+     * Guarantees rock-solid stability with zero fluctuation when jitter is disabled.
      */
     @Synchronized
     fun setLocation(
@@ -162,17 +162,18 @@ class MockLocationEngine(
         }
 
         val isMoving = speed >= 0.1f
+        // Rock-solid fixed coordinates when stationary unless jitter is explicitly turned on
         val (finalLat, finalLon) = if (applyStationaryJitter && !isMoving) {
             realismLayer.applyJitter(latitude, longitude)
         } else {
-            realismLayer.truncateIfNeeded(latitude, longitude)
+            Pair(latitude, longitude)
         }
 
-        val finalAltitude = realismLayer.generateAltitude(altitude, isMoving)
-        val horizontalAccuracy = realismLayer.generateHorizontalAccuracy(isMoving)
-        val verticalAccuracy = realismLayer.generateVerticalAccuracy(isMoving)
-        val speedAccuracy = realismLayer.generateSpeedAccuracy(isMoving)
-        val bearingAccuracy = realismLayer.generateBearingAccuracy(isMoving)
+        val finalAltitude = if (isMoving) realismLayer.generateAltitude(altitude, true) else altitude
+        val horizontalAccuracy = if (isMoving) realismLayer.generateHorizontalAccuracy(true) else 1.0f
+        val verticalAccuracy = if (isMoving) realismLayer.generateVerticalAccuracy(true) else 0.5f
+        val speedAccuracy = if (isMoving) realismLayer.generateSpeedAccuracy(true) else 0.0f
+        val bearingAccuracy = if (isMoving) realismLayer.generateBearingAccuracy(true) else 0.0f
 
         var lastSuccessfulLocation: Location? = null
         val nowMs = System.currentTimeMillis()
@@ -193,8 +194,8 @@ class MockLocationEngine(
                     this.elapsedRealtimeNanos = nowNanos
 
                     val extras = Bundle().apply {
-                        putInt("satellites", 18)
-                        putInt("maxSatellites", 24)
+                        putInt("satellites", 24)
+                        putInt("maxSatellites", 32)
                     }
                     this.extras = extras
 
@@ -215,7 +216,22 @@ class MockLocationEngine(
                 isInitialized = false
                 return Result.failure(MockLocationError.NotSelectedAsMockApp(cause = e))
             } catch (e: Exception) {
-                Log.w(TAG, "Non-fatal error injecting location into $provider: ${e.message}")
+                Log.w(TAG, "Non-fatal error injecting location into $provider: ${e.message}, attempting auto-recovery...")
+                try {
+                    locationManager.setTestProviderEnabled(provider, true)
+                    val retryLoc = Location(provider).apply {
+                        this.latitude = finalLat
+                        this.longitude = finalLon
+                        this.altitude = finalAltitude
+                        this.speed = speed
+                        this.bearing = bearing
+                        this.accuracy = horizontalAccuracy
+                        this.time = nowMs
+                        this.elapsedRealtimeNanos = nowNanos
+                    }
+                    locationManager.setTestProviderLocation(provider, retryLoc)
+                    lastSuccessfulLocation = retryLoc
+                } catch (ignored: Exception) {}
             }
         }
 
