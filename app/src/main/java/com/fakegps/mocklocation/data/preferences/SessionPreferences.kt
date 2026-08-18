@@ -145,8 +145,17 @@ class SessionPreferences(context: Context) {
         get() = prefs.getBoolean("key_is_session_expired", false)
         set(value) = prefs.edit().putBoolean("key_is_session_expired", value).apply()
 
-    fun startNewSession(durationMillis: Long = DEFAULT_SESSION_DURATION_MILLIS) {
+    fun hasValidActiveSession(): Boolean {
+        val remaining = getTimeRemainingMillis()
+        return isSessionActive && !isSessionExpired && remaining > 0L
+    }
+
+    fun startNewSession(durationMillis: Long = DEFAULT_SESSION_DURATION_MILLIS, forceRestart: Boolean = false) {
         val now = System.currentTimeMillis()
+        if (!forceRestart && hasValidActiveSession()) {
+            // Keep existing unexpired remaining duration and expiry timestamp intact across updates/restarts
+            return
+        }
         sessionAllocatedDurationMillis = durationMillis
         sessionExpiresTimestamp = now + durationMillis
         isSessionExpired = false
@@ -159,6 +168,7 @@ class SessionPreferences(context: Context) {
         sessionExpiresTimestamp = currentExpiry + extraMillis
         sessionAllocatedDurationMillis += extraMillis
         isSessionExpired = false
+        isSessionActive = true
     }
 
     fun getTimeRemainingMillis(): Long {

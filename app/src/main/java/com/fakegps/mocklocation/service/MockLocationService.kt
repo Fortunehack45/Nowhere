@@ -97,6 +97,9 @@ class MockLocationService : Service() {
         createNotificationChannel()
         acquireWakeLock()
         startForegroundNotification("Nowhere Location Service", "Ready & Active")
+        if (sessionPrefs.hasValidActiveSession()) {
+            SessionTimerManager.resumeExistingTimer(this)
+        }
     }
 
     private fun updateAllWidgets() {
@@ -483,9 +486,7 @@ class MockLocationService : Service() {
         sessionPrefs.lastAltitude = altitude
         updateAllWidgets()
 
-        if (!SessionTimerManager.timerState.value.isRunning || sessionPrefs.isSessionExpired) {
-            SessionTimerManager.startTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
-        }
+        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
         // Automatically activate VPN matching closest country/server to target mock location
         val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
@@ -570,9 +571,7 @@ class MockLocationService : Service() {
         sessionPrefs.isLooping = isLooping
         sessionPrefs.saveWaypoints(waypoints)
 
-        if (!SessionTimerManager.timerState.value.isRunning || sessionPrefs.isSessionExpired) {
-            SessionTimerManager.startTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
-        }
+        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
         // Automatically activate VPN matching closest country/server to route starting location
         if (waypoints.isNotEmpty()) {
@@ -723,9 +722,7 @@ class MockLocationService : Service() {
         sessionPrefs.lastSpeedKmh = speedKmh
         updateAllWidgets()
 
-        if (!SessionTimerManager.timerState.value.isRunning || sessionPrefs.isSessionExpired) {
-            SessionTimerManager.startTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
-        }
+        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
         // Automatically activate VPN matching closest country/server to joystick location
         val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(startLat, startLon)

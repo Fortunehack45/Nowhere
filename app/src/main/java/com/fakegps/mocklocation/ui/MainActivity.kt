@@ -245,6 +245,9 @@ class MainActivity : AppCompatActivity() {
         viewModel.refreshPermissionStates()
         checkBatteryOptimizationOnFirstLaunch()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
+        if (com.fakegps.mocklocation.data.preferences.SessionPreferences(this).hasValidActiveSession()) {
+            com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+        }
     }
 
     override fun onPause() {

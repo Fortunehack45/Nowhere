@@ -55,7 +55,20 @@ object SessionTimerManager {
     private var hasFired10s = false
     private var hasFiredExpired = false
 
-    fun startTimer(context: Context, durationMillis: Long = SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS) {
+    fun startOrResumeTimer(context: Context, durationMillis: Long = SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS) {
+        val sessionPrefs = SessionPreferences(context)
+        if (sessionPrefs.hasValidActiveSession()) {
+            resumeExistingTimer(context)
+        } else {
+            startTimer(context, durationMillis, forceRestart = true)
+        }
+    }
+
+    fun startTimer(
+        context: Context,
+        durationMillis: Long = SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS,
+        forceRestart: Boolean = false
+    ) {
         val sessionPrefs = SessionPreferences(context)
         val settingsPrefs = AppSettingsPreferences(context)
 
@@ -66,7 +79,7 @@ object SessionTimerManager {
             durationMillis
         }
 
-        sessionPrefs.startNewSession(actualDuration)
+        sessionPrefs.startNewSession(actualDuration, forceRestart = forceRestart)
         resetThresholdFlags()
 
         ensureNotificationChannel(context)
@@ -88,6 +101,10 @@ object SessionTimerManager {
     }
 
     fun resumeExistingTimer(context: Context) {
+        val sessionPrefs = SessionPreferences(context)
+        if (sessionPrefs.hasValidActiveSession()) {
+            updateState(context)
+        }
         ensureNotificationChannel(context)
         startTickerLoop(context.applicationContext)
     }
