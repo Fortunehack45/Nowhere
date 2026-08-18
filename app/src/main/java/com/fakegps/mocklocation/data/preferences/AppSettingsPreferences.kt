@@ -12,11 +12,11 @@ import org.osmdroid.util.MapTileIndex
  * Eliminates 404s, inverted coordinate bugs, and ensures zero latency worldwide.
  */
 class GoogleHybridSatelliteTileSource : OnlineTileSourceBase(
-    "GoogleHybridSatellite",
+    "NowhereSatelliteHybrid_v1",
     0,
     20,
     256,
-    "",
+    ".jpg",
     arrayOf(
         "https://mt0.google.com/vt/lyrs=y&",
         "https://mt1.google.com/vt/lyrs=y&",

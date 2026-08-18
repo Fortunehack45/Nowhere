@@ -245,6 +245,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.tvAppVersionTitle.text = "Nowhere Version v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME}"
+        binding.tvSettingsFooterVersion.text = "Version ${com.fakegps.mocklocation.BuildConfig.VERSION_NAME} (Build ${com.fakegps.mocklocation.BuildConfig.VERSION_CODE}) • Release"
         binding.btnCheckAppUpdates.setOnClickListener {
             binding.tvCheckUpdateStatus.text = "Checking..."
             binding.btnCheckAppUpdates.isEnabled = false
