@@ -140,10 +140,11 @@ class AppSettingsPreferences(context: Context) {
         get() = System.currentTimeMillis() < adFreeUntilTimestamp
 
     /**
-     * Records a watched rewarded ad. If 20 ads are watched, activates 24 hours of ad-free access & unlimited duration!
+     * Records an ad watched specifically towards the 24-Hour Pass.
+     * When 20 ads are watched, activates 24 hours of ad-free access & unlimited duration!
      * Returns a pair of (newWatchedCount, didUnlock24hPass)
      */
-    fun recordRewardedAdWatched(): Pair<Int, Boolean> {
+    fun record24hPassAdWatched(): Pair<Int, Boolean> {
         val current = watchedRewardAdsCount + 1
         return if (current >= 20) {
             val oneDayMillis = 24 * 60 * 60 * 1000L
@@ -156,6 +157,8 @@ class AppSettingsPreferences(context: Context) {
             Pair(current, false)
         }
     }
+
+    fun recordRewardedAdWatched(): Pair<Int, Boolean> = record24hPassAdWatched()
 
     fun getAdFreeRemainingTimeText(): String {
         if (!isAdFreeActive) return "Inactive"

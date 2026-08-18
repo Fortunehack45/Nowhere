@@ -530,7 +530,7 @@ class MockLocationService : Service() {
                             )
                         }
                     }
-                    delay(300L) // Continuous background provider lock
+                    delay(1000L) // Battery-optimized 1s background provider lock
                 }
             } catch (e: CancellationException) {
                 throw e

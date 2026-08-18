@@ -247,16 +247,14 @@ class NowhereVpnService : VpnService() {
     private suspend fun runTunnelLoop(pfd: ParcelFileDescriptor) = withContext(Dispatchers.IO) {
         try {
             val inputStream = FileInputStream(pfd.fileDescriptor)
-            val packet = ByteBuffer.allocate(32767)
+            val buffer = ByteArray(16384)
 
             while (isActive && isRunning) {
-                val length = inputStream.read(packet.array())
+                val length = inputStream.read(buffer)
                 if (length > 0) {
                     totalRxBytes += length
-                    packet.limit(length)
-                    packet.clear()
                 }
-                delay(50)
+                delay(500L)
             }
         } catch (ignored: Exception) {}
     }

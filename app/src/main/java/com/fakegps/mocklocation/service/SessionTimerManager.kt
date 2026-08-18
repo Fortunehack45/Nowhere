@@ -13,6 +13,9 @@ import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.ui.MainActivity
 import com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider
+import com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider
+import com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider
+import com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -168,6 +171,15 @@ object SessionTimerManager {
                         formattedTotal = sessionPrefs.formatAllocatedDuration(),
                         progressPercent = percent
                     )
+
+                    // Real-time 1-second direct home screen widget refresh
+                    NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                    if (sessionPrefs.activeMode == "ROUTE") {
+                        NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
+                    }
+                    if (sessionPrefs.isIpMaskingEnabled) {
+                        NowhereVpnWidgetProvider.updateAllVpnWidgets(appContext)
+                    }
                 }
 
                 delay(1000L)

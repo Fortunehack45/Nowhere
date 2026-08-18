@@ -88,9 +88,14 @@ class SessionExtendDialog(
         }
 
         binding.layoutPromo24hPass.setOnClickListener {
-            val intent = Intent(activity, SettingsActivity::class.java)
-            activity.startActivity(intent)
-            dismiss()
+            val settingsPrefs = AppSettingsPreferences(context)
+            if (settingsPrefs.isAdFreeActive) {
+                val intent = Intent(activity, SettingsActivity::class.java)
+                activity.startActivity(intent)
+                dismiss()
+            } else {
+                handleWatchAdFor24hPass()
+            }
         }
     }
 
@@ -100,13 +105,7 @@ class SessionExtendDialog(
                 activity,
                 onUserEarnedReward = {
                     SessionTimerManager.extendSession(context, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
-                    val settingsPrefs = AppSettingsPreferences(context)
-                    val (newCount, unlocked) = settingsPrefs.recordRewardedAdWatched()
-                    if (unlocked) {
-                        Toast.makeText(context, "🎉 24-Hour Ad-Free & Unlimited Pass Unlocked!", Toast.LENGTH_LONG).show()
-                    } else {
-                        Toast.makeText(context, "✅ +1 Hour Added! (Pass Progress: $newCount / 20)", Toast.LENGTH_LONG).show()
-                    }
+                    Toast.makeText(context, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
                     dismiss()
                 },
                 onAdClosed = {
@@ -118,14 +117,54 @@ class SessionExtendDialog(
                 activity,
                 onUserEarnedReward = {
                     SessionTimerManager.extendSession(context, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
-                    val settingsPrefs = AppSettingsPreferences(context)
-                    val (newCount, unlocked) = settingsPrefs.recordRewardedAdWatched()
-                    if (unlocked) {
-                        Toast.makeText(context, "🎉 24-Hour Ad-Free & Unlimited Pass Unlocked!", Toast.LENGTH_LONG).show()
-                    } else {
-                        Toast.makeText(context, "✅ +1 Hour Added! (Pass Progress: $newCount / 20)", Toast.LENGTH_LONG).show()
-                    }
+                    Toast.makeText(context, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
                     dismiss()
+                },
+                onAdClosed = {
+                    AdManager.preloadRewardedAd(activity)
+                }
+            )
+        } else {
+            AdManager.preloadRewardedInterstitialAd(activity)
+            AdManager.preloadRewardedAd(activity)
+            Toast.makeText(context, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun handleWatchAdFor24hPass() {
+        if (AdManager.isRewardedInterstitialAdReady()) {
+            AdManager.showRewardedInterstitialAd(
+                activity,
+                onUserEarnedReward = {
+                    val settingsPrefs = AppSettingsPreferences(context)
+                    val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
+                    if (unlocked) {
+                        SessionTimerManager.startTimer(context, SessionPreferences.UNLIMITED_24H_DURATION_MILLIS)
+                        Toast.makeText(context, "🎉 24-Hour Pass Unlocked! 24h unlimited simulation & ad-free active.", Toast.LENGTH_LONG).show()
+                        dismiss()
+                    } else {
+                        Toast.makeText(context, "🎯 24-Hour Pass Progress: $newCount / 20 videos completed!", Toast.LENGTH_SHORT).show()
+                        setupUI()
+                    }
+                },
+                onAdClosed = {
+                    AdManager.preloadRewardedInterstitialAd(activity)
+                }
+            )
+        } else if (AdManager.isRewardedAdReady()) {
+            AdManager.showRewardedAd(
+                activity,
+                onUserEarnedReward = {
+                    val settingsPrefs = AppSettingsPreferences(context)
+                    val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
+                    if (unlocked) {
+                        SessionTimerManager.startTimer(context, SessionPreferences.UNLIMITED_24H_DURATION_MILLIS)
+                        Toast.makeText(context, "🎉 24-Hour Pass Unlocked! 24h unlimited simulation & ad-free active.", Toast.LENGTH_LONG).show()
+                        dismiss()
+                    } else {
+                        Toast.makeText(context, "🎯 24-Hour Pass Progress: $newCount / 20 videos completed!", Toast.LENGTH_SHORT).show()
+                        setupUI()
+                    }
                 },
                 onAdClosed = {
                     AdManager.preloadRewardedAd(activity)

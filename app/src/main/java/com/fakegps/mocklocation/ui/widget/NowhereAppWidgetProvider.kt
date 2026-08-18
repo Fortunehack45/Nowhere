@@ -29,11 +29,18 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
         const val ACTION_UPDATE_WIDGET_STATE = "com.fakegps.mocklocation.ACTION_UPDATE_WIDGET_STATE"
 
         fun updateAllWidgets(context: Context) {
-            val intent = Intent(context, NowhereAppWidgetProvider::class.java).apply {
-                action = ACTION_UPDATE_WIDGET_STATE
-                setPackage(context.packageName)
+            try {
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, NowhereAppWidgetProvider::class.java))
+                if (ids != null && ids.isNotEmpty()) {
+                    for (id in ids) {
+                        updateAppWidgetDirect(context, appWidgetManager, id)
+                    }
+                }
+            } catch (e: Exception) {
+                // Non-fatal direct widget update fallback
             }
-            context.sendBroadcast(intent)
+
             NowhereRouteWidgetProvider.updateAllRouteWidgets(context)
             NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(context)
             NowhereSearchWidgetProvider.updateAllSearchWidgets(context)
@@ -42,11 +49,76 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
             NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(context)
         }
+
+        fun updateAppWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val views = RemoteViews(context.packageName, R.layout.widget_nowhere_layout)
+            val sessionPrefs = SessionPreferences(context)
+
+            val isActive = sessionPrefs.isSessionActive
+            val lat = sessionPrefs.lastLatitude
+            val lon = sessionPrefs.lastLongitude
+
+            if (isActive) {
+                views.setTextViewText(R.id.tvWidgetStatus, "ACTIVE")
+                views.setTextColor(R.id.tvWidgetStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+                views.setTextViewText(R.id.btnWidgetTeleport, "Stop")
+            } else {
+                views.setTextViewText(R.id.tvWidgetStatus, "READY")
+                views.setTextColor(R.id.tvWidgetStatus, ContextCompat.getColor(context, R.color.text_muted))
+                views.setTextViewText(R.id.btnWidgetTeleport, "Inject GPS")
+            }
+
+            val latDir = if (lat >= 0) "N" else "S"
+            val lonDir = if (lon >= 0) "E" else "W"
+            views.setTextViewText(R.id.tvWidgetCoords, String.format("%.5f° %s, %.5f° %s", Math.abs(lat), latDir, Math.abs(lon), lonDir))
+
+            // Open App Intent
+            val openAppIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                setPackage(context.packageName)
+            }
+            val openAppPendingIntent = PendingIntent.getActivity(
+                context,
+                10,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widgetRoot, openAppPendingIntent)
+            views.setOnClickPendingIntent(R.id.btnWidgetOpenApp, openAppPendingIntent)
+
+            // Teleport Action Intent
+            val teleportIntent = Intent(context, NowhereAppWidgetProvider::class.java).apply {
+                action = ACTION_WIDGET_TELEPORT
+                setPackage(context.packageName)
+            }
+            val teleportPendingIntent = PendingIntent.getBroadcast(
+                context,
+                20,
+                teleportIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.btnWidgetTeleport, teleportPendingIntent)
+
+            // Joystick Action Intent
+            val joystickIntent = Intent(context, NowhereAppWidgetProvider::class.java).apply {
+                action = ACTION_WIDGET_JOYSTICK
+                setPackage(context.packageName)
+            }
+            val joystickPendingIntent = PendingIntent.getBroadcast(
+                context,
+                30,
+                joystickIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.btnWidgetJoystick, joystickPendingIntent)
+
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
+            updateAppWidgetDirect(context, appWidgetManager, appWidgetId)
         }
     }
 
@@ -106,83 +178,8 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
                 }
             }
             ACTION_UPDATE_WIDGET_STATE, Intent.ACTION_LOCALE_CHANGED, Intent.ACTION_CONFIGURATION_CHANGED -> {
-                val appWidgetManager = AppWidgetManager.getInstance(context)
-                val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, NowhereAppWidgetProvider::class.java))
-                for (id in ids) {
-                    updateAppWidget(context, appWidgetManager, id)
-                }
+                updateAllWidgets(context)
             }
         }
-    }
-
-    private fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-        val views = RemoteViews(context.packageName, R.layout.widget_nowhere_layout)
-        val sessionPrefs = SessionPreferences(context)
-
-        val isActive = sessionPrefs.isSessionActive
-        val lat = sessionPrefs.lastLatitude
-        val lon = sessionPrefs.lastLongitude
-
-        if (isActive) {
-            views.setTextViewText(R.id.tvWidgetStatus, "ACTIVE")
-            views.setTextColor(R.id.tvWidgetStatus, ContextCompat.getColor(context, R.color.badge_active_text))
-            views.setTextViewText(R.id.btnWidgetTeleport, "Stop")
-        } else {
-            views.setTextViewText(R.id.tvWidgetStatus, "READY")
-            views.setTextColor(R.id.tvWidgetStatus, ContextCompat.getColor(context, R.color.text_muted))
-            views.setTextViewText(R.id.btnWidgetTeleport, "Inject GPS")
-        }
-
-        val latDir = if (lat >= 0) "N" else "S"
-        val lonDir = if (lon >= 0) "E" else "W"
-        views.setTextViewText(R.id.tvWidgetCoords, String.format("%.5f° %s, %.5f° %s", Math.abs(lat), latDir, Math.abs(lon), lonDir))
-
-        // Open App Intent
-        val openAppIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            setPackage(context.packageName)
-        }
-        val openAppPendingIntent = PendingIntent.getActivity(
-            context,
-            10,
-            openAppIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.widgetRoot, openAppPendingIntent)
-        views.setOnClickPendingIntent(R.id.btnWidgetOpenApp, openAppPendingIntent)
-
-        // Teleport Action Intent
-        val teleportIntent = Intent(context, NowhereAppWidgetProvider::class.java).apply {
-            action = ACTION_WIDGET_TELEPORT
-            setPackage(context.packageName)
-        }
-        val teleportPendingIntent = PendingIntent.getBroadcast(
-            context,
-            20,
-            teleportIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.btnWidgetTeleport, teleportPendingIntent)
-
-        // Joystick Action Intent
-        val joystickIntent = Intent(context, NowhereAppWidgetProvider::class.java).apply {
-            action = ACTION_WIDGET_JOYSTICK
-            setPackage(context.packageName)
-        }
-        val joystickPendingIntent = PendingIntent.getBroadcast(
-            context,
-            30,
-            joystickIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.btnWidgetJoystick, joystickPendingIntent)
-
-        CoroutineScope(Dispatchers.IO).launch {
-            val placeName = LocationNameResolver.resolveLocationName(context, lat, lon)
-            views.setTextViewText(R.id.tvWidgetLocationName, placeName)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-        }
-
-        appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 }

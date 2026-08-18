@@ -1254,4 +1254,11 @@ class MainActivity : AppCompatActivity() {
 
         binding.mapView.invalidate()
     }
+
+    override fun onDestroy() {
+        try {
+            binding.mapView.onDetach()
+        } catch (ignored: Exception) {}
+        super.onDestroy()
+    }
 }

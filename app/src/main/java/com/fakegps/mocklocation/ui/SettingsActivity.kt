@@ -147,7 +147,7 @@ class SettingsActivity : AppCompatActivity() {
                 com.fakegps.mocklocation.ads.AdManager.showRewardedInterstitialAd(
                     this,
                     onUserEarnedReward = {
-                        val (newCount, unlocked) = settingsPrefs.recordRewardedAdWatched()
+                        val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
                         if (unlocked) {
                             Toast.makeText(this, "🎉 24-Hour Pass Unlocked! Unlimited duration & ad-free access.", Toast.LENGTH_LONG).show()
                         } else {
@@ -163,7 +163,7 @@ class SettingsActivity : AppCompatActivity() {
                 com.fakegps.mocklocation.ads.AdManager.showRewardedAd(
                     this,
                     onUserEarnedReward = {
-                        val (newCount, unlocked) = settingsPrefs.recordRewardedAdWatched()
+                        val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
                         if (unlocked) {
                             Toast.makeText(this, "🎉 24-Hour Pass Unlocked! Unlimited duration & ad-free access.", Toast.LENGTH_LONG).show()
                         } else {
