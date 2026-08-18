@@ -23,8 +23,9 @@ class RealismLayer(
             return truncateIfNeeded(latitude, longitude)
         }
 
-        val maxJitter = (settingsPrefs?.jitterRadiusMeters?.toDouble() ?: 2.0).coerceAtLeast(0.1)
-        val minJitter = (maxJitter * 0.2).coerceAtLeast(0.05)
+        val configuredRadius = settingsPrefs?.jitterRadiusMeters ?: 2.0f
+        val maxJitter = if (configuredRadius >= 0.1f) configuredRadius.toDouble() else 2.0
+        val minJitter = (maxJitter * 0.25).coerceAtLeast(0.1)
         val radius = minJitter + (maxJitter - minJitter) * sqrt(random.nextDouble())
         val angleDeg = random.nextFloat() * 360f
 

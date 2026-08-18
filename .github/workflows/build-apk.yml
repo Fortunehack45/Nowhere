@@ -43,17 +43,27 @@ jobs:
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
 
-      - name: List Generated APK Files
+      - name: List Generated APK Files and Extract Version
+        id: extract_version
         run: |
           echo "=== Debug APKs ==="
           ls -la app/build/outputs/apk/debug/ || true
           echo "=== Release APKs ==="
           ls -la app/build/outputs/apk/release/ || true
+          RELEASE_APK=$(ls app/build/outputs/apk/release/Nowhere-*.apk 2>/dev/null | head -n 1)
+          if [ -n "$RELEASE_APK" ]; then
+            APK_BASENAME=$(basename "$RELEASE_APK")
+            VERSION=$(echo "$APK_BASENAME" | sed -E 's/Nowhere-v([0-9.]+)-release.apk/\1/')
+            echo "EXTRACTED_VERSION=$VERSION" >> $GITHUB_ENV
+            echo "Extracted Version: $VERSION"
+          else
+            echo "EXTRACTED_VERSION=1.0.${{ github.run_number }}" >> $GITHUB_ENV
+          fi
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Nowhere-Debug-APK-v1.0.${{ github.run_number }}
+          name: Nowhere-Debug-APK-v${{ env.EXTRACTED_VERSION }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
@@ -61,7 +71,7 @@ jobs:
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Nowhere-Release-APK-v1.0.${{ github.run_number }}
+          name: Nowhere-Release-APK-v${{ env.EXTRACTED_VERSION }}
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 14
@@ -70,8 +80,8 @@ jobs:
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Nowhere v1.0.${{ github.run_number }}
+          tag_name: v${{ env.EXTRACTED_VERSION }}
+          name: Nowhere v${{ env.EXTRACTED_VERSION }}
           generate_release_notes: true
           draft: false
           prerelease: false

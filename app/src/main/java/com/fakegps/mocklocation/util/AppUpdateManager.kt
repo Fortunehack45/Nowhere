@@ -32,6 +32,8 @@ object AppUpdateManager {
 
     private const val TAG = "AppUpdateManager"
     private const val GITHUB_LATEST_RELEASE_URL = "https://api.github.com/repos/Fortunehack45/Nowhere/releases/latest"
+    private const val GITHUB_ALL_RELEASES_URL = "https://api.github.com/repos/Fortunehack45/Nowhere/releases?per_page=5"
+    private const val GITHUB_TAGS_URL = "https://api.github.com/repos/Fortunehack45/Nowhere/tags?per_page=5"
     const val CHANNEL_ID = "nowhere_app_updates_channel"
     const val NOTIFICATION_ID = 5001
     const val DOWNLOAD_NOTIFICATION_ID = 5002
@@ -58,7 +60,7 @@ object AppUpdateManager {
     )
 
     /**
-     * Checks for updates asynchronously from GitHub releases API.
+     * Checks for updates asynchronously from GitHub releases API with fallback endpoints.
      */
     suspend fun checkForUpdates(context: Context, forceCheck: Boolean = false): UpdateInfo = withContext(Dispatchers.IO) {
         val currentVersion = BuildConfig.VERSION_NAME
@@ -67,8 +69,8 @@ object AppUpdateManager {
         val lastCheck = prefs.getLong(KEY_LAST_CHECK_TIME, 0L)
         val now = System.currentTimeMillis()
 
-        // Check at most once every 3 hours automatically unless forceCheck is true
-        if (!forceCheck && (now - lastCheck < 3 * 60 * 60 * 1000L)) {
+        // Short 5-minute cooldown for background checks; 0s cooldown when forceCheck is true
+        if (!forceCheck && (now - lastCheck < 5 * 60 * 1000L)) {
             return@withContext UpdateInfo(
                 isUpdateAvailable = false,
                 currentVersion = currentVersion,
@@ -80,63 +82,119 @@ object AppUpdateManager {
             )
         }
 
-        try {
-            val connection = openConnectionWithRedirects(GITHUB_LATEST_RELEASE_URL)
-            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                val response = reader.use { it.readText() }
-                val json = JSONObject(response)
+        val endpointsToTry = listOf(
+            GITHUB_LATEST_RELEASE_URL,
+            GITHUB_ALL_RELEASES_URL
+        )
 
-                val tagName = json.optString("tag_name", "").trim()
-                val cleanTag = tagName.removePrefix("v").removePrefix("V").trim()
-                val releaseName = json.optString("name", "Nowhere v$cleanTag")
-                val releaseNotes = json.optString("body", "Performance improvements and bug fixes.")
-                val htmlUrl = json.optString("html_url", "https://github.com/Fortunehack45/Nowhere/releases")
+        for (endpoint in endpointsToTry) {
+            try {
+                val connection = openConnectionWithRedirects(endpoint)
+                if (connection.responseCode in 200..299) {
+                    val reader = BufferedReader(InputStreamReader(connection.inputStream))
+                    val response = reader.use { it.readText() }.trim()
 
-                var apkDownloadUrl = ""
-                val assets = json.optJSONArray("assets")
-                if (assets != null) {
-                    for (i in 0 until assets.length()) {
-                        val asset = assets.getJSONObject(i)
-                        val name = asset.optString("name", "")
-                        if (name.endsWith(".apk", ignoreCase = true)) {
-                            apkDownloadUrl = asset.optString("browser_download_url", "")
-                            // Prefer release over debug if multiple exist
-                            if (name.contains("release", ignoreCase = true)) {
-                                break
+                    val targetReleaseJson = if (response.startsWith("[")) {
+                        val array = org.json.JSONArray(response)
+                        if (array.length() > 0) array.getJSONObject(0) else null
+                    } else if (response.startsWith("{")) {
+                        JSONObject(response)
+                    } else null
+
+                    if (targetReleaseJson != null) {
+                        val tagName = targetReleaseJson.optString("tag_name", "").trim()
+                        val cleanTag = tagName.removePrefix("v").removePrefix("V").trim()
+                        val releaseName = targetReleaseJson.optString("name", "Nowhere v$cleanTag").ifBlank { "Nowhere v$cleanTag" }
+                        val releaseNotes = targetReleaseJson.optString("body", "Performance improvements, stability upgrades, and bug fixes.")
+                        val htmlUrl = targetReleaseJson.optString("html_url", "https://github.com/Fortunehack45/Nowhere/releases")
+
+                        var apkDownloadUrl = ""
+                        val assets = targetReleaseJson.optJSONArray("assets")
+                        if (assets != null) {
+                            for (i in 0 until assets.length()) {
+                                val asset = assets.getJSONObject(i)
+                                val name = asset.optString("name", "")
+                                if (name.endsWith(".apk", ignoreCase = true)) {
+                                    apkDownloadUrl = asset.optString("browser_download_url", "")
+                                    if (name.contains("release", ignoreCase = true)) {
+                                        break
+                                    }
+                                }
                             }
                         }
+
+                        if (apkDownloadUrl.isEmpty() && cleanTag.isNotBlank()) {
+                            apkDownloadUrl = "https://github.com/Fortunehack45/Nowhere/releases/download/v$cleanTag/Nowhere-v$cleanTag-release.apk"
+                        }
+
+                        if (apkDownloadUrl.isEmpty()) {
+                            apkDownloadUrl = htmlUrl
+                        }
+
+                        prefs.edit().putLong(KEY_LAST_CHECK_TIME, now).apply()
+
+                        val isNewer = isNewerVersion(currentVersion, cleanTag)
+                        val dismissedVersion = prefs.getString(KEY_DISMISSED_VERSION, "") ?: ""
+
+                        val updateInfo = UpdateInfo(
+                            isUpdateAvailable = isNewer,
+                            currentVersion = currentVersion,
+                            latestVersion = cleanTag.ifEmpty { currentVersion },
+                            releaseTitle = releaseName,
+                            releaseNotes = releaseNotes,
+                            downloadUrl = apkDownloadUrl,
+                            htmlUrl = htmlUrl
+                        )
+
+                        if (isNewer && cleanTag != dismissedVersion) {
+                            notifyUpdateAvailable(context, updateInfo)
+                        }
+
+                        return@withContext updateInfo
                     }
                 }
-
-                if (apkDownloadUrl.isEmpty()) {
-                    apkDownloadUrl = htmlUrl
-                }
-
-                prefs.edit().putLong(KEY_LAST_CHECK_TIME, now).apply()
-
-                val isNewer = isNewerVersion(currentVersion, cleanTag)
-                val dismissedVersion = prefs.getString(KEY_DISMISSED_VERSION, "") ?: ""
-
-                val updateInfo = UpdateInfo(
-                    isUpdateAvailable = isNewer,
-                    currentVersion = currentVersion,
-                    latestVersion = cleanTag.ifEmpty { currentVersion },
-                    releaseTitle = releaseName,
-                    releaseNotes = releaseNotes,
-                    downloadUrl = apkDownloadUrl,
-                    htmlUrl = htmlUrl
-                )
-
-                if (isNewer && cleanTag != dismissedVersion) {
-                    notifyUpdateAvailable(context, updateInfo)
-                }
-
-                return@withContext updateInfo
+            } catch (e: Exception) {
+                Log.d(TAG, "Update endpoint check failed ($endpoint): ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.d(TAG, "Update check failed/skipped: ${e.message}")
         }
+
+        // Fallback: check /tags
+        try {
+            val tagConn = openConnectionWithRedirects(GITHUB_TAGS_URL)
+            if (tagConn.responseCode in 200..299) {
+                val response = tagConn.inputStream.bufferedReader().use { it.readText() }.trim()
+                if (response.startsWith("[")) {
+                    val array = org.json.JSONArray(response)
+                    if (array.length() > 0) {
+                        val firstTagObj = array.getJSONObject(0)
+                        val tagName = firstTagObj.optString("name", "").trim()
+                        val cleanTag = tagName.removePrefix("v").removePrefix("V").trim()
+                        val isNewer = isNewerVersion(currentVersion, cleanTag)
+                        val htmlUrl = "https://github.com/Fortunehack45/Nowhere/releases/tag/$tagName"
+                        val downloadUrl = "https://github.com/Fortunehack45/Nowhere/releases/download/$tagName/Nowhere-v$cleanTag-release.apk"
+
+                        prefs.edit().putLong(KEY_LAST_CHECK_TIME, now).apply()
+
+                        val updateInfo = UpdateInfo(
+                            isUpdateAvailable = isNewer,
+                            currentVersion = currentVersion,
+                            latestVersion = cleanTag.ifEmpty { currentVersion },
+                            releaseTitle = "Nowhere v$cleanTag",
+                            releaseNotes = "New features, bug fixes, and stability improvements.",
+                            downloadUrl = downloadUrl,
+                            htmlUrl = htmlUrl
+                        )
+
+                        val dismissedVersion = prefs.getString(KEY_DISMISSED_VERSION, "") ?: ""
+                        if (isNewer && cleanTag != dismissedVersion) {
+                            notifyUpdateAvailable(context, updateInfo)
+                        }
+
+                        return@withContext updateInfo
+                    }
+                }
+            }
+        } catch (ignored: Exception) {}
 
         return@withContext UpdateInfo(
             isUpdateAvailable = false,
@@ -145,7 +203,7 @@ object AppUpdateManager {
             releaseTitle = "Current Version",
             releaseNotes = "",
             downloadUrl = "",
-            htmlUrl = ""
+            htmlUrl = "https://github.com/Fortunehack45/Nowhere/releases"
         )
     }
 

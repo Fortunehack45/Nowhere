@@ -14,20 +14,17 @@ fun getDynamicBuildNumber(): Int {
     val propCode = (project.findProperty("versionCode") as? String)?.toIntOrNull()
     if (propCode != null && propCode > 0) return propCode
 
-    val envRunNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
-    if (envRunNumber != null && envRunNumber > 0) return envRunNumber
-
-    val envBuildNumber = System.getenv("BUILD_NUMBER")?.toIntOrNull()
-    if (envBuildNumber != null && envBuildNumber > 0) return envBuildNumber
-
-    return runCatching {
+    val gitCommitCount = runCatching {
         val stdout = ByteArrayOutputStream()
         project.exec {
             commandLine("git", "rev-list", "--count", "HEAD")
             standardOutput = stdout
         }
         stdout.toString().trim().toInt()
-    }.getOrNull() ?: 1
+    }.getOrNull() ?: 55
+
+    val envRunNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
+    return gitCommitCount + envRunNumber
 }
 
 val computedVersionCode = getDynamicBuildNumber()

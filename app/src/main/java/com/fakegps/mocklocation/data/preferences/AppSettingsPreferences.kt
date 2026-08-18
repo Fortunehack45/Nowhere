@@ -75,7 +75,7 @@ class AppSettingsPreferences(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_RANDOMIZE_JITTER, value).apply()
 
     var jitterRadiusMeters: Float
-        get() = prefs.getFloat(KEY_JITTER_RADIUS_METERS, 0.0f)
+        get() = prefs.getFloat(KEY_JITTER_RADIUS_METERS, 2.0f)
         set(value) = prefs.edit().putFloat(KEY_JITTER_RADIUS_METERS, value).apply()
 
     var truncateDecimals: Int

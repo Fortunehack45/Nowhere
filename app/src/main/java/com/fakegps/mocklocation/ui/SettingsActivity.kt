@@ -106,8 +106,12 @@ class SettingsActivity : AppCompatActivity() {
         // Advanced Simulation
         binding.switchFusedProvider.isChecked = settingsPrefs.useFusedProvider
         binding.switchJitter.isChecked = settingsPrefs.randomizeJitter
-        binding.sliderJitterRadius.value = settingsPrefs.jitterRadiusMeters.coerceIn(0.5f, 10.0f)
-        binding.tvJitterRadiusLabel.text = String.format("Radius: %.1f m", settingsPrefs.jitterRadiusMeters)
+        val jitterRadius = settingsPrefs.jitterRadiusMeters.coerceIn(0.5f, 10.0f)
+        binding.sliderJitterRadius.value = jitterRadius
+        binding.tvJitterRadiusLabel.text = String.format("Radius: %.1f m", jitterRadius)
+        binding.sliderJitterRadius.isEnabled = settingsPrefs.randomizeJitter
+        binding.sliderJitterRadius.alpha = if (settingsPrefs.randomizeJitter) 1.0f else 0.4f
+        binding.tvJitterRadiusLabel.alpha = if (settingsPrefs.randomizeJitter) 1.0f else 0.4f
 
         when (settingsPrefs.truncateDecimals) {
             6 -> binding.rbTruncate6.isChecked = true
@@ -279,6 +283,9 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.switchJitter.setOnCheckedChangeListener { _, isChecked ->
             settingsPrefs.randomizeJitter = isChecked
+            binding.sliderJitterRadius.isEnabled = isChecked
+            binding.sliderJitterRadius.alpha = if (isChecked) 1.0f else 0.4f
+            binding.tvJitterRadiusLabel.alpha = if (isChecked) 1.0f else 0.4f
         }
 
         binding.sliderJitterRadius.addOnChangeListener { _, value, _ ->

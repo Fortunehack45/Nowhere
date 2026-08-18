@@ -8,14 +8,32 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
-import kotlin.math.cos
 import kotlin.math.sin
 
 object RoadRouter {
 
+    private data class RoutingEndpoint(
+        val baseUrl: String,
+        val carProfile: String,
+        val footProfile: String
+    )
+
     private val ROUTING_ENDPOINTS = listOf(
-        "https://router.project-osrm.org/route/v1",
-        "https://routing.openstreetmap.de/routed-car/route/v1"
+        RoutingEndpoint(
+            baseUrl = "https://routing.openstreetmap.de/routed-car/route/v1",
+            carProfile = "driving",
+            footProfile = "driving"
+        ),
+        RoutingEndpoint(
+            baseUrl = "https://routing.openstreetmap.de/routed-foot/route/v1",
+            carProfile = "driving",
+            footProfile = "driving"
+        ),
+        RoutingEndpoint(
+            baseUrl = "https://router.project-osrm.org/route/v1",
+            carProfile = "driving",
+            footProfile = "walking"
+        )
     )
 
     /**
@@ -38,10 +56,10 @@ object RoadRouter {
         }
 
     /**
-     * Resolves true real-world routing based on transport mode:
-     * - VEHICLE / FOOT: Follows real motorways, streets, and avenues via OSRM with smooth road splines.
-     * - AIRCRAFT: Follows realistic high-altitude Great-Circle flight paths with climb, cruise (9500m), and descent curves.
-     * - SHIP: Follows marine waterways and ocean geodesic corridors locked strictly to sea level (0m) and nautical speed.
+     * Resolves the shortest real-world route between waypoints based on transport mode:
+     * - VEHICLE / FOOT: Follows shortest real roads/streets via OSRM, or shortest direct geodesic path when offline.
+     * - AIRCRAFT: Follows shortest Great-Circle flight paths with realistic climb, cruise (9500m), and descent curves.
+     * - SHIP: Follows direct marine waterways and ocean corridors locked strictly to sea level (0m).
      */
     suspend fun resolveRealWorldRoute(
         waypoints: List<RoutePoint>,
@@ -59,23 +77,20 @@ object RoadRouter {
             return@withContext generateMarineWaterwayRoute(waypoints)
         }
 
-        val profile = if (mode == TransportMode.FOOT) "walking" else "driving"
-
-        // Try direct multi-point route first
-        val directRoute = tryFetchOsrmRoute(waypoints, profile, mode)
+        // Try direct multi-point road route first
+        val directRoute = tryFetchOsrmRoute(waypoints, mode)
         if (directRoute.size >= 2) {
             return@withContext downsampleWaypointsIfNeeded(directRoute, maxPoints = 5000)
         }
 
-        // If direct long-distance query fails, chunk into sequential legs (e.g. waypoint pairs)
+        // If direct query fails, stitch leg by leg
         val stitchedRoute = mutableListOf<RoutePoint>()
-
         for (i in 0 until waypoints.size - 1) {
             val legStart = waypoints[i]
             val legEnd = waypoints[i + 1]
             val legPoints = listOf(legStart, legEnd)
 
-            val legResult = tryFetchOsrmRoute(legPoints, profile, mode)
+            val legResult = tryFetchOsrmRoute(legPoints, mode)
             if (legResult.size >= 2) {
                 if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == legResult.first()) {
                     stitchedRoute.addAll(legResult.subList(1, legResult.size))
@@ -83,12 +98,12 @@ object RoadRouter {
                     stitchedRoute.addAll(legResult)
                 }
             } else {
-                // Generate natural road spline for this specific leg so it never defaults to a flat straight line!
-                val splineLeg = generateNaturalRoadSpline(legStart, legEnd, mode)
-                if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == splineLeg.first()) {
-                    stitchedRoute.addAll(splineLeg.subList(1, splineLeg.size))
+                // Shortest direct geodesic path between the two points
+                val directLeg = generateShortestDirectPath(legStart, legEnd, mode)
+                if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == directLeg.first()) {
+                    stitchedRoute.addAll(directLeg.subList(1, directLeg.size))
                 } else {
-                    stitchedRoute.addAll(splineLeg)
+                    stitchedRoute.addAll(directLeg)
                 }
             }
         }
@@ -97,8 +112,8 @@ object RoadRouter {
             return@withContext downsampleWaypointsIfNeeded(stitchedRoute, maxPoints = 5000)
         }
 
-        // Offline or across terrain: generate natural curving road path
-        return@withContext generateNaturalRoadRoute(waypoints, mode)
+        // Fallback: direct shortest geodesic route connecting all waypoints cleanly
+        return@withContext generateShortestRoute(waypoints, mode)
     }
 
     /**
@@ -109,7 +124,7 @@ object RoadRouter {
      */
     private fun generateFlightCorridor(waypoints: List<RoutePoint>): List<RoutePoint> {
         val totalFlightPoints = mutableListOf<RoutePoint>()
-        val cruiseAltitudeMeters = 9500.0 // Cruising Flight Level (approx 31,000 ft)
+        val cruiseAltitudeMeters = 9500.0
 
         for (i in 0 until waypoints.size - 1) {
             val start = waypoints[i]
@@ -132,12 +147,10 @@ object RoadRouter {
 
                 val alt = when {
                     isFirstLeg && fraction < 0.25 -> {
-                        // Smooth aerodynamic climb
                         val climbFraction = fraction / 0.25
                         start.altitude + (cruiseAltitudeMeters - start.altitude) * sin(climbFraction * Math.PI / 2.0)
                     }
                     isLastLeg && fraction > 0.75 -> {
-                        // Smooth aerodynamic glide slope descent
                         val descentFraction = (fraction - 0.75) / 0.25
                         cruiseAltitudeMeters - (cruiseAltitudeMeters - end.altitude) * sin(descentFraction * Math.PI / 2.0)
                     }
@@ -167,7 +180,6 @@ object RoadRouter {
             val p2 = waypoints[i + 1]
             val legDistance = GeoUtils.calculateDistanceMeters(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
 
-            // Force altitude to exactly 0.0m (Sea Level)
             result.add(RoutePoint(p1.latitude, p1.longitude, 0.0))
 
             val stepSizeMeters = (legDistance / 40.0).coerceIn(1_000.0, 20_000.0)
@@ -194,19 +206,20 @@ object RoadRouter {
 
     private fun tryFetchOsrmRoute(
         points: List<RoutePoint>,
-        profile: String,
         mode: TransportMode
     ): List<RoutePoint> {
         val coordinatesParam = points.joinToString(";") { "${it.longitude},${it.latitude}" }
 
-        for (baseUrl in ROUTING_ENDPOINTS) {
+        for (endpoint in ROUTING_ENDPOINTS) {
             try {
-                val urlString = "$baseUrl/$profile/$coordinatesParam?overview=full&geometries=geojson"
+                val profile = if (mode == TransportMode.FOOT) endpoint.footProfile else endpoint.carProfile
+                val urlString = "${endpoint.baseUrl}/$profile/$coordinatesParam?overview=full&geometries=geojson&continue_straight=default"
                 val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
                     requestMethod = "GET"
                     connectTimeout = 4000
                     readTimeout = 5000
-                    setRequestProperty("User-Agent", "NowhereLocationSimulator/1.0")
+                    setRequestProperty("User-Agent", "Nowhere-Android-App/1.0")
+                    setRequestProperty("Accept", "application/json")
                 }
 
                 if (connection.responseCode == 200) {
@@ -230,54 +243,56 @@ object RoadRouter {
                         }
                     }
                 }
-            } catch (ignored: Exception) {
-                // Try next endpoint
+            } catch (_: Exception) {
+                // Try next routing endpoint
             }
         }
 
         return emptyList()
     }
 
-    fun generateNaturalRoadSpline(
+    /**
+     * Generates the shortest, straight direct geodesic path between two waypoints.
+     * Guarantees zero artificial lateral sway/wobble.
+     */
+    fun generateShortestDirectPath(
         start: RoutePoint,
         end: RoutePoint,
         mode: TransportMode
     ): List<RoutePoint> {
         val dist = GeoUtils.calculateDistanceMeters(start.latitude, start.longitude, end.latitude, end.longitude)
-        val bearing = GeoUtils.calculateBearing(start.latitude, start.longitude, end.latitude, end.longitude)
-
         val result = mutableListOf<RoutePoint>()
         result.add(start)
 
-        val stepMeters = (dist / 30.0).coerceIn(100.0, 5000.0)
-        val steps = (dist / stepMeters).toInt().coerceIn(4, 60)
-
-        val swayMeters = (dist * 0.015).coerceIn(15.0, 400.0)
+        // Interpolate in clean, uniform 10m-25m steps
+        val stepMeters = (dist / 40.0).coerceIn(10.0, 500.0)
+        val steps = (dist / stepMeters).toInt().coerceIn(2, 200)
 
         for (i in 1 until steps) {
             val fraction = i.toDouble() / steps.toDouble()
-            val (baseLat, baseLon) = GeoUtils.interpolate(start.latitude, start.longitude, end.latitude, end.longitude, fraction)
-
-            val lateralOffset = sin(fraction * Math.PI * 3.0) * swayMeters
-            val lateralBearing = (bearing + 90.0f) % 360.0f
-
-            val (offsetLat, offsetLon) = GeoUtils.computeDestinationPoint(baseLat, baseLon, lateralBearing, lateralOffset)
+            val (interLat, interLon) = if (dist > 50_000.0) {
+                GeoUtils.interpolateGreatCircle(start.latitude, start.longitude, end.latitude, end.longitude, fraction)
+            } else {
+                GeoUtils.interpolate(start.latitude, start.longitude, end.latitude, end.longitude, fraction)
+            }
             val alt = start.altitude + (end.altitude - start.altitude) * fraction
-
-            result.add(RoutePoint(offsetLat, offsetLon, if (alt > 0.1) alt else mode.defaultAltitudeMeters))
+            result.add(RoutePoint(interLat, interLon, if (alt > 0.1) alt else mode.defaultAltitudeMeters))
         }
 
         result.add(end)
         return result
     }
 
-    private fun generateNaturalRoadRoute(
+    /**
+     * Generates shortest direct geodesic path connecting all waypoints.
+     */
+    fun generateShortestRoute(
         waypoints: List<RoutePoint>,
         mode: TransportMode
     ): List<RoutePoint> {
         val result = mutableListOf<RoutePoint>()
         for (i in 0 until waypoints.size - 1) {
-            val leg = generateNaturalRoadSpline(waypoints[i], waypoints[i + 1], mode)
+            val leg = generateShortestDirectPath(waypoints[i], waypoints[i + 1], mode)
             if (result.isNotEmpty() && result.last() == leg.first()) {
                 result.addAll(leg.subList(1, leg.size))
             } else {
