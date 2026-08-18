@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -38,14 +40,20 @@ jobs:
 
       - name: Build Debug & Release APKs
         run: ./gradlew assembleDebug assembleRelease --stacktrace
+        env:
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
 
       - name: List Generated APK Files
-        run: ls -la app/build/outputs/apk/debug/ || true
+        run: |
+          echo "=== Debug APKs ==="
+          ls -la app/build/outputs/apk/debug/ || true
+          echo "=== Release APKs ==="
+          ls -la app/build/outputs/apk/release/ || true
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Nowhere-Debug-APK
+          name: Nowhere-Debug-APK-v1.0.${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
@@ -53,7 +61,23 @@ jobs:
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Nowhere-Release-Unsigned-APK
+          name: Nowhere-Release-APK-v1.0.${{ github.run_number }}
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Publish GitHub Release (Progressive Updates)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Nowhere v1.0.${{ github.run_number }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/debug/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

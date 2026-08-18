@@ -204,6 +204,26 @@ class MainActivity : AppCompatActivity() {
                 startFixedSpoofing()
             }.show()
         }
+
+        if (intent.getBooleanExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_OPEN_UPDATE_DIALOG, false)) {
+            val latestVersion = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_VERSION) ?: ""
+            val releaseTitle = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_TITLE) ?: "Nowhere Update"
+            val releaseNotes = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_NOTES) ?: ""
+            val downloadUrl = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_DOWNLOAD_URL) ?: ""
+            val htmlUrl = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_HTML_URL) ?: ""
+
+            val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.UpdateInfo(
+                isUpdateAvailable = true,
+                currentVersion = com.fakegps.mocklocation.BuildConfig.VERSION_NAME,
+                latestVersion = latestVersion.ifEmpty { com.fakegps.mocklocation.BuildConfig.VERSION_NAME },
+                releaseTitle = releaseTitle,
+                releaseNotes = releaseNotes,
+                downloadUrl = downloadUrl,
+                htmlUrl = htmlUrl
+            )
+            com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.newInstance(updateInfo)
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.TAG)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

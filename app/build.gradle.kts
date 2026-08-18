@@ -1,8 +1,38 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
 }
+
+// Compute dynamic build number and version progression
+val versionMajor = (project.findProperty("VERSION_MAJOR") as? String)?.toIntOrNull() ?: 1
+val versionMinor = (project.findProperty("VERSION_MINOR") as? String)?.toIntOrNull() ?: 0
+
+fun getDynamicBuildNumber(): Int {
+    val propCode = (project.findProperty("versionCode") as? String)?.toIntOrNull()
+    if (propCode != null && propCode > 0) return propCode
+
+    val envRunNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
+    if (envRunNumber != null && envRunNumber > 0) return envRunNumber
+
+    val envBuildNumber = System.getenv("BUILD_NUMBER")?.toIntOrNull()
+    if (envBuildNumber != null && envBuildNumber > 0) return envBuildNumber
+
+    return runCatching {
+        val stdout = ByteArrayOutputStream()
+        project.exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+            standardOutput = stdout
+        }
+        stdout.toString().trim().toInt()
+    }.getOrNull() ?: 1
+}
+
+val computedVersionCode = getDynamicBuildNumber()
+val customVersionName = project.findProperty("versionName") as? String
+val computedVersionName = customVersionName ?: "$versionMajor.$versionMinor.$computedVersionCode"
 
 android {
     namespace = "com.fakegps.mocklocation"
@@ -12,8 +42,8 @@ android {
         applicationId = "com.fakegps.mocklocation"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = computedVersionCode
+        versionName = computedVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -45,6 +75,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    applicationVariants.all {
+        outputs.all {
+            if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
+                outputFileName = "Nowhere-v${defaultConfig.versionName}-${name}.apk"
+            }
         }
     }
 

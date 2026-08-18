@@ -25,6 +25,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- In-App APK Updates & Installation -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application
         android:name=".MockLocationApp"
         android:allowBackup="true"
@@ -225,6 +228,17 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_nowhere_session_timer_info" />
         </receiver>
+
+        <!-- Secure File Provider for In-App APK Updates & Install -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 
