@@ -149,6 +149,12 @@ class MainActivity : AppCompatActivity() {
             WeatherBottomSheet(state.fixedLatitude, state.fixedLongitude).show(supportFragmentManager, "WEATHER_DIALOG")
         }
 
+        binding.layoutSessionTimerBadge.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.SessionExtendDialog(this) {
+                startFixedSpoofing()
+            }.show()
+        }
+
         com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer)
 
         handleIncomingIntents(intent)
@@ -176,6 +182,16 @@ class MainActivity : AppCompatActivity() {
 
         if (intent.getBooleanExtra("OPEN_VPN_DIALOG", false)) {
             IpChangerBottomSheet().show(supportFragmentManager, "IP_CHANGER_DIALOG")
+        }
+
+        if (intent.getBooleanExtra("OPEN_SESSION_EXTEND_DIALOG", false)) {
+            com.fakegps.mocklocation.ui.dialogs.SessionExtendDialog(this).show()
+        }
+
+        if (intent.getBooleanExtra("OPEN_SESSION_EXPIRED_DIALOG", false)) {
+            com.fakegps.mocklocation.ui.dialogs.SessionExtendDialog(this, isExpiredPrompt = true) {
+                startFixedSpoofing()
+            }.show()
         }
     }
 
@@ -909,6 +925,28 @@ class MainActivity : AppCompatActivity() {
                     }
                     binding.tvWeatherBadgeText.text = tempStr
                     binding.layoutWeatherBadge.contentDescription = "${report.locationName}: ${report.current.conditionName}, $tempStr"
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            com.fakegps.mocklocation.service.SessionTimerManager.timerState.collectLatest { timerState ->
+                if (!isFinishing && !isDestroyed) {
+                    if (timerState.isRunning) {
+                        binding.layoutSessionTimerBadge.visibility = View.VISIBLE
+                        binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
+                        binding.tvSessionTimerBadge.text = timerState.formattedRemaining
+                        binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.primary_bright))
+                        binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.primary_bright)
+                    } else if (timerState.isExpired) {
+                        binding.layoutSessionTimerBadge.visibility = View.VISIBLE
+                        binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)
+                        binding.tvSessionTimerBadge.text = "EXPIRED"
+                        binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_error_text))
+                        binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_text)
+                    } else {
+                        binding.layoutSessionTimerBadge.visibility = View.GONE
+                    }
                 }
             }
         }

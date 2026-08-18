@@ -259,6 +259,36 @@ object AdManager {
         }
     }
 
+    fun isInterstitialAdReady(): Boolean = interstitialAd != null
+
+    fun showInterstitialAd(activity: Activity, onDismissed: () -> Unit) {
+        val prefs = AppSettingsPreferences(activity)
+        if (prefs.isAdFreeActive) {
+            onDismissed()
+            return
+        }
+
+        interstitialAd?.let { ad ->
+            ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    interstitialAd = null
+                    preloadInterstitial(activity)
+                    onDismissed()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                    interstitialAd = null
+                    preloadInterstitial(activity)
+                    onDismissed()
+                }
+            }
+            ad.show(activity)
+        } ?: run {
+            preloadInterstitial(activity)
+            onDismissed()
+        }
+    }
+
     fun showInterstitialIfReady(activity: Activity) {
         val prefs = AppSettingsPreferences(activity)
         if (prefs.isAdFreeActive) return

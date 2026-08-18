@@ -213,6 +213,19 @@
                 android:resource="@xml/widget_nowhere_weather_info" />
         </receiver>
 
+        <!-- Home Screen App Widget: Session Duration & Countdown Widget -->
+        <receiver
+            android:name=".ui.widget.NowhereSessionTimerWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_SESSION_WIDGET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_nowhere_session_timer_info" />
+        </receiver>
+
     </application>
 
 </manifest>

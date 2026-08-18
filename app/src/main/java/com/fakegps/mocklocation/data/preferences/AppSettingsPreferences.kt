@@ -140,17 +140,17 @@ class AppSettingsPreferences(context: Context) {
         get() = System.currentTimeMillis() < adFreeUntilTimestamp
 
     /**
-     * Records a watched rewarded ad. If 5 ads are watched, activates 24 hours of ad-free access!
+     * Records a watched rewarded ad. If 20 ads are watched, activates 24 hours of ad-free access & unlimited duration!
      * Returns a pair of (newWatchedCount, didUnlock24hPass)
      */
     fun recordRewardedAdWatched(): Pair<Int, Boolean> {
         val current = watchedRewardAdsCount + 1
-        return if (current >= 5) {
+        return if (current >= 20) {
             val oneDayMillis = 24 * 60 * 60 * 1000L
             val currentFreeUntil = if (isAdFreeActive) adFreeUntilTimestamp else System.currentTimeMillis()
             adFreeUntilTimestamp = currentFreeUntil + oneDayMillis
             watchedRewardAdsCount = 0
-            Pair(5, true)
+            Pair(20, true)
         } else {
             watchedRewardAdsCount = current
             Pair(current, false)

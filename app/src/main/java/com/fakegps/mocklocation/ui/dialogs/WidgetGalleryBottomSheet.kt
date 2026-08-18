@@ -23,6 +23,7 @@ import com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider
 import com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider
 import com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider
 import com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider
+import com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 data class WidgetPreviewItem(
@@ -103,6 +104,13 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
                 description = "Quick-access list of your saved favorite destinations for rapid one-tap teleportation.",
                 layoutResId = R.layout.widget_nowhere_favorites_layout,
                 providerClass = NowhereFavoritesWidgetProvider::class.java
+            ),
+            WidgetPreviewItem(
+                title = "Session Duration & Countdown",
+                sizeLabel = "4 x 2",
+                description = "Live simulation countdown clock (HH:MM:SS), connection status, and 1-tap +1 Hour extension trigger.",
+                layoutResId = R.layout.widget_nowhere_session_timer_layout,
+                providerClass = NowhereSessionTimerWidgetProvider::class.java
             ),
             WidgetPreviewItem(
                 title = "1x1 Compact Quick-Action Pill",

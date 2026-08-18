@@ -12,6 +12,11 @@ class SessionPreferences(context: Context) {
         context.getSharedPreferences("mock_location_session_prefs", Context.MODE_PRIVATE)
 
     companion object {
+        const val DEFAULT_SESSION_DURATION_MILLIS = 2 * 60 * 60 * 1000L // 2 Hours (120 min)
+        const val RECONNECT_FALLBACK_DURATION_MILLIS = 20 * 60 * 1000L // 20 Minutes
+        const val REWARD_EXTENSION_DURATION_MILLIS = 60 * 60 * 1000L // 1 Hour (60 min)
+        const val UNLIMITED_24H_DURATION_MILLIS = 24 * 60 * 60 * 1000L // 24 Hours
+
         private const val KEY_IS_SESSION_ACTIVE = "key_is_session_active"
         private const val KEY_ACTIVE_MODE = "key_active_mode"
         private const val KEY_LAST_LATITUDE = "key_last_latitude"
@@ -126,9 +131,65 @@ class SessionPreferences(context: Context) {
         return list
     }
 
+    // --- Session Connection Duration & Countdown Timer Management ---
+
+    var sessionAllocatedDurationMillis: Long
+        get() = prefs.getLong("key_session_allocated_duration", DEFAULT_SESSION_DURATION_MILLIS)
+        set(value) = prefs.edit().putLong("key_session_allocated_duration", value).apply()
+
+    var sessionExpiresTimestamp: Long
+        get() = prefs.getLong("key_session_expires_timestamp", 0L)
+        set(value) = prefs.edit().putLong("key_session_expires_timestamp", value).apply()
+
+    var isSessionExpired: Boolean
+        get() = prefs.getBoolean("key_is_session_expired", false)
+        set(value) = prefs.edit().putBoolean("key_is_session_expired", value).apply()
+
+    fun startNewSession(durationMillis: Long = DEFAULT_SESSION_DURATION_MILLIS) {
+        val now = System.currentTimeMillis()
+        sessionAllocatedDurationMillis = durationMillis
+        sessionExpiresTimestamp = now + durationMillis
+        isSessionExpired = false
+        isSessionActive = true
+    }
+
+    fun extendSession(extraMillis: Long = REWARD_EXTENSION_DURATION_MILLIS) {
+        val now = System.currentTimeMillis()
+        val currentExpiry = if (sessionExpiresTimestamp > now) sessionExpiresTimestamp else now
+        sessionExpiresTimestamp = currentExpiry + extraMillis
+        sessionAllocatedDurationMillis += extraMillis
+        isSessionExpired = false
+    }
+
+    fun getTimeRemainingMillis(): Long {
+        val remaining = sessionExpiresTimestamp - System.currentTimeMillis()
+        return if (remaining > 0) remaining else 0L
+    }
+
+    fun formatRemainingTime(): String {
+        val remainingMillis = getTimeRemainingMillis()
+        val totalSecs = remainingMillis / 1000
+        val hours = totalSecs / 3600
+        val mins = (totalSecs % 3600) / 60
+        val secs = totalSecs % 60
+        return String.format("%02d:%02d:%02d", hours, mins, secs)
+    }
+
+    fun formatAllocatedDuration(): String {
+        val totalSecs = sessionAllocatedDurationMillis / 1000
+        val hours = totalSecs / 3600
+        val mins = (totalSecs % 3600) / 60
+        return if (hours > 0) {
+            String.format("%dh %02dm", hours, mins)
+        } else {
+            String.format("%dm", mins)
+        }
+    }
+
     fun clearSession() {
         prefs.edit()
             .putBoolean(KEY_IS_SESSION_ACTIVE, false)
+            .putBoolean("key_is_session_expired", false)
             .remove(KEY_WAYPOINTS_JSON)
             .apply()
     }

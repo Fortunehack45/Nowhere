@@ -135,7 +135,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Watch 5 short rewarded videos to remove all banner, interstitial, and open ads for 24 hours."
+                        android:text="Watch 20 short rewarded videos to unlock 24-hour unlimited simulation duration and remove all ads."
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
@@ -145,7 +145,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
                         android:layout_marginTop="10dp"
-                        android:max="5"
+                        android:max="20"
                         android:progress="0"
                         android:progressTint="@color/primary" />
 
@@ -162,7 +162,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:fontFamily="monospace"
-                            android:text="0 / 5 Videos Watched"
+                            android:text="0 / 20 Videos Watched"
                             android:textColor="@color/text_muted"
                             android:textSize="11sp" />
 

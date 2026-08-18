@@ -40,6 +40,7 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             NowhereIconWidgetProvider.updateAllIconWidgets(context)
             NowhereVpnWidgetProvider.updateAllVpnWidgets(context)
             NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
+            NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(context)
         }
     }
 

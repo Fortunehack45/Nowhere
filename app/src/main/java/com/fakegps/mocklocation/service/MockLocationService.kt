@@ -41,6 +41,8 @@ class MockLocationService : Service() {
         const val ACTION_PAUSE_ROUTE = "action_pause_route"
         const val ACTION_RESUME_ROUTE = "action_resume_route"
         const val ACTION_RESTORE_SESSION = "action_restore_session"
+        const val ACTION_EXTEND_SESSION = "action_extend_session"
+        const val ACTION_RECONNECT_FALLBACK = "action_reconnect_fallback"
 
         const val EXTRA_LATITUDE = "extra_latitude"
         const val EXTRA_LONGITUDE = "extra_longitude"
@@ -121,6 +123,14 @@ class MockLocationService : Service() {
             ACTION_PAUSE_ROUTE -> pauseRoute()
             ACTION_RESUME_ROUTE -> resumeRoute()
             ACTION_RESTORE_SESSION -> restoreActiveSession()
+            ACTION_EXTEND_SESSION -> {
+                val extraMillis = intent.getLongExtra("extra_duration_millis", SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
+                SessionTimerManager.extendSession(this, extraMillis)
+            }
+            ACTION_RECONNECT_FALLBACK -> {
+                SessionTimerManager.startTimer(this, SessionPreferences.RECONNECT_FALLBACK_DURATION_MILLIS)
+                restoreActiveSession()
+            }
             ACTION_START_FIXED -> {
                 val lat = intent.getDoubleExtra(EXTRA_LATITUDE, sessionPrefs.lastLatitude)
                 val lon = intent.getDoubleExtra(EXTRA_LONGITUDE, sessionPrefs.lastLongitude)
@@ -473,6 +483,10 @@ class MockLocationService : Service() {
         sessionPrefs.lastAltitude = altitude
         updateAllWidgets()
 
+        if (!SessionTimerManager.timerState.value.isRunning || sessionPrefs.isSessionExpired) {
+            SessionTimerManager.startTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        }
+
         // Automatically activate VPN matching closest country/server to target mock location
         val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
         sessionPrefs.activeIpNodeId = bestNode.id
@@ -555,6 +569,10 @@ class MockLocationService : Service() {
         sessionPrefs.lastSpeedKmh = speedKmh
         sessionPrefs.isLooping = isLooping
         sessionPrefs.saveWaypoints(waypoints)
+
+        if (!SessionTimerManager.timerState.value.isRunning || sessionPrefs.isSessionExpired) {
+            SessionTimerManager.startTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        }
 
         // Automatically activate VPN matching closest country/server to route starting location
         if (waypoints.isNotEmpty()) {
@@ -705,6 +723,10 @@ class MockLocationService : Service() {
         sessionPrefs.lastSpeedKmh = speedKmh
         updateAllWidgets()
 
+        if (!SessionTimerManager.timerState.value.isRunning || sessionPrefs.isSessionExpired) {
+            SessionTimerManager.startTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        }
+
         // Automatically activate VPN matching closest country/server to joystick location
         val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(startLat, startLon)
         sessionPrefs.activeIpNodeId = bestNode.id
@@ -818,6 +840,7 @@ class MockLocationService : Service() {
         releaseWakeLock()
         engine.stop()
         sessionPrefs.isSessionActive = false
+        SessionTimerManager.stopTimer(this)
         _serviceState.value = ServiceState.Idle
         updateAllWidgets()
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -832,6 +855,7 @@ class MockLocationService : Service() {
 
     private fun restoreActiveSession() {
         if (!sessionPrefs.isSessionActive) return
+        SessionTimerManager.resumeExistingTimer(this)
 
         when (sessionPrefs.activeMode) {
             "FIXED" -> {

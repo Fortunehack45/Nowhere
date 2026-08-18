@@ -43,16 +43,16 @@ class SettingsActivity : AppCompatActivity() {
         if (settingsPrefs.isAdFreeActive) {
             binding.tvAdFreeBadge.text = "Active"
             binding.tvAdFreeBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
-            binding.tvAdFreeDescription.text = "24-Hour Ad-Free pass is active! All ads are hidden."
+            binding.tvAdFreeDescription.text = "24-Hour Pass active! All ads are hidden and simulation duration is unlimited."
             binding.tvAdFreeProgressText.text = settingsPrefs.getAdFreeRemainingTimeText()
-            binding.pbAdFreeProgress.progress = 5
+            binding.pbAdFreeProgress.progress = 20
             binding.btnWatchRewardedAd.text = "Extend +24h"
         } else {
             val watched = settingsPrefs.watchedRewardAdsCount
             binding.tvAdFreeBadge.text = "Inactive"
             binding.tvAdFreeBadge.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
-            binding.tvAdFreeDescription.text = "Watch 5 short rewarded videos to remove all banner, interstitial, and open ads for 24 hours."
-            binding.tvAdFreeProgressText.text = "$watched / 5 Videos Watched (${5 - watched} remaining)"
+            binding.tvAdFreeDescription.text = "Watch 20 short rewarded videos to unlock 24-hour unlimited simulation duration and remove all ads."
+            binding.tvAdFreeProgressText.text = "$watched / 20 Videos Watched (${20 - watched} remaining)"
             binding.pbAdFreeProgress.progress = watched
             binding.btnWatchRewardedAd.text = "Watch Video"
         }
@@ -149,9 +149,9 @@ class SettingsActivity : AppCompatActivity() {
                     onUserEarnedReward = {
                         val (newCount, unlocked) = settingsPrefs.recordRewardedAdWatched()
                         if (unlocked) {
-                            Toast.makeText(this, "24-Hour Ad-Free Pass Unlocked! All ads are removed.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "🎉 24-Hour Pass Unlocked! Unlimited duration & ad-free access.", Toast.LENGTH_LONG).show()
                         } else {
-                            Toast.makeText(this, "Video $newCount / 5 complete! Watch ${5 - newCount} more to unlock 24h Ad-Free.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Video $newCount / 20 complete! Watch ${20 - newCount} more to unlock 24h Pass.", Toast.LENGTH_SHORT).show()
                         }
                         refreshSystemStatus()
                     },
@@ -165,9 +165,9 @@ class SettingsActivity : AppCompatActivity() {
                     onUserEarnedReward = {
                         val (newCount, unlocked) = settingsPrefs.recordRewardedAdWatched()
                         if (unlocked) {
-                            Toast.makeText(this, "24-Hour Ad-Free Pass Unlocked! All ads are removed.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "🎉 24-Hour Pass Unlocked! Unlimited duration & ad-free access.", Toast.LENGTH_LONG).show()
                         } else {
-                            Toast.makeText(this, "Video $newCount / 5 complete! Watch ${5 - newCount} more to unlock 24h Ad-Free.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Video $newCount / 20 complete! Watch ${20 - newCount} more to unlock 24h Pass.", Toast.LENGTH_SHORT).show()
                         }
                         refreshSystemStatus()
                     },
