@@ -5,6 +5,7 @@ struct SettingsSheetView: View {
 
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var storage = StorageManager.shared
+    @EnvironmentObject var updateChecker: AppUpdateChecker
 
     @State private var showEditSlot1 = false
     @State private var showEditSlot2 = false
@@ -77,13 +78,81 @@ struct SettingsSheetView: View {
                     Toggle("Haptic Feedback", isOn: $storage.hapticFeedback)
                 }
 
-                // Section 4: Developer Portfolio & Contact
+                // Section 4: Updates
+                Section(header: Text("APP UPDATES").foregroundColor(.red)) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Installed Version")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                            Text("v\(updateChecker.currentVersion)")
+                                .font(.system(size: 12, design: .monospaced))
+                                .foregroundColor(.gray)
+                        }
+                        Spacer()
+                        if updateChecker.isChecking {
+                            ProgressView()
+                                .scaleEffect(0.75)
+                        } else if updateChecker.updateAvailable {
+                            VStack(alignment: .trailing, spacing: 3) {
+                                Text("Update Available")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.red)
+                                Text("v\(updateChecker.latestVersion)")
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundColor(.red.opacity(0.8))
+                            }
+                        } else if updateChecker.latestVersion.isEmpty {
+                            Text("Not checked")
+                                .font(.system(size: 11))
+                                .foregroundColor(.gray)
+                        } else {
+                            Text("Up to date ✓")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.green)
+                        }
+                    }
+
+                    if updateChecker.updateAvailable, let url = updateChecker.releaseURL {
+                        Link(destination: url) {
+                            HStack {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .foregroundColor(.red)
+                                Text("Download v\(updateChecker.latestVersion)")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.red)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                    }
+
+                    Button(action: { updateChecker.checkForUpdate() }) {
+                        HStack {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundColor(.gray)
+                            Text(updateChecker.isChecking ? "Checking..." : "Check for Updates")
+                                .foregroundColor(.gray)
+                            Spacer()
+                            if let lastChecked = updateChecker.lastCheckedAt {
+                                Text(lastChecked, style: .relative)
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.gray.opacity(0.6))
+                            }
+                        }
+                    }
+                    .disabled(updateChecker.isChecking)
+                }
+
+                // Section 5: Developer Portfolio & Contact
                 Section(header: Text("ABOUT NOWHERE").foregroundColor(.red)) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Nowhere GPS Simulator for iOS")
                             .font(.headline)
                             .foregroundColor(.white)
-                        Text("Version 1.2.0 • Precision Location Spoofing")
+                        Text("v\(updateChecker.currentVersion) • Precision Location Spoofing")
                             .font(.caption)
                             .foregroundColor(.gray)
                     }

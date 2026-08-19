@@ -6,6 +6,7 @@ struct MainMapView: View {
     @StateObject private var engine = LocationSimulationEngine.shared
     @StateObject private var searchService = SearchService.shared
     @StateObject private var storage = StorageManager.shared
+    @EnvironmentObject var updateChecker: AppUpdateChecker
 
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -31,6 +32,9 @@ struct MainMapView: View {
     @State private var newRouteName: String = ""
     @State private var showShareSheet: Bool = false
     @State private var gpxExportURL: URL? = nil
+
+    // Update banner dismiss state
+    @State private var updateBannerDismissed: Bool = false
 
     // Location name
     @State private var activeLocationName: String = "San Francisco"
@@ -69,6 +73,13 @@ struct MainMapView: View {
                 }
 
                 segmentedModePicker
+
+                // Update Available Banner
+                if updateChecker.updateAvailable && !updateBannerDismissed {
+                    updateAvailableBanner
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+
                 Spacer()
             }
 
@@ -551,6 +562,63 @@ struct MainMapView: View {
                 .cornerRadius(14)
             }
         }
+    }
+
+    // MARK: - Update Available Banner
+    private var updateAvailableBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "arrow.down.circle.fill")
+                .foregroundColor(.red)
+                .font(.system(size: 18, weight: .bold))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Update Available — v\(updateChecker.latestVersion)")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                Text("Tap to download the latest Nowhere build")
+                    .font(.system(size: 10))
+                    .foregroundColor(.gray)
+            }
+
+            Spacer()
+
+            Button(action: {
+                if let url = updateChecker.releaseURL {
+                    UIApplication.shared.open(url)
+                }
+            }) {
+                Text("Update")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.red)
+                    .cornerRadius(8)
+            }
+
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    updateBannerDismissed = true
+                }
+            }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.gray)
+                    .padding(6)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(
+            Color(red: 0.12, green: 0.05, blue: 0.05)
+                .overlay(Color.red.opacity(0.15))
+        )
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.red.opacity(0.5), lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
     }
 
     // MARK: - Helpers

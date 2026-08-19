@@ -26,6 +26,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MockLocationService : Service() {
 
@@ -77,6 +78,9 @@ class MockLocationService : Service() {
     private var simulationJob: Job? = null
     private var activeMode: SimulationMode = SimulationMode.Idle
     private var routeSimulator: RouteSimulator? = null
+
+    // Idempotent stop guard — prevents double-stop from onDestroy + timer expiry racing
+    private val isStopping = AtomicBoolean(false)
 
     // Joystick runtime state
     private var joystickLat: Double = 0.0
@@ -412,7 +416,10 @@ class MockLocationService : Service() {
     }
 
     private fun scheduleWatchdog() {
+        // Watchdog: only schedule a one-shot keepalive if no session is currently running.
+        // Uses inexact alarm to avoid SCHEDULE_EXACT_ALARM permission requirement on Android 12+.
         if (!sessionPrefs.isSessionActive) return
+        if (_serviceState.value is ServiceState.Running) return // Already running — no need
         try {
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
             val watchdogIntent = Intent(applicationContext, MockLocationService::class.java).apply {
@@ -424,9 +431,10 @@ class MockLocationService : Service() {
                 watchdogIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            val triggerTime = android.os.SystemClock.elapsedRealtime() + 60_000L
+            val triggerTime = android.os.SystemClock.elapsedRealtime() + 90_000L // 90s keepalive
+            // Use setAndAllowWhileIdle (inexact) — avoids SCHEDULE_EXACT_ALARM SecurityException on API 31+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager?.setExactAndAllowWhileIdle(
+                alarmManager?.setAndAllowWhileIdle(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     triggerTime,
                     pendingIntent
@@ -438,6 +446,8 @@ class MockLocationService : Service() {
                     pendingIntent
                 )
             }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Watchdog alarm permission denied — service will rely on START_STICKY for self-recovery.")
         } catch (e: Exception) {
             Log.w(TAG, "Could not schedule watchdog alarm: ${e.message}")
         }
@@ -476,6 +486,7 @@ class MockLocationService : Service() {
     }
 
     fun startFixed(latitude: Double, longitude: Double, altitude: Double = 15.0) {
+        isStopping.set(false)
         stopCurrentLoop()
         acquireWakeLock()
         activeMode = SimulationMode.Fixed(latitude, longitude, altitude)
@@ -488,11 +499,15 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically activate VPN matching closest country/server to target mock location
-        val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
-        sessionPrefs.activeIpNodeId = bestNode.id
-        sessionPrefs.isIpMaskingEnabled = true
-        com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+        // Automatically activate VPN — wrapped in try-catch to prevent VPN errors crashing simulation
+        try {
+            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
+            sessionPrefs.activeIpNodeId = bestNode.id
+            sessionPrefs.isIpMaskingEnabled = true
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+        } catch (e: Exception) {
+            Log.w(TAG, "VPN auto-start failed (non-fatal): ${e.message}")
+        }
 
         serviceScope.launch(Dispatchers.IO) {
             com.fakegps.mocklocation.weather.WeatherManager.fetchWeather(this@MockLocationService, latitude, longitude)
@@ -558,6 +573,7 @@ class MockLocationService : Service() {
             return
         }
 
+        isStopping.set(false)
         stopCurrentLoop()
         acquireWakeLock()
 
@@ -573,12 +589,16 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically activate VPN matching closest country/server to route starting location
+        // Automatically activate VPN — wrapped in try-catch to prevent VPN errors crashing simulation
         if (waypoints.isNotEmpty()) {
-            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(waypoints[0].latitude, waypoints[0].longitude)
-            sessionPrefs.activeIpNodeId = bestNode.id
-            sessionPrefs.isIpMaskingEnabled = true
-            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+            try {
+                val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(waypoints[0].latitude, waypoints[0].longitude)
+                sessionPrefs.activeIpNodeId = bestNode.id
+                sessionPrefs.isIpMaskingEnabled = true
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+            } catch (e: Exception) {
+                Log.w(TAG, "VPN auto-start failed on route (non-fatal): ${e.message}")
+            }
         }
 
         startForegroundNotification(
@@ -706,6 +726,7 @@ class MockLocationService : Service() {
     }
 
     fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f) {
+        isStopping.set(false)
         stopCurrentLoop()
         acquireWakeLock()
         joystickLat = startLat
@@ -724,11 +745,15 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically activate VPN matching closest country/server to joystick location
-        val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(startLat, startLon)
-        sessionPrefs.activeIpNodeId = bestNode.id
-        sessionPrefs.isIpMaskingEnabled = true
-        com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+        // Automatically activate VPN — wrapped in try-catch to prevent VPN errors crashing simulation
+        try {
+            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(startLat, startLon)
+            sessionPrefs.activeIpNodeId = bestNode.id
+            sessionPrefs.isIpMaskingEnabled = true
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+        } catch (e: Exception) {
+            Log.w(TAG, "VPN auto-start failed on joystick (non-fatal): ${e.message}")
+        }
 
         startForegroundNotification(
             String.format("Joystick: %.5f, %.5f", startLat, startLon),
@@ -831,16 +856,21 @@ class MockLocationService : Service() {
     }
 
     fun stopSpoofing() {
+        // Idempotent guard: prevent double-stop from timer expiry and onDestroy racing
+        if (!isStopping.compareAndSet(false, true)) {
+            Log.d(TAG, "stopSpoofing already in progress, skipping duplicate call.")
+            return
+        }
         Log.i(TAG, "stopSpoofing called. Terminating simulation and releasing resources.")
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()
-        engine.stop()
+        try { engine.stop() } catch (e: Exception) { Log.w(TAG, "engine.stop() error (non-fatal): ${e.message}") }
         sessionPrefs.isSessionActive = false
         SessionTimerManager.stopTimer(this)
         _serviceState.value = ServiceState.Idle
-        updateAllWidgets()
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        try { updateAllWidgets() } catch (e: Exception) { Log.w(TAG, "widget update on stop (non-fatal): ${e.message}") }
+        try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (e: Exception) {}
         stopSelf()
     }
 
@@ -852,6 +882,11 @@ class MockLocationService : Service() {
 
     private fun restoreActiveSession() {
         if (!sessionPrefs.isSessionActive) return
+        // If simulation is already running (e.g. watchdog fired while active), skip restore
+        if (simulationJob?.isActive == true) {
+            Log.d(TAG, "restoreActiveSession: simulation already active, skipping.")
+            return
+        }
         SessionTimerManager.resumeExistingTimer(this)
 
         when (sessionPrefs.activeMode) {
@@ -884,8 +919,14 @@ class MockLocationService : Service() {
     }
 
     override fun onDestroy() {
+        // IMPORTANT: Do NOT call stopSpoofing() here — it calls stopSelf() which creates a
+        // recursive destroy loop when Android system legitimately destroys the service.
+        // Instead, only cancel coroutines and release resources directly.
         MockLocationServiceReceiver.activeService = null
-        stopSpoofing()
+        cancelWatchdog()
+        stopCurrentLoop()
+        releaseWakeLock()
+        try { engine.stop() } catch (e: Exception) {}
         serviceJob.cancel()
         super.onDestroy()
     }
