@@ -1,21 +1,35 @@
 package com.fakegps.mocklocation.ads
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.Window
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
+import android.widget.Toast
 import com.fakegps.mocklocation.BuildConfig
 import com.fakegps.mocklocation.R
+import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
@@ -29,6 +43,7 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 
 object AdManager {
 
@@ -306,7 +321,7 @@ object AdManager {
 
     fun showInterstitialAd(activity: Activity, onDismissed: () -> Unit) {
         interstitialAd?.let { ad ->
-            ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     interstitialAd = null
                     lastInterstitialShowTime = System.currentTimeMillis()
@@ -314,7 +329,7 @@ object AdManager {
                     onDismissed()
                 }
 
-                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                     interstitialAd = null
                     preloadInterstitial(activity)
                     onDismissed()
@@ -335,13 +350,13 @@ object AdManager {
 
         interstitialAd?.let { ad ->
             lastInterstitialShowTime = now
-            ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     interstitialAd = null
                     preloadInterstitial(activity)
                 }
 
-                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                     interstitialAd = null
                     preloadInterstitial(activity)
                 }
@@ -395,16 +410,18 @@ object AdManager {
         onAdClosed: () -> Unit
     ) {
         rewardedAd?.let { ad ->
-            ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     rewardedAd = null
                     preloadRewardedAd(activity)
+                    preloadRewardedInterstitialAd(activity)
                     onAdClosed()
                 }
 
-                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                     rewardedAd = null
                     preloadRewardedAd(activity)
+                    preloadRewardedInterstitialAd(activity)
                     onAdClosed()
                 }
             }
@@ -418,7 +435,7 @@ object AdManager {
         }
     }
 
-    // --- Rewarded Interstitial Ads ---
+    // --- Rewarded Interstitial Ads (Interstellar Reward Ads) ---
 
     fun preloadRewardedInterstitialAd(context: Context) {
         val primaryUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
@@ -461,16 +478,18 @@ object AdManager {
         onAdClosed: () -> Unit
     ) {
         rewardedInterstitialAd?.let { ad ->
-            ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     rewardedInterstitialAd = null
                     preloadRewardedInterstitialAd(activity)
+                    preloadRewardedAd(activity)
                     onAdClosed()
                 }
 
-                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                     rewardedInterstitialAd = null
                     preloadRewardedInterstitialAd(activity)
+                    preloadRewardedAd(activity)
                     onAdClosed()
                 }
             }
@@ -482,5 +501,195 @@ object AdManager {
             preloadRewardedInterstitialAd(activity)
             onAdClosed()
         }
+    }
+
+    // --- Unified Reward Video Flow with Instant Loading Dialog ---
+
+    /**
+     * Unified reward video presenter that guarantees a reward ad pops up when the user wants to add duration.
+     * Prefers Rewarded Interstitial (Interstellar), falls back to Rewarded Ad, or loads on-the-fly with a clean dialog.
+     */
+    fun showRewardVideoWithProgress(
+        activity: Activity,
+        onUserEarnedReward: () -> Unit,
+        onAdClosed: (() -> Unit)? = null
+    ) {
+        if (activity.isFinishing || activity.isDestroyed) return
+
+        // 1. If Rewarded Interstitial is preloaded and ready, show immediately!
+        if (isRewardedInterstitialAdReady()) {
+            showRewardedInterstitialAd(
+                activity,
+                onUserEarnedReward = { onUserEarnedReward() },
+                onAdClosed = { onAdClosed?.invoke() }
+            )
+            return
+        }
+
+        // 2. If standard Rewarded ad is preloaded and ready, show immediately!
+        if (isRewardedAdReady()) {
+            showRewardedAd(
+                activity,
+                onUserEarnedReward = { onUserEarnedReward() },
+                onAdClosed = { onAdClosed?.invoke() }
+            )
+            return
+        }
+
+        // 3. Neither is preloaded yet -> Display loading dialog and load with priority
+        val loadingDialog = createLoadingDialog(activity, "Loading reward video...")
+        try {
+            loadingDialog.show()
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not display loading dialog: ${e.message}")
+        }
+
+        var isHandled = false
+        val dismissLoading = {
+            activity.runOnUiThread {
+                try {
+                    if (loadingDialog.isShowing) {
+                        loadingDialog.dismiss()
+                    }
+                } catch (e: Exception) {}
+            }
+        }
+
+        val handler = Handler(Looper.getMainLooper())
+        val timeoutRunnable = Runnable {
+            if (!isHandled) {
+                isHandled = true
+                dismissLoading()
+                Toast.makeText(activity, "Reward video is loading in background. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
+                preloadRewardedInterstitialAd(activity)
+                preloadRewardedAd(activity)
+            }
+        }
+        handler.postDelayed(timeoutRunnable, 8000L)
+
+        // Attempt priority load of Rewarded Interstitial first
+        val interstitialUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
+        val adRequest = AdRequest.Builder().build()
+
+        RewardedInterstitialAd.load(
+            activity,
+            interstitialUnit,
+            adRequest,
+            object : RewardedInterstitialAdLoadCallback() {
+                override fun onAdLoaded(ad: RewardedInterstitialAd) {
+                    if (isHandled) return
+                    isHandled = true
+                    handler.removeCallbacks(timeoutRunnable)
+                    dismissLoading()
+
+                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            rewardedInterstitialAd = null
+                            preloadRewardedInterstitialAd(activity)
+                            preloadRewardedAd(activity)
+                            onAdClosed?.invoke()
+                        }
+
+                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                            rewardedInterstitialAd = null
+                            preloadRewardedInterstitialAd(activity)
+                            preloadRewardedAd(activity)
+                            onAdClosed?.invoke()
+                        }
+                    }
+
+                    ad.show(activity) { rewardItem ->
+                        onUserEarnedReward()
+                    }
+                }
+
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    Log.w(TAG, "Priority Rewarded Interstitial failed ($interstitialUnit): ${loadAdError.message}, trying regular rewarded...")
+                    val rewardedUnit = if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else PROD_REWARDED_AD_UNIT_ID
+                    RewardedAd.load(
+                        activity,
+                        rewardedUnit,
+                        adRequest,
+                        object : RewardedAdLoadCallback() {
+                            override fun onAdLoaded(ad: RewardedAd) {
+                                if (isHandled) return
+                                isHandled = true
+                                handler.removeCallbacks(timeoutRunnable)
+                                dismissLoading()
+
+                                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                                    override fun onAdDismissedFullScreenContent() {
+                                        rewardedAd = null
+                                        preloadRewardedAd(activity)
+                                        preloadRewardedInterstitialAd(activity)
+                                        onAdClosed?.invoke()
+                                    }
+
+                                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                                        rewardedAd = null
+                                        preloadRewardedAd(activity)
+                                        preloadRewardedInterstitialAd(activity)
+                                        onAdClosed?.invoke()
+                                    }
+                                }
+
+                                ad.show(activity) { rewardItem ->
+                                    onUserEarnedReward()
+                                }
+                            }
+
+                            override fun onAdFailedToLoad(rewardedError: LoadAdError) {
+                                if (isHandled) return
+                                isHandled = true
+                                handler.removeCallbacks(timeoutRunnable)
+                                dismissLoading()
+                                Toast.makeText(activity, "Unable to load reward video. Please check your internet connection.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                }
+            }
+        )
+    }
+
+    private fun createLoadingDialog(activity: Activity, message: String): Dialog {
+        val dialog = Dialog(activity)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setCancelable(true)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        val card = MaterialCardView(activity).apply {
+            radius = 16f * activity.resources.displayMetrics.density
+            setCardBackgroundColor(Color.parseColor("#161C28"))
+            strokeColor = Color.parseColor("#2A3346")
+            strokeWidth = (1 * activity.resources.displayMetrics.density).toInt()
+        }
+
+        val layout = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            val pad = (20 * activity.resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+        }
+
+        val progressBar = ProgressBar(activity).apply {
+            indeterminateTintList = ColorStateList.valueOf(Color.parseColor("#FF3B30"))
+        }
+
+        val textView = TextView(activity).apply {
+            text = message
+            setTextColor(Color.WHITE)
+            textSize = 14f
+            setTypeface(null, Typeface.BOLD)
+            val leftPad = (16 * activity.resources.displayMetrics.density).toInt()
+            setPadding(leftPad, 0, 0, 0)
+        }
+
+        layout.addView(progressBar)
+        layout.addView(textView)
+        card.addView(layout)
+        dialog.setContentView(card)
+
+        return dialog
     }
 }

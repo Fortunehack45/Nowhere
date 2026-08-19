@@ -188,37 +188,17 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.btnSettingsExtendOneHour.setOnClickListener {
-            if (com.fakegps.mocklocation.ads.AdManager.isRewardedInterstitialAdReady()) {
-                com.fakegps.mocklocation.ads.AdManager.showRewardedInterstitialAd(
-                    this,
-                    onUserEarnedReward = {
-                        com.fakegps.mocklocation.service.SessionTimerManager.extendSession(this, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
-                        Toast.makeText(this, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
-                        refreshSystemStatus()
-                    },
-                    onAdClosed = {
-                        com.fakegps.mocklocation.ads.AdManager.preloadRewardedInterstitialAd(this)
-                        refreshSystemStatus()
-                    }
-                )
-            } else if (com.fakegps.mocklocation.ads.AdManager.isRewardedAdReady()) {
-                com.fakegps.mocklocation.ads.AdManager.showRewardedAd(
-                    this,
-                    onUserEarnedReward = {
-                        com.fakegps.mocklocation.service.SessionTimerManager.extendSession(this, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
-                        Toast.makeText(this, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
-                        refreshSystemStatus()
-                    },
-                    onAdClosed = {
-                        com.fakegps.mocklocation.ads.AdManager.preloadRewardedAd(this)
-                        refreshSystemStatus()
-                    }
-                )
-            } else {
-                com.fakegps.mocklocation.ads.AdManager.preloadRewardedInterstitialAd(this)
-                com.fakegps.mocklocation.ads.AdManager.preloadRewardedAd(this)
-                Toast.makeText(this, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
-            }
+            com.fakegps.mocklocation.ads.AdManager.showRewardVideoWithProgress(
+                this,
+                onUserEarnedReward = {
+                    com.fakegps.mocklocation.service.SessionTimerManager.extendSession(this, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
+                    Toast.makeText(this, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
+                    refreshSystemStatus()
+                },
+                onAdClosed = {
+                    refreshSystemStatus()
+                }
+            )
         }
 
         binding.btnSettingsExtendManage.setOnClickListener {

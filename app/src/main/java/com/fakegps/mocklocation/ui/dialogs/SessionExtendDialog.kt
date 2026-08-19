@@ -82,35 +82,14 @@ class SessionExtendDialog(
     }
 
     private fun handleWatchAdToExtend() {
-        if (AdManager.isRewardedInterstitialAdReady()) {
-            AdManager.showRewardedInterstitialAd(
-                activity,
-                onUserEarnedReward = {
-                    SessionTimerManager.extendSession(context, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
-                    Toast.makeText(context, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
-                    dismiss()
-                },
-                onAdClosed = {
-                    AdManager.preloadRewardedInterstitialAd(activity)
-                }
-            )
-        } else if (AdManager.isRewardedAdReady()) {
-            AdManager.showRewardedAd(
-                activity,
-                onUserEarnedReward = {
-                    SessionTimerManager.extendSession(context, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
-                    Toast.makeText(context, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
-                    dismiss()
-                },
-                onAdClosed = {
-                    AdManager.preloadRewardedAd(activity)
-                }
-            )
-        } else {
-            AdManager.preloadRewardedInterstitialAd(activity)
-            AdManager.preloadRewardedAd(activity)
-            Toast.makeText(context, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
-        }
+        AdManager.showRewardVideoWithProgress(
+            activity,
+            onUserEarnedReward = {
+                SessionTimerManager.extendSession(context, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
+                Toast.makeText(context, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
+                dismiss()
+            }
+        )
     }
 
     private fun handleReconnectFallback() {
