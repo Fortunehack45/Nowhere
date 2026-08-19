@@ -73,11 +73,6 @@ object AdManager {
      * Loads an Adaptive/Standard Banner Ad into the specified container.
      */
     fun loadBanner(activity: Activity, container: FrameLayout, isHomeBanner: Boolean = false) {
-        val prefs = AppSettingsPreferences(activity)
-        if (prefs.isAdFreeActive) {
-            container.visibility = View.GONE
-            return
-        }
 
         try {
             val adUnit = if (BuildConfig.DEBUG) {
@@ -105,11 +100,6 @@ object AdManager {
      * Loads a Native Advanced Ad into the specified container.
      */
     fun loadNativeAd(activity: Activity, container: FrameLayout) {
-        val prefs = AppSettingsPreferences(activity)
-        if (prefs.isAdFreeActive) {
-            container.visibility = View.GONE
-            return
-        }
 
         try {
             val adUnit = if (BuildConfig.DEBUG) TEST_NATIVE_AD_UNIT_ID else PROD_NATIVE_AD_UNIT_ID
@@ -233,8 +223,6 @@ object AdManager {
     }
 
     fun preloadInterstitial(context: Context) {
-        val prefs = AppSettingsPreferences(context)
-        if (prefs.isAdFreeActive) return
 
         try {
             val adRequest = AdRequest.Builder().build()
@@ -262,11 +250,6 @@ object AdManager {
     fun isInterstitialAdReady(): Boolean = interstitialAd != null
 
     fun showInterstitialAd(activity: Activity, onDismissed: () -> Unit) {
-        val prefs = AppSettingsPreferences(activity)
-        if (prefs.isAdFreeActive) {
-            onDismissed()
-            return
-        }
 
         interstitialAd?.let { ad ->
             ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
@@ -290,8 +273,6 @@ object AdManager {
     }
 
     fun showInterstitialIfReady(activity: Activity) {
-        val prefs = AppSettingsPreferences(activity)
-        if (prefs.isAdFreeActive) return
 
         val now = System.currentTimeMillis()
         if (now - lastInterstitialShowTime < INTERSTITIAL_COOLDOWN_MS) {
@@ -370,8 +351,6 @@ object AdManager {
     // --- Rewarded Interstitial Ads (Rewarded Interstitial Unit: 6932394336) ---
 
     fun preloadRewardedInterstitialAd(context: Context) {
-        val prefs = AppSettingsPreferences(context)
-        if (prefs.isAdFreeActive) return
 
         try {
             val adUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID

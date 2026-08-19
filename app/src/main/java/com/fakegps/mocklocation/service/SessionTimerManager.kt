@@ -70,16 +70,7 @@ object SessionTimerManager {
         forceRestart: Boolean = false
     ) {
         val sessionPrefs = SessionPreferences(context)
-        val settingsPrefs = AppSettingsPreferences(context)
-
-        // If user has 24h pass active, grant full 24h duration
-        val actualDuration = if (settingsPrefs.isAdFreeActive) {
-            SessionPreferences.UNLIMITED_24H_DURATION_MILLIS
-        } else {
-            durationMillis
-        }
-
-        sessionPrefs.startNewSession(actualDuration, forceRestart = forceRestart)
+        sessionPrefs.startNewSession(durationMillis, forceRestart = forceRestart)
         resetThresholdFlags()
 
         ensureNotificationChannel(context)

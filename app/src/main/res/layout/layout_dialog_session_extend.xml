@@ -219,45 +219,7 @@
             app:iconTint="@color/text_primary"
             app:strokeColor="@color/stroke_subtle" />
 
-        <!-- 24-Hour Pass Promo Pill -->
-        <LinearLayout
-            android:id="@+id/layoutPromo24hPass"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_segmented_tab"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="8dp">
 
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:src="@drawable/ic_shield_check"
-                app:tint="@color/badge_success_text"
-                tools:ignore="ContentDescription" />
-
-            <TextView
-                android:id="@+id/tvPromo24hText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:text="Unlock 24h Unlimited Duration (20 Ads)"
-                android:textColor="@color/text_primary"
-                android:textSize="11.5sp"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_chevron_right"
-                app:tint="@color/text_muted"
-                tools:ignore="ContentDescription" />
-        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

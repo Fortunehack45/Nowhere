@@ -172,12 +172,7 @@ class SessionPreferences(private val context: Context) {
     }
 
     fun getEffectiveExpiryTimestamp(): Long {
-        val settingsPrefs = AppSettingsPreferences(context)
-        return if (settingsPrefs.isAdFreeActive) {
-            maxOf(sessionExpiresTimestamp, settingsPrefs.adFreeUntilTimestamp)
-        } else {
-            sessionExpiresTimestamp
-        }
+        return sessionExpiresTimestamp
     }
 
     fun getTimeRemainingMillis(): Long {
@@ -195,13 +190,7 @@ class SessionPreferences(private val context: Context) {
     }
 
     fun formatAllocatedDuration(): String {
-        val settingsPrefs = AppSettingsPreferences(context)
-        val allocated = if (settingsPrefs.isAdFreeActive) {
-            maxOf(sessionAllocatedDurationMillis, UNLIMITED_24H_DURATION_MILLIS)
-        } else {
-            sessionAllocatedDurationMillis
-        }
-        val totalSecs = allocated / 1000
+        val totalSecs = sessionAllocatedDurationMillis / 1000
         val hours = totalSecs / 3600
         val mins = (totalSecs % 3600) / 60
         return if (hours > 0) {

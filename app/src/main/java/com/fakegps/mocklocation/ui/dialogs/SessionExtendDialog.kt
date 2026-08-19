@@ -65,13 +65,6 @@ class SessionExtendDialog(
         } else {
             binding.btnReconnectFallback.visibility = View.GONE
         }
-
-        val watchedCount = settingsPrefs.watchedRewardAdsCount
-        if (settingsPrefs.isAdFreeActive) {
-            binding.tvPromo24hText.text = "24-Hour Pass Active (${settingsPrefs.getAdFreeRemainingTimeText()})"
-        } else {
-            binding.tvPromo24hText.text = "Unlock 24h Unlimited Pass ($watchedCount / 20 Ads)"
-        }
     }
 
     private fun setupListeners() {
@@ -85,17 +78,6 @@ class SessionExtendDialog(
 
         binding.btnReconnectFallback.setOnClickListener {
             handleReconnectFallback()
-        }
-
-        binding.layoutPromo24hPass.setOnClickListener {
-            val settingsPrefs = AppSettingsPreferences(context)
-            if (settingsPrefs.isAdFreeActive) {
-                val intent = Intent(activity, SettingsActivity::class.java)
-                activity.startActivity(intent)
-                dismiss()
-            } else {
-                handleWatchAdFor24hPass()
-            }
         }
     }
 
@@ -130,54 +112,6 @@ class SessionExtendDialog(
             Toast.makeText(context, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
         }
     }
-
-    private fun handleWatchAdFor24hPass() {
-        if (AdManager.isRewardedInterstitialAdReady()) {
-            AdManager.showRewardedInterstitialAd(
-                activity,
-                onUserEarnedReward = {
-                    val settingsPrefs = AppSettingsPreferences(context)
-                    val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
-                    if (unlocked) {
-                        val sessionPrefs = SessionPreferences(context)
-                        sessionPrefs.sessionExpiresTimestamp = settingsPrefs.adFreeUntilTimestamp
-                        sessionPrefs.sessionAllocatedDurationMillis = SessionPreferences.UNLIMITED_24H_DURATION_MILLIS
-                        sessionPrefs.isSessionExpired = false
-                        sessionPrefs.isSessionActive = true
-                        SessionTimerManager.startTimer(context, SessionPreferences.UNLIMITED_24H_DURATION_MILLIS, forceRestart = true)
-                        Toast.makeText(context, "🎉 24-Hour Pass Unlocked! 24h unlimited simulation & ad-free active.", Toast.LENGTH_LONG).show()
-                        dismiss()
-                    } else {
-                        Toast.makeText(context, "🎯 24-Hour Pass Progress: $newCount / 20 videos completed!", Toast.LENGTH_SHORT).show()
-                        setupUI()
-                    }
-                },
-                onAdClosed = {
-                    AdManager.preloadRewardedInterstitialAd(activity)
-                }
-            )
-        } else if (AdManager.isRewardedAdReady()) {
-            AdManager.showRewardedAd(
-                activity,
-                onUserEarnedReward = {
-                    val settingsPrefs = AppSettingsPreferences(context)
-                    val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
-                    if (unlocked) {
-                        val sessionPrefs = SessionPreferences(context)
-                        sessionPrefs.sessionExpiresTimestamp = settingsPrefs.adFreeUntilTimestamp
-                        sessionPrefs.sessionAllocatedDurationMillis = SessionPreferences.UNLIMITED_24H_DURATION_MILLIS
-                        sessionPrefs.isSessionExpired = false
-                        sessionPrefs.isSessionActive = true
-                        SessionTimerManager.startTimer(context, SessionPreferences.UNLIMITED_24H_DURATION_MILLIS, forceRestart = true)
-                        Toast.makeText(context, "🎉 24-Hour Pass Unlocked! 24h unlimited simulation & ad-free active.", Toast.LENGTH_LONG).show()
-                        dismiss()
-                    } else {
-                        Toast.makeText(context, "🎯 24-Hour Pass Progress: $newCount / 20 videos completed!", Toast.LENGTH_SHORT).show()
-                        setupUI()
-                    }
-                },
-                onAdClosed = {
-                    AdManager.preloadRewardedAd(activity)
                 }
             )
         } else {

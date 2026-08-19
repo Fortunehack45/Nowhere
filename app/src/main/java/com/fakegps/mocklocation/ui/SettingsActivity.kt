@@ -58,18 +58,16 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun renderSessionTimerUI(timerState: com.fakegps.mocklocation.service.SessionTimerManager.SessionTimerState) {
         val remaining = sessionPrefs.getTimeRemainingMillis()
-        val is24h = settingsPrefs.isAdFreeActive
         val formattedRemaining = sessionPrefs.formatRemainingTime()
 
         if (timerState.isRunning || (sessionPrefs.isSessionActive && remaining > 0)) {
-            binding.tvSettingsSessionBadge.text = if (is24h) "24H PASS ACTIVE" else formattedRemaining
+            binding.tvSettingsSessionBadge.text = formattedRemaining
             binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.primary_bright))
             binding.tvSettingsSessionBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_active_bg)
             binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
 
             binding.tvSettingsSessionTime.text = formattedRemaining
-            val totalText = if (is24h) "Total Allocated: 24h 00m (Unlimited Pass)" else "Total Allocated: ${sessionPrefs.formatAllocatedDuration()}"
-            binding.tvSettingsSessionTotal.text = totalText
+            binding.tvSettingsSessionTotal.text = "Total Allocated: ${sessionPrefs.formatAllocatedDuration()}"
             binding.pbSettingsSessionProgress.progress = timerState.progressPercent
         } else if (timerState.isExpired || sessionPrefs.isSessionExpired) {
             binding.tvSettingsSessionBadge.text = "EXPIRED"
@@ -81,37 +79,18 @@ class SettingsActivity : AppCompatActivity() {
             binding.tvSettingsSessionTotal.text = "Session expired. Tap +1 Hour to extend."
             binding.pbSettingsSessionProgress.progress = 0
         } else {
-            binding.tvSettingsSessionBadge.text = if (is24h) "24H PASS READY" else "STANDBY"
+            binding.tvSettingsSessionBadge.text = "STANDBY"
             binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_standby_text))
             binding.tvSettingsSessionBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_standby_bg)
             binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.badge_standby_text)
 
             binding.tvSettingsSessionTime.text = formattedRemaining
-            val totalText = if (is24h) "24-Hour Pass Active (Ready)" else "Default Duration: 2h 00m (Ready)"
-            binding.tvSettingsSessionTotal.text = totalText
+            binding.tvSettingsSessionTotal.text = "Default Duration: 2h 00m (Ready)"
             binding.pbSettingsSessionProgress.progress = 100
         }
     }
 
     private fun refreshSystemStatus() {
-        // 24-Hour Ad-Free Pass Status
-        if (settingsPrefs.isAdFreeActive) {
-            binding.tvAdFreeBadge.text = "Active"
-            binding.tvAdFreeBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
-            binding.tvAdFreeDescription.text = "24-Hour Pass active! All ads are hidden and simulation duration is unlimited."
-            binding.tvAdFreeProgressText.text = settingsPrefs.getAdFreeRemainingTimeText()
-            binding.pbAdFreeProgress.progress = 20
-            binding.btnWatchRewardedAd.text = "Extend +24h"
-        } else {
-            val watched = settingsPrefs.watchedRewardAdsCount
-            binding.tvAdFreeBadge.text = "Inactive"
-            binding.tvAdFreeBadge.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
-            binding.tvAdFreeDescription.text = "Watch 20 short rewarded videos to unlock 24-hour unlimited simulation duration and remove all ads."
-            binding.tvAdFreeProgressText.text = "$watched / 20 Videos Watched (${20 - watched} remaining)"
-            binding.pbAdFreeProgress.progress = watched
-            binding.btnWatchRewardedAd.text = "Watch Video"
-        }
-
         renderSessionTimerUI(com.fakegps.mocklocation.service.SessionTimerManager.timerState.value)
 
         // Mock Location in Developer Options
@@ -240,58 +219,6 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnSettingsExtendManage.setOnClickListener {
             val dialog = com.fakegps.mocklocation.ui.dialogs.SessionExtendDialog(this)
             dialog.show()
-        }
-
-        binding.btnWatchRewardedAd.setOnClickListener {
-            if (com.fakegps.mocklocation.ads.AdManager.isRewardedInterstitialAdReady()) {
-                com.fakegps.mocklocation.ads.AdManager.showRewardedInterstitialAd(
-                    this,
-                    onUserEarnedReward = {
-                        val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
-                        if (unlocked) {
-                            sessionPrefs.sessionExpiresTimestamp = settingsPrefs.adFreeUntilTimestamp
-                            sessionPrefs.sessionAllocatedDurationMillis = SessionPreferences.UNLIMITED_24H_DURATION_MILLIS
-                            sessionPrefs.isSessionExpired = false
-                            sessionPrefs.isSessionActive = true
-                            com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
-                            Toast.makeText(this, "🎉 24-Hour Pass Unlocked! 24h unlimited duration active.", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(this, "Video $newCount / 20 complete! Watch ${20 - newCount} more to unlock 24h Pass.", Toast.LENGTH_SHORT).show()
-                        }
-                        refreshSystemStatus()
-                    },
-                    onAdClosed = {
-                        com.fakegps.mocklocation.ads.AdManager.preloadRewardedInterstitialAd(this)
-                        refreshSystemStatus()
-                    }
-                )
-            } else if (com.fakegps.mocklocation.ads.AdManager.isRewardedAdReady()) {
-                com.fakegps.mocklocation.ads.AdManager.showRewardedAd(
-                    this,
-                    onUserEarnedReward = {
-                        val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
-                        if (unlocked) {
-                            sessionPrefs.sessionExpiresTimestamp = settingsPrefs.adFreeUntilTimestamp
-                            sessionPrefs.sessionAllocatedDurationMillis = SessionPreferences.UNLIMITED_24H_DURATION_MILLIS
-                            sessionPrefs.isSessionExpired = false
-                            sessionPrefs.isSessionActive = true
-                            com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
-                            Toast.makeText(this, "🎉 24-Hour Pass Unlocked! 24h unlimited duration active.", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(this, "Video $newCount / 20 complete! Watch ${20 - newCount} more to unlock 24h Pass.", Toast.LENGTH_SHORT).show()
-                        }
-                        refreshSystemStatus()
-                    },
-                    onAdClosed = {
-                        com.fakegps.mocklocation.ads.AdManager.preloadRewardedAd(this)
-                        refreshSystemStatus()
-                    }
-                )
-            } else {
-                com.fakegps.mocklocation.ads.AdManager.preloadRewardedInterstitialAd(this)
-                com.fakegps.mocklocation.ads.AdManager.preloadRewardedAd(this)
-                Toast.makeText(this, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
-            }
         }
 
         // Permission & Integration buttons

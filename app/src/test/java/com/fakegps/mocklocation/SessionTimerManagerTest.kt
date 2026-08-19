@@ -84,18 +84,9 @@ class SessionTimerManagerTest {
     }
 
     @Test
-    fun test24hPass_synchronizesWithSessionDuration() {
-        val settingsPrefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(context)
-        // Simulate unlocking 24h pass
-        settingsPrefs.watchedRewardAdsCount = 19
-        val (_, unlocked) = settingsPrefs.record24hPassAdWatched()
-        assertTrue("24h Pass should be unlocked", unlocked)
-        assertTrue("isAdFreeActive should be true", settingsPrefs.isAdFreeActive)
-
-        // Session preferences should synchronize with 24h pass
-        val effectiveExpiry = sessionPrefs.getEffectiveExpiryTimestamp()
-        assertEquals(settingsPrefs.adFreeUntilTimestamp, effectiveExpiry)
-        assertTrue(sessionPrefs.getTimeRemainingMillis() > 23 * 60 * 60 * 1000L)
-        assertTrue(sessionPrefs.formatAllocatedDuration().contains("24h"))
+    fun testFormatAllocatedDuration_formatsCorrectly() {
+        val duration = 2 * 60 * 60 * 1000L // 2 hours
+        sessionPrefs.startNewSession(duration, forceRestart = true)
+        assertEquals("2h 00m", sessionPrefs.formatAllocatedDuration())
     }
 }
