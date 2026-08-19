@@ -6,7 +6,7 @@ import com.fakegps.mocklocation.simulator.RoutePoint
 import org.json.JSONArray
 import org.json.JSONObject
 
-class SessionPreferences(context: Context) {
+class SessionPreferences(private val context: Context) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences("mock_location_session_prefs", Context.MODE_PRIVATE)
@@ -171,8 +171,17 @@ class SessionPreferences(context: Context) {
         isSessionActive = true
     }
 
+    fun getEffectiveExpiryTimestamp(): Long {
+        val settingsPrefs = AppSettingsPreferences(context)
+        return if (settingsPrefs.isAdFreeActive) {
+            maxOf(sessionExpiresTimestamp, settingsPrefs.adFreeUntilTimestamp)
+        } else {
+            sessionExpiresTimestamp
+        }
+    }
+
     fun getTimeRemainingMillis(): Long {
-        val remaining = sessionExpiresTimestamp - System.currentTimeMillis()
+        val remaining = getEffectiveExpiryTimestamp() - System.currentTimeMillis()
         return if (remaining > 0) remaining else 0L
     }
 
@@ -186,7 +195,13 @@ class SessionPreferences(context: Context) {
     }
 
     fun formatAllocatedDuration(): String {
-        val totalSecs = sessionAllocatedDurationMillis / 1000
+        val settingsPrefs = AppSettingsPreferences(context)
+        val allocated = if (settingsPrefs.isAdFreeActive) {
+            maxOf(sessionAllocatedDurationMillis, UNLIMITED_24H_DURATION_MILLIS)
+        } else {
+            sessionAllocatedDurationMillis
+        }
+        val totalSecs = allocated / 1000
         val hours = totalSecs / 3600
         val mins = (totalSecs % 3600) / 60
         return if (hours > 0) {

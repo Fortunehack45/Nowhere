@@ -139,7 +139,12 @@ class SessionExtendDialog(
                     val settingsPrefs = AppSettingsPreferences(context)
                     val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
                     if (unlocked) {
-                        SessionTimerManager.startTimer(context, SessionPreferences.UNLIMITED_24H_DURATION_MILLIS)
+                        val sessionPrefs = SessionPreferences(context)
+                        sessionPrefs.sessionExpiresTimestamp = settingsPrefs.adFreeUntilTimestamp
+                        sessionPrefs.sessionAllocatedDurationMillis = SessionPreferences.UNLIMITED_24H_DURATION_MILLIS
+                        sessionPrefs.isSessionExpired = false
+                        sessionPrefs.isSessionActive = true
+                        SessionTimerManager.startTimer(context, SessionPreferences.UNLIMITED_24H_DURATION_MILLIS, forceRestart = true)
                         Toast.makeText(context, "🎉 24-Hour Pass Unlocked! 24h unlimited simulation & ad-free active.", Toast.LENGTH_LONG).show()
                         dismiss()
                     } else {
@@ -158,7 +163,12 @@ class SessionExtendDialog(
                     val settingsPrefs = AppSettingsPreferences(context)
                     val (newCount, unlocked) = settingsPrefs.record24hPassAdWatched()
                     if (unlocked) {
-                        SessionTimerManager.startTimer(context, SessionPreferences.UNLIMITED_24H_DURATION_MILLIS)
+                        val sessionPrefs = SessionPreferences(context)
+                        sessionPrefs.sessionExpiresTimestamp = settingsPrefs.adFreeUntilTimestamp
+                        sessionPrefs.sessionAllocatedDurationMillis = SessionPreferences.UNLIMITED_24H_DURATION_MILLIS
+                        sessionPrefs.isSessionExpired = false
+                        sessionPrefs.isSessionActive = true
+                        SessionTimerManager.startTimer(context, SessionPreferences.UNLIMITED_24H_DURATION_MILLIS, forceRestart = true)
                         Toast.makeText(context, "🎉 24-Hour Pass Unlocked! 24h unlimited simulation & ad-free active.", Toast.LENGTH_LONG).show()
                         dismiss()
                     } else {
