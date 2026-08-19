@@ -36,12 +36,17 @@ class SettingsActivity : AppCompatActivity() {
         loadInitialValues()
         setupListeners()
         observeSessionTimer()
+
+        com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
     }
 
     override fun onResume() {
         super.onResume()
         if (sessionPrefs.hasValidActiveSession()) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+        }
+        if (binding.adBannerContainer.childCount == 0) {
+            com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
         }
         refreshSystemStatus()
     }

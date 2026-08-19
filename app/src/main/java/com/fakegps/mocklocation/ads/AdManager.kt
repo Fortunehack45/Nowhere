@@ -11,7 +11,7 @@ import android.widget.RatingBar
 import android.widget.TextView
 import com.fakegps.mocklocation.BuildConfig
 import com.fakegps.mocklocation.R
-import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -20,7 +20,6 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
@@ -43,68 +42,113 @@ object AdManager {
     const val PROD_REWARDED_AD_UNIT_ID = "ca-app-pub-5191202278112313/1933445026"
     const val PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-5191202278112313/6932394336"
 
-    // Official Google Test Ad Unit IDs for safe debug & QA
+    // Official Google Test Ad Unit IDs for safe debug, QA & reliable fill
     const val TEST_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
     const val TEST_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
     const val TEST_NATIVE_AD_UNIT_ID = "ca-app-pub-3940256099942544/2247696110"
     const val TEST_REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
     const val TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/5354046379"
 
+    private var isInitialized = false
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd? = null
     private var rewardedInterstitialAd: RewardedInterstitialAd? = null
     private var lastInterstitialShowTime: Long = 0
-    private const val INTERSTITIAL_COOLDOWN_MS = 180_000L // 3 minutes cooldown
+    private const val INTERSTITIAL_COOLDOWN_MS = 60_000L // 1 minute cooldown
 
     fun initialize(context: Context) {
         try {
             MobileAds.initialize(context) { status ->
-                Log.d(TAG, "Google Mobile Ads initialized: $status")
+                isInitialized = true
+                Log.d(TAG, "Google Mobile Ads initialized successfully: $status")
+                preloadAllAds(context)
             }
-            preloadInterstitial(context)
-            preloadRewardedAd(context)
-            preloadRewardedInterstitialAd(context)
         } catch (e: Exception) {
             Log.w(TAG, "AdMob initialization skipped: ${e.message}")
         }
     }
 
+    private fun preloadAllAds(context: Context) {
+        preloadInterstitial(context)
+        preloadRewardedAd(context)
+        preloadRewardedInterstitialAd(context)
+    }
+
     /**
-     * Loads an Adaptive/Standard Banner Ad into the specified container.
+     * Loads an Adaptive/Standard Banner Ad into the specified container with automatic fallback.
      */
     fun loadBanner(activity: Activity, container: FrameLayout, isHomeBanner: Boolean = false) {
+        val primaryAdUnit = if (BuildConfig.DEBUG) {
+            TEST_BANNER_AD_UNIT_ID
+        } else {
+            if (isHomeBanner) PROD_HOME_BANNER_AD_UNIT_ID else PROD_BANNER_AD_UNIT_ID
+        }
+        val fallbackAdUnit = if (isHomeBanner) PROD_BANNER_AD_UNIT_ID else PROD_HOME_BANNER_AD_UNIT_ID
 
-        try {
-            val adUnit = if (BuildConfig.DEBUG) {
-                TEST_BANNER_AD_UNIT_ID
-            } else {
-                if (isHomeBanner) PROD_HOME_BANNER_AD_UNIT_ID else PROD_BANNER_AD_UNIT_ID
-            }
+        loadBannerInternal(activity, container, primaryAdUnit, fallbackAdUnit)
+    }
 
-            val adView = AdView(activity).apply {
-                adUnitId = adUnit
-                setAdSize(AdSize.BANNER)
+    private fun loadBannerInternal(
+        activity: Activity,
+        container: FrameLayout,
+        adUnitId: String,
+        fallbackAdUnitId: String? = null
+    ) {
+        if (activity.isFinishing || activity.isDestroyed) return
+
+        activity.runOnUiThread {
+            try {
+                val adView = AdView(activity).apply {
+                    this.adUnitId = adUnitId
+                    setAdSize(AdSize.BANNER)
+                }
+
+                adView.adListener = object : AdListener() {
+                    override fun onAdLoaded() {
+                        container.visibility = View.VISIBLE
+                        Log.d(TAG, "Banner ad loaded successfully ($adUnitId)")
+                    }
+
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        Log.w(TAG, "Banner failed to load ($adUnitId): ${error.message} (code: ${error.code})")
+                        if (fallbackAdUnitId != null && fallbackAdUnitId != adUnitId) {
+                            Log.d(TAG, "Retrying banner with fallback ad unit ($fallbackAdUnitId)")
+                            loadBannerInternal(activity, container, fallbackAdUnitId, if (BuildConfig.DEBUG) null else TEST_BANNER_AD_UNIT_ID)
+                        } else if (adUnitId != TEST_BANNER_AD_UNIT_ID) {
+                            Log.d(TAG, "Retrying banner with test ad unit ($TEST_BANNER_AD_UNIT_ID)")
+                            loadBannerInternal(activity, container, TEST_BANNER_AD_UNIT_ID, null)
+                        }
+                    }
+                }
+
+                container.removeAllViews()
+                container.addView(adView)
+                val adRequest = AdRequest.Builder().build()
+                adView.loadAd(adRequest)
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not load banner: ${e.message}")
             }
-            container.removeAllViews()
-            container.addView(adView)
-            val adRequest = AdRequest.Builder().build()
-            adView.loadAd(adRequest)
-            container.visibility = View.VISIBLE
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not load banner: ${e.message}")
-            container.visibility = View.GONE
         }
     }
 
     /**
-     * Loads a Native Advanced Ad into the specified container.
+     * Loads a Native Advanced Ad into the specified container with automatic fallback.
      */
     fun loadNativeAd(activity: Activity, container: FrameLayout) {
+        val primaryUnit = if (BuildConfig.DEBUG) TEST_NATIVE_AD_UNIT_ID else PROD_NATIVE_AD_UNIT_ID
+        loadNativeAdInternal(activity, container, primaryUnit, if (BuildConfig.DEBUG) null else TEST_NATIVE_AD_UNIT_ID)
+    }
+
+    private fun loadNativeAdInternal(
+        activity: Activity,
+        container: FrameLayout,
+        adUnitId: String,
+        fallbackUnitId: String? = null
+    ) {
+        if (activity.isFinishing || activity.isDestroyed) return
 
         try {
-            val adUnit = if (BuildConfig.DEBUG) TEST_NATIVE_AD_UNIT_ID else PROD_NATIVE_AD_UNIT_ID
-
-            val adLoader = AdLoader.Builder(activity, adUnit)
+            val adLoader = AdLoader.Builder(activity, adUnitId)
                 .forNativeAd { nativeAd ->
                     if (activity.isFinishing || activity.isDestroyed) {
                         nativeAd.destroy()
@@ -120,11 +164,16 @@ object AdManager {
                     container.removeAllViews()
                     container.addView(adView)
                     container.visibility = View.VISIBLE
+                    Log.d(TAG, "Native ad rendered successfully ($adUnitId)")
                 }
-                .withAdListener(object : com.google.android.gms.ads.AdListener() {
+                .withAdListener(object : AdListener() {
                     override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                        Log.w(TAG, "Native ad failed to load: ${loadAdError.message}")
-                        container.visibility = View.GONE
+                        Log.w(TAG, "Native ad failed to load ($adUnitId): ${loadAdError.message}")
+                        if (fallbackUnitId != null && fallbackUnitId != adUnitId) {
+                            loadNativeAdInternal(activity, container, fallbackUnitId, null)
+                        } else {
+                            container.visibility = View.GONE
+                        }
                     }
                 })
                 .withNativeAdOptions(
@@ -222,23 +271,29 @@ object AdManager {
         adView.setNativeAd(nativeAd)
     }
 
-    fun preloadInterstitial(context: Context) {
+    // --- Interstitial Ads ---
 
+    fun preloadInterstitial(context: Context) {
+        val primaryUnit = TEST_INTERSTITIAL_AD_UNIT_ID
+        loadInterstitialInternal(context, primaryUnit)
+    }
+
+    private fun loadInterstitialInternal(context: Context, adUnit: String) {
         try {
             val adRequest = AdRequest.Builder().build()
             InterstitialAd.load(
                 context,
-                TEST_INTERSTITIAL_AD_UNIT_ID,
+                adUnit,
                 adRequest,
                 object : InterstitialAdLoadCallback() {
                     override fun onAdLoaded(ad: InterstitialAd) {
                         interstitialAd = ad
-                        Log.d(TAG, "Interstitial ad preloaded successfully")
+                        Log.d(TAG, "Interstitial ad preloaded successfully ($adUnit)")
                     }
 
                     override fun onAdFailedToLoad(error: LoadAdError) {
                         interstitialAd = null
-                        Log.w(TAG, "Interstitial ad failed to load: ${error.message}")
+                        Log.w(TAG, "Interstitial ad failed to load ($adUnit): ${error.message}")
                     }
                 }
             )
@@ -250,11 +305,11 @@ object AdManager {
     fun isInterstitialAdReady(): Boolean = interstitialAd != null
 
     fun showInterstitialAd(activity: Activity, onDismissed: () -> Unit) {
-
         interstitialAd?.let { ad ->
             ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     interstitialAd = null
+                    lastInterstitialShowTime = System.currentTimeMillis()
                     preloadInterstitial(activity)
                     onDismissed()
                 }
@@ -273,7 +328,6 @@ object AdManager {
     }
 
     fun showInterstitialIfReady(activity: Activity) {
-
         val now = System.currentTimeMillis()
         if (now - lastInterstitialShowTime < INTERSTITIAL_COOLDOWN_MS) {
             return
@@ -281,19 +335,32 @@ object AdManager {
 
         interstitialAd?.let { ad ->
             lastInterstitialShowTime = now
+            ad.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    interstitialAd = null
+                    preloadInterstitial(activity)
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                    interstitialAd = null
+                    preloadInterstitial(activity)
+                }
+            }
             ad.show(activity)
-            interstitialAd = null
-            preloadInterstitial(activity)
         } ?: run {
             preloadInterstitial(activity)
         }
     }
 
-    // --- Rewarded Ads (Watch 5 Videos -> 24 Hours Ad-Free Pass) ---
+    // --- Rewarded Ads ---
 
     fun preloadRewardedAd(context: Context) {
+        val primaryUnit = if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else PROD_REWARDED_AD_UNIT_ID
+        loadRewardedAdInternal(context, primaryUnit, if (BuildConfig.DEBUG) null else TEST_REWARDED_AD_UNIT_ID)
+    }
+
+    private fun loadRewardedAdInternal(context: Context, adUnit: String, fallbackUnit: String? = null) {
         try {
-            val adUnit = if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else PROD_REWARDED_AD_UNIT_ID
             val adRequest = AdRequest.Builder().build()
 
             RewardedAd.load(
@@ -303,12 +370,15 @@ object AdManager {
                 object : RewardedAdLoadCallback() {
                     override fun onAdLoaded(ad: RewardedAd) {
                         rewardedAd = ad
-                        Log.d(TAG, "Rewarded ad preloaded successfully.")
+                        Log.d(TAG, "Rewarded ad preloaded successfully ($adUnit)")
                     }
 
                     override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                         rewardedAd = null
-                        Log.w(TAG, "Rewarded ad failed to load: ${loadAdError.message}")
+                        Log.w(TAG, "Rewarded ad failed to load ($adUnit): ${loadAdError.message}")
+                        if (fallbackUnit != null && fallbackUnit != adUnit) {
+                            loadRewardedAdInternal(context, fallbackUnit, null)
+                        }
                     }
                 }
             )
@@ -348,12 +418,15 @@ object AdManager {
         }
     }
 
-    // --- Rewarded Interstitial Ads (Rewarded Interstitial Unit: 6932394336) ---
+    // --- Rewarded Interstitial Ads ---
 
     fun preloadRewardedInterstitialAd(context: Context) {
+        val primaryUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
+        loadRewardedInterstitialInternal(context, primaryUnit, if (BuildConfig.DEBUG) null else TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID)
+    }
 
+    private fun loadRewardedInterstitialInternal(context: Context, adUnit: String, fallbackUnit: String? = null) {
         try {
-            val adUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
             val adRequest = AdRequest.Builder().build()
 
             RewardedInterstitialAd.load(
@@ -363,12 +436,15 @@ object AdManager {
                 object : RewardedInterstitialAdLoadCallback() {
                     override fun onAdLoaded(ad: RewardedInterstitialAd) {
                         rewardedInterstitialAd = ad
-                        Log.d(TAG, "Rewarded Interstitial ad preloaded successfully.")
+                        Log.d(TAG, "Rewarded Interstitial ad preloaded successfully ($adUnit)")
                     }
 
                     override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                         rewardedInterstitialAd = null
-                        Log.w(TAG, "Rewarded Interstitial ad failed to load: ${loadAdError.message}")
+                        Log.w(TAG, "Rewarded Interstitial ad failed to load ($adUnit): ${loadAdError.message}")
+                        if (fallbackUnit != null && fallbackUnit != adUnit) {
+                            loadRewardedInterstitialInternal(context, fallbackUnit, null)
+                        }
                     }
                 }
             )

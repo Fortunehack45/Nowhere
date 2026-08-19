@@ -47,15 +47,19 @@ class AppOpenAdManager(private val application: Application) :
     }
 
     /**
-     * Request an App Open Ad.
+     * Request an App Open Ad with automatic fallback.
      */
     fun loadAd(context: Context) {
         if (isLoadingAd || isAdAvailable()) {
             return
         }
 
-        isLoadingAd = true
         val adUnitId = if (BuildConfig.DEBUG) TEST_APP_OPEN_AD_UNIT_ID else PROD_APP_OPEN_AD_UNIT_ID
+        loadAdInternal(context, adUnitId, if (BuildConfig.DEBUG) null else TEST_APP_OPEN_AD_UNIT_ID)
+    }
+
+    private fun loadAdInternal(context: Context, adUnitId: String, fallbackUnitId: String? = null) {
+        isLoadingAd = true
         val request = AdRequest.Builder().build()
 
         AppOpenAd.load(
@@ -67,13 +71,16 @@ class AppOpenAdManager(private val application: Application) :
                     appOpenAd = ad
                     isLoadingAd = false
                     loadTime = Date().time
-                    Log.d(TAG, "App Open Ad loaded successfully.")
+                    Log.d(TAG, "App Open Ad loaded successfully ($adUnitId).")
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                     isLoadingAd = false
                     appOpenAd = null
-                    Log.w(TAG, "App Open Ad failed to load: ${loadAdError.message}")
+                    Log.w(TAG, "App Open Ad failed to load ($adUnitId): ${loadAdError.message}")
+                    if (fallbackUnitId != null && fallbackUnitId != adUnitId) {
+                        loadAdInternal(context, fallbackUnitId, null)
+                    }
                 }
             }
         )

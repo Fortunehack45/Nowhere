@@ -1540,6 +1540,15 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- AdMob Banner Container in Settings -->
+            <FrameLayout
+                android:id="@+id/adBannerContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone" />
+
             <!-- Bottom Version Footer Section -->
             <LinearLayout
                 android:layout_width="match_parent"

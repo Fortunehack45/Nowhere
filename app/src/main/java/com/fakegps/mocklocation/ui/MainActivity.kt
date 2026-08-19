@@ -155,7 +155,7 @@ class MainActivity : AppCompatActivity() {
             }.show()
         }
 
-        com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer)
+        com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
 
         lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             kotlinx.coroutines.delay(2000L)
@@ -247,6 +247,9 @@ class MainActivity : AppCompatActivity() {
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         if (com.fakegps.mocklocation.data.preferences.SessionPreferences(this).hasValidActiveSession()) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+        }
+        if (binding.adBannerContainer.childCount == 0) {
+            com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
         }
     }
 
