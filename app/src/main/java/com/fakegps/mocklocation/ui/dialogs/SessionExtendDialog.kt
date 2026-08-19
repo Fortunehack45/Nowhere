@@ -112,14 +112,6 @@ class SessionExtendDialog(
             Toast.makeText(context, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
         }
     }
-                }
-            )
-        } else {
-            AdManager.preloadRewardedInterstitialAd(activity)
-            AdManager.preloadRewardedAd(activity)
-            Toast.makeText(context, "Video ad is loading. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     private fun handleReconnectFallback() {
         if (AdManager.isInterstitialAdReady()) {
