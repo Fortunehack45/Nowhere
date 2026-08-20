@@ -366,11 +366,14 @@ class MockLocationService : Service() {
 
                 val runningState = _serviceState.value as? ServiceState.Running
                 val routeDetails = if (runningState != null && runningState.totalDistanceMeters > 0) {
-                    val covered = String.format("%.2f km", runningState.distanceCoveredMeters / 1000.0)
-                    val total = String.format("%.2f km", runningState.totalDistanceMeters / 1000.0)
-                    val remaining = String.format("%.2f km", runningState.distanceRemainingMeters / 1000.0)
+                    val covered = String.format(Locale.US, "%.2f km", runningState.distanceCoveredMeters / 1000.0)
+                    val total = String.format(Locale.US, "%.2f km", runningState.totalDistanceMeters / 1000.0)
+                    val remaining = String.format(Locale.US, "%.2f km", runningState.distanceRemainingMeters / 1000.0)
                     val progress = ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt()
-                    "\n📍 Route Progress: $covered / $total ($progress% • $remaining left)"
+                    val speedMps = runningState.speedMps.coerceAtLeast(0.1f)
+                    val etaSec = (runningState.distanceRemainingMeters / speedMps).toLong()
+                    val etaStr = formatEta(etaSec)
+                    "\n📍 Route: $covered / $total ($progress%) • $remaining left\n⏱️ ETA: $etaStr"
                 } else ""
 
                 val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
