@@ -100,6 +100,7 @@ class MockLocationService : Service() {
         sessionPrefs = SessionPreferences(this)
         createNotificationChannel()
         acquireWakeLock()
+        com.fakegps.mocklocation.hotspot.HotspotLocationServer.startServer(this)
         startForegroundNotification("Nowhere Location Service", "Ready & Active")
         if (sessionPrefs.hasValidActiveSession()) {
             SessionTimerManager.resumeExistingTimer(this)
@@ -513,6 +514,7 @@ class MockLocationService : Service() {
             com.fakegps.mocklocation.weather.WeatherManager.fetchWeather(this@MockLocationService, latitude, longitude)
         }
 
+        com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(latitude, longitude, altitude, 0.0f, 0.0f)
         startForegroundNotification(String.format("Fixed: %.5f, %.5f", latitude, longitude))
         updateLocationNotification(latitude, longitude, "Teleported / Fixed")
 
@@ -531,11 +533,12 @@ class MockLocationService : Service() {
                     if (result.isFailure) {
                         val error = result.exceptionOrNull()
                         Log.w(TAG, "Transient injection error: ${error?.message}, retrying...")
-                        delay(500L)
+                        delay(250L)
                         continue
                     } else {
                         val loc = result.getOrNull()
                         if (loc != null) {
+                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(latitude, longitude, altitude, 0.0f, 0.0f)
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = latitude,
@@ -546,7 +549,7 @@ class MockLocationService : Service() {
                             )
                         }
                     }
-                    delay(1000L) // Battery-optimized 1s background provider lock
+                    delay(500L) // High-frequency 500ms zero-dropout provider lock
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -636,6 +639,7 @@ class MockLocationService : Service() {
                             val error = result.exceptionOrNull()
                             Log.w(TAG, "Transient route injection error: ${error?.message}, retrying...")
                         } else {
+                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(simLoc.latitude, simLoc.longitude, simLoc.altitude, simLoc.speedMps, simLoc.bearingDegrees)
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = simLoc.latitude,
@@ -794,6 +798,7 @@ class MockLocationService : Service() {
                         )
 
                         if (result.isSuccess) {
+                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(newLat, newLon, 15.0, speedMps, joystickAngleDeg)
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = newLat,
@@ -825,6 +830,7 @@ class MockLocationService : Service() {
                             applyStationaryJitter = settingsPrefs.randomizeJitter
                         )
                         if (result.isSuccess) {
+                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(joystickLat, joystickLon, 15.0, 0.0f, joystickAngleDeg)
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = joystickLat,
@@ -865,6 +871,7 @@ class MockLocationService : Service() {
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()
+        try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
         try { engine.stop() } catch (e: Exception) { Log.w(TAG, "engine.stop() error (non-fatal): ${e.message}") }
         sessionPrefs.isSessionActive = false
         SessionTimerManager.stopTimer(this)
@@ -926,6 +933,7 @@ class MockLocationService : Service() {
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()
+        try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
         try { engine.stop() } catch (e: Exception) {}
         serviceJob.cancel()
         super.onDestroy()

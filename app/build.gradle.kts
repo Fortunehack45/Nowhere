@@ -137,6 +137,9 @@ dependencies {
     // Google Mobile Ads (AdMob)
     implementation("com.google.android.gms:play-services-ads:23.0.0")
 
+    // QR Code Generation for Hotspot Tethering
+    implementation("com.google.zxing:core:3.5.3")
+
     // Unit Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")

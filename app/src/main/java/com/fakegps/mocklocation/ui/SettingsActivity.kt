@@ -231,6 +231,11 @@ class SettingsActivity : AppCompatActivity() {
             PermissionHelper.requestOverlayPermission(this)
         }
 
+        binding.btnSettingsHotspotManage.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.HotspotTetheringBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.HotspotTetheringBottomSheet.TAG)
+        }
+
         // Developer & Social Links
         binding.btnDeveloperPortfolio.setOnClickListener {
             openBrowser("https://fortuneadebayo.space")

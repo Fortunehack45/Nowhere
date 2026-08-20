@@ -209,6 +209,7 @@ class MockLocationEngine(
                     }
                 }
 
+                locationManager.setTestProviderEnabled(provider, true)
                 locationManager.setTestProviderLocation(provider, location)
                 lastSuccessfulLocation = location
             } catch (e: SecurityException) {

@@ -155,6 +155,28 @@ class MainActivity : AppCompatActivity() {
             }.show()
         }
 
+        binding.layoutHotspotBadge.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.HotspotTetheringBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.HotspotTetheringBottomSheet.TAG)
+        }
+
+        lifecycleScope.launch {
+            com.fakegps.mocklocation.hotspot.HotspotLocationServer.connectedClientsCount.collect { count ->
+                if (!isFinishing && !isDestroyed) {
+                    if (count > 0) {
+                        binding.tvHotspotBadge.text = "SYNC ($count)"
+                        binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.badge_success_text))
+                    } else if (com.fakegps.mocklocation.hotspot.HotspotLocationServer.isServerRunning.value) {
+                        binding.tvHotspotBadge.text = "HOTSPOT"
+                        binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bright))
+                    } else {
+                        binding.tvHotspotBadge.text = "HOTSPOT"
+                        binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.text_primary))
+                    }
+                }
+            }
+        }
+
         com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
 
         lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
@@ -193,6 +215,11 @@ class MainActivity : AppCompatActivity() {
 
         if (intent.getBooleanExtra("OPEN_VPN_DIALOG", false)) {
             IpChangerBottomSheet().show(supportFragmentManager, "IP_CHANGER_DIALOG")
+        }
+
+        if (intent.getBooleanExtra("OPEN_HOTSPOT_DIALOG", false)) {
+            com.fakegps.mocklocation.ui.dialogs.HotspotTetheringBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.HotspotTetheringBottomSheet.TAG)
         }
 
         if (intent.getBooleanExtra("OPEN_SESSION_EXTEND_DIALOG", false)) {
