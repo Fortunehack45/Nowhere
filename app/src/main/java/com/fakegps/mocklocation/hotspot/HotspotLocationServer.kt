@@ -1,8 +1,6 @@
 package com.fakegps.mocklocation.hotspot
 
 import android.content.Context
-import android.net.wifi.WifiManager
-import android.os.SystemClock
 import android.util.Log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +54,10 @@ object HotspotLocationServer {
     private val activeNmeaClients = ConcurrentHashMap.newKeySet<PrintWriter>()
 
     fun startServer(context: Context, httpPort: Int = DEFAULT_HTTP_PORT, nmeaPort: Int = DEFAULT_NMEA_PORT) {
-        if (_isServerRunning.value) return
+        if (_isServerRunning.value) {
+            refreshIpAddress(context, httpPort)
+            return
+        }
 
         val detectedIp = getHotspotOrWifiIpAddress(context)
         _serverUrl.value = "http://$detectedIp:$httpPort"
@@ -74,6 +75,12 @@ object HotspotLocationServer {
             // Launch NMEA Periodic Broadcast Loop (1 Hz)
             launch { runNmeaBroadcastLoop() }
         }
+    }
+
+    fun refreshIpAddress(context: Context, httpPort: Int = DEFAULT_HTTP_PORT): String {
+        val detectedIp = getHotspotOrWifiIpAddress(context)
+        _serverUrl.value = "http://$detectedIp:$httpPort"
+        return detectedIp
     }
 
     fun stopServer() {
@@ -137,6 +144,12 @@ object HotspotLocationServer {
             val method = parts[0]
             val path = parts[1].split("?")[0]
 
+            if (method.equals("OPTIONS", ignoreCase = true)) {
+                serveCorsPreflight(outputStream)
+                outputStream.flush()
+                return@withContext
+            }
+
             when {
                 path == "/location.json" || path == "/api/location" -> {
                     serveJsonLocation(outputStream)
@@ -165,6 +178,16 @@ object HotspotLocationServer {
         }
     }
 
+    private fun serveCorsPreflight(out: OutputStream) {
+        val response = "HTTP/1.1 204 No Content\r\n" +
+                "Access-Control-Allow-Origin: *\r\n" +
+                "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
+                "Access-Control-Allow-Headers: *\r\n" +
+                "Access-Control-Max-Age: 86400\r\n" +
+                "Connection: close\r\n\r\n"
+        out.write(response.toByteArray(Charsets.UTF_8))
+    }
+
     private fun serveJsonLocation(out: OutputStream) {
         val json = JSONObject().apply {
             put("status", "ACTIVE")
@@ -183,8 +206,10 @@ object HotspotLocationServer {
         val response = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: application/json; charset=UTF-8\r\n" +
                 "Access-Control-Allow-Origin: *\r\n" +
+                "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
+                "Access-Control-Allow-Headers: *\r\n" +
                 "Cache-Control: no-cache, no-store, must-revalidate\r\n" +
-                "Content-Length: ${json.toByteArray().size}\r\n" +
+                "Content-Length: ${json.toByteArray(Charsets.UTF_8).size}\r\n" +
                 "Connection: close\r\n\r\n" + json
 
         out.write(response.toByteArray(Charsets.UTF_8))
@@ -209,7 +234,7 @@ object HotspotLocationServer {
                 "Content-Type: application/gpx+xml; charset=UTF-8\r\n" +
                 "Access-Control-Allow-Origin: *\r\n" +
                 "Content-Disposition: attachment; filename=\"nowhere_location.gpx\"\r\n" +
-                "Content-Length: ${gpx.toByteArray().size}\r\n" +
+                "Content-Length: ${gpx.toByteArray(Charsets.UTF_8).size}\r\n" +
                 "Connection: close\r\n\r\n" + gpx
 
         out.write(response.toByteArray(Charsets.UTF_8))
@@ -255,15 +280,15 @@ object HotspotLocationServer {
       }
     } catch(e) {}
   }
-  setInterval(pollLocation, 1000);
+  setInterval(pollLocation, 500);
   pollLocation();
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition = function(success, error, options) {
-      setTimeout(() => success(cachedPosition), 50);
+      setTimeout(() => success(cachedPosition), 30);
     };
     navigator.geolocation.watchPosition = function(success, error, options) {
-      const id = setInterval(() => success(cachedPosition), 1000);
+      const id = setInterval(() => success(cachedPosition), 500);
       return id;
     };
     navigator.geolocation.clearWatch = function(id) {
@@ -278,7 +303,7 @@ object HotspotLocationServer {
         val response = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: application/javascript; charset=UTF-8\r\n" +
                 "Access-Control-Allow-Origin: *\r\n" +
-                "Content-Length: ${js.toByteArray().size}\r\n" +
+                "Content-Length: ${js.toByteArray(Charsets.UTF_8).size}\r\n" +
                 "Connection: close\r\n\r\n" + js
 
         out.write(response.toByteArray(Charsets.UTF_8))
@@ -297,39 +322,42 @@ object HotspotLocationServer {
     :root {
       --bg: #0B0E14;
       --card-bg: #141923;
+      --card-elevated: #1B2232;
       --border: #232B3E;
-      --primary: #FF3B30;
-      --accent: #387BFF;
+      --primary: #387BFF;
+      --accent: #00E676;
       --green: #34C759;
       --text: #F2F5F8;
       --muted: #8E9BAE;
     }
     * { margin:0; padding:0; box-sizing:border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-    .container { max-width: 720px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+    .container { max-width: 760px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
     .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; }
     .logo-area { display: flex; align-items: center; gap: 12px; }
     .status-badge { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(52, 199, 89, 0.15); border: 1px solid rgba(52, 199, 89, 0.4); border-radius: 20px; color: var(--green); font-size: 12px; font-weight: 700; }
     .pulse-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } 100% { opacity: 1; transform: scale(1); } }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
     .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
     .stat-label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; font-weight: 600; }
     .stat-val { font-size: 18px; font-weight: 800; color: var(--text); font-family: monospace; }
-    #map { height: 320px; width: 100%; border-radius: 16px; border: 1px solid var(--border); z-index: 1; }
-    .code-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-    .btn { background: var(--primary); color: white; border: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+    #map { height: 340px; width: 100%; border-radius: 16px; border: 1px solid var(--border); z-index: 1; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .step-item { display: flex; gap: 14px; align-items: flex-start; background: var(--card-elevated); padding: 14px; border-radius: 12px; border: 1px solid var(--border); }
+    .step-num { width: 28px; height: 28px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
+    .btn { background: var(--primary); color: white; border: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; font-size: 13px; }
     .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-secondary { background: #232B3E; color: var(--text); }
     .endpoints { display: flex; flex-wrap: wrap; gap: 8px; }
-    .endpoint-pill { background: rgba(56, 123, 255, 0.12); border: 1px solid rgba(56, 123, 255, 0.3); padding: 6px 12px; border-radius: 8px; color: var(--accent); font-size: 12px; font-family: monospace; text-decoration: none; }
+    .endpoint-pill { background: rgba(56, 123, 255, 0.12); border: 1px solid rgba(56, 123, 255, 0.3); padding: 8px 14px; border-radius: 10px; color: var(--primary); font-size: 12px; font-family: monospace; text-decoration: none; font-weight: 600; }
+    .code-box { background: #080A0E; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #64B5F6; overflow-x: auto; word-break: break-all; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <div class="logo-area">
-        <h2 style="font-size: 20px; font-weight: 800;">🛰️ Nowhere Hotspot GPS</h2>
+        <h2 style="font-size: 20px; font-weight: 800;">🛰️ Nowhere Hotspot GPS Radar</h2>
       </div>
       <div class="status-badge">
         <div class="pulse-dot"></div>
@@ -352,21 +380,52 @@ object HotspotLocationServer {
       </div>
       <div class="stat-card">
         <div class="stat-label">Speed</div>
-        <div class="stat-val" id="valSpeed">${String.format("%.1f", currentSpeedMps * 3.6f)} km/h</div>
+        <div class="stat-val" id="valSpeed">${String.format(Locale.US, "%.1f", currentSpeedMps * 3.6f)} km/h</div>
       </div>
     </div>
 
     <div id="map"></div>
 
-    <div class="code-card">
-      <h3 style="font-size: 15px; font-weight: 700;">🌐 Connected Device Location Endpoints</h3>
-      <div class="endpoints">
-        <a class="endpoint-pill" href="/location.json" target="_blank">📄 /location.json (REST API)</a>
-        <a class="endpoint-pill" href="/nmea" target="_blank">📡 /nmea (NMEA 0183 Stream)</a>
-        <a class="endpoint-pill" href="/gps.gpx" target="_blank">🗺️ /gps.gpx (GPX Waypoint)</a>
-        <a class="endpoint-pill" href="/override.js" target="_blank">⚙️ /override.js (Browser Polyfill)</a>
+    <!-- Step-by-Step Device Setup Guide -->
+    <div class="card">
+      <h3 style="font-size: 16px; font-weight: 700;">📱 How to Use Spoofed GPS on Connected Devices</h3>
+      
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div>
+          <strong style="color: var(--text);">For Web Browsers (Chrome / Safari on iPad, Mac, PC):</strong>
+          <p style="color: var(--muted); font-size: 13px; margin: 4px 0 8px 0;">Click the button below to copy the browser injection script. Open DevTools Console (F12 or Inspect) on any website (e.g. Google Maps or Web App) and paste it to instantly lock your browser location to this spoofed GPS.</p>
+          <button class="btn" onclick="copyBookmarklet()">📋 Copy Browser Geolocation Script</button>
+        </div>
       </div>
-      <button class="btn" onclick="copyBookmarklet()">📋 Copy Browser Geolocation Override Script</button>
+
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div>
+          <strong style="color: var(--text);">For Navigation & GIS Software (OsmAnd, QGIS, OpenCPN, Marine GPS):</strong>
+          <p style="color: var(--muted); font-size: 13px; margin: 4px 0 8px 0;">Set GPS source to <strong>TCP NMEA Client</strong>:</p>
+          <div class="code-box">Host: $hostIp | Port: 10110 (TCP NMEA 0183)</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div>
+          <strong style="color: var(--text);">For Developers & REST Clients:</strong>
+          <p style="color: var(--muted); font-size: 13px; margin: 4px 0 8px 0;">Query real-time JSON coordinates anytime via HTTP GET:</p>
+          <div class="code-box">curl http://$hostIp:$port/location.json</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size: 15px; font-weight: 700;">🔗 Direct API & Data Feeds</h3>
+      <div class="endpoints">
+        <a class="endpoint-pill" href="/location.json" target="_blank">📄 /location.json (JSON API)</a>
+        <a class="endpoint-pill" href="/nmea" target="_blank">📡 /nmea (Live SSE Stream)</a>
+        <a class="endpoint-pill" href="/gps.gpx" target="_blank">🗺️ /gps.gpx (GPX Download)</a>
+        <a class="endpoint-pill" href="/override.js" target="_blank">⚙️ /override.js (Polyfill JS)</a>
+      </div>
     </div>
   </div>
 
@@ -388,12 +447,12 @@ object HotspotLocationServer {
         marker.setLatLng(newPos);
       } catch(e) {}
     }
-    setInterval(refresh, 1000);
+    setInterval(refresh, 500);
 
     function copyBookmarklet() {
       const script = "fetch('http://$hostIp:$port/override.js').then(r=>r.text()).then(eval);";
       navigator.clipboard.writeText(script).then(() => {
-        alert('✅ Geolocation script copied! Open DevTools Console on any website (e.g. Google Maps or browser app) on your laptop/iPad and paste it to instantly spoof your browser location.');
+        alert('✅ Geolocation override script copied! Open DevTools Console on any website on your connected laptop/iPad and paste it to instantly lock your browser location.');
       });
     }
   </script>
@@ -404,7 +463,7 @@ object HotspotLocationServer {
         val response = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: text/html; charset=UTF-8\r\n" +
                 "Access-Control-Allow-Origin: *\r\n" +
-                "Content-Length: ${html.toByteArray().size}\r\n" +
+                "Content-Length: ${html.toByteArray(Charsets.UTF_8).size}\r\n" +
                 "Connection: close\r\n\r\n" + html
 
         out.write(response.toByteArray(Charsets.UTF_8))
@@ -465,8 +524,9 @@ object HotspotLocationServer {
     }
 
     private suspend fun handleNmeaTcpClient(socket: Socket) = withContext(Dispatchers.IO) {
+        var writer: PrintWriter? = null
         try {
-            val writer = PrintWriter(OutputStreamWriter(socket.getOutputStream(), Charsets.US_ASCII), true)
+            writer = PrintWriter(OutputStreamWriter(socket.getOutputStream(), Charsets.US_ASCII), true)
             activeNmeaClients.add(writer)
             _connectedClientsCount.value = activeNmeaClients.size
 
@@ -483,6 +543,9 @@ object HotspotLocationServer {
             try {
                 socket.close()
             } catch (ignored: Exception) {}
+            if (writer != null) {
+                activeNmeaClients.remove(writer)
+            }
             _connectedClientsCount.value = activeNmeaClients.size
         }
     }

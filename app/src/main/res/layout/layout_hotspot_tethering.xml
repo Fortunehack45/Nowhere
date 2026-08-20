@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/surface_card"
-    android:paddingBottom="24dp">
+    android:paddingBottom="32dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -38,7 +38,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Hotspot GPS Sync"
+                    android:text="Hotspot GPS Tethering"
                     android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -47,7 +47,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Tether &amp; broadcast GPS to connected devices"
+                    android:text="Sync spoofed location to iPad, Mac, PC, or iPhone"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -113,7 +113,7 @@
                             android:id="@+id/tvHotspotClientCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0 connected clients streaming live GPS"
+                            android:text="0 connected client(s) streaming live GPS"
                             android:textColor="@color/badge_success_text"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -149,7 +149,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="WEB RADAR &amp; API URL"
+                            android:text="WEB RADAR &amp; API GATEWAY"
                             android:textColor="@color/text_muted"
                             android:textSize="10sp"
                             android:textStyle="bold" />
@@ -180,6 +180,166 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Quick 3-Step Setup Instructions Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/surface_card_elevated"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stroke_subtle"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:text="How to Connect Other Devices"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <!-- Step 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:background="@drawable/bg_status_pill"
+                        android:gravity="center"
+                        android:text="1"
+                        android:textColor="@color/primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Turn ON Android Portable Hotspot"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Enable Wi-Fi Hotspot in Android Settings."
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnOpenHotspotSettings"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="Hotspot"
+                        android:textSize="10sp"
+                        app:cornerRadius="8dp" />
+                </LinearLayout>
+
+                <!-- Step 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:background="@drawable/bg_status_pill"
+                        android:gravity="center"
+                        android:text="2"
+                        android:textColor="@color/primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Connect Other Device to Hotspot"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Connect your iPad, laptop, iPhone, or car unit to this phone's Wi-Fi network."
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Step 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:background="@drawable/bg_status_pill"
+                        android:gravity="center"
+                        android:text="3"
+                        android:textColor="@color/primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Scan QR or Open Web Radar"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Open browser on connected device to access live coordinates, map &amp; 1-click GPS override."
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- QR Code Card for Instant Sync -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -201,7 +361,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Scan to Connect &amp; Sync"
+                    android:text="Scan with Camera to Connect"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -212,7 +372,7 @@
                     android:layout_marginTop="2dp"
                     android:layout_marginBottom="12dp"
                     android:gravity="center"
-                    android:text="Open on connected iPad, iPhone, Mac, or PC"
+                    android:text="Scan on connected iPad, iPhone, Mac, or PC"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
 
@@ -246,7 +406,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Streaming Endpoints Guide Card -->
+        <!-- Streaming Endpoints Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -265,7 +425,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Live Protocol Endpoints"
+                    android:text="Direct Streaming Endpoints"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />

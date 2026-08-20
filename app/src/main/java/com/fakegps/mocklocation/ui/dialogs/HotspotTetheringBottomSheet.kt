@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +17,9 @@ import com.fakegps.mocklocation.databinding.LayoutHotspotTetheringBinding
 import com.fakegps.mocklocation.hotspot.HotspotLocationServer
 import com.fakegps.mocklocation.util.QrCodeGenerator
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
@@ -49,11 +52,26 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
 
         setupListeners()
         observeServerState()
+        startPeriodicIpRefresh()
     }
 
     private fun setupListeners() {
         binding.btnHotspotClose.setOnClickListener {
             dismiss()
+        }
+
+        binding.btnOpenHotspotSettings.setOnClickListener {
+            try {
+                val intent = Intent()
+                intent.setClassName("com.android.settings", "com.android.settings.TetherSettings")
+                startActivity(intent)
+            } catch (e: Exception) {
+                try {
+                    startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+                } catch (e2: Exception) {
+                    startActivity(Intent(Settings.ACTION_SETTINGS))
+                }
+            }
         }
 
         binding.switchHotspotServer.setOnCheckedChangeListener { _, isChecked ->
@@ -81,6 +99,17 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                 startActivity(browserIntent)
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Could not open browser: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun startPeriodicIpRefresh() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            while (isActive) {
+                delay(2000L)
+                if (isAdded && context != null) {
+                    HotspotLocationServer.refreshIpAddress(requireContext())
+                }
             }
         }
     }
