@@ -22,7 +22,7 @@ class SessionTimerManagerTest {
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
         sessionPrefs = SessionPreferences(context)
-        sessionPrefs.clearSession()
+        sessionPrefs.resetSessionForTesting()
     }
 
     @Test
@@ -67,6 +67,28 @@ class SessionTimerManagerTest {
 
         assertEquals("Expiry timestamp should remain the original unexpired timestamp", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
         assertEquals(duration, sessionPrefs.sessionAllocatedDurationMillis)
+    }
+
+    @Test
+    fun testStopSimulation_preservesRemainingDurationAndValidSession() {
+        // User starts simulation with 1 hour duration
+        val oneHour = 60 * 60 * 1000L
+        sessionPrefs.startNewSession(oneHour, forceRestart = true)
+        val originalExpiry = sessionPrefs.sessionExpiresTimestamp
+
+        // User stops simulation while they still have time remaining
+        SessionTimerManager.stopTimer(context)
+
+        // Verify remaining session is STILL valid and NOT expired
+        assertTrue("Session must remain valid when stopped if time remains", sessionPrefs.hasValidActiveSession())
+        assertFalse("Session must not be marked expired when stopped manually", sessionPrefs.isSessionExpired)
+        assertEquals("Expiry timestamp must be preserved", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
+        assertTrue("Remaining time must be positive", sessionPrefs.getTimeRemainingMillis() > 0L)
+
+        // User restarts simulation: timer resumes without prompting for ads or resetting
+        SessionTimerManager.startOrResumeTimer(context)
+        assertEquals("Expiry timestamp must still match original after restart", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
+        assertTrue(sessionPrefs.hasValidActiveSession())
     }
 
     @Test

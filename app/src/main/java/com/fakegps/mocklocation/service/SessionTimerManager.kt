@@ -57,10 +57,11 @@ object SessionTimerManager {
 
     fun startOrResumeTimer(context: Context, durationMillis: Long = SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS) {
         val sessionPrefs = SessionPreferences(context)
+        sessionPrefs.isSessionActive = true
         if (sessionPrefs.hasValidActiveSession()) {
             resumeExistingTimer(context)
         } else {
-            startTimer(context, durationMillis, forceRestart = true)
+            startTimer(context, durationMillis, forceRestart = false)
         }
     }
 
@@ -93,9 +94,9 @@ object SessionTimerManager {
 
     fun resumeExistingTimer(context: Context) {
         val sessionPrefs = SessionPreferences(context)
-        if (sessionPrefs.hasValidActiveSession()) {
-            updateState(context)
-        }
+        sessionPrefs.isSessionActive = true
+        sessionPrefs.isSessionExpired = false
+        updateState(context)
         ensureNotificationChannel(context)
         startTickerLoop(context.applicationContext)
     }
@@ -107,10 +108,10 @@ object SessionTimerManager {
         timerScope = null
 
         val sessionPrefs = SessionPreferences(context)
-        sessionPrefs.clearSession()
+        sessionPrefs.isSessionActive = false
         resetThresholdFlags()
 
-        _timerState.value = SessionTimerState()
+        updateState(context)
         NowhereAppWidgetProvider.updateAllWidgets(context)
     }
 
