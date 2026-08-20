@@ -60,22 +60,6 @@ jobs:
             echo "version=1.0.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Nowhere-Debug-APK-v${{ steps.extract_version.outputs.version }}
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload Release APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Nowhere-Release-APK-v${{ steps.extract_version.outputs.version }}
-          path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn
-          retention-days: 14
-
       - name: Publish GitHub Release (Progressive Updates)
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         uses: softprops/action-gh-release@v2
@@ -91,3 +75,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Upload Debug APK Artifact (Optional)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nowhere-Debug-APK-v${{ steps.extract_version.outputs.version }}
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Upload Release APK Artifact (Optional)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nowhere-Release-APK-v${{ steps.extract_version.outputs.version }}
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+          retention-days: 1
