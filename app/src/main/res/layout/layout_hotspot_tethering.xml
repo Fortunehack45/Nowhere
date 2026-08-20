@@ -22,7 +22,7 @@
             android:layout_marginBottom="14dp"
             android:background="@drawable/bg_status_pill" />
 
-        <!-- Header -->
+        <!-- Header with BETA Tag -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -35,19 +35,41 @@
                 android:layout_centerVertical="true"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Hotspot GPS Sync"
-                    android:textColor="@color/text_primary"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hotspot GPS Sync"
+                        android:textColor="@color/text_primary"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <!-- BETA Tag Badge -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_status_pill"
+                        android:backgroundTint="@color/badge_active_bg"
+                        android:letterSpacing="0.08"
+                        android:paddingHorizontal="7dp"
+                        android:paddingVertical="2dp"
+                        android:text="BETA"
+                        android:textColor="@color/primary_bright"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Share mock location with iPad, Laptop, or Android phone"
+                    android:text="Share mock location with iPad, Laptop, iPhone, or Android"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -226,6 +248,26 @@
                             app:iconSize="14dp"
                             app:iconTint="@color/primary_bright" />
                     </LinearLayout>
+
+                    <!-- Alternative IP Links (if connected via Wi-Fi/LAN) -->
+                    <TextView
+                        android:id="@+id/tvAltIpHeader"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="AVAILABLE ON THESE NETWORK IPS:"
+                        android:textColor="@color/text_muted"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutAltIpChips"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:orientation="vertical"
+                        android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -499,6 +541,20 @@
                         app:cornerRadius="12dp"
                         app:icon="@drawable/ic_bolt"
                         app:iconTint="@android:color/white" />
+
+                    <!-- Developer Options Mock App Button (if needed) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnOpenClientDevOptions"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="8dp"
+                        android:backgroundTint="@color/surface_card"
+                        android:text="Select Nowhere as Mock App in Dev Options"
+                        android:textColor="@color/primary_bright"
+                        android:textSize="11sp"
+                        android:visibility="gone"
+                        app:cornerRadius="10dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

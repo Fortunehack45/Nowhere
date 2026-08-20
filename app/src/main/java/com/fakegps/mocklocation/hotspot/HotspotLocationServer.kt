@@ -1,6 +1,7 @@
 package com.fakegps.mocklocation.hotspot
 
 import android.content.Context
+import android.net.wifi.WifiManager
 import android.util.Log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Hotspot Location & GPS Tethering Server.
+ * Hotspot Location & GPS Tethering Server (BETA).
  * Runs an embedded lightweight HTTP server (port 8088) and NMEA 0183 TCP server (port 10110).
  * Allows any device connected to this device's Wi-Fi Hotspot (iPhones, iPads, PCs, Macs, Androids, car consoles)
  * to receive, synchronize with, and emulate the exact spoofed GPS location in real time.
@@ -123,15 +124,16 @@ object HotspotLocationServer {
 
     private suspend fun runHttpServer(port: Int, hostIp: String) = withContext(Dispatchers.IO) {
         try {
-            httpServerSocket = ServerSocket(port, 50, InetAddress.getByName("0.0.0.0")).apply {
+            httpServerSocket = ServerSocket().apply {
                 reuseAddress = true
+                bind(InetSocketAddress("0.0.0.0", port), 50)
             }
-            Log.i(TAG, "HTTP Server listening on 0.0.0.0:$port")
+            Log.i(TAG, "HTTP Server successfully listening on 0.0.0.0:$port")
 
             while (isActive && _isServerRunning.value) {
                 try {
                     val clientSocket = httpServerSocket?.accept() ?: break
-                    launch {
+                    launch(Dispatchers.IO) {
                         handleHttpClient(clientSocket, hostIp, port)
                     }
                 } catch (e: SocketException) {
@@ -147,8 +149,8 @@ object HotspotLocationServer {
 
     private suspend fun handleHttpClient(socket: Socket, hostIp: String, port: Int) = withContext(Dispatchers.IO) {
         try {
-            socket.soTimeout = 10000
-            val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
+            socket.soTimeout = 8000
+            val reader = BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.UTF_8))
             val outputStream = BufferedOutputStream(socket.getOutputStream())
 
             val requestLine = reader.readLine() ?: return@withContext
@@ -184,6 +186,9 @@ object HotspotLocationServer {
                 path == "/override.js" -> {
                     serveGeolocationOverrideJs(outputStream, hostIp, port)
                 }
+                path == "/ping" || path == "/health" -> {
+                    serveHealthCheck(outputStream)
+                }
                 else -> {
                     serveWebDashboard(outputStream, hostIp, port)
                 }
@@ -205,6 +210,24 @@ object HotspotLocationServer {
                 "Access-Control-Allow-Headers: *\r\n" +
                 "Access-Control-Max-Age: 86400\r\n" +
                 "Connection: close\r\n\r\n"
+        out.write(response.toByteArray(Charsets.UTF_8))
+    }
+
+    private fun serveHealthCheck(out: OutputStream) {
+        val json = JSONObject().apply {
+            put("status", "ONLINE")
+            put("service", "Nowhere GPS Hotspot Server")
+            put("version", "BETA")
+            put("timestamp", System.currentTimeMillis())
+        }.toString()
+
+        val response = "HTTP/1.1 200 OK\r\n" +
+                "Content-Type: application/json; charset=UTF-8\r\n" +
+                "Access-Control-Allow-Origin: *\r\n" +
+                "Cache-Control: no-cache\r\n" +
+                "Content-Length: ${json.toByteArray(Charsets.UTF_8).size}\r\n" +
+                "Connection: close\r\n\r\n" + json
+
         out.write(response.toByteArray(Charsets.UTF_8))
     }
 
@@ -262,7 +285,7 @@ object HotspotLocationServer {
 
     private fun serveGeolocationOverrideJs(out: OutputStream, hostIp: String, port: Int) {
         val js = """
-// Nowhere Hotspot GPS Injector for Connected Browsers
+// Nowhere Hotspot GPS Injector for Connected Browsers (BETA)
 (function() {
   const SERVER_URL = 'http://' + window.location.hostname + ':' + (window.location.port || '$port') + '/location.json';
   console.log('[Nowhere GPS] Injecting mock location from ' + SERVER_URL);
@@ -287,13 +310,13 @@ object HotspotLocationServer {
       if (data && data.latitude !== undefined) {
         cachedPosition = {
           coords: {
-            latitude: data.latitude,
-            longitude: data.longitude,
-            altitude: data.altitude || 15.0,
-            accuracy: data.accuracy || 1.0,
+            latitude: Number(data.latitude),
+            longitude: Number(data.longitude),
+            altitude: Number(data.altitude) || 15.0,
+            accuracy: Number(data.accuracy) || 1.0,
             altitudeAccuracy: 0.5,
-            heading: data.bearing || 0.0,
-            speed: data.speedMps || 0.0
+            heading: Number(data.bearing) || 0.0,
+            speed: Number(data.speedMps) || 0.0
           },
           timestamp: data.timestamp || Date.now()
         };
@@ -305,7 +328,7 @@ object HotspotLocationServer {
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition = function(success, error, options) {
-      setTimeout(() => success(cachedPosition), 30);
+      setTimeout(() => success(cachedPosition), 20);
     };
     navigator.geolocation.watchPosition = function(success, error, options) {
       const id = setInterval(() => success(cachedPosition), 500);
@@ -316,7 +339,7 @@ object HotspotLocationServer {
     };
   }
   window.__nowhereGpsActive = true;
-  console.log('✅ Nowhere GPS Active! Spoofed to: ' + cachedPosition.coords.latitude + ', ' + cachedPosition.coords.longitude);
+  console.log('✅ Nowhere GPS Active! Coordinates: ' + cachedPosition.coords.latitude + ', ' + cachedPosition.coords.longitude);
 })();
 """.trimIndent()
 
@@ -336,7 +359,7 @@ object HotspotLocationServer {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nowhere GPS Hotspot Radar</title>
+  <title>Nowhere GPS Hotspot Radar (BETA)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     :root {
@@ -351,15 +374,19 @@ object HotspotLocationServer {
       --green: #34C759;
       --text: #FFFFFF;
       --muted: #A0AAB8;
+      --beta-gold: #FF9500;
     }
     * { margin:0; padding:0; box-sizing:border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding: 16px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
     .container { max-width: 720px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
     
-    /* Red Header with Nowhere App Logo */
+    /* Red Header with Nowhere App Logo & BETA Tag */
     .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--border-red); border-radius: 16px; box-shadow: 0 4px 20px rgba(255, 59, 48, 0.1); }
     .logo-area { display: flex; align-items: center; gap: 12px; }
-    .logo-container { width: 40px; height: 40px; background: #181B26; border: 1px solid rgba(255,59,48,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px var(--glow-red); }
+    .logo-container { width: 42px; height: 42px; background: #181B26; border: 1px solid rgba(255,59,48,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px var(--glow-red); }
+    
+    .title-row { display: flex; align-items: center; gap: 8px; }
+    .beta-badge { background: rgba(255, 149, 0, 0.15); border: 1px solid var(--beta-gold); color: var(--beta-gold); font-size: 10px; font-weight: 900; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 6px; }
     
     .status-badge { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(255, 59, 48, 0.15); border: 1px solid var(--primary-red); border-radius: 20px; color: #FF6961; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; }
     .pulse-dot { width: 9px; height: 9px; background: var(--primary-red); border-radius: 50%; box-shadow: 0 0 8px var(--primary-red); animation: pulse 1.2s infinite; }
@@ -371,8 +398,10 @@ object HotspotLocationServer {
     .stat-label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; font-weight: 700; }
     .stat-val { font-size: 18px; font-weight: 800; color: var(--text); font-family: monospace; }
     
-    /* Map */
-    #map { height: 320px; width: 100%; border-radius: 16px; border: 1px solid var(--border-red); z-index: 1; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
+    /* Map & Fallback Radar Canvas */
+    .map-container { position: relative; width: 100%; height: 320px; border-radius: 16px; border: 1px solid var(--border-red); overflow: hidden; background: #0B0E14; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
+    #map { height: 100%; width: 100%; z-index: 1; }
+    #radarCanvas { position: absolute; top:0; left:0; width:100%; height:100%; display:none; z-index: 0; }
     
     /* Quick Action Cards */
     .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
@@ -397,7 +426,7 @@ object HotspotLocationServer {
 <body>
   <div class="container">
     
-    <!-- Red Header with Nowhere Vector Logo -->
+    <!-- Red Header with Nowhere Vector Logo & BETA Tag -->
     <div class="header">
       <div class="logo-area">
         <div class="logo-container">
@@ -408,7 +437,10 @@ object HotspotLocationServer {
           </svg>
         </div>
         <div>
-          <h2 style="font-size: 18px; font-weight: 900; letter-spacing: -0.02em;">Nowhere GPS Sync</h2>
+          <div class="title-row">
+            <h2 style="font-size: 18px; font-weight: 900; letter-spacing: -0.02em;">Nowhere GPS Sync</h2>
+            <span class="beta-badge">BETA</span>
+          </div>
           <p style="font-size: 11px; color: var(--muted); margin-top: 2px;">Hotspot Location Gateway</p>
         </div>
       </div>
@@ -438,8 +470,11 @@ object HotspotLocationServer {
       </div>
     </div>
 
-    <!-- Live Map -->
-    <div id="map"></div>
+    <!-- Map & Canvas Container -->
+    <div class="map-container">
+      <div id="map"></div>
+      <canvas id="radarCanvas"></canvas>
+    </div>
 
     <!-- 1-Tap Quick Launchers -->
     <div class="card">
@@ -487,37 +522,101 @@ object HotspotLocationServer {
     </div>
 
     <div class="footer">
-      Nowhere Mock Location • Powered by Nowhere Engine
+      Nowhere Mock Location • Hotspot GPS Gateway (BETA)
     </div>
 
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([$currentLat, $currentLon], 15);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap © CARTO'
-    }).addTo(map);
-
-    // Glowing Red Radar Marker
-    const radarIcon = L.divIcon({
-      className: 'custom-radar-marker',
-      html: '<div style="width:20px;height:20px;background:#FF3B30;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 15px #FF3B30;"></div>',
-      iconSize: [20, 20],
-      iconAnchor: [10, 10]
-    });
-
-    const marker = L.marker([$currentLat, $currentLon], { icon: radarIcon }).addTo(map);
-    const radarCircle = L.circle([$currentLat, $currentLon], {
-      color: '#FF3B30',
-      fillColor: '#FF3B30',
-      fillOpacity: 0.15,
-      radius: 120
-    }).addTo(map);
-
+    let map = null;
+    let marker = null;
+    let radarCircle = null;
     let lastLat = $currentLat;
     let lastLon = $currentLon;
+
+    // Fail-safe Leaflet initialization with offline fallback
+    try {
+      if (typeof L !== 'undefined') {
+        map = L.map('map').setView([$currentLat, $currentLon], 15);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap © CARTO'
+        }).addTo(map);
+
+        const radarIcon = L.divIcon({
+          className: 'custom-radar-marker',
+          html: '<div style="width:20px;height:20px;background:#FF3B30;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 15px #FF3B30;"></div>',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
+
+        marker = L.marker([$currentLat, $currentLon], { icon: radarIcon }).addTo(map);
+        radarCircle = L.circle([$currentLat, $currentLon], {
+          color: '#FF3B30',
+          fillColor: '#FF3B30',
+          fillOpacity: 0.15,
+          radius: 120
+        }).addTo(map);
+      } else {
+        showRadarFallback();
+      }
+    } catch(e) {
+      showRadarFallback();
+    }
+
+    function showRadarFallback() {
+      const cvs = document.getElementById('radarCanvas');
+      if (cvs) {
+        cvs.style.display = 'block';
+        const ctx = cvs.getContext('2d');
+        let angle = 0;
+        function drawRadar() {
+          cvs.width = cvs.clientWidth;
+          cvs.height = cvs.clientHeight;
+          const cx = cvs.width / 2;
+          const cy = cvs.height / 2;
+          const r = Math.min(cx, cy) - 20;
+
+          ctx.fillStyle = '#090B0E';
+          ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+          // Grid circles
+          ctx.strokeStyle = 'rgba(255, 59, 48, 0.25)';
+          ctx.lineWidth = 1;
+          for (let i = 1; i <= 3; i++) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, (r / 3) * i, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          // Sweep
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(angle);
+          const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+          grad.addColorStop(0, 'rgba(255, 59, 48, 0.4)');
+          grad.addColorStop(1, 'rgba(255, 59, 48, 0.0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, r, 0, Math.PI / 3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          // Center target
+          ctx.fillStyle = '#FF3B30';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+          ctx.fill();
+
+          angle += 0.04;
+          requestAnimationFrame(drawRadar);
+        }
+        drawRadar();
+      }
+    }
 
     async function refresh() {
       try {
@@ -531,9 +630,11 @@ object HotspotLocationServer {
           document.getElementById('valAlt').innerText = Number(d.altitude).toFixed(1) + ' m';
           document.getElementById('valSpeed').innerText = Number(d.speedKmh).toFixed(1) + ' km/h';
 
-          const newPos = [lastLat, lastLon];
-          marker.setLatLng(newPos);
-          radarCircle.setLatLng(newPos);
+          if (map && marker && radarCircle) {
+            const newPos = [lastLat, lastLon];
+            marker.setLatLng(newPos);
+            radarCircle.setLatLng(newPos);
+          }
 
           document.getElementById('btnGoogleMaps').href = 'https://www.google.com/maps?q=' + lastLat + ',' + lastLon;
           document.getElementById('btnAppleMaps').href = 'http://maps.apple.com/?q=' + lastLat + ',' + lastLon + '&ll=' + lastLat + ',' + lastLon;
@@ -599,8 +700,9 @@ object HotspotLocationServer {
 
     private suspend fun runNmeaTcpServer(port: Int) = withContext(Dispatchers.IO) {
         try {
-            nmeaServerSocket = ServerSocket(port, 20, InetAddress.getByName("0.0.0.0")).apply {
+            nmeaServerSocket = ServerSocket().apply {
                 reuseAddress = true
+                bind(InetSocketAddress("0.0.0.0", port), 20)
             }
             Log.i(TAG, "NMEA TCP Server listening on 0.0.0.0:$port")
 
@@ -751,17 +853,37 @@ object HotspotLocationServer {
     fun getAllLocalIpAddresses(context: Context): List<String> {
         val result = mutableListOf<String>()
         try {
-            val interfaces = NetworkInterface.getNetworkInterfaces() ?: return emptyList()
+            // Check WifiManager for Wi-Fi interface IP
+            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            val ipInt = wifiManager?.connectionInfo?.ipAddress ?: 0
+            if (ipInt != 0) {
+                val wifiIp = String.format(
+                    Locale.US,
+                    "%d.%d.%d.%d",
+                    ipInt and 0xff,
+                    ipInt shr 8 and 0xff,
+                    ipInt shr 16 and 0xff,
+                    ipInt shr 24 and 0xff
+                )
+                if (wifiIp != "0.0.0.0" && !wifiIp.startsWith("127.")) {
+                    result.add(wifiIp)
+                }
+            }
+
+            // Check network interfaces
+            val interfaces = NetworkInterface.getNetworkInterfaces() ?: return result.distinct()
 
             for (networkInterface in Collections.list(interfaces)) {
-                val name = networkInterface.name.lowercase()
-                val isHotspot = name.startsWith("ap") || name.startsWith("wlan1") || name.startsWith("swlan") || name.startsWith("rndis") || name.startsWith("tether")
+                val name = networkInterface.name.lowercase(Locale.US)
+                val isHotspot = name.startsWith("ap") || name.startsWith("wlan1") || name.startsWith("swlan") ||
+                        name.startsWith("softap") || name.startsWith("rndis") || name.startsWith("tether") ||
+                        name.startsWith("p2p") || name.startsWith("wigig")
 
                 for (inetAddress in Collections.list(networkInterface.inetAddresses)) {
                     if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
                         val hostAddress = inetAddress.hostAddress ?: continue
                         if (hostAddress.startsWith("127.")) continue
-                        if (isHotspot || hostAddress.startsWith("192.168.43.") || hostAddress.startsWith("192.168.44.")) {
+                        if (isHotspot || hostAddress.startsWith("192.168.43.") || hostAddress.startsWith("192.168.44.") || hostAddress.startsWith("192.168.49.") || hostAddress.startsWith("192.168.50.")) {
                             result.add(0, hostAddress) // prioritize hotspot IPs
                         } else {
                             result.add(hostAddress)
@@ -772,6 +894,11 @@ object HotspotLocationServer {
         } catch (e: Exception) {
             Log.w(TAG, "getAllLocalIpAddresses error: ${e.message}")
         }
+
+        if (!result.any { it.startsWith("192.168.43.") || it.startsWith("192.168.44.") }) {
+            result.add(0, "192.168.43.1")
+        }
+
         return result.distinct()
     }
 }

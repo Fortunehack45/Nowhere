@@ -11,14 +11,19 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.databinding.LayoutHotspotTetheringBinding
 import com.fakegps.mocklocation.hotspot.HotspotLocationClient
 import com.fakegps.mocklocation.hotspot.HotspotLocationServer
+import com.fakegps.mocklocation.util.PermissionHelper
 import com.fakegps.mocklocation.util.QrCodeGenerator
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
@@ -118,7 +123,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         binding.switchHotspotServer.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 HotspotLocationServer.startServer(requireContext())
-                Toast.makeText(requireContext(), "🛰️ Hotspot GPS Broadcast Started", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "🛰️ Hotspot GPS Broadcast Started (BETA)", Toast.LENGTH_SHORT).show()
             } else {
                 HotspotLocationServer.stopServer()
                 Toast.makeText(requireContext(), "Hotspot GPS Broadcast Stopped", Toast.LENGTH_SHORT).show()
@@ -158,6 +163,10 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                 Toast.makeText(requireContext(), "Connecting to Host Phone ($hostUrl)...", Toast.LENGTH_SHORT).show()
             }
         }
+
+        binding.btnOpenClientDevOptions.setOnClickListener {
+            PermissionHelper.openDeveloperSettings(requireActivity())
+        }
     }
 
     private fun startPeriodicIpRefresh() {
@@ -184,10 +193,39 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
+            HotspotLocationServer.allAvailableUrls.collectLatest { urls ->
+                val otherUrls = urls.filter { it != HotspotLocationServer.serverUrl.value }
+                if (otherUrls.isNotEmpty()) {
+                    binding.tvAltIpHeader.visibility = View.VISIBLE
+                    binding.layoutAltIpChips.visibility = View.VISIBLE
+                    binding.layoutAltIpChips.removeAllViews()
+
+                    for (altUrl in otherUrls) {
+                        val btn = MaterialButton(requireContext(), null, com.google.android.material.R.attr.borderlessButtonStyle).apply {
+                            text = "🔗 $altUrl"
+                            textSize = 11f
+                            isAllCaps = false
+                            setTextColor(ContextCompat.getColor(context, R.color.primary_bright))
+                            setOnClickListener {
+                                val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("Alt GPS URL", altUrl))
+                                Toast.makeText(requireContext(), "Copied: $altUrl", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        binding.layoutAltIpChips.addView(btn)
+                    }
+                } else {
+                    binding.tvAltIpHeader.visibility = View.GONE
+                    binding.layoutAltIpChips.visibility = View.GONE
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
             HotspotLocationServer.isServerRunning.collectLatest { isRunning ->
                 binding.switchHotspotServer.isChecked = isRunning
                 if (isRunning) {
-                    binding.tvHotspotStatusTitle.text = "GPS Broadcasting Active"
+                    binding.tvHotspotStatusTitle.text = "GPS Broadcasting Active (BETA)"
                     binding.tvHotspotStatusTitle.setTextColor(requireContext().getColor(R.color.text_primary))
                 } else {
                     binding.tvHotspotStatusTitle.text = "GPS Broadcasting Stopped"
@@ -213,12 +251,14 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                         binding.tvClientSyncCoordinates.text = "Waiting for Host GPS stream..."
                         binding.btnToggleClientSync.text = "Start Syncing Location"
                         binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+                        binding.btnOpenClientDevOptions.visibility = View.GONE
                     }
                     is HotspotLocationClient.SyncState.Connecting -> {
                         binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary_bright))
                         binding.tvClientSyncStatusTitle.text = "Connecting to Host..."
                         binding.tvClientSyncCoordinates.text = state.url
                         binding.btnToggleClientSync.text = "Cancel Connection"
+                        binding.btnOpenClientDevOptions.visibility = View.GONE
                     }
                     is HotspotLocationClient.SyncState.Synced -> {
                         binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.badge_success_text))
@@ -230,11 +270,17 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                         )
                         binding.btnToggleClientSync.text = "Disconnect / Stop Sync"
                         binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.surface_card_elevated))
+                        binding.btnOpenClientDevOptions.visibility = View.GONE
                     }
                     is HotspotLocationClient.SyncState.Error -> {
                         binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
-                        binding.tvClientSyncStatusTitle.text = "Sync Error / Reconnecting"
+                        binding.tvClientSyncStatusTitle.text = "Sync Status"
                         binding.tvClientSyncCoordinates.text = state.message
+                        if (state.needsMockPermission) {
+                            binding.btnOpenClientDevOptions.visibility = View.VISIBLE
+                        } else {
+                            binding.btnOpenClientDevOptions.visibility = View.GONE
+                        }
                     }
                 }
             }

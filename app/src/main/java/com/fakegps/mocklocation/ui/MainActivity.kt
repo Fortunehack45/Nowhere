@@ -164,13 +164,13 @@ class MainActivity : AppCompatActivity() {
             com.fakegps.mocklocation.hotspot.HotspotLocationServer.connectedClientsCount.collect { count ->
                 if (!isFinishing && !isDestroyed) {
                     if (count > 0) {
-                        binding.tvHotspotBadge.text = "SYNC ($count)"
+                        binding.tvHotspotBadge.text = "SYNC BETA ($count)"
                         binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.badge_success_text))
                     } else if (com.fakegps.mocklocation.hotspot.HotspotLocationServer.isServerRunning.value) {
-                        binding.tvHotspotBadge.text = "HOTSPOT"
+                        binding.tvHotspotBadge.text = "HOTSPOT BETA"
                         binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bright))
                     } else {
-                        binding.tvHotspotBadge.text = "HOTSPOT"
+                        binding.tvHotspotBadge.text = "HOTSPOT BETA"
                         binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.text_primary))
                     }
                 }

@@ -163,7 +163,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:letterSpacing="0.04"
-                                android:text="HOTSPOT"
+                                android:text="HOTSPOT BETA"
                                 android:textColor="@color/text_primary"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
