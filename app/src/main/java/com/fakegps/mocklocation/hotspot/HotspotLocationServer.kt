@@ -47,6 +47,9 @@ object HotspotLocationServer {
     private val _serverUrl = MutableStateFlow("http://192.168.43.1:8088")
     val serverUrl: StateFlow<String> = _serverUrl.asStateFlow()
 
+    private val _allAvailableUrls = MutableStateFlow<List<String>>(listOf("http://192.168.43.1:8088"))
+    val allAvailableUrls: StateFlow<List<String>> = _allAvailableUrls.asStateFlow()
+
     private var serverJob: Job? = null
     private var httpServerSocket: ServerSocket? = null
     private var nmeaServerSocket: ServerSocket? = null
@@ -61,6 +64,7 @@ object HotspotLocationServer {
 
         val detectedIp = getHotspotOrWifiIpAddress(context)
         _serverUrl.value = "http://$detectedIp:$httpPort"
+        updateAllUrls(context, httpPort)
         Log.i(TAG, "Starting Hotspot Location Server at ${_serverUrl.value} and NMEA TCP :$nmeaPort")
 
         serverJob = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
@@ -80,7 +84,17 @@ object HotspotLocationServer {
     fun refreshIpAddress(context: Context, httpPort: Int = DEFAULT_HTTP_PORT): String {
         val detectedIp = getHotspotOrWifiIpAddress(context)
         _serverUrl.value = "http://$detectedIp:$httpPort"
+        updateAllUrls(context, httpPort)
         return detectedIp
+    }
+
+    private fun updateAllUrls(context: Context, httpPort: Int = DEFAULT_HTTP_PORT) {
+        val ips = getAllLocalIpAddresses(context)
+        if (ips.isNotEmpty()) {
+            _allAvailableUrls.value = ips.map { "http://$it:$httpPort" }
+        } else {
+            _allAvailableUrls.value = listOf("http://192.168.43.1:$httpPort")
+        }
     }
 
     fun stopServer() {
@@ -143,6 +157,12 @@ object HotspotLocationServer {
 
             val method = parts[0]
             val path = parts[1].split("?")[0]
+
+            // Fully consume remaining HTTP request headers before responding
+            var headerLine: String? = reader.readLine()
+            while (headerLine != null && headerLine.isNotEmpty()) {
+                headerLine = reader.readLine()
+            }
 
             if (method.equals("OPTIONS", ignoreCase = true)) {
                 serveCorsPreflight(outputStream)
@@ -244,7 +264,7 @@ object HotspotLocationServer {
         val js = """
 // Nowhere Hotspot GPS Injector for Connected Browsers
 (function() {
-  const SERVER_URL = 'http://$hostIp:$port/location.json';
+  const SERVER_URL = 'http://' + window.location.hostname + ':' + (window.location.port || '$port') + '/location.json';
   console.log('[Nowhere GPS] Injecting mock location from ' + SERVER_URL);
 
   let cachedPosition = {
@@ -296,7 +316,7 @@ object HotspotLocationServer {
     };
   }
   window.__nowhereGpsActive = true;
-  console.log('✅ Nowhere GPS Override Active! Spoofed to: ' + cachedPosition.coords.latitude + ', ' + cachedPosition.coords.longitude);
+  console.log('✅ Nowhere GPS Active! Spoofed to: ' + cachedPosition.coords.latitude + ', ' + cachedPosition.coords.longitude);
 })();
 """.trimIndent()
 
@@ -316,55 +336,83 @@ object HotspotLocationServer {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nowhere Hotspot GPS Radar</title>
+  <title>Nowhere GPS Hotspot Radar</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     :root {
-      --bg: #0B0E14;
-      --card-bg: #141923;
-      --card-elevated: #1B2232;
-      --border: #232B3E;
-      --primary: #387BFF;
-      --accent: #00E676;
+      --bg: #090B0E;
+      --card-bg: #12151E;
+      --card-elevated: #1A1E2C;
+      --border: #2A1818;
+      --border-red: rgba(255, 59, 48, 0.35);
+      --primary-red: #FF3B30;
+      --primary-red-hover: #E52E24;
+      --glow-red: rgba(255, 59, 48, 0.4);
       --green: #34C759;
-      --text: #F2F5F8;
-      --muted: #8E9BAE;
+      --text: #FFFFFF;
+      --muted: #A0AAB8;
     }
     * { margin:0; padding:0; box-sizing:border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-    .container { max-width: 760px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; }
-    .logo-area { display: flex; align-items: center; gap: 12px; }
-    .status-badge { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(52, 199, 89, 0.15); border: 1px solid rgba(52, 199, 89, 0.4); border-radius: 20px; color: var(--green); font-size: 12px; font-weight: 700; }
-    .pulse-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } 100% { opacity: 1; transform: scale(1); } }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-    .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
-    .stat-label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; font-weight: 600; }
+    body { background: var(--bg); color: var(--text); padding: 16px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    .container { max-width: 720px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
+    
+    /* Red Header */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--border-red); border-radius: 16px; box-shadow: 0 4px 20px rgba(255, 59, 48, 0.1); }
+    .logo-area { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 32px; height: 32px; background: var(--primary-red); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 0 12px var(--glow-red); }
+    
+    .status-badge { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(255, 59, 48, 0.15); border: 1px solid var(--primary-red); border-radius: 20px; color: #FF6961; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; }
+    .pulse-dot { width: 9px; height: 9px; background: var(--primary-red); border-radius: 50%; box-shadow: 0 0 8px var(--primary-red); animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(1.4); } 100% { opacity: 1; transform: scale(1); } }
+    
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+    .stat-card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; border-left: 3px solid var(--primary-red); }
+    .stat-label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; font-weight: 700; }
     .stat-val { font-size: 18px; font-weight: 800; color: var(--text); font-family: monospace; }
-    #map { height: 340px; width: 100%; border-radius: 16px; border: 1px solid var(--border); z-index: 1; }
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-    .step-item { display: flex; gap: 14px; align-items: flex-start; background: var(--card-elevated); padding: 14px; border-radius: 12px; border: 1px solid var(--border); }
-    .step-num { width: 28px; height: 28px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
-    .btn { background: var(--primary); color: white; border: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; font-size: 13px; }
-    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-    .endpoints { display: flex; flex-wrap: wrap; gap: 8px; }
-    .endpoint-pill { background: rgba(56, 123, 255, 0.12); border: 1px solid rgba(56, 123, 255, 0.3); padding: 8px 14px; border-radius: 10px; color: var(--primary); font-size: 12px; font-family: monospace; text-decoration: none; font-weight: 600; }
-    .code-box { background: #080A0E; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #64B5F6; overflow-x: auto; word-break: break-all; }
+    
+    /* Map */
+    #map { height: 320px; width: 100%; border-radius: 16px; border: 1px solid var(--border-red); z-index: 1; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
+    
+    /* Quick Action Cards */
+    .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .card-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--text); }
+    
+    .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+    .btn-red { background: linear-gradient(135deg, #FF3B30 0%, #D32F2F 100%); color: white; border: none; padding: 14px 16px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-size: 13px; text-decoration: none; box-shadow: 0 4px 14px var(--glow-red); }
+    .btn-red:hover { background: linear-gradient(135deg, #FF5247 0%, #E53935 100%); transform: translateY(-2px); box-shadow: 0 6px 20px var(--glow-red); }
+    .btn-secondary { background: var(--card-elevated); color: var(--text); border: 1px solid rgba(255,255,255,0.12); padding: 14px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; text-decoration: none; }
+    .btn-secondary:hover { background: #262B3D; }
+
+    /* Red Easy Steps */
+    .easy-step { display: flex; align-items: flex-start; gap: 12px; background: var(--card-elevated); padding: 14px; border-radius: 12px; border-left: 3px solid var(--primary-red); }
+    .step-circle { width: 26px; height: 26px; background: var(--primary-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; flex-shrink: 0; }
+    .step-text { font-size: 13px; line-height: 1.5; color: var(--muted); }
+    .step-text strong { color: var(--text); font-weight: 700; }
+    
+    /* Footer */
+    .footer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="container">
+    
+    <!-- Red Header -->
     <div class="header">
       <div class="logo-area">
-        <h2 style="font-size: 20px; font-weight: 800;">🛰️ Nowhere Hotspot GPS Radar</h2>
+        <div class="logo-icon">📍</div>
+        <div>
+          <h2 style="font-size: 18px; font-weight: 900; letter-spacing: -0.02em;">Nowhere GPS Sync</h2>
+          <p style="font-size: 11px; color: var(--muted); margin-top: 2px;">Hotspot Location Gateway</p>
+        </div>
       </div>
       <div class="status-badge">
         <div class="pulse-dot"></div>
-        LIVE SYNC ACTIVE
+        LIVE SYNC
       </div>
     </div>
 
+    <!-- Live Coordinates Grid -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Latitude</div>
@@ -384,76 +432,120 @@ object HotspotLocationServer {
       </div>
     </div>
 
+    <!-- Live Map -->
     <div id="map"></div>
 
-    <!-- Step-by-Step Device Setup Guide -->
+    <!-- 1-Tap Quick Launchers -->
     <div class="card">
-      <h3 style="font-size: 16px; font-weight: 700;">📱 How to Use Spoofed GPS on Connected Devices</h3>
+      <div class="card-title">🚀 1-Tap Location Launchers</div>
+      <div class="actions-grid">
+        <a id="btnGoogleMaps" class="btn-red" href="https://www.google.com/maps?q=$currentLat,$currentLon" target="_blank">
+          🗺️ Open in Google Maps
+        </a>
+        <a id="btnAppleMaps" class="btn-secondary" href="http://maps.apple.com/?q=$currentLat,$currentLon&ll=$currentLat,$currentLon" target="_blank">
+          🍎 Open in Apple Maps
+        </a>
+        <button class="btn-secondary" onclick="syncBrowserTab()">
+          ⚡ Sync This Browser Tab
+        </button>
+        <a class="btn-secondary" href="/gps.gpx" download="nowhere_location.gpx">
+          📥 Download GPS File (.gpx)
+        </a>
+      </div>
+    </div>
+
+    <!-- Simple Connection Steps -->
+    <div class="card">
+      <div class="card-title">📱 How it Works on Your Devices</div>
       
-      <div class="step-item">
-        <div class="step-num">1</div>
-        <div>
-          <strong style="color: var(--text);">For Web Browsers (Chrome / Safari on iPad, Mac, PC):</strong>
-          <p style="color: var(--muted); font-size: 13px; margin: 4px 0 8px 0;">Click the button below to copy the browser injection script. Open DevTools Console (F12 or Inspect) on any website (e.g. Google Maps or Web App) and paste it to instantly lock your browser location to this spoofed GPS.</p>
-          <button class="btn" onclick="copyBookmarklet()">📋 Copy Browser Geolocation Script</button>
+      <div class="easy-step">
+        <div class="step-circle">1</div>
+        <div class="step-text">
+          <strong>Connected to Hotspot:</strong> Your iPad, MacBook, PC, or iPhone is connected to this phone's Wi-Fi.
         </div>
       </div>
 
-      <div class="step-item">
-        <div class="step-num">2</div>
-        <div>
-          <strong style="color: var(--text);">For Navigation & GIS Software (OsmAnd, QGIS, OpenCPN, Marine GPS):</strong>
-          <p style="color: var(--muted); font-size: 13px; margin: 4px 0 8px 0;">Set GPS source to <strong>TCP NMEA Client</strong>:</p>
-          <div class="code-box">Host: $hostIp | Port: 10110 (TCP NMEA 0183)</div>
+      <div class="easy-step">
+        <div class="step-circle">2</div>
+        <div class="step-text">
+          <strong>Instant Map Sync:</strong> This page automatically tracks your spoofed location in real time. Tap <strong>"Open in Google Maps"</strong> or <strong>"Open in Apple Maps"</strong> to navigate anywhere instantly.
         </div>
       </div>
 
-      <div class="step-item">
-        <div class="step-num">3</div>
-        <div>
-          <strong style="color: var(--text);">For Developers & REST Clients:</strong>
-          <p style="color: var(--muted); font-size: 13px; margin: 4px 0 8px 0;">Query real-time JSON coordinates anytime via HTTP GET:</p>
-          <div class="code-box">curl http://$hostIp:$port/location.json</div>
+      <div class="easy-step">
+        <div class="step-circle">3</div>
+        <div class="step-text">
+          <strong>Browser Geolocation Sync:</strong> Tap <strong>"Sync This Browser Tab"</strong> to inject this spoofed position directly into your web browser.
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <h3 style="font-size: 15px; font-weight: 700;">🔗 Direct API & Data Feeds</h3>
-      <div class="endpoints">
-        <a class="endpoint-pill" href="/location.json" target="_blank">📄 /location.json (JSON API)</a>
-        <a class="endpoint-pill" href="/nmea" target="_blank">📡 /nmea (Live SSE Stream)</a>
-        <a class="endpoint-pill" href="/gps.gpx" target="_blank">🗺️ /gps.gpx (GPX Download)</a>
-        <a class="endpoint-pill" href="/override.js" target="_blank">⚙️ /override.js (Polyfill JS)</a>
-      </div>
+    <div class="footer">
+      Nowhere Mock Location • Powered by Nowhere Engine
     </div>
+
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const map = L.map('map').setView([$currentLat, $currentLon], 15);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    const marker = L.marker([$currentLat, $currentLon]).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap © CARTO'
+    }).addTo(map);
+
+    // Glowing Red Radar Marker
+    const radarIcon = L.divIcon({
+      className: 'custom-radar-marker',
+      html: '<div style="width:20px;height:20px;background:#FF3B30;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 15px #FF3B30;"></div>',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+
+    const marker = L.marker([$currentLat, $currentLon], { icon: radarIcon }).addTo(map);
+    const radarCircle = L.circle([$currentLat, $currentLon], {
+      color: '#FF3B30',
+      fillColor: '#FF3B30',
+      fillOpacity: 0.15,
+      radius: 120
+    }).addTo(map);
+
+    let lastLat = $currentLat;
+    let lastLon = $currentLon;
 
     async function refresh() {
       try {
         const res = await fetch('/location.json');
         const d = await res.json();
-        document.getElementById('valLat').innerText = Number(d.latitude).toFixed(6);
-        document.getElementById('valLon').innerText = Number(d.longitude).toFixed(6);
-        document.getElementById('valAlt').innerText = Number(d.altitude).toFixed(1) + ' m';
-        document.getElementById('valSpeed').innerText = Number(d.speedKmh).toFixed(1) + ' km/h';
-        const newPos = [d.latitude, d.longitude];
-        marker.setLatLng(newPos);
+        if (d && d.latitude !== undefined) {
+          lastLat = Number(d.latitude);
+          lastLon = Number(d.longitude);
+          document.getElementById('valLat').innerText = lastLat.toFixed(6);
+          document.getElementById('valLon').innerText = lastLon.toFixed(6);
+          document.getElementById('valAlt').innerText = Number(d.altitude).toFixed(1) + ' m';
+          document.getElementById('valSpeed').innerText = Number(d.speedKmh).toFixed(1) + ' km/h';
+
+          const newPos = [lastLat, lastLon];
+          marker.setLatLng(newPos);
+          radarCircle.setLatLng(newPos);
+
+          document.getElementById('btnGoogleMaps').href = 'https://www.google.com/maps?q=' + lastLat + ',' + lastLon;
+          document.getElementById('btnAppleMaps').href = 'http://maps.apple.com/?q=' + lastLat + ',' + lastLon + '&ll=' + lastLat + ',' + lastLon;
+        }
       } catch(e) {}
     }
     setInterval(refresh, 500);
 
-    function copyBookmarklet() {
-      const script = "fetch('http://$hostIp:$port/override.js').then(r=>r.text()).then(eval);";
-      navigator.clipboard.writeText(script).then(() => {
-        alert('✅ Geolocation override script copied! Open DevTools Console on any website on your connected laptop/iPad and paste it to instantly lock your browser location.');
-      });
+    function syncBrowserTab() {
+      fetch('/override.js')
+        .then(r => r.text())
+        .then(code => {
+          eval(code);
+          alert('✅ Location synced in this browser tab! Current position: ' + lastLat.toFixed(5) + ', ' + lastLon.toFixed(5));
+        })
+        .catch(() => {
+          alert('✅ Location is active! Use the Open in Google Maps button to view.');
+        });
     }
   </script>
 </body>
@@ -635,31 +727,45 @@ object HotspotLocationServer {
      */
     fun getHotspotOrWifiIpAddress(context: Context): String {
         try {
-            val interfaces = NetworkInterface.getNetworkInterfaces()
-            var fallbackIp: String? = null
-
-            for (networkInterface in Collections.list(interfaces)) {
-                val name = networkInterface.name.lowercase()
-                val isHotspotInterface = name.startsWith("ap") || name.startsWith("wlan1") || name.startsWith("swlan") || name.startsWith("rndis") || name.startsWith("tether")
-
-                for (inetAddress in Collections.list(networkInterface.inetAddresses)) {
-                    if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
-                        val hostAddress = inetAddress.hostAddress ?: continue
-                        if (isHotspotInterface || hostAddress.startsWith("192.168.43.") || hostAddress.startsWith("192.168.44.")) {
-                            return hostAddress
-                        }
-                        if (fallbackIp == null && !hostAddress.startsWith("127.")) {
-                            fallbackIp = hostAddress
-                        }
-                    }
-                }
+            val allIps = getAllLocalIpAddresses(context)
+            if (allIps.isNotEmpty()) {
+                return allIps[0]
             }
-            if (fallbackIp != null) return fallbackIp
         } catch (e: Exception) {
             Log.w(TAG, "Error resolving network interfaces: ${e.message}")
         }
 
         // Standard Android default hotspot gateway IP
         return "192.168.43.1"
+    }
+
+    /**
+     * Gets all valid non-loopback IPv4 addresses sorted with hotspot interfaces prioritized.
+     */
+    fun getAllLocalIpAddresses(context: Context): List<String> {
+        val result = mutableListOf<String>()
+        try {
+            val interfaces = NetworkInterface.getNetworkInterfaces() ?: return emptyList()
+
+            for (networkInterface in Collections.list(interfaces)) {
+                val name = networkInterface.name.lowercase()
+                val isHotspot = name.startsWith("ap") || name.startsWith("wlan1") || name.startsWith("swlan") || name.startsWith("rndis") || name.startsWith("tether")
+
+                for (inetAddress in Collections.list(networkInterface.inetAddresses)) {
+                    if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
+                        val hostAddress = inetAddress.hostAddress ?: continue
+                        if (hostAddress.startsWith("127.")) continue
+                        if (isHotspot || hostAddress.startsWith("192.168.43.") || hostAddress.startsWith("192.168.44.")) {
+                            result.add(0, hostAddress) // prioritize hotspot IPs
+                        } else {
+                            result.add(hostAddress)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "getAllLocalIpAddresses error: ${e.message}")
+        }
+        return result.distinct()
     }
 }

@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -14,6 +15,7 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.databinding.LayoutHotspotTetheringBinding
+import com.fakegps.mocklocation.hotspot.HotspotLocationClient
 import com.fakegps.mocklocation.hotspot.HotspotLocationServer
 import com.fakegps.mocklocation.util.QrCodeGenerator
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -21,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
 
@@ -35,6 +38,8 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
     private var _binding: LayoutHotspotTetheringBinding? = null
     private val binding get() = _binding!!
 
+    private var isHostTabActive = true
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -47,12 +52,48 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Ensure server is started
+        // Auto-start server in host mode
         HotspotLocationServer.startServer(requireContext())
 
+        setupTabs()
         setupListeners()
         observeServerState()
+        observeClientState()
         startPeriodicIpRefresh()
+    }
+
+    private fun setupTabs() {
+        binding.tabHostMode.setOnClickListener {
+            switchToHostMode()
+        }
+
+        binding.tabClientMode.setOnClickListener {
+            switchToClientMode()
+        }
+    }
+
+    private fun switchToHostMode() {
+        isHostTabActive = true
+        binding.layoutHostContainer.visibility = View.VISIBLE
+        binding.layoutClientContainer.visibility = View.GONE
+
+        binding.tabHostMode.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+        binding.tabHostMode.setTextColor(requireContext().getColor(android.R.color.white))
+
+        binding.tabClientMode.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(android.R.color.transparent))
+        binding.tabClientMode.setTextColor(requireContext().getColor(R.color.text_secondary))
+    }
+
+    private fun switchToClientMode() {
+        isHostTabActive = false
+        binding.layoutHostContainer.visibility = View.GONE
+        binding.layoutClientContainer.visibility = View.VISIBLE
+
+        binding.tabClientMode.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+        binding.tabClientMode.setTextColor(requireContext().getColor(android.R.color.white))
+
+        binding.tabHostMode.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(android.R.color.transparent))
+        binding.tabHostMode.setTextColor(requireContext().getColor(R.color.text_secondary))
     }
 
     private fun setupListeners() {
@@ -101,13 +142,29 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                 Toast.makeText(requireContext(), "Could not open browser: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
+
+        // Client Receiver Sync Toggle
+        binding.btnToggleClientSync.setOnClickListener {
+            if (HotspotLocationClient.isSyncing()) {
+                HotspotLocationClient.stopSync()
+                binding.btnToggleClientSync.text = "Start Syncing Location"
+                binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+                Toast.makeText(requireContext(), "Stopped GPS Sync from Host", Toast.LENGTH_SHORT).show()
+            } else {
+                val hostUrl = binding.etHostPhoneUrl.text?.toString()?.trim() ?: "http://192.168.43.1:8088"
+                HotspotLocationClient.startSync(requireContext(), hostUrl)
+                binding.btnToggleClientSync.text = "Disconnect / Stop Sync"
+                binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.surface_card_elevated))
+                Toast.makeText(requireContext(), "Connecting to Host Phone ($hostUrl)...", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun startPeriodicIpRefresh() {
         viewLifecycleOwner.lifecycleScope.launch {
             while (isActive) {
-                delay(2000L)
-                if (isAdded && context != null) {
+                delay(2500L)
+                if (isAdded && context != null && isHostTabActive) {
                     HotspotLocationServer.refreshIpAddress(requireContext())
                 }
             }
@@ -141,7 +198,45 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             HotspotLocationServer.connectedClientsCount.collectLatest { count ->
-                binding.tvHotspotClientCount.text = "$count connected client(s) streaming live GPS"
+                binding.tvHotspotClientCount.text = "$count connected client(s)"
+            }
+        }
+    }
+
+    private fun observeClientState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            HotspotLocationClient.syncState.collectLatest { state ->
+                when (state) {
+                    is HotspotLocationClient.SyncState.Idle -> {
+                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.text_muted))
+                        binding.tvClientSyncStatusTitle.text = "Not Syncing"
+                        binding.tvClientSyncCoordinates.text = "Waiting for Host GPS stream..."
+                        binding.btnToggleClientSync.text = "Start Syncing Location"
+                        binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+                    }
+                    is HotspotLocationClient.SyncState.Connecting -> {
+                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary_bright))
+                        binding.tvClientSyncStatusTitle.text = "Connecting to Host..."
+                        binding.tvClientSyncCoordinates.text = state.url
+                        binding.btnToggleClientSync.text = "Cancel Connection"
+                    }
+                    is HotspotLocationClient.SyncState.Synced -> {
+                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.badge_success_text))
+                        binding.tvClientSyncStatusTitle.text = "LIVE SYNCED WITH HOST PHONE"
+                        binding.tvClientSyncCoordinates.text = String.format(
+                            Locale.US,
+                            "Lat: %.6f\nLon: %.6f\nAlt: %.1f m • Speed: %.1f km/h",
+                            state.latitude, state.longitude, state.altitude, state.speedKmh
+                        )
+                        binding.btnToggleClientSync.text = "Disconnect / Stop Sync"
+                        binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.surface_card_elevated))
+                    }
+                    is HotspotLocationClient.SyncState.Error -> {
+                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+                        binding.tvClientSyncStatusTitle.text = "Sync Error / Reconnecting"
+                        binding.tvClientSyncCoordinates.text = state.message
+                    }
+                }
             }
         }
     }
