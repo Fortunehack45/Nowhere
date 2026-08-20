@@ -104,6 +104,7 @@ class SessionPreferences(private val context: Context) {
                 put("lat", wp.latitude)
                 put("lon", wp.longitude)
                 put("alt", wp.altitude)
+                put("stopSec", wp.stopDurationSeconds)
             }
             jsonArray.put(obj)
         }
@@ -121,7 +122,8 @@ class SessionPreferences(private val context: Context) {
                     RoutePoint(
                         latitude = obj.getDouble("lat"),
                         longitude = obj.getDouble("lon"),
-                        altitude = obj.optDouble("alt", 0.0)
+                        altitude = obj.optDouble("alt", 0.0),
+                        stopDurationSeconds = obj.optInt("stopSec", 0)
                     )
                 )
             }

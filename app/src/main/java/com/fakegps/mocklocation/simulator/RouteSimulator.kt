@@ -31,6 +31,19 @@ class RouteSimulator(
     private var isCompleted: Boolean = false
     private var cachedSegmentIndex: Int = 0
 
+    // Waypoint Dwell / Stop State
+    private data class WaypointStop(
+        val index: Int,
+        val point: RoutePoint,
+        val cumulativeDistance: Double,
+        val durationSeconds: Int
+    )
+
+    private val waypointStops: List<WaypointStop>
+    private var dwellSecondsRemaining: Double = 0.0
+    private var activeDwellPoint: RoutePoint? = null
+    private val completedDwellIndices = mutableSetOf<Int>()
+
     private data class RouteSegment(
         val start: RoutePoint,
         val end: RoutePoint,
@@ -42,6 +55,7 @@ class RouteSimulator(
 
     init {
         val segmentList = mutableListOf<RouteSegment>()
+        val stopsList = mutableListOf<WaypointStop>()
         var cumulativeDist = 0.0
 
         val effectiveWaypoints = if (isLooping && rawWaypoints.size >= 2) {
@@ -58,32 +72,39 @@ class RouteSimulator(
         }
 
         if (effectiveWaypoints.size >= 2) {
-            for (i in 0 until effectiveWaypoints.size - 1) {
-                val p1 = effectiveWaypoints[i]
-                val p2 = effectiveWaypoints[i + 1]
-                val dist = GeoUtils.calculateDistanceMeters(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
-                val bearing = GeoUtils.calculateBearing(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
+            for (i in 0 until effectiveWaypoints.size) {
+                val pt = effectiveWaypoints[i]
+                if (pt.stopDurationSeconds > 0) {
+                    stopsList.add(WaypointStop(i, pt, cumulativeDist, pt.stopDurationSeconds))
+                }
 
-                val turnAngle = if (i > 0) {
-                    val prevBearing = segmentList[i - 1].bearing
-                    val diff = abs(bearing - prevBearing)
-                    if (diff > 180f) 360f - diff else diff
-                } else 0f
+                if (i < effectiveWaypoints.size - 1) {
+                    val nextPt = effectiveWaypoints[i + 1]
+                    val dist = GeoUtils.calculateDistanceMeters(pt.latitude, pt.longitude, nextPt.latitude, nextPt.longitude)
+                    val bearing = GeoUtils.calculateBearing(pt.latitude, pt.longitude, nextPt.latitude, nextPt.longitude)
 
-                segmentList.add(
-                    RouteSegment(
-                        start = p1,
-                        end = p2,
-                        distanceMeters = dist,
-                        startCumulativeDistance = cumulativeDist,
-                        bearing = bearing,
-                        turnAngleDeg = turnAngle
+                    val turnAngle = if (i > 0 && segmentList.isNotEmpty()) {
+                        val prevBearing = segmentList[i - 1].bearing
+                        val diff = abs(bearing - prevBearing)
+                        if (diff > 180f) 360f - diff else diff
+                    } else 0f
+
+                    segmentList.add(
+                        RouteSegment(
+                            start = pt,
+                            end = nextPt,
+                            distanceMeters = dist,
+                            startCumulativeDistance = cumulativeDist,
+                            bearing = bearing,
+                            turnAngleDeg = turnAngle
+                        )
                     )
-                )
-                cumulativeDist += dist
+                    cumulativeDist += dist
+                }
             }
         }
         segments = segmentList
+        waypointStops = stopsList
         totalDistanceMeters = cumulativeDist
     }
 
@@ -106,6 +127,9 @@ class RouteSimulator(
         isPaused = false
         isCompleted = false
         cachedSegmentIndex = 0
+        dwellSecondsRemaining = 0.0
+        activeDwellPoint = null
+        completedDwellIndices.clear()
     }
 
     /**
@@ -116,6 +140,24 @@ class RouteSimulator(
         if (isPaused) {
             val currentLoc = getLocationAtDistance(currentDistanceAlongRoute)
             return currentLoc.copy(speedMps = 0.0f)
+        }
+
+        // Handle active waypoint dwell / stop duration
+        if (dwellSecondsRemaining > 0.0 && activeDwellPoint != null) {
+            dwellSecondsRemaining = (dwellSecondsRemaining - deltaTimeSeconds).coerceAtLeast(0.0)
+            val dwellPt = activeDwellPoint!!
+            val remaining = max(0.0, totalDistanceMeters - currentDistanceAlongRoute)
+            return SimulatedLocation(
+                latitude = dwellPt.latitude,
+                longitude = dwellPt.longitude,
+                altitude = if (dwellPt.altitude > 0.1) dwellPt.altitude else transportMode.defaultAltitudeMeters,
+                speedMps = 0.0f,
+                bearingDegrees = calculateSmoothedBearing(cachedSegmentIndex, currentDistanceAlongRoute),
+                isCompleted = false,
+                totalDistanceMeters = totalDistanceMeters,
+                distanceCoveredMeters = currentDistanceAlongRoute,
+                distanceRemainingMeters = remaining
+            )
         }
 
         val maxAccelerationMps2 = when (transportMode) {
@@ -134,10 +176,37 @@ class RouteSimulator(
 
         val targetSpeedMps = (targetSpeedKmh * 1000f / 3600f).coerceAtLeast(0.2f)
 
+        // Check if reaching an upcoming dwell stop waypoint
+        for (stop in waypointStops) {
+            if (stop.index !in completedDwellIndices) {
+                if (abs(currentDistanceAlongRoute - stop.cumulativeDistance) <= 1.0 ||
+                    (currentDistanceAlongRoute < stop.cumulativeDistance && currentDistanceAlongRoute + (currentSpeedMps * deltaTimeSeconds) >= stop.cumulativeDistance)
+                ) {
+                    completedDwellIndices.add(stop.index)
+                    dwellSecondsRemaining = stop.durationSeconds.toDouble()
+                    activeDwellPoint = stop.point
+                    currentDistanceAlongRoute = stop.cumulativeDistance
+                    currentSpeedMps = 0.0f
+                    val remaining = max(0.0, totalDistanceMeters - currentDistanceAlongRoute)
+                    return SimulatedLocation(
+                        latitude = stop.point.latitude,
+                        longitude = stop.point.longitude,
+                        altitude = if (stop.point.altitude > 0.1) stop.point.altitude else transportMode.defaultAltitudeMeters,
+                        speedMps = 0.0f,
+                        bearingDegrees = calculateSmoothedBearing(cachedSegmentIndex, currentDistanceAlongRoute),
+                        isCompleted = false,
+                        totalDistanceMeters = totalDistanceMeters,
+                        distanceCoveredMeters = currentDistanceAlongRoute,
+                        distanceRemainingMeters = remaining
+                    )
+                }
+            }
+        }
+
         // Find active segment with high efficiency
         val segmentIndex = findSegmentIndexForDistance(currentDistanceAlongRoute)
 
-        // Calculate realistic speed constraint near upcoming turns or route end
+        // Calculate realistic speed constraint near upcoming turns, dwell stops, or route end
         val desiredSpeedMps = calculateDesiredSpeed(segmentIndex, targetSpeedMps, maxDecelerationMps2)
 
         // Smooth acceleration/deceleration
@@ -158,6 +227,7 @@ class RouteSimulator(
             if (isLooping) {
                 currentDistanceAlongRoute %= totalDistanceMeters
                 cachedSegmentIndex = 0
+                completedDwellIndices.clear()
             } else {
                 currentDistanceAlongRoute = totalDistanceMeters
                 isCompleted = true
@@ -186,7 +256,20 @@ class RouteSimulator(
         baseTargetSpeed: Float,
         maxDeceleration: Double
     ): Float {
-        // If coming to end of route and not looping, decelerate
+        // 1. Decelerate if approaching an upcoming dwell stop waypoint
+        for (stop in waypointStops) {
+            if (stop.index !in completedDwellIndices) {
+                val distToStop = stop.cumulativeDistance - currentDistanceAlongRoute
+                if (distToStop > 0.0) {
+                    val stoppingDistance = (currentSpeedMps.pow(2)) / (2 * maxDeceleration)
+                    if (distToStop <= stoppingDistance + 5.0) {
+                        return (sqrt(2 * maxDeceleration * distToStop)).toFloat().coerceAtLeast(0.2f)
+                    }
+                }
+            }
+        }
+
+        // 2. If coming to end of route and not looping, decelerate
         if (!isLooping) {
             val distToEnd = totalDistanceMeters - currentDistanceAlongRoute
             val stoppingDistance = (currentSpeedMps.pow(2)) / (2 * maxDeceleration)
@@ -195,9 +278,9 @@ class RouteSimulator(
             }
         }
 
-        // Cornering speed reduction for land vehicles and ships (aircraft maintain bank speed)
+        // 3. Cornering speed reduction for land vehicles and ships (aircraft maintain bank speed)
         if (transportMode != TransportMode.AIRCRAFT) {
-            // 1. Check if we just came out of a sharp turn (exit zone speed hold)
+            // A. Check if we just came out of a sharp turn (exit zone speed hold)
             if (currentSegmentIndex in segments.indices) {
                 val currentSegment = segments[currentSegmentIndex]
                 if (currentSegment.turnAngleDeg > 35f) {
@@ -211,7 +294,7 @@ class RouteSimulator(
                 }
             }
 
-            // 2. Check if approaching an upcoming sharp turn (braking zone with speed-derived distance)
+            // B. Check if approaching an upcoming sharp turn (braking zone with speed-derived distance)
             val nextSegmentIndex = currentSegmentIndex + 1
             if (nextSegmentIndex < segments.size) {
                 val nextSegment = segments[nextSegmentIndex]

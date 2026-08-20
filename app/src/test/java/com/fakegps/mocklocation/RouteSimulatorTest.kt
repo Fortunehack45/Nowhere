@@ -266,4 +266,33 @@ class RouteSimulatorTest {
             assertTrue("Speed must be non-negative", loc.speedMps >= 0.0f)
         }
     }
+
+    @Test
+    fun testRouteSimulator_waypointDwellStopTime() {
+        val waypoints = listOf(
+            RoutePoint(37.7749, -122.4194),
+            RoutePoint(37.7769, -122.4194, stopDurationSeconds = 10), // 10 second stop at middle waypoint
+            RoutePoint(37.7789, -122.4194)
+        )
+
+        val sim = RouteSimulator(waypoints, targetSpeedKmh = 50.0f, isLooping = false, transportMode = TransportMode.VEHICLE)
+
+        var dwellDetected = false
+        var dwellTickCount = 0
+
+        for (step in 0 until 500) {
+            val loc = sim.tick(1.0) ?: break
+            if (loc.isCompleted) break
+
+            // If near the second waypoint coordinates and speed is 0
+            if (kotlin.math.abs(loc.latitude - 37.7769) < 0.0001 && loc.speedMps == 0.0f) {
+                dwellDetected = true
+                dwellTickCount++
+            }
+        }
+
+        assertTrue("Dwell stop at Waypoint #2 should be detected", dwellDetected)
+        // With 1.0s ticks and a 10s stop duration, dwell count should be around 10
+        assertTrue("Dwell should last approximately 10 ticks (was $dwellTickCount)", dwellTickCount in 8..12)
+    }
 }

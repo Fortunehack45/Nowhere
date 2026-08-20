@@ -8,7 +8,13 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.math.abs
 import kotlin.math.sin
+
+data class RouteResolutionResult(
+    val waypoints: List<RoutePoint>,
+    val isFallbackDirectPath: Boolean
+)
 
 object RoadRouter {
 
@@ -56,35 +62,38 @@ object RoadRouter {
         }
 
     /**
-     * Resolves the shortest real-world route between waypoints based on transport mode:
-     * - VEHICLE / FOOT: Follows shortest real roads/streets via OSRM, or shortest direct geodesic path when offline.
+     * Resolves the shortest real-world route between waypoints with status reporting:
+     * - VEHICLE / FOOT: Follows shortest real roads/streets via OSRM, or degrades gracefully to direct path when offline.
      * - AIRCRAFT: Follows shortest Great-Circle flight paths with realistic climb, cruise (9500m), and descent curves.
      * - SHIP: Follows direct marine waterways and ocean corridors locked strictly to sea level (0m).
      */
-    suspend fun resolveRealWorldRoute(
+    suspend fun resolveRealWorldRouteWithStatus(
         waypoints: List<RoutePoint>,
         mode: TransportMode
-    ): List<RoutePoint> = withContext(Dispatchers.IO) {
-        if (waypoints.size < 2) return@withContext waypoints
+    ): RouteResolutionResult = withContext(Dispatchers.IO) {
+        if (waypoints.size < 2) return@withContext RouteResolutionResult(waypoints, isFallbackDirectPath = false)
 
         // For Aircraft, generate Great-Circle flight corridor with climb and descent profile
         if (mode == TransportMode.AIRCRAFT) {
-            return@withContext generateFlightCorridor(waypoints)
+            return@withContext RouteResolutionResult(generateFlightCorridor(waypoints), isFallbackDirectPath = false)
         }
 
         // For Ship, generate marine waterway geodesic route locked strictly to sea level (0.0m)
         if (mode == TransportMode.SHIP) {
-            return@withContext generateMarineWaterwayRoute(waypoints)
+            return@withContext RouteResolutionResult(generateMarineWaterwayRoute(waypoints), isFallbackDirectPath = false)
         }
 
         // Try direct multi-point road route first
         val directRoute = tryFetchOsrmRoute(waypoints, mode)
         if (directRoute.size >= 2) {
-            return@withContext downsampleWaypointsIfNeeded(directRoute, maxPoints = 5000)
+            val mapped = matchWaypointsStopDuration(directRoute, waypoints)
+            return@withContext RouteResolutionResult(downsampleWaypointsIfNeeded(mapped, maxPoints = 5000), isFallbackDirectPath = false)
         }
 
         // If direct query fails, stitch leg by leg
         val stitchedRoute = mutableListOf<RoutePoint>()
+        var usedDirectFallback = false
+
         for (i in 0 until waypoints.size - 1) {
             val legStart = waypoints[i]
             val legEnd = waypoints[i + 1]
@@ -92,12 +101,21 @@ object RoadRouter {
 
             val legResult = tryFetchOsrmRoute(legPoints, mode)
             if (legResult.size >= 2) {
-                if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == legResult.first()) {
-                    stitchedRoute.addAll(legResult.subList(1, legResult.size))
+                val withDwell = legResult.toMutableList()
+                if (legStart.stopDurationSeconds > 0) {
+                    withDwell[0] = withDwell[0].copy(stopDurationSeconds = legStart.stopDurationSeconds)
+                }
+                if (legEnd.stopDurationSeconds > 0) {
+                    withDwell[withDwell.lastIndex] = withDwell.last().copy(stopDurationSeconds = legEnd.stopDurationSeconds)
+                }
+
+                if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == withDwell.first()) {
+                    stitchedRoute.addAll(withDwell.subList(1, withDwell.size))
                 } else {
-                    stitchedRoute.addAll(legResult)
+                    stitchedRoute.addAll(withDwell)
                 }
             } else {
+                usedDirectFallback = true
                 // Shortest direct geodesic path between the two points
                 val directLeg = generateShortestDirectPath(legStart, legEnd, mode)
                 if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == directLeg.first()) {
@@ -109,11 +127,46 @@ object RoadRouter {
         }
 
         if (stitchedRoute.size >= 2) {
-            return@withContext downsampleWaypointsIfNeeded(stitchedRoute, maxPoints = 5000)
+            return@withContext RouteResolutionResult(
+                downsampleWaypointsIfNeeded(stitchedRoute, maxPoints = 5000),
+                isFallbackDirectPath = usedDirectFallback
+            )
         }
 
         // Fallback: direct shortest geodesic route connecting all waypoints cleanly
-        return@withContext generateShortestRoute(waypoints, mode)
+        val directFullRoute = generateShortestRoute(waypoints, mode)
+        return@withContext RouteResolutionResult(directFullRoute, isFallbackDirectPath = true)
+    }
+
+    suspend fun resolveRealWorldRoute(
+        waypoints: List<RoutePoint>,
+        mode: TransportMode
+    ): List<RoutePoint> = resolveRealWorldRouteWithStatus(waypoints, mode).waypoints
+
+    private fun matchWaypointsStopDuration(
+        snappedPoints: List<RoutePoint>,
+        originalKeypoints: List<RoutePoint>
+    ): List<RoutePoint> {
+        if (snappedPoints.isEmpty() || originalKeypoints.isEmpty()) return snappedPoints
+        val result = snappedPoints.toMutableList()
+
+        for (key in originalKeypoints) {
+            if (key.stopDurationSeconds > 0) {
+                var bestIndex = -1
+                var minDistance = Double.MAX_VALUE
+                for (i in result.indices) {
+                    val dist = GeoUtils.calculateDistanceMeters(key.latitude, key.longitude, result[i].latitude, result[i].longitude)
+                    if (dist < minDistance) {
+                        minDistance = dist
+                        bestIndex = i
+                    }
+                }
+                if (bestIndex in result.indices && minDistance < 50.0) {
+                    result[bestIndex] = result[bestIndex].copy(stopDurationSeconds = key.stopDurationSeconds)
+                }
+            }
+        }
+        return result
     }
 
     /**
@@ -157,13 +210,14 @@ object RoadRouter {
                     else -> cruiseAltitudeMeters
                 }
 
-                totalFlightPoints.add(RoutePoint(lat, lon, alt))
+                val stopSec = if (step == 0) start.stopDurationSeconds else 0
+                totalFlightPoints.add(RoutePoint(lat, lon, alt, stopDurationSeconds = stopSec))
             }
         }
 
         if (waypoints.isNotEmpty()) {
             val last = waypoints.last()
-            totalFlightPoints.add(RoutePoint(last.latitude, last.longitude, last.altitude))
+            totalFlightPoints.add(RoutePoint(last.latitude, last.longitude, last.altitude, stopDurationSeconds = last.stopDurationSeconds))
         }
 
         return totalFlightPoints
@@ -180,7 +234,7 @@ object RoadRouter {
             val p2 = waypoints[i + 1]
             val legDistance = GeoUtils.calculateDistanceMeters(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
 
-            result.add(RoutePoint(p1.latitude, p1.longitude, 0.0))
+            result.add(RoutePoint(p1.latitude, p1.longitude, 0.0, stopDurationSeconds = p1.stopDurationSeconds))
 
             val stepSizeMeters = (legDistance / 40.0).coerceIn(1_000.0, 20_000.0)
             val numSteps = (legDistance / stepSizeMeters).toInt().coerceIn(2, 60)
@@ -198,7 +252,7 @@ object RoadRouter {
 
         if (waypoints.isNotEmpty()) {
             val last = waypoints.last()
-            result.add(RoutePoint(last.latitude, last.longitude, 0.0))
+            result.add(RoutePoint(last.latitude, last.longitude, 0.0, stopDurationSeconds = last.stopDurationSeconds))
         }
 
         return result
@@ -216,8 +270,8 @@ object RoadRouter {
                 val urlString = "${endpoint.baseUrl}/$profile/$coordinatesParam?overview=full&geometries=geojson&continue_straight=default"
                 val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
                     requestMethod = "GET"
-                    connectTimeout = 4000
-                    readTimeout = 5000
+                    connectTimeout = 3000
+                    readTimeout = 4000
                     setRequestProperty("User-Agent", "Nowhere-Android-App/1.0")
                     setRequestProperty("Accept", "application/json")
                 }

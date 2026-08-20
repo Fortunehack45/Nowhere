@@ -799,6 +799,27 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
 
+                <!-- Manage / Edit Waypoints Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnManageWaypoints"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/surface_card_elevated"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="10dp"
+                    android:text="Manage"
+                    android:textColor="@color/primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_route"
+                    app:iconSize="13dp"
+                    app:iconTint="@color/primary" />
+
                 <!-- Undo Waypoint Button -->
                 <ImageButton
                     android:id="@+id/btnRouteUndo"
@@ -857,6 +878,16 @@
                         android:layout_weight="1"
                         android:text="Covered: 0.00 km / 0.00 km"
                         android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvRouteEta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="⏱️ ETA: --"
+                        android:textColor="@color/badge_warning_text"
                         android:textSize="11sp"
                         android:textStyle="bold" />
 
@@ -1066,12 +1097,32 @@
                         android:insetBottom="0dp"
                         android:minWidth="0dp"
                         android:paddingHorizontal="14dp"
-                        android:text="GPX"
+                        android:text="Import GPX"
                         android:textColor="@color/primary_bright"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         app:cornerRadius="19dp"
                         app:icon="@drawable/ic_gpx"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/primary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnExportGpx"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="8dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="14dp"
+                        android:text="Export GPX"
+                        android:textColor="@color/primary_bright"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_share"
                         app:iconSize="16dp"
                         app:iconTint="@color/primary" />
 

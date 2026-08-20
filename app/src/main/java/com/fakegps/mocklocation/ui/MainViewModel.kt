@@ -100,6 +100,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Route Waypoint Management with Undo & Redo ---
 
+    private var pendingRoadSnapKeypoints: List<RoutePoint>? = null
+
     fun addRouteWaypoint(latitude: Double, longitude: Double) {
         val currentKeys = _uiState.value.userKeypoints
         undoStack.push(currentKeys)
@@ -108,6 +110,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val newPoint = RoutePoint(latitude, longitude)
         val nextKeys = currentKeys.toMutableList().apply { add(newPoint) }
         applyKeypoints(nextKeys)
+    }
+
+    fun removeWaypointAt(index: Int) {
+        val currentKeys = _uiState.value.userKeypoints
+        if (index in currentKeys.indices) {
+            undoStack.push(currentKeys)
+            redoStack.clear()
+            val nextKeys = currentKeys.toMutableList().apply { removeAt(index) }
+            applyKeypoints(nextKeys)
+        }
+    }
+
+    fun reorderWaypoints(fromPosition: Int, toPosition: Int) {
+        val currentKeys = _uiState.value.userKeypoints
+        if (fromPosition in currentKeys.indices && toPosition in currentKeys.indices && fromPosition != toPosition) {
+            undoStack.push(currentKeys)
+            redoStack.clear()
+            val nextKeys = currentKeys.toMutableList()
+            val item = nextKeys.removeAt(fromPosition)
+            nextKeys.add(toPosition, item)
+            applyKeypoints(nextKeys)
+        }
+    }
+
+    fun updateWaypointStopDuration(index: Int, durationSeconds: Int) {
+        val currentKeys = _uiState.value.userKeypoints
+        if (index in currentKeys.indices) {
+            undoStack.push(currentKeys)
+            redoStack.clear()
+            val nextKeys = currentKeys.toMutableList()
+            nextKeys[index] = nextKeys[index].copy(stopDurationSeconds = durationSeconds.coerceAtLeast(0))
+            applyKeypoints(nextKeys)
+        }
     }
 
     fun undoRouteWaypoint() {
@@ -126,6 +161,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun retryPendingRoadRouting() {
+        val keys = pendingRoadSnapKeypoints ?: return
+        if (keys.size >= 2) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val result = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRouteWithStatus(keys, _uiState.value.transportMode)
+                if (!result.isFallbackDirectPath) {
+                    pendingRoadSnapKeypoints = null
+                    sessionPrefs.saveWaypoints(result.waypoints)
+                    _uiState.update {
+                        it.copy(
+                            routeWaypoints = result.waypoints,
+                            isUsingDirectRouteFallback = false,
+                            statusMessage = "Road-snapped routing active."
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     private fun applyKeypoints(keys: List<RoutePoint>) {
         _uiState.update {
             it.copy(
@@ -136,16 +191,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         if (keys.isEmpty()) {
+            pendingRoadSnapKeypoints = null
             sessionPrefs.saveWaypoints(emptyList())
-            _uiState.update { it.copy(routeWaypoints = emptyList()) }
+            _uiState.update { it.copy(routeWaypoints = emptyList(), isUsingDirectRouteFallback = false) }
         } else if (keys.size == 1) {
+            pendingRoadSnapKeypoints = null
             sessionPrefs.saveWaypoints(keys)
-            _uiState.update { it.copy(routeWaypoints = keys) }
+            _uiState.update { it.copy(routeWaypoints = keys, isUsingDirectRouteFallback = false) }
         } else {
             viewModelScope.launch(Dispatchers.IO) {
-                val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(keys, _uiState.value.transportMode)
-                sessionPrefs.saveWaypoints(resolved)
-                _uiState.update { it.copy(routeWaypoints = resolved) }
+                val result = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRouteWithStatus(keys, _uiState.value.transportMode)
+                sessionPrefs.saveWaypoints(result.waypoints)
+                if (result.isFallbackDirectPath) {
+                    pendingRoadSnapKeypoints = keys
+                    _uiState.update {
+                        it.copy(
+                            routeWaypoints = result.waypoints,
+                            isUsingDirectRouteFallback = true,
+                            statusMessage = "Road-snapped routing unavailable — using direct path between points"
+                        )
+                    }
+                } else {
+                    pendingRoadSnapKeypoints = null
+                    _uiState.update {
+                        it.copy(
+                            routeWaypoints = result.waypoints,
+                            isUsingDirectRouteFallback = false
+                        )
+                    }
+                }
             }
         }
     }
@@ -153,6 +227,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setLoadedRoute(waypoints: List<RoutePoint>, transportMode: com.fakegps.mocklocation.simulator.TransportMode? = null, speed: Float? = null) {
         undoStack.clear()
         redoStack.clear()
+        pendingRoadSnapKeypoints = null
         sessionPrefs.saveWaypoints(waypoints)
         if (speed != null) sessionPrefs.lastSpeedKmh = speed
         _uiState.update {
@@ -163,6 +238,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 routeSpeedKmh = speed ?: it.routeSpeedKmh,
                 canUndoRoute = false,
                 canRedoRoute = false,
+                isUsingDirectRouteFallback = false,
                 selectedTab = SelectedModeTab.ROUTE
             )
         }
@@ -173,13 +249,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             undoStack.push(_uiState.value.userKeypoints)
             redoStack.clear()
         }
+        pendingRoadSnapKeypoints = null
         sessionPrefs.saveWaypoints(emptyList())
         _uiState.update {
             it.copy(
                 routeWaypoints = emptyList(),
                 userKeypoints = emptyList(),
                 canUndoRoute = undoStack.isNotEmpty(),
-                canRedoRoute = false
+                canRedoRoute = false,
+                isUsingDirectRouteFallback = false
             )
         }
     }
@@ -476,6 +554,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     put("lat", wp.latitude)
                     put("lon", wp.longitude)
                     put("alt", wp.altitude)
+                    put("stopSec", wp.stopDurationSeconds)
                 }
                 jsonArray.put(obj)
             }
@@ -494,6 +573,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun exportCurrentRouteToGpx(customName: String? = null): String {
+        val waypoints = if (_uiState.value.userKeypoints.size >= 2) _uiState.value.userKeypoints else _uiState.value.routeWaypoints
+        val name = customName ?: "Nowhere Route (${waypoints.size} waypoints)"
+        return com.fakegps.mocklocation.simulator.GpxExporter.exportToGpx(waypoints, name)
+    }
+
     fun loadSavedRoute(route: SavedRoute) {
         val points = mutableListOf<RoutePoint>()
         try {
@@ -504,7 +589,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     RoutePoint(
                         latitude = obj.getDouble("lat"),
                         longitude = obj.getDouble("lon"),
-                        altitude = obj.optDouble("alt", 0.0)
+                        altitude = obj.optDouble("alt", 0.0),
+                        stopDurationSeconds = obj.optInt("stopSec", 0)
                     )
                 )
             }
@@ -512,6 +598,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 sessionPrefs.saveWaypoints(points)
                 _uiState.update {
                     it.copy(
+                        userKeypoints = points,
                         routeWaypoints = points,
                         routeSpeedKmh = route.defaultSpeedKmh,
                         isRouteLooping = route.isLooping,

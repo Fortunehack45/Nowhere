@@ -50,6 +50,9 @@ class SavedRoutesBottomSheet @JvmOverloads constructor(
             },
             onDeleteClick = { route ->
                 viewModel.deleteSavedRoute(route)
+            },
+            onExportClick = { route ->
+                exportSavedRoute(route)
             }
         )
 
@@ -64,6 +67,46 @@ class SavedRoutesBottomSheet @JvmOverloads constructor(
         }
     }
 
+    private fun exportSavedRoute(route: SavedRoute) {
+        val points = mutableListOf<com.fakegps.mocklocation.simulator.RoutePoint>()
+        try {
+            val arr = org.json.JSONArray(route.waypointsJson)
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                points.add(
+                    com.fakegps.mocklocation.simulator.RoutePoint(
+                        latitude = obj.getDouble("lat"),
+                        longitude = obj.getDouble("lon"),
+                        altitude = obj.optDouble("alt", 0.0),
+                        stopDurationSeconds = obj.optInt("stopSec", 0)
+                    )
+                )
+            }
+
+            if (points.isEmpty()) return
+
+            val gpxContent = com.fakegps.mocklocation.simulator.GpxExporter.exportToGpx(points, route.name)
+            val exportFile = java.io.File(requireContext().cacheDir, "${route.name.replace("[^a-zA-Z0-9_-]".toRegex(), "_")}.gpx")
+            exportFile.writeText(gpxContent)
+
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                exportFile
+            )
+
+            val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "application/gpx+xml"
+                putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                putExtra(android.content.Intent.EXTRA_SUBJECT, "GPX: ${route.name}")
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(android.content.Intent.createChooser(sendIntent, "Export GPX: ${route.name}"))
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(requireContext(), "Failed to export: ${e.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -72,7 +115,8 @@ class SavedRoutesBottomSheet @JvmOverloads constructor(
 
 class SavedRoutesAdapter(
     private val onItemClick: (SavedRoute) -> Unit,
-    private val onDeleteClick: (SavedRoute) -> Unit
+    private val onDeleteClick: (SavedRoute) -> Unit,
+    private val onExportClick: (SavedRoute) -> Unit
 ) : ListAdapter<SavedRoute, SavedRoutesAdapter.ViewHolder>(DiffCallback) {
 
     inner class ViewHolder(private val binding: ItemSavedRouteBinding) :
@@ -89,6 +133,7 @@ class SavedRoutesAdapter(
 
             binding.root.setOnClickListener { onItemClick(route) }
             binding.btnDeleteRoute.setOnClickListener { onDeleteClick(route) }
+            binding.btnExportRoute.setOnClickListener { onExportClick(route) }
         }
     }
 

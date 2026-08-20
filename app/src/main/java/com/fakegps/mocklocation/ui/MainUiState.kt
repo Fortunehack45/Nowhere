@@ -29,6 +29,7 @@ data class MainUiState(
     val isSearching: Boolean = false,
     val canUndoRoute: Boolean = false,
     val canRedoRoute: Boolean = false,
+    val isUsingDirectRouteFallback: Boolean = false,
     val activeError: MockLocationError? = null,
     val statusMessage: String? = null
 )

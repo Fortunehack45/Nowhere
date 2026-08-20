@@ -47,4 +47,24 @@ class GpxParserTest {
         val points = GpxParser.parse(invalidGpx)
         assertTrue(points.isEmpty())
     }
+
+    @Test
+    fun testGpxExport_roundtrip() {
+        val originalPoints = listOf(
+            com.fakegps.mocklocation.simulator.RoutePoint(37.7749, -122.4194, altitude = 15.0, stopDurationSeconds = 30),
+            com.fakegps.mocklocation.simulator.RoutePoint(37.7759, -122.4184, altitude = 20.0, stopDurationSeconds = 0),
+            com.fakegps.mocklocation.simulator.RoutePoint(37.7769, -122.4174, altitude = 25.0, stopDurationSeconds = 60)
+        )
+
+        val gpxXml = com.fakegps.mocklocation.simulator.GpxExporter.exportToGpx(originalPoints, "Test Export Route")
+        assertNotNull(gpxXml)
+        assertTrue(gpxXml.contains("<gpx"))
+        assertTrue(gpxXml.contains("Test Export Route"))
+        assertTrue(gpxXml.contains("37.7749"))
+
+        val parsedPoints = GpxParser.parse(gpxXml)
+        assertTrue("Parsed points should not be empty", parsedPoints.isNotEmpty())
+        assertEquals(37.7749, parsedPoints[0].latitude, 0.0001)
+        assertEquals(-122.4194, parsedPoints[0].longitude, 0.0001)
+    }
 }

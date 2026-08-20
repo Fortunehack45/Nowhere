@@ -58,6 +58,19 @@
             tools:text="8 Waypoints • 3.4 km • 25 km/h" />
 
         <ImageButton
+            android:id="@+id/btnExportRoute"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginEnd="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_share"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/primary"
+            tools:ignore="ContentDescription" />
+
+        <ImageButton
             android:id="@+id/btnDeleteRoute"
             android:layout_width="34dp"
             android:layout_height="34dp"

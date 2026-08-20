@@ -259,10 +259,26 @@ class MainActivity : AppCompatActivity() {
         handleIncomingIntents(intent)
     }
 
+    private var connectivityManager: android.net.ConnectivityManager? = null
+    private val networkCallback = object : android.net.ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: android.net.Network) {
+            runOnUiThread {
+                viewModel.retryPendingRoadRouting()
+            }
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         val intent = Intent(this, MockLocationService::class.java)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        try {
+            connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+            val request = android.net.NetworkRequest.Builder()
+                .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build()
+            connectivityManager?.registerNetworkCallback(request, networkCallback)
+        } catch (_: Exception) {}
     }
 
     override fun onResume() {
@@ -287,6 +303,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        try {
+            connectivityManager?.unregisterNetworkCallback(networkCallback)
+        } catch (_: Exception) {}
         if (isServiceBound) {
             unbindService(serviceConnection)
             isServiceBound = false
@@ -575,8 +594,17 @@ class MainActivity : AppCompatActivity() {
             viewModel.setTransportMode(mode)
         }
 
+        binding.btnManageWaypoints.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.WaypointManagerBottomSheet()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.WaypointManagerBottomSheet.TAG)
+        }
+
         binding.btnImportGpx.setOnClickListener {
             gpxPickerLauncher.launch("*/*")
+        }
+
+        binding.btnExportGpx.setOnClickListener {
+            exportCurrentRouteGpx()
         }
 
         binding.btnRouteUndo.setOnClickListener {
@@ -634,6 +662,37 @@ class MainActivity : AppCompatActivity() {
             } else {
                 mockService?.pauseRoute()
             }
+        }
+    }
+
+    private fun exportCurrentRouteGpx() {
+        val state = viewModel.uiState.value
+        val waypoints = if (state.userKeypoints.size >= 2) state.userKeypoints else state.routeWaypoints
+        if (waypoints.size < 2) {
+            Toast.makeText(this, "Plot at least 2 waypoints to export a GPX file.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            val gpxContent = viewModel.exportCurrentRouteToGpx("Nowhere Route (${waypoints.size} pts)")
+            val exportFile = java.io.File(cacheDir, "nowhere_route_${System.currentTimeMillis()}.gpx")
+            exportFile.writeText(gpxContent)
+
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                this,
+                "${packageName}.fileprovider",
+                exportFile
+            )
+
+            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/gpx+xml"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, "Nowhere GPX Route")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(sendIntent, "Export GPX Route"))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Failed to export GPX: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -1163,7 +1222,26 @@ class MainActivity : AppCompatActivity() {
                 val remaining = settingsPrefs.formatDistance(runningState.distanceRemainingMeters)
                 val progress = ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt().coerceIn(0, 100)
 
+                val speedMps = runningState.speedMps
+                val remainingMeters = runningState.distanceRemainingMeters
+                val etaText = if (speedMps > 0.3f && remainingMeters > 5.0) {
+                    val secondsLeft = (remainingMeters / speedMps).toLong()
+                    val hours = secondsLeft / 3600
+                    val minutes = (secondsLeft % 3600) / 60
+                    val seconds = secondsLeft % 60
+                    if (hours > 0) {
+                        String.format("⏱️ ETA: %dh %02dm", hours, minutes)
+                    } else {
+                        String.format("⏱️ ETA: %02dm %02ds", minutes, seconds)
+                    }
+                } else if (remainingMeters <= 5.0 && runningState.totalDistanceMeters > 0) {
+                    "⏱️ ETA: Arrived"
+                } else {
+                    "⏱️ ETA: --"
+                }
+
                 binding.tvRouteDistanceCovered.text = "Covered: $covered / $total"
+                binding.tvRouteEta.text = etaText
                 binding.tvRouteDistanceRemaining.text = "$remaining left ($progress%)"
                 binding.pbRouteLiveProgress.progress = progress
             } else {
