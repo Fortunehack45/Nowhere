@@ -1,7 +1,14 @@
 package com.fakegps.mocklocation.weather
 
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import com.fakegps.mocklocation.R
+import com.fakegps.mocklocation.ui.MainActivity
 import com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider
 import com.fakegps.mocklocation.util.LocationNameResolver
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +27,9 @@ import kotlin.math.abs
 object WeatherManager {
 
     private const val TAG = "WeatherManager"
+    private const val WEATHER_NOTIFICATION_ID = 5005
+    private const val WEATHER_CHANNEL_ID = "nowhere_service_channel"
+
     private var cachedReport: LocationWeatherReport? = null
     private var lastFetchTimestamp: Long = 0L
 
@@ -163,6 +173,16 @@ object WeatherManager {
                     current = currentWeather,
                     forecast = forecastList
                 )
+
+                // Detect meaningful weather/temperature change
+                if (currentCached != null) {
+                    val tempDiff = abs(currentWeather.temperatureC - currentCached.current.temperatureC)
+                    val conditionChanged = currentWeather.conditionName != currentCached.current.conditionName
+                    if (tempDiff >= 1.0 || conditionChanged) {
+                        sendWeatherChangeNotification(context, currentCached, report)
+                    }
+                }
+
                 cachedReport = report
                 lastFetchTimestamp = System.currentTimeMillis()
                 _weatherFlow.value = report
@@ -208,5 +228,43 @@ object WeatherManager {
         lastFetchTimestamp = System.currentTimeMillis()
         _weatherFlow.value = fallbackReport
         return@withContext fallbackReport
+    }
+
+    private fun sendWeatherChangeNotification(
+        context: Context,
+        oldReport: LocationWeatherReport,
+        newReport: LocationWeatherReport
+    ) {
+        try {
+            val place = newReport.locationName.substringBefore(",").ifBlank { "Current Location" }
+            val newTempStr = String.format(Locale.US, "%.1f°C", newReport.current.temperatureC)
+            val oldTempStr = String.format(Locale.US, "%.1f°C", oldReport.current.temperatureC)
+
+            val openAppIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                103,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val text = "${newReport.current.conditionEmoji} $newTempStr ${newReport.current.conditionName} (Was $oldTempStr ${oldReport.current.conditionName})"
+
+            val builder = NotificationCompat.Builder(context, WEATHER_CHANNEL_ID)
+                .setContentTitle("🌦️ Weather Update: $place")
+                .setContentText(text)
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setColor(ContextCompat.getColor(context, R.color.primary))
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager?.notify(WEATHER_NOTIFICATION_ID, builder.build())
+        } catch (e: Exception) {
+            Log.w(TAG, "Weather change notification error: ${e.message}")
+        }
     }
 }

@@ -26,6 +26,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MockLocationService : Service() {
@@ -604,6 +605,9 @@ class MockLocationService : Service() {
             }
         }
 
+        val totalRouteDist = simulator.totalDistanceMeters
+        sendRouteStartedNotification(waypoints.size, totalRouteDist, speedKmh, transportMode.title)
+
         startForegroundNotification(
             String.format("Route: %d waypoints", waypoints.size),
             String.format("%.1f KM/H • %s", speedKmh, transportMode.title)
@@ -673,6 +677,7 @@ class MockLocationService : Service() {
 
                         if (simLoc.isCompleted) {
                             Log.i(TAG, "Route completed: automatically transitioning to Fixed mock location at destination: (${simLoc.latitude}, ${simLoc.longitude})")
+                            sendRouteCompletedNotification(simLoc.totalDistanceMeters, simLoc.latitude, simLoc.longitude)
                             updateAllWidgets()
                             startFixed(simLoc.latitude, simLoc.longitude, simLoc.altitude)
                             break
@@ -686,6 +691,79 @@ class MockLocationService : Service() {
                 Log.e(TAG, "Uncaught fatal error in route simulation loop: ${t.message}", t)
                 stopSpoofing()
             }
+        }
+    }
+
+    private fun sendRouteStartedNotification(waypointsCount: Int, totalDistanceMeters: Double, speedKmh: Float, transportMode: String) {
+        try {
+            val speedMps = (speedKmh / 3.6f).coerceAtLeast(0.1f)
+            val etaSec = (totalDistanceMeters / speedMps).toLong()
+            val etaStr = formatEta(etaSec)
+            val distStr = String.format(Locale.US, "%.2f km", totalDistanceMeters / 1000.0)
+
+            val openAppIntent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                this,
+                101,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("🚀 Route Simulation Started")
+                .setContentText("$waypointsCount waypoints • $distStr • Speed: ${speedKmh.toInt()} km/h • ETA: $etaStr")
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setColor(ContextCompat.getColor(this, R.color.primary))
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.notify(5003, builder.build())
+        } catch (e: Exception) {
+            Log.w(TAG, "Route start notification error: ${e.message}")
+        }
+    }
+
+    private fun sendRouteCompletedNotification(totalDistanceMeters: Double, finalLat: Double, finalLon: Double) {
+        try {
+            val distStr = String.format(Locale.US, "%.2f km", totalDistanceMeters / 1000.0)
+            val coordsStr = String.format(Locale.US, "%.5f, %.5f", finalLat, finalLon)
+
+            val openAppIntent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                this,
+                102,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("🏁 Route Simulation Completed!")
+                .setContentText("Destination reached ($coordsStr) • Total: $distStr")
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setColor(ContextCompat.getColor(this, R.color.primary))
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.notify(5004, builder.build())
+        } catch (e: Exception) {
+            Log.w(TAG, "Route complete notification error: ${e.message}")
+        }
+    }
+
+    private fun formatEta(etaSeconds: Long): String {
+        return when {
+            etaSeconds <= 0 -> "Arriving"
+            etaSeconds >= 3600 -> String.format(Locale.US, "%dh %02dm", etaSeconds / 3600, (etaSeconds % 3600) / 60)
+            etaSeconds >= 60 -> String.format(Locale.US, "%dm %02ds", etaSeconds / 60, etaSeconds % 60)
+            else -> String.format(Locale.US, "%ds", etaSeconds)
         }
     }
 

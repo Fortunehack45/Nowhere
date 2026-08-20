@@ -356,10 +356,10 @@ object HotspotLocationServer {
     body { background: var(--bg); color: var(--text); padding: 16px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
     .container { max-width: 720px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
     
-    /* Red Header */
+    /* Red Header with Nowhere App Logo */
     .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--border-red); border-radius: 16px; box-shadow: 0 4px 20px rgba(255, 59, 48, 0.1); }
-    .logo-area { display: flex; align-items: center; gap: 10px; }
-    .logo-icon { width: 32px; height: 32px; background: var(--primary-red); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 0 12px var(--glow-red); }
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-container { width: 40px; height: 40px; background: #181B26; border: 1px solid rgba(255,59,48,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px var(--glow-red); }
     
     .status-badge { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(255, 59, 48, 0.15); border: 1px solid var(--primary-red); border-radius: 20px; color: #FF6961; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; }
     .pulse-dot { width: 9px; height: 9px; background: var(--primary-red); border-radius: 50%; box-shadow: 0 0 8px var(--primary-red); animation: pulse 1.2s infinite; }
@@ -397,10 +397,16 @@ object HotspotLocationServer {
 <body>
   <div class="container">
     
-    <!-- Red Header -->
+    <!-- Red Header with Nowhere Vector Logo -->
     <div class="header">
       <div class="logo-area">
-        <div class="logo-icon">📍</div>
+        <div class="logo-container">
+          <svg width="28" height="28" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100,20 C133.14,20 160,46.86 160,80 C160,118 100,185 100,185 C100,185 40,118 40,80 C40,46.86 66.86,20 100,20 Z" fill="#FF3B30"/>
+            <path d="M100,20 C66.86,20 40,46.86 40,80 L75,80 C75,66.2 86.2,55 100,55 Z" fill="#991B1B"/>
+            <path d="M100,55 C113.8,55 125,66.2 125,80 C125,93.8 113.8,105 100,105 C86.2,105 75,93.8 75,80 C75,66.2 86.2,55 100,55 Z" fill="#181B26"/>
+          </svg>
+        </div>
         <div>
           <h2 style="font-size: 18px; font-weight: 900; letter-spacing: -0.02em;">Nowhere GPS Sync</h2>
           <p style="font-size: 11px; color: var(--muted); margin-top: 2px;">Hotspot Location Gateway</p>

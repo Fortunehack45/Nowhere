@@ -807,8 +807,20 @@ class MainActivity : AppCompatActivity() {
         } catch (ignored: Exception) {}
     }
 
+    private fun ensureActiveSessionOrPrompt(onActive: () -> Unit): Boolean {
+        val sessionPrefs = SessionPreferences(this)
+        if (!sessionPrefs.hasValidActiveSession()) {
+            com.fakegps.mocklocation.ui.dialogs.SessionExtendDialog(this, isExpiredPrompt = true) {
+                onActive()
+            }.show()
+            return false
+        }
+        return true
+    }
+
     private fun startFixedSpoofing() {
         if (!verifyMockAppSelected()) return
+        if (!ensureActiveSessionOrPrompt { startFixedSpoofing() }) return
         performHapticFeedbackIfEnabled()
 
         val state = viewModel.uiState.value
@@ -826,6 +838,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startRouteSpoofing() {
         if (!verifyMockAppSelected()) return
+        if (!ensureActiveSessionOrPrompt { startRouteSpoofing() }) return
         performHapticFeedbackIfEnabled()
 
         val state = viewModel.uiState.value
@@ -896,6 +909,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startJoystickSpoofing() {
         if (!verifyMockAppSelected()) return
+        if (!ensureActiveSessionOrPrompt { startJoystickSpoofing() }) return
         performHapticFeedbackIfEnabled()
 
         val state = viewModel.uiState.value

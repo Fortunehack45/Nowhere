@@ -77,6 +77,15 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
                 remainingFormatted = String.format("%.2f km left", remainingKm)
             }
 
+            val speedMps = (speedKmh / 3.6f).coerceAtLeast(0.1f)
+            val etaSeconds = if (speedMps > 0.1f && remainingDistMeters > 0) (remainingDistMeters / speedMps).toLong() else 0L
+            val etaFormatted = when {
+                etaSeconds <= 0 -> "Arriving"
+                etaSeconds >= 3600 -> String.format(java.util.Locale.US, "%dh %02dm", etaSeconds / 3600, (etaSeconds % 3600) / 60)
+                etaSeconds >= 60 -> String.format(java.util.Locale.US, "%dm %02ds", etaSeconds / 60, etaSeconds % 60)
+                else -> String.format(java.util.Locale.US, "%ds", etaSeconds)
+            }
+
             val progressPercent = if (totalDistMeters > 0) ((coveredDistMeters / totalDistMeters) * 100).toInt().coerceIn(0, 100) else 0
 
             if (isActive) {
@@ -85,7 +94,7 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.btnWidgetRoutePlayPause, "Pause")
                 views.setTextViewText(R.id.tvWidgetRouteWaypoints, "${waypoints.size} Waypoints • $progressPercent%")
                 views.setTextViewText(R.id.tvWidgetRouteDistance, "Covered: $coveredFormatted / $totalFormatted")
-                views.setTextViewText(R.id.tvWidgetRouteRemaining, remainingFormatted)
+                views.setTextViewText(R.id.tvWidgetRouteRemaining, "$remainingFormatted • ETA: $etaFormatted")
                 views.setProgressBar(R.id.pbWidgetRoute, 100, progressPercent, false)
             } else {
                 views.setTextViewText(R.id.tvWidgetRouteStatus, "STANDBY")

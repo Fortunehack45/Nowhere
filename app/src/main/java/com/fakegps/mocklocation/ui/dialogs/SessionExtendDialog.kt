@@ -87,6 +87,7 @@ class SessionExtendDialog(
             onUserEarnedReward = {
                 SessionTimerManager.extendSession(context, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
                 Toast.makeText(context, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
+                onReconnectRequested?.invoke()
                 dismiss()
             }
         )
