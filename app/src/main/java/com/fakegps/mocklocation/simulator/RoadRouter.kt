@@ -33,12 +33,12 @@ object RoadRouter {
         RoutingEndpoint(
             baseUrl = "https://routing.openstreetmap.de/routed-foot/route/v1",
             carProfile = "driving",
-            footProfile = "driving"
+            footProfile = "foot"
         ),
         RoutingEndpoint(
             baseUrl = "https://router.project-osrm.org/route/v1",
             carProfile = "driving",
-            footProfile = "walking"
+            footProfile = "foot"
         )
     )
 

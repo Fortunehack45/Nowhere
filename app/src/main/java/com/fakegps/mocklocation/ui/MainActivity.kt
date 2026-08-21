@@ -905,7 +905,8 @@ class MainActivity : AppCompatActivity() {
         performHapticFeedbackIfEnabled()
 
         val state = viewModel.uiState.value
-        if (state.routeWaypoints.size < 2) {
+        val effectiveWaypoints = if (state.routeWaypoints.size >= 2) state.routeWaypoints else state.userKeypoints
+        if (effectiveWaypoints.size < 2) {
             Toast.makeText(this, "Plot at least 2 waypoints by tapping the map or importing a GPX file.", Toast.LENGTH_LONG).show()
             return
         }
@@ -913,7 +914,7 @@ class MainActivity : AppCompatActivity() {
         if (state.transportMode == com.fakegps.mocklocation.simulator.TransportMode.SHIP) {
             Toast.makeText(this, "Validating marine waters...", Toast.LENGTH_SHORT).show()
             lifecycleScope.launch(Dispatchers.IO) {
-                val (isValid, reason) = com.fakegps.mocklocation.simulator.RoadRouter.validateMarineRoute(this@MainActivity, state.routeWaypoints)
+                val (isValid, reason) = com.fakegps.mocklocation.simulator.RoadRouter.validateMarineRoute(this@MainActivity, effectiveWaypoints)
                 withContext(Dispatchers.Main) {
                     if (!isValid) {
                         MaterialAlertDialogBuilder(this@MainActivity)
@@ -935,30 +936,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun launchRouteService(state: MainUiState) {
+        val waypointsToRun = if (state.routeWaypoints.size >= 2) state.routeWaypoints else state.userKeypoints
         val sessionPrefs = SessionPreferences(this)
-        sessionPrefs.saveWaypoints(state.routeWaypoints)
+        sessionPrefs.saveWaypoints(waypointsToRun)
         sessionPrefs.lastSpeedKmh = state.routeSpeedKmh
         sessionPrefs.isLooping = state.isRouteLooping
 
         var totalDist = 0.0
-        for (i in 0 until state.routeWaypoints.size - 1) {
+        for (i in 0 until waypointsToRun.size - 1) {
             totalDist += GeoUtils.calculateDistanceMeters(
-                state.routeWaypoints[i].latitude, state.routeWaypoints[i].longitude,
-                state.routeWaypoints[i + 1].latitude, state.routeWaypoints[i + 1].longitude
+                waypointsToRun[i].latitude, waypointsToRun[i].longitude,
+                waypointsToRun[i + 1].latitude, waypointsToRun[i + 1].longitude
             )
         }
         viewModel.recordRouteHistory(
-            routeName = "Route (${state.routeWaypoints.size} pts • ${state.transportMode.name})",
-            waypoints = state.routeWaypoints,
+            routeName = "Route (${waypointsToRun.size} pts)",
+            waypoints = waypointsToRun,
             totalDistanceMeters = totalDist,
             speedKmh = state.routeSpeedKmh,
             isLooping = state.isRouteLooping,
             transportMode = state.transportMode.name
         )
 
-        if (state.routeWaypoints.isNotEmpty()) {
-            autoEngageVpnForLocation(state.routeWaypoints[0].latitude, state.routeWaypoints[0].longitude)
-        }
+        autoEngageVpnForLocation(waypointsToRun.first().latitude, waypointsToRun.first().longitude)
+
+        mockService?.startRoute(
+            waypoints = waypointsToRun,
+            speedKmh = state.routeSpeedKmh,
+            isLooping = state.isRouteLooping,
+            transportMode = state.transportMode
+        )
 
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_ROUTE
@@ -967,7 +974,6 @@ class MainActivity : AppCompatActivity() {
             putExtra(MockLocationService.EXTRA_TRANSPORT_MODE, state.transportMode.name)
         }
         startForegroundServiceCompat(intent)
-        mockService?.startRoute(state.routeWaypoints, state.routeSpeedKmh, state.isRouteLooping, state.transportMode)
     }
 
     private fun startJoystickSpoofing() {
@@ -1334,32 +1340,43 @@ class MainActivity : AppCompatActivity() {
                 routePolyline = null
             }
 
-            if (state.routeWaypoints.isNotEmpty()) {
-                val geoPoints = state.routeWaypoints.map { GeoPoint(it.latitude, it.longitude) }
-                routePolyline = Polyline().apply {
-                    setPoints(geoPoints)
-                    outlinePaint.color = Color.parseColor("#E41B1B")
-                    outlinePaint.strokeWidth = 8f
+            val pathPoints = if (state.routeWaypoints.isNotEmpty()) {
+                state.routeWaypoints
+            } else if (state.userKeypoints.isNotEmpty()) {
+                state.userKeypoints
+            } else {
+                emptyList()
+            }
+
+            if (pathPoints.isNotEmpty()) {
+                val geoPoints = pathPoints.map { GeoPoint(it.latitude, it.longitude) }
+                if (geoPoints.size >= 2) {
+                    routePolyline = Polyline().apply {
+                        setPoints(geoPoints)
+                        outlinePaint.color = Color.parseColor("#E41B1B")
+                        outlinePaint.strokeWidth = 8f
+                        setOnClickListener { _, _, _ -> false }
+                    }
+                    binding.mapView.overlays.add(routePolyline)
                 }
-                binding.mapView.overlays.add(routePolyline)
 
                 val waypointsToMark = if (state.userKeypoints.isNotEmpty()) {
                     state.userKeypoints.mapIndexed { idx, pt -> Pair(idx + 1, pt) }
-                } else if (state.routeWaypoints.size <= 25) {
-                    state.routeWaypoints.mapIndexed { idx, pt -> Pair(idx + 1, pt) }
+                } else if (pathPoints.size <= 25) {
+                    pathPoints.mapIndexed { idx, pt -> Pair(idx + 1, pt) }
                 } else {
                     val sampled = mutableListOf<Pair<Int, com.fakegps.mocklocation.simulator.RoutePoint>>()
-                    sampled.add(Pair(1, state.routeWaypoints.first()))
-                    val step = (state.routeWaypoints.size - 2) / 10
+                    sampled.add(Pair(1, pathPoints.first()))
+                    val step = (pathPoints.size - 2) / 10
                     if (step > 0) {
                         for (i in 1..10) {
                             val targetIndex = i * step
-                            if (targetIndex < state.routeWaypoints.size - 1) {
-                                sampled.add(Pair(targetIndex + 1, state.routeWaypoints[targetIndex]))
+                            if (targetIndex < pathPoints.size - 1) {
+                                sampled.add(Pair(targetIndex + 1, pathPoints[targetIndex]))
                             }
                         }
                     }
-                    sampled.add(Pair(state.routeWaypoints.size, state.routeWaypoints.last()))
+                    sampled.add(Pair(pathPoints.size, pathPoints.last()))
                     sampled
                 }
 
@@ -1369,6 +1386,7 @@ class MainActivity : AppCompatActivity() {
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                         title = "Waypoint #$labelIdx"
                         icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_route)
+                        setOnMarkerClickListener { _, _ -> false }
                     }
                     routeMarkers.add(marker)
                     binding.mapView.overlays.add(marker)

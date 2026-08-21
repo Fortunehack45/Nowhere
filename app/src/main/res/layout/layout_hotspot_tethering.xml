@@ -26,13 +26,26 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="14dp">
+
+            <ImageButton
+                android:id="@+id/btnHotspotClose"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_status_pill"
+                android:contentDescription="Close"
+                android:src="@drawable/ic_close"
+                app:tint="@color/text_secondary" />
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
+                android:layout_marginEnd="12dp"
+                android:layout_toStartOf="@id/btnHotspotClose"
                 android:orientation="vertical">
 
                 <LinearLayout
@@ -46,7 +59,7 @@
                         android:layout_height="wrap_content"
                         android:text="Hotspot GPS Sync"
                         android:textColor="@color/text_primary"
-                        android:textSize="20sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <!-- BETA Tag Badge -->
@@ -73,23 +86,12 @@
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
             </LinearLayout>
-
-            <ImageButton
-                android:id="@+id/btnHotspotClose"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:background="@drawable/bg_status_pill"
-                android:contentDescription="Close"
-                android:src="@drawable/ic_close"
-                app:tint="@color/text_secondary" />
         </RelativeLayout>
 
         <!-- Segmented Tab Pill: Broadcast vs Receiver -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="46dp"
+            android:layout_height="44dp"
             android:layout_marginBottom="16dp"
             android:background="@drawable/bg_segmented_tab"
             android:orientation="horizontal"
@@ -105,8 +107,10 @@
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:minHeight="0dp"
+                android:paddingHorizontal="6dp"
                 android:paddingTop="0dp"
                 android:paddingBottom="0dp"
+                android:singleLine="true"
                 android:stateListAnimator="@null"
                 android:text="📡 Broadcast (Host)"
                 android:textColor="@android:color/white"
@@ -125,10 +129,12 @@
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:minHeight="0dp"
+                android:paddingHorizontal="6dp"
                 android:paddingTop="0dp"
                 android:paddingBottom="0dp"
+                android:singleLine="true"
                 android:stateListAnimator="@null"
-                android:text="📥 Receive (Client Phone)"
+                android:text="📥 Receive (Client)"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold"
@@ -542,7 +548,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnToggleClientSync"
-                        style="@style/Widget.Material3.Button.TonalButton"
+                        style="@style/Widget.Material3.Button.UnelevatedButton"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:backgroundTint="@color/primary"

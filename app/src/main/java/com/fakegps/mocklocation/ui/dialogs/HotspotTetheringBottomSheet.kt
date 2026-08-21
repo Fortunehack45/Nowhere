@@ -312,22 +312,29 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
             HotspotLocationClient.syncState.collectLatest { state ->
                 when (state) {
                     is HotspotLocationClient.SyncState.Idle -> {
-                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.text_muted))
+                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.text_muted))
                         binding.tvClientSyncStatusTitle.text = "Not Syncing"
                         binding.tvClientSyncCoordinates.text = "Waiting for Host GPS stream..."
                         binding.btnToggleClientSync.text = "Start Syncing Location"
-                        binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+                        binding.btnToggleClientSync.setIconResource(R.drawable.ic_bolt)
+                        binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.primary))
+                        binding.btnToggleClientSync.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+                        binding.btnToggleClientSync.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.white))
                         binding.btnOpenClientDevOptions.visibility = View.GONE
                     }
                     is HotspotLocationClient.SyncState.Connecting -> {
-                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary_bright))
+                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.primary_bright))
                         binding.tvClientSyncStatusTitle.text = "Connecting to Host..."
                         binding.tvClientSyncCoordinates.text = state.url
                         binding.btnToggleClientSync.text = "Cancel Connection"
+                        binding.btnToggleClientSync.setIconResource(R.drawable.ic_close)
+                        binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_stop_bg))
+                        binding.btnToggleClientSync.setTextColor(ContextCompat.getColor(requireContext(), R.color.btn_stop_text))
+                        binding.btnToggleClientSync.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_stop_text))
                         binding.btnOpenClientDevOptions.visibility = View.GONE
                     }
                     is HotspotLocationClient.SyncState.Synced -> {
-                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.badge_success_text))
+                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.badge_success_text))
                         binding.tvClientSyncStatusTitle.text = "LIVE SYNCED WITH HOST PHONE"
                         binding.tvClientSyncCoordinates.text = String.format(
                             Locale.US,
@@ -335,13 +342,21 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                             state.latitude, state.longitude, state.altitude, state.speedKmh
                         )
                         binding.btnToggleClientSync.text = "Disconnect / Stop Sync"
-                        binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.surface_card_elevated))
+                        binding.btnToggleClientSync.setIconResource(R.drawable.ic_stop)
+                        binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_stop_bg))
+                        binding.btnToggleClientSync.setTextColor(ContextCompat.getColor(requireContext(), R.color.btn_stop_text))
+                        binding.btnToggleClientSync.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_stop_text))
                         binding.btnOpenClientDevOptions.visibility = View.GONE
                     }
                     is HotspotLocationClient.SyncState.Error -> {
-                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+                        binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.primary))
                         binding.tvClientSyncStatusTitle.text = "Sync Status"
                         binding.tvClientSyncCoordinates.text = state.message
+                        binding.btnToggleClientSync.text = "Start Syncing Location"
+                        binding.btnToggleClientSync.setIconResource(R.drawable.ic_bolt)
+                        binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.primary))
+                        binding.btnToggleClientSync.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+                        binding.btnToggleClientSync.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.white))
                         if (state.needsMockPermission) {
                             binding.btnOpenClientDevOptions.visibility = View.VISIBLE
                         } else {

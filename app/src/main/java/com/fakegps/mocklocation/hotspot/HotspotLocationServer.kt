@@ -210,6 +210,9 @@ object HotspotLocationServer {
             }
 
             when {
+                path == "/favicon.ico" || path == "/apple-touch-icon.png" || path == "/robots.txt" -> {
+                    serveNoContent(outputStream)
+                }
                 path == "/location.json" || path == "/api/location" -> {
                     serveJsonLocation(outputStream)
                 }
@@ -238,6 +241,13 @@ object HotspotLocationServer {
                 socket.close()
             } catch (ignored: Exception) {}
         }
+    }
+
+    private fun serveNoContent(out: OutputStream) {
+        val response = "HTTP/1.1 204 No Content\r\n" +
+                "Access-Control-Allow-Origin: *\r\n" +
+                "Connection: close\r\n\r\n"
+        out.write(response.toByteArray(Charsets.UTF_8))
     }
 
     private fun serveCorsPreflight(out: OutputStream) {
@@ -398,7 +408,6 @@ object HotspotLocationServer {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nowhere GPS Hotspot Radar (BETA)</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     :root {
       --bg: #090B0E;
@@ -417,44 +426,32 @@ object HotspotLocationServer {
     body { background: var(--bg); color: var(--text); padding: 16px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
     .container { max-width: 720px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
     
-    /* Header */
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--border-red); border-radius: 16px; box-shadow: 0 4px 20px rgba(255, 59, 48, 0.1); }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--border-red); border-radius: 16px; }
     .logo-area { display: flex; align-items: center; gap: 12px; }
-    .logo-container { width: 42px; height: 42px; background: #181B26; border: 1px solid rgba(255,59,48,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px var(--glow-red); }
-    
-    .title-row { display: flex; align-items: center; gap: 8px; }
-    .beta-badge { background: rgba(255, 149, 0, 0.15); border: 1px solid var(--beta-gold); color: var(--beta-gold); font-size: 10px; font-weight: 900; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 6px; }
-    
-    .status-badge { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(255, 59, 48, 0.15); border: 1px solid var(--primary-red); border-radius: 20px; color: #FF6961; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; }
-    .pulse-dot { width: 9px; height: 9px; background: var(--primary-red); border-radius: 50%; box-shadow: 0 0 8px var(--primary-red); animation: pulse 1.2s infinite; }
+    .status-badge { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(255, 59, 48, 0.15); border: 1px solid var(--primary-red); border-radius: 20px; color: #FF6961; font-size: 12px; font-weight: 800; }
+    .pulse-dot { width: 9px; height: 9px; background: var(--primary-red); border-radius: 50%; animation: pulse 1.2s infinite; }
     @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(1.4); } 100% { opacity: 1; transform: scale(1); } }
     
-    /* Toast Banner */
-    #toastBanner { display: none; background: rgba(52, 199, 89, 0.2); border: 1px solid var(--green); color: #4CD964; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; text-align: center; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    #toastBanner { display: none; background: rgba(52, 199, 89, 0.2); border: 1px solid var(--green); color: #4CD964; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; text-align: center; }
     
-    /* Stats Grid */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
     .stat-card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; border-left: 3px solid var(--primary-red); }
     .stat-label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; font-weight: 700; }
     .stat-val { font-size: 18px; font-weight: 800; color: var(--text); font-family: monospace; }
     
-    /* Map Container */
-    .map-container { position: relative; width: 100%; height: 320px; border-radius: 16px; border: 1px solid var(--border-red); overflow: hidden; background: #0B0E14; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
-    #map { height: 100%; width: 100%; z-index: 1; }
-    #radarCanvas { position: absolute; top:0; left:0; width:100%; height:100%; display:none; z-index: 0; }
+    /* Map & Radar Container */
+    .map-container { position: relative; width: 100%; height: 300px; border-radius: 16px; border: 1px solid var(--border-red); overflow: hidden; background: #0B0E14; box-shadow: 0 6px 24px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+    #radarCanvas { width: 100%; height: 100%; display: block; }
+    #map { position: absolute; top:0; left:0; width:100%; height:100%; display:none; z-index: 1; }
     
     /* Cards & Buttons */
     .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
     .card-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--text); }
     
     .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-    .btn-red { background: linear-gradient(135deg, #FF3B30 0%, #D32F2F 100%); color: white; border: none; padding: 14px 16px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s; font-size: 13px; text-decoration: none; box-shadow: 0 4px 14px var(--glow-red); }
-    .btn-red:active { transform: scale(0.96); filter: brightness(1.2); }
-    .btn-secondary { background: var(--card-elevated); color: var(--text); border: 1px solid rgba(255,255,255,0.12); padding: 14px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; text-decoration: none; transition: all 0.15s; }
-    .btn-secondary:active { transform: scale(0.96); background: #262B3D; }
-
-    /* Easy Steps */
+    .btn-red { background: linear-gradient(135deg, #FF3B30 0%, #D32F2F 100%); color: white; border: none; padding: 14px 16px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; text-decoration: none; }
+    .btn-secondary { background: var(--card-elevated); color: var(--text); border: 1px solid rgba(255,255,255,0.12); padding: 14px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; text-decoration: none; }
+    
     .easy-step { display: flex; align-items: flex-start; gap: 12px; background: var(--card-elevated); padding: 14px; border-radius: 12px; border-left: 3px solid var(--primary-red); }
     .step-circle { width: 26px; height: 26px; background: var(--primary-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; flex-shrink: 0; }
     .step-text { font-size: 13px; line-height: 1.5; color: var(--muted); }
@@ -465,24 +462,9 @@ object HotspotLocationServer {
 </head>
 <body>
   <div class="container">
-    
-    <!-- Red Header with Nowhere Vector Logo & BETA Tag -->
     <div class="header">
       <div class="logo-area">
-        <div class="logo-container">
-          <svg width="28" height="28" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M100,20 C133.14,20 160,46.86 160,80 C160,118 100,185 100,185 C100,185 40,118 40,80 C40,46.86 66.86,20 100,20 Z" fill="#FF3B30"/>
-            <path d="M100,20 C66.86,20 40,46.86 40,80 L75,80 C75,66.2 86.2,55 100,55 Z" fill="#991B1B"/>
-            <path d="M100,55 C113.8,55 125,66.2 125,80 C125,93.8 113.8,105 100,105 C86.2,105 75,93.8 75,80 C75,66.2 86.2,55 100,55 Z" fill="#181B26"/>
-          </svg>
-        </div>
-        <div>
-          <div class="title-row">
-            <h2 style="font-size: 18px; font-weight: 900; letter-spacing: -0.02em;">Nowhere GPS Sync</h2>
-            <span class="beta-badge">BETA</span>
-          </div>
-          <p style="font-size: 11px; color: var(--muted); margin-top: 2px;">Hotspot Location Gateway</p>
-        </div>
+        <h2 style="font-size: 18px; font-weight: 900;">Nowhere GPS Sync</h2>
       </div>
       <div class="status-badge">
         <div class="pulse-dot"></div>
@@ -490,10 +472,8 @@ object HotspotLocationServer {
       </div>
     </div>
 
-    <!-- Live Interactive Toast Feedback -->
     <div id="toastBanner"></div>
 
-    <!-- Live Coordinates Grid -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Latitude</div>
@@ -513,80 +493,53 @@ object HotspotLocationServer {
       </div>
     </div>
 
-    <!-- Map & Canvas Container -->
     <div class="map-container">
-      <div id="map"></div>
       <canvas id="radarCanvas"></canvas>
+      <div id="map"></div>
     </div>
 
-    <!-- 1-Tap Quick Launchers -->
     <div class="card">
       <div class="card-title">🚀 1-Tap Location Launchers &amp; Sync</div>
       <div class="actions-grid">
-        <a id="btnGoogleMaps" class="btn-red" href="https://www.google.com/maps?q=$currentLat,$currentLon" target="_blank" onclick="showFeedback('🗺️ Opening Google Maps at live spoofed coordinates...')">
-          🗺️ Open in Google Maps
-        </a>
-        <a id="btnAppleMaps" class="btn-secondary" href="http://maps.apple.com/?q=$currentLat,$currentLon&ll=$currentLat,$currentLon" target="_blank" onclick="showFeedback('🍎 Opening Apple Maps at live coordinates...')">
-          🍎 Open in Apple Maps
-        </a>
-        <button id="btnSyncTab" class="btn-secondary" onclick="syncBrowserTab()">
-          ⚡ Sync This Browser Tab
-        </button>
-        <button id="btnCopyBookmarklet" class="btn-secondary" onclick="copyBookmarklet()">
-          🔖 Copy Safari/Chrome Bookmarklet
-        </button>
-        <a class="btn-secondary" href="/gps.gpx" download="nowhere_location.gpx" onclick="showFeedback('📥 Downloading live .gpx route/waypoint track...')">
-          📥 Download GPS File (.gpx)
-        </a>
+        <a id="btnGoogleMaps" class="btn-red" href="https://www.google.com/maps?q=$currentLat,$currentLon" target="_blank">🗺️ Open in Google Maps</a>
+        <a id="btnAppleMaps" class="btn-secondary" href="http://maps.apple.com/?q=$currentLat,$currentLon" target="_blank">🍎 Open in Apple Maps</a>
+        <button id="btnSyncTab" class="btn-secondary" onclick="syncBrowserTab()">⚡ Sync This Browser Tab</button>
+        <button id="btnCopyBookmarklet" class="btn-secondary" onclick="copyBookmarklet()">🔖 Copy Bookmarklet</button>
+        <a class="btn-secondary" href="/gps.gpx" download="nowhere_location.gpx">📥 Download GPX</a>
       </div>
     </div>
 
-    <!-- Simple Connection Steps -->
     <div class="card">
       <div class="card-title">📱 How to Sync Other Devices</div>
-      
       <div class="easy-step">
         <div class="step-circle">1</div>
-        <div class="step-text">
-          <strong>Connected to Hotspot:</strong> Make sure your iPad, MacBook, PC, iPhone, or Android is connected to this phone's Wi-Fi Hotspot.
-        </div>
+        <div class="step-text"><strong>Connected to Hotspot:</strong> Make sure your device is connected to this phone's Wi-Fi Hotspot.</div>
       </div>
-
       <div class="easy-step">
         <div class="step-circle">2</div>
-        <div class="step-text">
-          <strong>Instant Live Maps:</strong> Tap <strong>"Open in Google Maps"</strong> or <strong>"Open in Apple Maps"</strong> to navigate directly with the spoofed position.
-        </div>
+        <div class="step-text"><strong>Instant Live Maps:</strong> Tap <strong>"Open in Google Maps"</strong> or <strong>"Open in Apple Maps"</strong>.</div>
       </div>
-
       <div class="easy-step">
         <div class="step-circle">3</div>
-        <div class="step-text">
-          <strong>iOS / Desktop Safari &amp; Chrome Bookmarklet:</strong> Tap <strong>"Copy Bookmarklet"</strong> and save as a bookmark. Tap that bookmark on any site (e.g. Life360, Tinder, Maps) to lock your location.
-        </div>
+        <div class="step-text"><strong>Bookmarklet:</strong> Tap <strong>"Copy Bookmarklet"</strong> and save as a bookmark. Tap that bookmark on any site to lock your location.</div>
       </div>
-
       <div class="easy-step">
         <div class="step-circle">4</div>
-        <div class="step-text">
-          <strong>Android Phone Sync:</strong> Open the Nowhere app on your other Android phone, switch to the <strong>"Receive (Client Phone)"</strong> tab, and tap <strong>"Start Syncing"</strong>!
-        </div>
+        <div class="step-text"><strong>Android Phone Sync:</strong> Open the Nowhere app on your other Android, go to <strong>"Receive"</strong>, and tap <strong>"Start Syncing Location"</strong>.</div>
       </div>
     </div>
 
-    <div class="footer">
-      Nowhere Mock Location • Hotspot GPS Gateway (BETA)
-    </div>
-
+    <div class="footer">Nowhere Mock Location • Hotspot GPS Gateway (BETA)</div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     let map = null;
     let marker = null;
     let radarCircle = null;
     let lastLat = $currentLat;
     let lastLon = $currentLon;
+    let lastBearing = $currentBearingDeg;
+    let lastSpeed = ${currentSpeedMps * 3.6f};
 
     function showFeedback(msg) {
       const banner = document.getElementById('toastBanner');
@@ -597,84 +550,69 @@ object HotspotLocationServer {
       }
     }
 
-    // Fail-safe Leaflet initialization with offline fallback
-    try {
-      if (typeof L !== 'undefined') {
-        map = L.map('map').setView([$currentLat, $currentLon], 15);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19,
-          attribution: '© OpenStreetMap © CARTO'
-        }).addTo(map);
-
-        const radarIcon = L.divIcon({
-          className: 'custom-radar-marker',
-          html: '<div style="width:20px;height:20px;background:#FF3B30;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 15px #FF3B30;"></div>',
-          iconSize: [20, 20],
-          iconAnchor: [10, 10]
-        });
-
-        marker = L.marker([$currentLat, $currentLon], { icon: radarIcon }).addTo(map);
-        radarCircle = L.circle([$currentLat, $currentLon], {
-          color: '#FF3B30',
-          fillColor: '#FF3B30',
-          fillOpacity: 0.15,
-          radius: 120
-        }).addTo(map);
-      } else {
-        showRadarFallback();
-      }
-    } catch(e) {
-      showRadarFallback();
-    }
-
-    function showRadarFallback() {
-      const cvs = document.getElementById('radarCanvas');
-      if (cvs) {
-        cvs.style.display = 'block';
-        const ctx = cvs.getContext('2d');
-        let angle = 0;
-        function drawRadar() {
+    const cvs = document.getElementById('radarCanvas');
+    let angle = 0;
+    if (cvs) {
+      const ctx = cvs.getContext('2d');
+      function drawRadar() {
+        if (cvs.clientWidth > 0 && cvs.clientHeight > 0) {
           cvs.width = cvs.clientWidth;
           cvs.height = cvs.clientHeight;
           const cx = cvs.width / 2;
           const cy = cvs.height / 2;
-          const r = Math.min(cx, cy) - 20;
+          const r = Math.min(cx, cy) - 24;
 
-          ctx.fillStyle = '#090B0E';
+          ctx.fillStyle = '#0B0E14';
           ctx.fillRect(0, 0, cvs.width, cvs.height);
 
-          ctx.strokeStyle = 'rgba(255, 59, 48, 0.25)';
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(255, 59, 48, 0.22)';
+          ctx.lineWidth = 1.2;
           for (let i = 1; i <= 3; i++) {
             ctx.beginPath();
             ctx.arc(cx, cy, (r / 3) * i, 0, Math.PI * 2);
             ctx.stroke();
           }
 
+          ctx.beginPath();
+          ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy);
+          ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r);
+          ctx.stroke();
+
           ctx.save();
           ctx.translate(cx, cy);
           ctx.rotate(angle);
           const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-          grad.addColorStop(0, 'rgba(255, 59, 48, 0.4)');
+          grad.addColorStop(0, 'rgba(255, 59, 48, 0.45)');
           grad.addColorStop(1, 'rgba(255, 59, 48, 0.0)');
           ctx.fillStyle = grad;
           ctx.beginPath();
           ctx.moveTo(0, 0);
-          ctx.arc(0, 0, r, 0, Math.PI / 3);
+          ctx.arc(0, 0, r, 0, Math.PI / 3.5);
           ctx.closePath();
           ctx.fill();
           ctx.restore();
 
           ctx.fillStyle = '#FF3B30';
+          ctx.shadowColor = '#FF3B30';
+          ctx.shadowBlur = 12;
           ctx.beginPath();
-          ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+          ctx.arc(cx, cy, 7, 0, Math.PI * 2);
           ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.font = 'bold 11px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('N', cx, cy - r + 14);
+          ctx.fillText('S', cx, cy + r - 6);
+          ctx.fillText('E', cx + r - 10, cy + 4);
+          ctx.fillText('W', cx - r + 10, cy + 4);
 
           angle += 0.04;
-          requestAnimationFrame(drawRadar);
         }
-        drawRadar();
+        requestAnimationFrame(drawRadar);
       }
+      drawRadar();
     }
 
     async function refresh() {
@@ -684,23 +622,18 @@ object HotspotLocationServer {
         if (d && d.latitude !== undefined) {
           lastLat = Number(d.latitude);
           lastLon = Number(d.longitude);
+          lastSpeed = Number(d.speedKmh) || 0;
           document.getElementById('valLat').innerText = lastLat.toFixed(6);
           document.getElementById('valLon').innerText = lastLon.toFixed(6);
           document.getElementById('valAlt').innerText = Number(d.altitude).toFixed(1) + ' m';
-          document.getElementById('valSpeed').innerText = Number(d.speedKmh).toFixed(1) + ' km/h';
-
-          if (map && marker && radarCircle) {
-            const newPos = [lastLat, lastLon];
-            marker.setLatLng(newPos);
-            radarCircle.setLatLng(newPos);
-          }
+          document.getElementById('valSpeed').innerText = lastSpeed.toFixed(1) + ' km/h';
 
           document.getElementById('btnGoogleMaps').href = 'https://www.google.com/maps?q=' + lastLat + ',' + lastLon;
           document.getElementById('btnAppleMaps').href = 'http://maps.apple.com/?q=' + lastLat + ',' + lastLon + '&ll=' + lastLat + ',' + lastLon;
         }
       } catch(e) {}
     }
-    setInterval(refresh, 400);
+    setInterval(refresh, 500);
 
     function syncBrowserTab() {
       const btn = document.getElementById('btnSyncTab');
@@ -709,28 +642,27 @@ object HotspotLocationServer {
         .then(code => {
           eval(code);
           if (btn) {
-            btn.innerText = '✅ Live Geolocation Synced!';
+            btn.innerText = '✅ Synced!';
             setTimeout(() => { btn.innerText = '⚡ Sync This Browser Tab'; }, 3000);
           }
-          showFeedback('⚡ Live Geolocation Synced! This browser tab is now locked to ' + lastLat.toFixed(5) + ', ' + lastLon.toFixed(5));
-        })
-        .catch(() => {
-          showFeedback('✅ Location active! Open in Google Maps or use Bookmarklet.');
+          showFeedback('⚡ Live Geolocation Synced!');
         });
     }
 
     function copyBookmarklet() {
       const bookmarklet = "javascript:(function(){var s=document.createElement('script');s.src='http://$hostIp:$port/override.js';document.body.appendChild(s);})();";
-      navigator.clipboard.writeText(bookmarklet).then(() => {
-        const btn = document.getElementById('btnCopyBookmarklet');
-        if (btn) {
-          btn.innerText = '✅ Bookmarklet Copied!';
-          setTimeout(() => { btn.innerText = '🔖 Copy Safari/Chrome Bookmarklet'; }, 2500);
-        }
-        showFeedback('🔖 Bookmarklet copied! Save as bookmark in Safari/Chrome to spoof any website with 1 tap.');
-      }).catch(() => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(bookmarklet).then(() => {
+          const btn = document.getElementById('btnCopyBookmarklet');
+          if (btn) {
+            btn.innerText = '✅ Copied!';
+            setTimeout(() => { btn.innerText = '🔖 Copy Bookmarklet'; }, 2500);
+          }
+          showFeedback('🔖 Bookmarklet copied!');
+        });
+      } else {
         prompt('Copy bookmarklet code below:', bookmarklet);
-      });
+      }
     }
   </script>
 </body>
@@ -973,8 +905,10 @@ object HotspotLocationServer {
             Log.w(TAG, "getAllLocalIpAddresses error: ${e.message}")
         }
 
-        if (!result.any { it.startsWith("192.168.43.") || it.startsWith("192.168.44.") }) {
-            result.add(0, "192.168.43.1")
+        if (result.isEmpty()) {
+            result.add("192.168.43.1")
+        } else if (!result.contains("192.168.43.1")) {
+            result.add("192.168.43.1")
         }
 
         return result.distinct()

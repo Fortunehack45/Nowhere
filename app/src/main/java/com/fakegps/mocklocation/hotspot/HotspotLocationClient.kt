@@ -13,6 +13,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 
 /**
  * Hotspot Location Client for Android devices (BETA).
@@ -61,30 +62,14 @@ object HotspotLocationClient {
             return
         }
 
-        var cleanUrl = hostUrl.trim()
-        if (cleanUrl.isEmpty()) {
-            cleanUrl = "http://192.168.43.1:8088"
-        }
+        val appContext = context.applicationContext
+        val candidateUrls = buildCandidateUrls(appContext, hostUrl)
+        var activeWorkingUrl = candidateUrls.firstOrNull() ?: DEFAULT_HOST_URL
 
-        if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
-            cleanUrl = "http://$cleanUrl"
-        }
+        Log.i(TAG, "Starting Hotspot GPS Client sync with candidates: $candidateUrls")
+        _syncState.value = SyncState.Connecting(activeWorkingUrl)
 
-        val hostPart = cleanUrl.substringAfter("://").substringBefore("/")
-        if (!hostPart.contains(":") && !cleanUrl.endsWith(".json")) {
-            cleanUrl = "http://$hostPart:8088"
-        }
-
-        val fullUrl = if (!cleanUrl.endsWith("/location.json") && !cleanUrl.endsWith("/api/location")) {
-            if (cleanUrl.endsWith("/")) "${cleanUrl}location.json" else "$cleanUrl/location.json"
-        } else {
-            cleanUrl
-        }
-
-        Log.i(TAG, "Starting Hotspot GPS Client sync with host: $fullUrl")
-        _syncState.value = SyncState.Connecting(fullUrl)
-
-        clientEngine = MockLocationEngine(context.applicationContext)
+        clientEngine = MockLocationEngine(appContext)
         val initResult = clientEngine?.initialize()
         if (initResult?.isFailure == true) {
             val errorMsg = initResult.exceptionOrNull()?.message ?: "Failed to initialize test provider"
@@ -98,7 +83,23 @@ object HotspotLocationClient {
 
             while (isActive) {
                 try {
-                    val locationData = fetchHostLocation(fullUrl)
+                    // Try primary working URL first
+                    var locationData = fetchHostLocation(activeWorkingUrl)
+
+                    // If primary fails during initial connection or drop, sweep candidate gateway URLs
+                    if (locationData == null) {
+                        for (candidate in candidateUrls) {
+                            if (candidate == activeWorkingUrl) continue
+                            val testData = fetchHostLocation(candidate)
+                            if (testData != null) {
+                                activeWorkingUrl = candidate
+                                locationData = testData
+                                Log.i(TAG, "Discovered working host phone at $activeWorkingUrl")
+                                break
+                            }
+                        }
+                    }
+
                     if (locationData != null) {
                         consecutiveFailures = 0
                         val lat = locationData.optDouble("latitude", 0.0)
@@ -119,7 +120,7 @@ object HotspotLocationClient {
                         )
 
                         _syncState.value = SyncState.Synced(
-                            hostUrl = fullUrl,
+                            hostUrl = activeWorkingUrl,
                             latitude = lat,
                             longitude = lon,
                             altitude = alt,
@@ -129,7 +130,7 @@ object HotspotLocationClient {
                     } else {
                         consecutiveFailures++
                         if (consecutiveFailures > 4) {
-                            _syncState.value = SyncState.Error("Searching for Host Phone at $fullUrl... (Ensure phone is connected to host hotspot)")
+                            _syncState.value = SyncState.Error("Searching for Host Phone at $activeWorkingUrl... (Ensure phone is connected to host hotspot)")
                         }
                     }
                 } catch (e: Exception) {
@@ -142,6 +143,62 @@ object HotspotLocationClient {
                 delay(500L) // 500ms real-time sync heartbeat
             }
         }
+    }
+
+    private fun buildCandidateUrls(context: Context, initialHostUrl: String): List<String> {
+        val list = mutableListOf<String>()
+
+        fun normalizeUrl(raw: String, defaultPort: Int = 8088): String {
+            var url = raw.trim()
+            if (url.isEmpty()) return "http://192.168.43.1:$defaultPort/location.json"
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                url = "http://$url"
+            }
+            val hostPart = url.substringAfter("://").substringBefore("/")
+            if (!hostPart.contains(":")) {
+                url = "http://$hostPart:$defaultPort"
+            }
+            return if (!url.endsWith("/location.json") && !url.endsWith("/api/location")) {
+                if (url.endsWith("/")) "${url}location.json" else "$url/location.json"
+            } else {
+                url
+            }
+        }
+
+        if (initialHostUrl.isNotBlank()) {
+            list.add(normalizeUrl(initialHostUrl))
+        }
+
+        // 1. Detect DHCP Gateway from active Wi-Fi / Hotspot connection
+        try {
+            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? android.net.wifi.WifiManager
+            val dhcp = wifiManager?.dhcpInfo
+            if (dhcp != null && dhcp.gateway != 0) {
+                val ipInt = dhcp.gateway
+                val gatewayIp = String.format(
+                    Locale.US,
+                    "%d.%d.%d.%d",
+                    ipInt and 0xff,
+                    ipInt shr 8 and 0xff,
+                    ipInt shr 16 and 0xff,
+                    ipInt shr 24 and 0xff
+                )
+                if (gatewayIp != "0.0.0.0" && !gatewayIp.startsWith("127.")) {
+                    list.add(normalizeUrl(gatewayIp, 8088))
+                    list.add(normalizeUrl(gatewayIp, 8089))
+                    list.add(normalizeUrl(gatewayIp, 8090))
+                }
+            }
+        } catch (ignored: Exception) {}
+
+        // 2. Common Android Hotspot Gateway defaults
+        val defaultGateways = listOf("192.168.43.1", "192.168.44.1", "192.168.49.1", "192.168.50.1", "10.0.0.1", "192.168.1.1")
+        for (gw in defaultGateways) {
+            list.add(normalizeUrl(gw, 8088))
+            list.add(normalizeUrl(gw, 8089))
+        }
+
+        return list.distinct()
     }
 
     fun stopSync() {
@@ -160,8 +217,8 @@ object HotspotLocationClient {
         return try {
             val url = URL(urlString)
             connection = (url.openConnection() as HttpURLConnection).apply {
-                connectTimeout = 2500
-                readTimeout = 2500
+                connectTimeout = 2000
+                readTimeout = 2000
                 requestMethod = "GET"
                 setRequestProperty("Accept", "application/json")
                 setRequestProperty("Connection", "close")

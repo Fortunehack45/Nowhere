@@ -199,6 +199,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             sessionPrefs.saveWaypoints(keys)
             _uiState.update { it.copy(routeWaypoints = keys, isUsingDirectRouteFallback = false) }
         } else {
+            val directPath = com.fakegps.mocklocation.simulator.RoadRouter.generateShortestRoute(keys, _uiState.value.transportMode)
+            sessionPrefs.saveWaypoints(directPath)
+            _uiState.update { it.copy(routeWaypoints = directPath, isUsingDirectRouteFallback = false) }
+
             viewModelScope.launch(Dispatchers.IO) {
                 val result = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRouteWithStatus(keys, _uiState.value.transportMode)
                 sessionPrefs.saveWaypoints(result.waypoints)
