@@ -62,6 +62,15 @@ class HotspotLocationServerTest {
     }
 
     @Test
+    fun testQrCodeGenerator_withEmbeddedLogo() {
+        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        val bitmap = QrCodeGenerator.generateQrBitmap("http://192.168.43.1:8088", 300, 300, context = context)
+        assertNotNull("Generated QR bitmap with logo should not be null", bitmap)
+        assertEquals(300, bitmap?.width)
+        assertEquals(300, bitmap?.height)
+    }
+
+    @Test
     fun testIpResolution_returnsValidIpv4() {
         val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
         val ip = HotspotLocationServer.getHotspotOrWifiIpAddress(context)

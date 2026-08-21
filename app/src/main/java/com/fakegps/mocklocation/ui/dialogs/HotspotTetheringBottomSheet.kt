@@ -118,11 +118,13 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         binding.layoutHostContainer.visibility = View.VISIBLE
         binding.layoutClientContainer.visibility = View.GONE
 
-        binding.tabHostMode.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
-        binding.tabHostMode.setTextColor(requireContext().getColor(android.R.color.white))
+        binding.tabHostMode.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.primary))
+        binding.tabHostMode.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
 
-        binding.tabClientMode.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(android.R.color.transparent))
-        binding.tabClientMode.setTextColor(requireContext().getColor(R.color.text_secondary))
+        binding.tabClientMode.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.transparent))
+        binding.tabClientMode.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+
+        HotspotLocationServer.startServer(requireContext())
     }
 
     private fun switchToClientMode() {
@@ -130,11 +132,16 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         binding.layoutHostContainer.visibility = View.GONE
         binding.layoutClientContainer.visibility = View.VISIBLE
 
-        binding.tabClientMode.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
-        binding.tabClientMode.setTextColor(requireContext().getColor(android.R.color.white))
+        binding.tabClientMode.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.primary))
+        binding.tabClientMode.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
 
-        binding.tabHostMode.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(android.R.color.transparent))
-        binding.tabHostMode.setTextColor(requireContext().getColor(R.color.text_secondary))
+        binding.tabHostMode.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.transparent))
+        binding.tabHostMode.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+
+        if (binding.etHostPhoneUrl.text.isNullOrBlank()) {
+            val hostIp = HotspotLocationServer.getHotspotOrWifiIpAddress(requireContext())
+            binding.etHostPhoneUrl.setText("http://$hostIp:8088")
+        }
     }
 
     private fun setupListeners() {
@@ -239,7 +246,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             HotspotLocationServer.serverUrl.collectLatest { url ->
                 binding.tvHotspotUrl.text = url
-                val qrBitmap = QrCodeGenerator.generateQrBitmap(url, width = 400, height = 400)
+                val qrBitmap = QrCodeGenerator.generateQrBitmap(url, width = 500, height = 500, context = context)
                 if (qrBitmap != null) {
                     binding.ivHotspotQrCode.setImageBitmap(qrBitmap)
                     binding.ivHotspotQrCode.visibility = View.VISIBLE

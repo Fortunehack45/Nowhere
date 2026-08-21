@@ -63,6 +63,15 @@ object HotspotLocationServer {
             return
         }
 
+        try {
+            val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(context)
+            if (sessionPrefs.lastLatitude != 0.0 || sessionPrefs.lastLongitude != 0.0) {
+                currentLat = sessionPrefs.lastLatitude
+                currentLon = sessionPrefs.lastLongitude
+                currentAlt = sessionPrefs.lastAltitude.toDouble().coerceAtLeast(5.0)
+            }
+        } catch (ignored: Exception) {}
+
         val detectedIp = getHotspotOrWifiIpAddress(context)
         _serverUrl.value = "http://$detectedIp:$httpPort"
         updateAllUrls(context, httpPort)
@@ -72,7 +81,7 @@ object HotspotLocationServer {
             _isServerRunning.value = true
 
             // Launch HTTP Server
-            launch { runHttpServer(httpPort, detectedIp) }
+            launch { runHttpServer(httpPort, detectedIp, context) }
 
             // Launch NMEA TCP Server
             launch { runNmeaTcpServer(nmeaPort) }
@@ -84,8 +93,9 @@ object HotspotLocationServer {
 
     fun refreshIpAddress(context: Context, httpPort: Int = DEFAULT_HTTP_PORT): String {
         val detectedIp = getHotspotOrWifiIpAddress(context)
-        _serverUrl.value = "http://$detectedIp:$httpPort"
-        updateAllUrls(context, httpPort)
+        val currentPort = httpServerSocket?.localPort ?: httpPort
+        _serverUrl.value = "http://$detectedIp:$currentPort"
+        updateAllUrls(context, currentPort)
         return detectedIp
     }
 
@@ -105,9 +115,11 @@ object HotspotLocationServer {
         try {
             httpServerSocket?.close()
         } catch (ignored: Exception) {}
+        httpServerSocket = null
         try {
             nmeaServerSocket?.close()
         } catch (ignored: Exception) {}
+        nmeaServerSocket = null
         activeNmeaClients.clear()
         serverJob?.cancel()
         serverJob = null
@@ -122,19 +134,42 @@ object HotspotLocationServer {
         lastUpdateTimestamp = System.currentTimeMillis()
     }
 
-    private suspend fun runHttpServer(port: Int, hostIp: String) = withContext(Dispatchers.IO) {
-        try {
-            httpServerSocket = ServerSocket().apply {
-                reuseAddress = true
-                bind(InetSocketAddress("0.0.0.0", port), 50)
-            }
-            Log.i(TAG, "HTTP Server successfully listening on 0.0.0.0:$port")
+    private suspend fun runHttpServer(requestedPort: Int, hostIp: String, context: Context) = withContext(Dispatchers.IO) {
+        val candidatePorts = listOf(requestedPort, 8088, 8089, 8090, 8080, 8000).distinct()
+        var boundSocket: ServerSocket? = null
+        var boundPort = requestedPort
 
+        for (port in candidatePorts) {
+            try {
+                val socket = ServerSocket().apply {
+                    reuseAddress = true
+                    bind(InetSocketAddress("0.0.0.0", port), 50)
+                }
+                boundSocket = socket
+                boundPort = port
+                break
+            } catch (e: Exception) {
+                Log.w(TAG, "Port $port unavailable, trying next candidate: ${e.message}")
+            }
+        }
+
+        if (boundSocket == null) {
+            Log.e(TAG, "Failed to bind HTTP Server on any candidate ports $candidatePorts")
+            _isServerRunning.value = false
+            return@withContext
+        }
+
+        httpServerSocket = boundSocket
+        _serverUrl.value = "http://$hostIp:$boundPort"
+        updateAllUrls(context, boundPort)
+        Log.i(TAG, "HTTP Server successfully listening on 0.0.0.0:$boundPort -> ${_serverUrl.value}")
+
+        try {
             while (isActive && _isServerRunning.value) {
                 try {
                     val clientSocket = httpServerSocket?.accept() ?: break
                     launch(Dispatchers.IO) {
-                        handleHttpClient(clientSocket, hostIp, port)
+                        handleHttpClient(clientSocket, hostIp, boundPort)
                     }
                 } catch (e: SocketException) {
                     break // Server socket closed
@@ -142,8 +177,10 @@ object HotspotLocationServer {
                     Log.w(TAG, "HTTP accept error: ${e.message}")
                 }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to start HTTP Server on port $port: ${e.message}", e)
+        } finally {
+            try {
+                boundSocket.close()
+            } catch (ignored: Exception) {}
         }
     }
 
