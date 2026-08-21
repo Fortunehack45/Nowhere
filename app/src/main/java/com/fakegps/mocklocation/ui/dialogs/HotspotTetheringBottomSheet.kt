@@ -67,12 +67,48 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         startPeriodicIpRefresh()
     }
 
+    private fun performHapticFeedback() {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                vibrator?.vibrate(android.os.VibrationEffect.createOneShot(35, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(35)
+            }
+        } catch (ignored: Exception) {}
+    }
+
+    private fun showCopySuccessFeedback(button: MaterialButton? = null) {
+        performHapticFeedback()
+        button?.let { btn ->
+            btn.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).withEndAction {
+                btn.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
+            }.start()
+            val origText = btn.text.toString()
+            val origIcon = btn.icon
+            btn.text = "Copied!"
+            btn.setIconResource(R.drawable.ic_check_circle)
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(1800L)
+                if (isAdded) {
+                    btn.text = origText
+                    btn.icon = origIcon
+                }
+            }
+        }
+    }
+
     private fun setupTabs() {
         binding.tabHostMode.setOnClickListener {
+            performHapticFeedback()
             switchToHostMode()
         }
 
         binding.tabClientMode.setOnClickListener {
+            performHapticFeedback()
             switchToClientMode()
         }
     }
@@ -103,10 +139,12 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
 
     private fun setupListeners() {
         binding.btnHotspotClose.setOnClickListener {
+            performHapticFeedback()
             dismiss()
         }
 
         binding.btnOpenHotspotSettings.setOnClickListener {
+            performHapticFeedback()
             try {
                 val intent = Intent()
                 intent.setClassName("com.android.settings", "com.android.settings.TetherSettings")
@@ -121,6 +159,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.switchHotspotServer.setOnCheckedChangeListener { _, isChecked ->
+            performHapticFeedback()
             if (isChecked) {
                 HotspotLocationServer.startServer(requireContext())
                 Toast.makeText(requireContext(), "🛰️ Hotspot GPS Broadcast Started (BETA)", Toast.LENGTH_SHORT).show()
@@ -130,15 +169,29 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
-        binding.btnCopyHotspotUrl.setOnClickListener {
+        val copyAction = {
             val url = HotspotLocationServer.serverUrl.value
             val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("Hotspot GPS URL", url)
             clipboard.setPrimaryClip(clip)
+            showCopySuccessFeedback(binding.btnCopyHotspotUrl)
             Toast.makeText(requireContext(), "✅ URL copied to clipboard: $url", Toast.LENGTH_SHORT).show()
         }
 
+        binding.btnCopyHotspotUrl.setOnClickListener {
+            copyAction()
+        }
+
+        binding.tvHotspotUrl.setOnClickListener {
+            copyAction()
+        }
+
+        binding.ivHotspotQrCode.setOnClickListener {
+            copyAction()
+        }
+
         binding.btnOpenWebDashboard.setOnClickListener {
+            performHapticFeedback()
             val url = HotspotLocationServer.serverUrl.value
             try {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -150,6 +203,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
 
         // Client Receiver Sync Toggle
         binding.btnToggleClientSync.setOnClickListener {
+            performHapticFeedback()
             if (HotspotLocationClient.isSyncing()) {
                 HotspotLocationClient.stopSync()
                 binding.btnToggleClientSync.text = "Start Syncing Location"
@@ -165,6 +219,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.btnOpenClientDevOptions.setOnClickListener {
+            performHapticFeedback()
             PermissionHelper.openDeveloperSettings(requireActivity())
         }
     }
@@ -209,6 +264,10 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                             setOnClickListener {
                                 val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 clipboard.setPrimaryClip(ClipData.newPlainText("Alt GPS URL", altUrl))
+                                performHapticFeedback()
+                                val oldText = text
+                                text = "✅ Copied: $altUrl"
+                                postDelayed({ text = oldText }, 1800)
                                 Toast.makeText(requireContext(), "Copied: $altUrl", Toast.LENGTH_SHORT).show()
                             }
                         }

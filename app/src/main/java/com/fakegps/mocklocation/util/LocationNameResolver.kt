@@ -17,6 +17,11 @@ object LocationNameResolver {
     private val cache = ConcurrentHashMap<String, String>()
     private val waterCache = ConcurrentHashMap<String, Boolean>()
 
+    fun getCachedLocationName(latitude: Double, longitude: Double): String? {
+        val cacheKey = String.format(Locale.US, "%.3f,%.3f", latitude, longitude)
+        return cache[cacheKey]
+    }
+
     suspend fun resolveLocationName(context: Context, latitude: Double, longitude: Double): String =
         withContext(Dispatchers.IO) {
             val cacheKey = String.format(Locale.US, "%.3f,%.3f", latitude, longitude)

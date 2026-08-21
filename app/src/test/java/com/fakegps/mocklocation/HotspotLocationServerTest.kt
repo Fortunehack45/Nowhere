@@ -60,4 +60,18 @@ class HotspotLocationServerTest {
         assertEquals(200, bitmap?.width)
         assertEquals(200, bitmap?.height)
     }
+
+    @Test
+    fun testIpResolution_returnsValidIpv4() {
+        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        val ip = HotspotLocationServer.getHotspotOrWifiIpAddress(context)
+        assertNotNull("Resolved IP must not be null", ip)
+        assertTrue("Resolved IP must be a valid IPv4 string", ip.matches(Regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\$")))
+
+        val allIps = HotspotLocationServer.getAllLocalIpAddresses(context)
+        assertTrue("All IPs list must contain at least one valid IP", allIps.isNotEmpty())
+        for (addr in allIps) {
+            assertTrue("Every address must match IPv4 format", addr.matches(Regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\$")))
+        }
+    }
 }

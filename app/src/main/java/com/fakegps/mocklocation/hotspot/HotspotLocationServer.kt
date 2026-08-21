@@ -287,7 +287,7 @@ object HotspotLocationServer {
         val js = """
 // Nowhere Hotspot GPS Injector for Connected Browsers (BETA)
 (function() {
-  const SERVER_URL = 'http://' + window.location.hostname + ':' + (window.location.port || '$port') + '/location.json';
+  const SERVER_URL = 'http://$hostIp:$port/location.json';
   console.log('[Nowhere GPS] Injecting mock location from ' + SERVER_URL);
 
   let cachedPosition = {
@@ -323,15 +323,15 @@ object HotspotLocationServer {
       }
     } catch(e) {}
   }
-  setInterval(pollLocation, 500);
+  setInterval(pollLocation, 400);
   pollLocation();
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition = function(success, error, options) {
-      setTimeout(() => success(cachedPosition), 20);
+      setTimeout(() => success(cachedPosition), 10);
     };
     navigator.geolocation.watchPosition = function(success, error, options) {
-      const id = setInterval(() => success(cachedPosition), 500);
+      const id = setInterval(() => success(cachedPosition), 400);
       return id;
     };
     navigator.geolocation.clearWatch = function(id) {
@@ -346,6 +346,7 @@ object HotspotLocationServer {
         val response = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: application/javascript; charset=UTF-8\r\n" +
                 "Access-Control-Allow-Origin: *\r\n" +
+                "Access-Control-Allow-Methods: GET, OPTIONS\r\n" +
                 "Content-Length: ${js.toByteArray(Charsets.UTF_8).size}\r\n" +
                 "Connection: close\r\n\r\n" + js
 
@@ -366,7 +367,6 @@ object HotspotLocationServer {
       --bg: #090B0E;
       --card-bg: #12151E;
       --card-elevated: #1A1E2C;
-      --border: #2A1818;
       --border-red: rgba(255, 59, 48, 0.35);
       --primary-red: #FF3B30;
       --primary-red-hover: #E52E24;
@@ -380,7 +380,7 @@ object HotspotLocationServer {
     body { background: var(--bg); color: var(--text); padding: 16px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
     .container { max-width: 720px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
     
-    /* Red Header with Nowhere App Logo & BETA Tag */
+    /* Header */
     .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--border-red); border-radius: 16px; box-shadow: 0 4px 20px rgba(255, 59, 48, 0.1); }
     .logo-area { display: flex; align-items: center; gap: 12px; }
     .logo-container { width: 42px; height: 42px; background: #181B26; border: 1px solid rgba(255,59,48,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px var(--glow-red); }
@@ -392,34 +392,37 @@ object HotspotLocationServer {
     .pulse-dot { width: 9px; height: 9px; background: var(--primary-red); border-radius: 50%; box-shadow: 0 0 8px var(--primary-red); animation: pulse 1.2s infinite; }
     @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(1.4); } 100% { opacity: 1; transform: scale(1); } }
     
+    /* Toast Banner */
+    #toastBanner { display: none; background: rgba(52, 199, 89, 0.2); border: 1px solid var(--green); color: #4CD964; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; text-align: center; animation: fadeIn 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    
     /* Stats Grid */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
     .stat-card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; border-left: 3px solid var(--primary-red); }
     .stat-label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; font-weight: 700; }
     .stat-val { font-size: 18px; font-weight: 800; color: var(--text); font-family: monospace; }
     
-    /* Map & Fallback Radar Canvas */
+    /* Map Container */
     .map-container { position: relative; width: 100%; height: 320px; border-radius: 16px; border: 1px solid var(--border-red); overflow: hidden; background: #0B0E14; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
     #map { height: 100%; width: 100%; z-index: 1; }
     #radarCanvas { position: absolute; top:0; left:0; width:100%; height:100%; display:none; z-index: 0; }
     
-    /* Quick Action Cards */
+    /* Cards & Buttons */
     .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
     .card-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--text); }
     
     .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-    .btn-red { background: linear-gradient(135deg, #FF3B30 0%, #D32F2F 100%); color: white; border: none; padding: 14px 16px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-size: 13px; text-decoration: none; box-shadow: 0 4px 14px var(--glow-red); }
-    .btn-red:hover { background: linear-gradient(135deg, #FF5247 0%, #E53935 100%); transform: translateY(-2px); box-shadow: 0 6px 20px var(--glow-red); }
-    .btn-secondary { background: var(--card-elevated); color: var(--text); border: 1px solid rgba(255,255,255,0.12); padding: 14px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; text-decoration: none; }
-    .btn-secondary:hover { background: #262B3D; }
+    .btn-red { background: linear-gradient(135deg, #FF3B30 0%, #D32F2F 100%); color: white; border: none; padding: 14px 16px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s; font-size: 13px; text-decoration: none; box-shadow: 0 4px 14px var(--glow-red); }
+    .btn-red:active { transform: scale(0.96); filter: brightness(1.2); }
+    .btn-secondary { background: var(--card-elevated); color: var(--text); border: 1px solid rgba(255,255,255,0.12); padding: 14px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; text-decoration: none; transition: all 0.15s; }
+    .btn-secondary:active { transform: scale(0.96); background: #262B3D; }
 
-    /* Red Easy Steps */
+    /* Easy Steps */
     .easy-step { display: flex; align-items: flex-start; gap: 12px; background: var(--card-elevated); padding: 14px; border-radius: 12px; border-left: 3px solid var(--primary-red); }
     .step-circle { width: 26px; height: 26px; background: var(--primary-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; flex-shrink: 0; }
     .step-text { font-size: 13px; line-height: 1.5; color: var(--muted); }
     .step-text strong { color: var(--text); font-weight: 700; }
     
-    /* Footer */
     .footer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 10px; }
   </style>
 </head>
@@ -450,6 +453,9 @@ object HotspotLocationServer {
       </div>
     </div>
 
+    <!-- Live Interactive Toast Feedback -->
+    <div id="toastBanner"></div>
+
     <!-- Live Coordinates Grid -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -478,18 +484,21 @@ object HotspotLocationServer {
 
     <!-- 1-Tap Quick Launchers -->
     <div class="card">
-      <div class="card-title">🚀 1-Tap Location Launchers</div>
+      <div class="card-title">🚀 1-Tap Location Launchers &amp; Sync</div>
       <div class="actions-grid">
-        <a id="btnGoogleMaps" class="btn-red" href="https://www.google.com/maps?q=$currentLat,$currentLon" target="_blank">
+        <a id="btnGoogleMaps" class="btn-red" href="https://www.google.com/maps?q=$currentLat,$currentLon" target="_blank" onclick="showFeedback('🗺️ Opening Google Maps at live spoofed coordinates...')">
           🗺️ Open in Google Maps
         </a>
-        <a id="btnAppleMaps" class="btn-secondary" href="http://maps.apple.com/?q=$currentLat,$currentLon&ll=$currentLat,$currentLon" target="_blank">
+        <a id="btnAppleMaps" class="btn-secondary" href="http://maps.apple.com/?q=$currentLat,$currentLon&ll=$currentLat,$currentLon" target="_blank" onclick="showFeedback('🍎 Opening Apple Maps at live coordinates...')">
           🍎 Open in Apple Maps
         </a>
-        <button class="btn-secondary" onclick="syncBrowserTab()">
+        <button id="btnSyncTab" class="btn-secondary" onclick="syncBrowserTab()">
           ⚡ Sync This Browser Tab
         </button>
-        <a class="btn-secondary" href="/gps.gpx" download="nowhere_location.gpx">
+        <button id="btnCopyBookmarklet" class="btn-secondary" onclick="copyBookmarklet()">
+          🔖 Copy Safari/Chrome Bookmarklet
+        </button>
+        <a class="btn-secondary" href="/gps.gpx" download="nowhere_location.gpx" onclick="showFeedback('📥 Downloading live .gpx route/waypoint track...')">
           📥 Download GPS File (.gpx)
         </a>
       </div>
@@ -497,26 +506,33 @@ object HotspotLocationServer {
 
     <!-- Simple Connection Steps -->
     <div class="card">
-      <div class="card-title">📱 How it Works on Your Devices</div>
+      <div class="card-title">📱 How to Sync Other Devices</div>
       
       <div class="easy-step">
         <div class="step-circle">1</div>
         <div class="step-text">
-          <strong>Connected to Hotspot:</strong> Your iPad, MacBook, PC, or iPhone is connected to this phone's Wi-Fi.
+          <strong>Connected to Hotspot:</strong> Make sure your iPad, MacBook, PC, iPhone, or Android is connected to this phone's Wi-Fi Hotspot.
         </div>
       </div>
 
       <div class="easy-step">
         <div class="step-circle">2</div>
         <div class="step-text">
-          <strong>Instant Map Sync:</strong> This page automatically tracks your spoofed location in real time. Tap <strong>"Open in Google Maps"</strong> or <strong>"Open in Apple Maps"</strong> to navigate anywhere instantly.
+          <strong>Instant Live Maps:</strong> Tap <strong>"Open in Google Maps"</strong> or <strong>"Open in Apple Maps"</strong> to navigate directly with the spoofed position.
         </div>
       </div>
 
       <div class="easy-step">
         <div class="step-circle">3</div>
         <div class="step-text">
-          <strong>Browser Geolocation Sync:</strong> Tap <strong>"Sync This Browser Tab"</strong> to inject this spoofed position directly into your web browser.
+          <strong>iOS / Desktop Safari &amp; Chrome Bookmarklet:</strong> Tap <strong>"Copy Bookmarklet"</strong> and save as a bookmark. Tap that bookmark on any site (e.g. Life360, Tinder, Maps) to lock your location.
+        </div>
+      </div>
+
+      <div class="easy-step">
+        <div class="step-circle">4</div>
+        <div class="step-text">
+          <strong>Android Phone Sync:</strong> Open the Nowhere app on your other Android phone, switch to the <strong>"Receive (Client Phone)"</strong> tab, and tap <strong>"Start Syncing"</strong>!
         </div>
       </div>
     </div>
@@ -534,6 +550,15 @@ object HotspotLocationServer {
     let radarCircle = null;
     let lastLat = $currentLat;
     let lastLon = $currentLon;
+
+    function showFeedback(msg) {
+      const banner = document.getElementById('toastBanner');
+      if (banner) {
+        banner.innerText = msg;
+        banner.style.display = 'block';
+        setTimeout(() => { banner.style.display = 'none'; }, 4000);
+      }
+    }
 
     // Fail-safe Leaflet initialization with offline fallback
     try {
@@ -581,7 +606,6 @@ object HotspotLocationServer {
           ctx.fillStyle = '#090B0E';
           ctx.fillRect(0, 0, cvs.width, cvs.height);
 
-          // Grid circles
           ctx.strokeStyle = 'rgba(255, 59, 48, 0.25)';
           ctx.lineWidth = 1;
           for (let i = 1; i <= 3; i++) {
@@ -590,7 +614,6 @@ object HotspotLocationServer {
             ctx.stroke();
           }
 
-          // Sweep
           ctx.save();
           ctx.translate(cx, cy);
           ctx.rotate(angle);
@@ -605,7 +628,6 @@ object HotspotLocationServer {
           ctx.fill();
           ctx.restore();
 
-          // Center target
           ctx.fillStyle = '#FF3B30';
           ctx.beginPath();
           ctx.arc(cx, cy, 6, 0, Math.PI * 2);
@@ -641,18 +663,37 @@ object HotspotLocationServer {
         }
       } catch(e) {}
     }
-    setInterval(refresh, 500);
+    setInterval(refresh, 400);
 
     function syncBrowserTab() {
+      const btn = document.getElementById('btnSyncTab');
       fetch('/override.js')
         .then(r => r.text())
         .then(code => {
           eval(code);
-          alert('✅ Location synced in this browser tab! Current position: ' + lastLat.toFixed(5) + ', ' + lastLon.toFixed(5));
+          if (btn) {
+            btn.innerText = '✅ Live Geolocation Synced!';
+            setTimeout(() => { btn.innerText = '⚡ Sync This Browser Tab'; }, 3000);
+          }
+          showFeedback('⚡ Live Geolocation Synced! This browser tab is now locked to ' + lastLat.toFixed(5) + ', ' + lastLon.toFixed(5));
         })
         .catch(() => {
-          alert('✅ Location is active! Use the Open in Google Maps button to view.');
+          showFeedback('✅ Location active! Open in Google Maps or use Bookmarklet.');
         });
+    }
+
+    function copyBookmarklet() {
+      const bookmarklet = "javascript:(function(){var s=document.createElement('script');s.src='http://$hostIp:$port/override.js';document.body.appendChild(s);})();";
+      navigator.clipboard.writeText(bookmarklet).then(() => {
+        const btn = document.getElementById('btnCopyBookmarklet');
+        if (btn) {
+          btn.innerText = '✅ Bookmarklet Copied!';
+          setTimeout(() => { btn.innerText = '🔖 Copy Safari/Chrome Bookmarklet'; }, 2500);
+        }
+        showFeedback('🔖 Bookmarklet copied! Save as bookmark in Safari/Chrome to spoof any website with 1 tap.');
+      }).catch(() => {
+        prompt('Copy bookmarklet code below:', bookmarklet);
+      });
     }
   </script>
 </body>

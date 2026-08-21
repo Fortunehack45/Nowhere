@@ -114,6 +114,9 @@ class MockLocationService : Service() {
         com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider.updateAllSearchWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider.updateAllWeatherWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereIconWidgetProvider.updateAllIconWidgets(this)
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -337,11 +340,21 @@ class MockLocationService : Service() {
     private fun updateLocationNotification(lat: Double, lon: Double, modeDescription: String = "Active") {
         serviceScope.launch {
             try {
-                val placeName = com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
-                    this@MockLocationService,
-                    lat,
-                    lon
-                )
+                val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
+                val placeName = if (!cachedName.isNullOrBlank()) {
+                    cachedName
+                } else {
+                    // Trigger background resolution for future ticks
+                    serviceScope.launch(Dispatchers.IO) {
+                        com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
+                            this@MockLocationService,
+                            lat,
+                            lon
+                        )
+                    }
+                    String.format(Locale.US, "%.5f°, %.5f°", lat, lon)
+                }
+
                 val coordsText = String.format("%.5f°, %.5f° • %s", lat, lon, modeDescription)
 
                 val stopIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
@@ -365,20 +378,40 @@ class MockLocationService : Service() {
                 )
 
                 val runningState = _serviceState.value as? ServiceState.Running
-                val routeDetails = if (runningState != null && runningState.totalDistanceMeters > 0) {
-                    val covered = String.format(Locale.US, "%.2f km", runningState.distanceCoveredMeters / 1000.0)
-                    val total = String.format(Locale.US, "%.2f km", runningState.totalDistanceMeters / 1000.0)
-                    val remaining = String.format(Locale.US, "%.2f km", runningState.distanceRemainingMeters / 1000.0)
-                    val progress = ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt()
-                    val speedMps = runningState.speedMps.coerceAtLeast(0.1f)
-                    val etaSec = (runningState.distanceRemainingMeters / speedMps).toLong()
-                    val etaStr = formatEta(etaSec)
-                    "\n📍 Route: $covered / $total ($progress%) • $remaining left\n⏱️ ETA: $etaStr"
+                val isRoute = activeMode is SimulationMode.Route && runningState != null && runningState.totalDistanceMeters > 0
+                val progress = if (isRoute && runningState!!.totalDistanceMeters > 0) {
+                    ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt().coerceIn(0, 100)
+                } else 0
+
+                val coveredStr = if (isRoute) String.format(Locale.US, "%.2f km", runningState!!.distanceCoveredMeters / 1000.0) else ""
+                val totalStr = if (isRoute) String.format(Locale.US, "%.2f km", runningState!!.totalDistanceMeters / 1000.0) else ""
+                val remainingStr = if (isRoute) String.format(Locale.US, "%.2f km", runningState!!.distanceRemainingMeters / 1000.0) else ""
+                val speedKmh = if (runningState != null) runningState.speedMps * 3.6f else 0.0f
+                val speedMps = if (runningState != null) runningState.speedMps.coerceAtLeast(0.1f) else 0.1f
+                val etaSec = if (isRoute && speedMps > 0.3f && runningState!!.distanceRemainingMeters > 5.0) {
+                    (runningState.distanceRemainingMeters / speedMps).toLong()
+                } else 0L
+                val etaStr = if (isRoute) formatEta(etaSec) else ""
+
+                val notifTitle = if (isRoute) {
+                    "📍 Route: $coveredStr / $totalStr ($progress%)"
+                } else {
+                    placeName
+                }
+
+                val notifText = if (isRoute) {
+                    "⏱️ ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
+                } else {
+                    coordsText
+                }
+
+                val routeDetails = if (isRoute) {
+                    "\n📍 Route: $coveredStr / $totalStr ($progress%) • $remainingStr left\n⏱️ ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
                 } else ""
 
                 val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
-                    .setContentTitle(placeName)
-                    .setContentText(coordsText)
+                    .setContentTitle(notifTitle)
+                    .setContentText(notifText)
                     .setSmallIcon(R.drawable.ic_launcher_monochrome)
                     .setColor(ContextCompat.getColor(this@MockLocationService, R.color.primary))
                     .setContentIntent(openAppPendingIntent)
@@ -386,11 +419,16 @@ class MockLocationService : Service() {
                     .setCategory(NotificationCompat.CATEGORY_SERVICE)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                     .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .setStyle(
-                        NotificationCompat.BigTextStyle()
-                            .setBigContentTitle(placeName)
-                            .bigText("$coordsText$routeDetails\nGPS Mocking active in background across all apps.")
-                    )
+
+                if (isRoute) {
+                    builder.setProgress(100, progress, false)
+                }
+
+                builder.setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .setBigContentTitle(notifTitle)
+                        .bigText("$coordsText$routeDetails\nGPS Mocking active in background across all apps.")
+                )
 
                 if (activeMode is SimulationMode.Route) {
                     val isPaused = (_serviceState.value as? ServiceState.Running)?.isPaused == true
@@ -625,6 +663,9 @@ class MockLocationService : Service() {
                 var lastTickTime = android.os.SystemClock.elapsedRealtime()
                 var lastWidgetUpdateTime = 0L
                 var lastNotificationUpdateTime = 0L
+                var lastWeatherUpdateTime = 0L
+                var lastWeatherLat = 0.0
+                var lastWeatherLon = 0.0
 
                 while (isActive) {
                     val now = android.os.SystemClock.elapsedRealtime()
@@ -665,16 +706,29 @@ class MockLocationService : Service() {
                             sessionPrefs.routeCoveredDistanceMeters = simLoc.distanceCoveredMeters
                             sessionPrefs.routeRemainingDistanceMeters = simLoc.distanceRemainingMeters
 
-                            // Real-time home screen widget update in background
-                            if (now - lastWidgetUpdateTime >= 1500L) {
+                            // Real-time home screen widget update in background (every 1s)
+                            if (now - lastWidgetUpdateTime >= 1000L) {
                                 lastWidgetUpdateTime = now
                                 updateAllWidgets()
                             }
 
-                            // Real-time foreground notification progress update in background
-                            if (now - lastNotificationUpdateTime >= 2000L) {
+                            // Real-time foreground notification progress update in background (every 1s)
+                            if (now - lastNotificationUpdateTime >= 1000L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(simLoc.latitude, simLoc.longitude, "Route Active (${transportMode.title})")
+                            }
+
+                            // Periodic weather update during route travel (every 45s or when moved > 0.05 degrees ~ 5km)
+                            val distShift = kotlin.math.abs(simLoc.latitude - lastWeatherLat) + kotlin.math.abs(simLoc.longitude - lastWeatherLon)
+                            if (now - lastWeatherUpdateTime >= 45000L || (distShift > 0.05 && now - lastWeatherUpdateTime >= 15000L)) {
+                                lastWeatherUpdateTime = now
+                                lastWeatherLat = simLoc.latitude
+                                lastWeatherLon = simLoc.longitude
+                                serviceScope.launch(Dispatchers.IO) {
+                                    try {
+                                        com.fakegps.mocklocation.weather.WeatherManager.fetchWeather(this@MockLocationService, simLoc.latitude, simLoc.longitude)
+                                    } catch (ignored: Exception) {}
+                                }
                             }
                         }
 
