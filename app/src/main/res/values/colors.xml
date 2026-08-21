@@ -57,6 +57,10 @@
     <color name="badge_error_bg">#FEE2E2</color>
     <color name="badge_error_text">#DC2626</color>
 
+    <!-- Simulation Stop Action Button (Light Mode: Visible light red, not washed out) -->
+    <color name="btn_stop_bg">#FCA5A5</color>
+    <color name="btn_stop_text">#7F1D1D</color>
+
     <!-- Widget Dynamic Themed Icon Tokens (Light Mode Fallback) -->
     <color name="widget_icon_bg">#E2E8F0</color>
     <color name="widget_icon_bg_active">#FEE2E2</color>

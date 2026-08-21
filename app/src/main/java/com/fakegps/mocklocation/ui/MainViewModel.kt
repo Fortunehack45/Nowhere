@@ -113,9 +113,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun removeWaypointAt(index: Int) {
-        val currentKeys = _uiState.value.userKeypoints
+        val currentKeys = if (_uiState.value.userKeypoints.isNotEmpty()) _uiState.value.userKeypoints else _uiState.value.routeWaypoints
         if (index in currentKeys.indices) {
-            undoStack.push(currentKeys)
+            undoStack.push(_uiState.value.userKeypoints)
             redoStack.clear()
             val nextKeys = currentKeys.toMutableList().apply { removeAt(index) }
             applyKeypoints(nextKeys)
@@ -123,9 +123,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun reorderWaypoints(fromPosition: Int, toPosition: Int) {
-        val currentKeys = _uiState.value.userKeypoints
+        val currentKeys = if (_uiState.value.userKeypoints.isNotEmpty()) _uiState.value.userKeypoints else _uiState.value.routeWaypoints
         if (fromPosition in currentKeys.indices && toPosition in currentKeys.indices && fromPosition != toPosition) {
-            undoStack.push(currentKeys)
+            undoStack.push(_uiState.value.userKeypoints)
             redoStack.clear()
             val nextKeys = currentKeys.toMutableList()
             val item = nextKeys.removeAt(fromPosition)
@@ -135,9 +135,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateWaypointStopDuration(index: Int, durationSeconds: Int) {
-        val currentKeys = _uiState.value.userKeypoints
+        val currentKeys = if (_uiState.value.userKeypoints.isNotEmpty()) _uiState.value.userKeypoints else _uiState.value.routeWaypoints
         if (index in currentKeys.indices) {
-            undoStack.push(currentKeys)
+            undoStack.push(_uiState.value.userKeypoints)
             redoStack.clear()
             val nextKeys = currentKeys.toMutableList()
             nextKeys[index] = nextKeys[index].copy(stopDurationSeconds = durationSeconds.coerceAtLeast(0))

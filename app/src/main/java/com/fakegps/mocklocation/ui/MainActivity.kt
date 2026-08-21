@@ -1162,9 +1162,9 @@ class MainActivity : AppCompatActivity() {
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.FIXED) {
             binding.btnFixedToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnFixedToggle.setIconResource(R.drawable.ic_stop)
-            binding.btnFixedToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_error_bg)
-            binding.btnFixedToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
-            binding.btnFixedToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
+            binding.btnFixedToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btn_stop_bg)
+            binding.btnFixedToggle.setTextColor(ContextCompat.getColor(this, R.color.btn_stop_text))
+            binding.btnFixedToggle.iconTint = ContextCompat.getColorStateList(this, R.color.btn_stop_text)
         } else {
             binding.btnFixedToggle.text = getString(R.string.btn_start_teleport)
             binding.btnFixedToggle.setIconResource(R.drawable.ic_teleport)
@@ -1208,9 +1208,9 @@ class MainActivity : AppCompatActivity() {
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.ROUTE) {
             binding.btnRouteToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnRouteToggle.setIconResource(R.drawable.ic_stop)
-            binding.btnRouteToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_error_bg)
-            binding.btnRouteToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
-            binding.btnRouteToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
+            binding.btnRouteToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btn_stop_bg)
+            binding.btnRouteToggle.setTextColor(ContextCompat.getColor(this, R.color.btn_stop_text))
+            binding.btnRouteToggle.iconTint = ContextCompat.getColorStateList(this, R.color.btn_stop_text)
             binding.btnRoutePause.visibility = View.VISIBLE
 
             val isPaused = runningState?.isPaused == true
@@ -1269,9 +1269,9 @@ class MainActivity : AppCompatActivity() {
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.JOYSTICK) {
             binding.btnJoystickToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnJoystickToggle.setIconResource(R.drawable.ic_stop)
-            binding.btnJoystickToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_error_bg)
-            binding.btnJoystickToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
-            binding.btnJoystickToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
+            binding.btnJoystickToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btn_stop_bg)
+            binding.btnJoystickToggle.setTextColor(ContextCompat.getColor(this, R.color.btn_stop_text))
+            binding.btnJoystickToggle.iconTint = ContextCompat.getColorStateList(this, R.color.btn_stop_text)
 
             val running = state.serviceState as? ServiceState.Running
             if (running != null && running.mode is SimulationMode.Joystick) {
