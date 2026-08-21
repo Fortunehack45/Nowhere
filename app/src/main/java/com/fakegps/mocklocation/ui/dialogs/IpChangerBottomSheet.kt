@@ -167,9 +167,12 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         }
 
         binding.btnToggleShield.setOnClickListener {
+            val ctx = context ?: return@setOnClickListener
             if (NowhereVpnService.isRunning) {
-                val ctx = context ?: return@setOnClickListener
-                Toast.makeText(ctx, "Privacy Shield is locked to Mock GPS to preserve background operation. Tap any country node to switch servers.", Toast.LENGTH_LONG).show()
+                NowhereVpnService.stop(ctx)
+                sessionPrefs.isIpMaskingEnabled = false
+                Toast.makeText(ctx, "Privacy Shield Disconnected", Toast.LENGTH_SHORT).show()
+                onShieldStateChanged?.invoke()
             } else {
                 val node = IpManager.getNodeById(sessionPrefs.activeIpNodeId)
                 requestConnectVpn(node)
@@ -242,17 +245,21 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 binding.tvCurrentIp.text = state.node.virtualIp
                 binding.tvIpDetails.text = "${state.node.flagEmoji} ${state.node.city}, ${state.node.country} • Nowhere Privacy Tunnel"
 
-                binding.btnToggleShield.text = "🔒 Privacy Shield Active • Tap Any Node to Switch"
-                binding.btnToggleShield.setIconResource(R.drawable.ic_shield_check)
-                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.primary)
+                binding.btnToggleShield.text = "Disconnect Privacy Shield"
+                binding.btnToggleShield.setIconResource(R.drawable.ic_close)
+                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.btn_stop_bg)
                 binding.btnToggleShield.strokeWidth = 0
-                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.white))
-                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.white)
+                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.btn_stop_text))
+                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.btn_stop_text)
             }
             is NowhereVpnService.VpnState.Connecting -> {
                 binding.cardVpnTraffic.visibility = View.VISIBLE
                 binding.tvShieldStatus.text = "CONNECTING..."
                 binding.btnToggleShield.text = "Connecting..."
+                binding.btnToggleShield.setIconResource(R.drawable.ic_shield_check)
+                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.primary)
+                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.white))
+                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.white)
             }
             else -> {
                 binding.cardVpnTraffic.visibility = View.GONE

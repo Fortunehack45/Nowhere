@@ -97,7 +97,7 @@ class SessionTimerManagerTest {
         sessionPrefs.startNewSession(baseDuration, forceRestart = true)
         val initialExpiry = sessionPrefs.sessionExpiresTimestamp
 
-        val extraMillis = 60 * 60 * 1000L // 1 hr extra
+        val extraMillis = SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS // 2 hr extra
         sessionPrefs.extendSession(extraMillis)
 
         assertEquals(initialExpiry + extraMillis, sessionPrefs.sessionExpiresTimestamp)

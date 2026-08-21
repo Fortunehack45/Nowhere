@@ -81,7 +81,7 @@ class SettingsActivity : AppCompatActivity() {
             binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.badge_error_text)
 
             binding.tvSettingsSessionTime.text = "00:00:00"
-            binding.tvSettingsSessionTotal.text = "Session expired. Tap +1 Hour to extend."
+            binding.tvSettingsSessionTotal.text = "Session expired. Tap +2 Hours to extend."
             binding.pbSettingsSessionProgress.progress = 0
         } else {
             binding.tvSettingsSessionBadge.text = "STANDBY"
@@ -192,7 +192,7 @@ class SettingsActivity : AppCompatActivity() {
                 this,
                 onUserEarnedReward = {
                     com.fakegps.mocklocation.service.SessionTimerManager.extendSession(this, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
-                    Toast.makeText(this, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "✅ +2 Hours Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
                     refreshSystemStatus()
                 },
                 onAdClosed = {

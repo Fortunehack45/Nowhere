@@ -858,10 +858,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
         try {
-            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
             val sessionPrefs = SessionPreferences(this)
+            if (!sessionPrefs.autoMatchIpWithGps || !sessionPrefs.isIpMaskingEnabled) return
+            if (android.net.VpnService.prepare(this) != null) return
+            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
             sessionPrefs.activeIpNodeId = bestNode.id
-            sessionPrefs.isIpMaskingEnabled = true
             com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
         } catch (ignored: Exception) {}
     }

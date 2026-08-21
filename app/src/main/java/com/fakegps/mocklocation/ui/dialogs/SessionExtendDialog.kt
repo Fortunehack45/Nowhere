@@ -60,7 +60,7 @@ class SessionExtendDialog(
             binding.tvExtendBadgeText.setTextColor(ContextCompat.getColor(context, R.color.badge_error_text))
 
             binding.tvExtendTitle.text = "Simulation Time Expired"
-            binding.tvExtendSubtitle.text = "Watch a short video to add +1 Hour, or reconnect for +20 mins free."
+            binding.tvExtendSubtitle.text = "Watch a short video to add +2 Hours, or reconnect for +20 mins free."
             binding.btnReconnectFallback.visibility = View.VISIBLE
         } else {
             binding.btnReconnectFallback.visibility = View.GONE
@@ -86,7 +86,7 @@ class SessionExtendDialog(
             activity,
             onUserEarnedReward = {
                 SessionTimerManager.extendSession(context, SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS)
-                Toast.makeText(context, "✅ +1 Hour Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "✅ +2 Hours Added! Simulation time extended.", Toast.LENGTH_SHORT).show()
                 onReconnectRequested?.invoke()
                 dismiss()
             }

@@ -14,7 +14,7 @@ class SessionPreferences(private val context: Context) {
     companion object {
         const val DEFAULT_SESSION_DURATION_MILLIS = 2 * 60 * 60 * 1000L // 2 Hours (120 min)
         const val RECONNECT_FALLBACK_DURATION_MILLIS = 20 * 60 * 1000L // 20 Minutes
-        const val REWARD_EXTENSION_DURATION_MILLIS = 60 * 60 * 1000L // 1 Hour (60 min)
+        const val REWARD_EXTENSION_DURATION_MILLIS = 2 * 60 * 60 * 1000L // 2 Hours (120 min)
         const val UNLIMITED_24H_DURATION_MILLIS = 24 * 60 * 60 * 1000L // 24 Hours
 
         private const val KEY_IS_SESSION_ACTIVE = "key_is_session_active"

@@ -218,10 +218,10 @@ object SessionTimerManager {
     private fun checkAndNotifyThresholds(context: Context, remainingSecs: Long) {
         if (remainingSecs in 51..60 && !hasFired60s) {
             hasFired60s = true
-            notifyThreshold(context, NOTIF_ID_60S, "⚠️ 1 Minute Remaining", "Your mock location simulation expires in 60 seconds! Tap to extend by +1 hour.")
+            notifyThreshold(context, NOTIF_ID_60S, "⚠️ 1 Minute Remaining", "Your mock location simulation expires in 60 seconds! Tap to extend by +2 hours.")
         } else if (remainingSecs in 21..30 && !hasFired30s) {
             hasFired30s = true
-            notifyThreshold(context, NOTIF_ID_30S, "⏳ 30 Seconds Remaining", "Simulation will pause in 30 seconds. Watch a short video to add +1 hour.")
+            notifyThreshold(context, NOTIF_ID_30S, "⏳ 30 Seconds Remaining", "Simulation will pause in 30 seconds. Watch a short video to add +2 hours.")
         } else if (remainingSecs in 1..10 && !hasFired10s) {
             hasFired10s = true
             notifyThreshold(context, NOTIF_ID_10S, "🚨 10 Seconds Left!", "Simulation is about to expire! Tap here immediately to keep spoofing active.")
@@ -249,7 +249,7 @@ object SessionTimerManager {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .setContentIntent(pendingOpen)
-            .addAction(R.drawable.ic_bolt, "Extend +1 Hour", pendingOpen)
+            .addAction(R.drawable.ic_bolt, "Extend +2 Hours", pendingOpen)
             .build()
 
         val manager = context.getSystemService(NotificationManager::class.java)
@@ -271,13 +271,13 @@ object SessionTimerManager {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle("🔴 Mock Location Session Expired")
-            .setContentText("Your simulation time has ended. Tap to extend +1 hour with rewarded ad or reconnect.")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Your simulation session has ended. Tap below to extend by +1 Hour by watching an ad, or reconnect for +20 mins free."))
+            .setContentText("Your simulation time has ended. Tap to extend +2 hours with rewarded ad or reconnect.")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Your simulation session has ended. Tap below to extend by +2 Hours by watching an ad, or reconnect for +20 mins free."))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .setContentIntent(pendingOpen)
-            .addAction(R.drawable.ic_bolt, "Extend +1 Hour", pendingOpen)
+            .addAction(R.drawable.ic_bolt, "Extend +2 Hours", pendingOpen)
             .addAction(R.drawable.ic_refresh, "Reconnect (+20m)", pendingOpen)
             .build()
 

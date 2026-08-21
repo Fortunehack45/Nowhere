@@ -108,7 +108,7 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
             WidgetPreviewItem(
                 title = "Session Duration & Countdown",
                 sizeLabel = "4 x 2",
-                description = "Live simulation countdown clock (HH:MM:SS), connection status, and 1-tap +1 Hour extension trigger.",
+                description = "Live simulation countdown clock (HH:MM:SS), connection status, and 1-tap +2 Hours extension trigger.",
                 layoutResId = R.layout.widget_nowhere_session_timer_layout,
                 providerClass = NowhereSessionTimerWidgetProvider::class.java
             ),

@@ -186,14 +186,14 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Extend +1 Hour Action Button (Rewarded Ad) -->
+        <!-- Extend +2 Hours Action Button (Rewarded Ad) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnExtendOneHour"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="16dp"
             android:backgroundTint="@color/primary"
-            android:text="Extend +1 Hour (Watch Video)"
+            android:text="Extend +2 Hours (Watch Video)"
             android:textColor="@color/white"
             android:textSize="14.5sp"
             android:textStyle="bold"
