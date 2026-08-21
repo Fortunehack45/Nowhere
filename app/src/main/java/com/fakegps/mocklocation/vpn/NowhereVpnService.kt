@@ -166,18 +166,25 @@ class NowhereVpnService : VpnService() {
             networkCallback = object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     if (isRunning && sessionPrefs.isIpMaskingEnabled) {
-                        Log.i(TAG, "Internet network active: verifying IP Shield tunnel...")
-                        serviceScope.launch {
-                            delay(500L)
-                            if (isRunning && vpnInterface == null) {
-                                connectVpn(sessionPrefs.activeIpNodeId)
+                        Log.i(TAG, "Network available: syncing underlying network to VPN tunnel...")
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            try {
+                                setUnderlyingNetworks(arrayOf(network))
+                            } catch (ignored: Exception) {}
+                        }
+                        if (vpnInterface == null) {
+                            serviceScope.launch {
+                                delay(300L)
+                                if (isRunning && vpnInterface == null) {
+                                    connectVpn(sessionPrefs.activeIpNodeId)
+                                }
                             }
                         }
                     }
                 }
 
                 override fun onLost(network: Network) {
-                    Log.i(TAG, "Offline / Airplane mode detected: Privacy Shield remains 100% active & locked.")
+                    Log.i(TAG, "Offline / Airplane mode detected: Privacy Shield remains 100% active & locked to mock GPS.")
                     // Do NOT disconnect! Ensure state stays connected and traffic monitor continues ticking
                     val node = IpManager.getNodeById(sessionPrefs.activeIpNodeId)
                     _vpnState.value = VpnState.Connected(node)
@@ -226,17 +233,21 @@ class NowhereVpnService : VpnService() {
                         .addRoute("10.8.0.0", 24) // Private subnet only, never hijacking physical internet
                         .addDnsServer("1.1.1.1")
                         .addDnsServer("8.8.8.8")
+                        .addDnsServer("9.9.9.9")
                         .setMtu(1500)
                         .setBlocking(false)
 
-                    // Clear underlying physical networks so VPN operates independently of Airplane mode & Wi-Fi/Cellular state
+                    // Bind active network if available (keeps Wi-Fi/Cellular fast; gracefully handles offline/airplane mode)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         try {
-                            setUnderlyingNetworks(null)
+                            val activeNet = connectivityManager?.activeNetwork
+                            if (activeNet != null) {
+                                setUnderlyingNetworks(arrayOf(activeNet))
+                            }
                         } catch (ignored: Exception) {}
                     }
 
-                    // Allow our app to bypass the tunnel for Nominatim & Tile downloads
+                    // Allow our app to bypass the tunnel for Nominatim, Tile downloads, and mock provider
                     try {
                         builder.addDisallowedApplication(packageName)
                     } catch (ignored: Exception) {}
@@ -246,7 +257,7 @@ class NowhereVpnService : VpnService() {
                     Log.w(TAG, "VPN builder establish warning (operating in standalone/offline mode): ${e.message}")
                 }
 
-                // Guaranteed persistent connection state even in Airplane mode
+                // Guaranteed persistent connection state even in Airplane / Offline mode
                 isRunning = true
                 _vpnState.value = VpnState.Connected(node)
                 Log.i(TAG, "VPN Privacy Shield successfully active and locked for node: ${node.name} (Offline & Airplane Ready)")

@@ -859,8 +859,7 @@ class MainActivity : AppCompatActivity() {
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
         try {
             val sessionPrefs = SessionPreferences(this)
-            if (!sessionPrefs.autoMatchIpWithGps || !sessionPrefs.isIpMaskingEnabled) return
-            if (android.net.VpnService.prepare(this) != null) return
+            sessionPrefs.isIpMaskingEnabled = true
             val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
             sessionPrefs.activeIpNodeId = bestNode.id
             com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
@@ -1003,6 +1002,7 @@ class MainActivity : AppCompatActivity() {
         }
         startService(intent)
         mockService?.stopSpoofing()
+        com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this)
         com.fakegps.mocklocation.ads.AdManager.showInterstitialIfReady(this)
     }
 

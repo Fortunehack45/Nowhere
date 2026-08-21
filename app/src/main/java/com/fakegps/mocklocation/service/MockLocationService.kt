@@ -1007,6 +1007,7 @@ class MockLocationService : Service() {
         stopCurrentLoop()
         releaseWakeLock()
         try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
+        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
         try { engine.stop() } catch (e: Exception) { Log.w(TAG, "engine.stop() error (non-fatal): ${e.message}") }
         sessionPrefs.isSessionActive = false
         SessionTimerManager.stopTimer(this)
