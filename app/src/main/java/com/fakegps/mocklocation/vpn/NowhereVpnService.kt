@@ -318,26 +318,38 @@ class NowhereVpnService : VpnService() {
     }
 
     private suspend fun runTunnelLoop(pfd: ParcelFileDescriptor, node: IpNode) = withContext(Dispatchers.IO) {
+        var inputStream: FileInputStream? = null
         try {
-            val inputStream = FileInputStream(pfd.fileDescriptor)
+            inputStream = FileInputStream(pfd.fileDescriptor)
             val buffer = ByteArray(16384)
 
-            while (isActive && isRunning) {
-                val length = inputStream.read(buffer)
-                if (length > 0) {
-                    totalRxBytes += length
+            while (isActive && isRunning && vpnInterface != null) {
+                try {
+                    val length = inputStream.read(buffer)
+                    if (length > 0) {
+                        totalRxBytes += length
+                    } else if (length == -1) {
+                        break
+                    }
+                } catch (e: java.io.IOException) {
+                    if (e.message?.contains("temporarily unavailable") == true ||
+                        e.message?.contains("EAGAIN") == true ||
+                        e.message?.contains("EWOULDBLOCK") == true
+                    ) {
+                        delay(250L)
+                        continue
+                    } else {
+                        break
+                    }
                 }
-                delay(500L)
+                delay(250L)
             }
         } catch (e: Exception) {
             Log.d(TAG, "Tunnel stream ended: ${e.message}")
         } finally {
-            // Auto-reconnect watchdog: if still intended to run, re-establish automatically!
-            if (isActive && isRunning && sessionPrefs.isIpMaskingEnabled) {
-                Log.i(TAG, "Tunnel interface closed: automatically recovering IP Shield...")
-                delay(1000L)
-                connectVpn(node.id)
-            }
+            try {
+                inputStream?.close()
+            } catch (ignored: Exception) {}
         }
     }
 
