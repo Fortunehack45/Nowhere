@@ -113,6 +113,7 @@ object AdManager {
 
         activity.runOnUiThread {
             try {
+                container.visibility = View.VISIBLE
                 val adView = AdView(activity).apply {
                     this.adUnitId = adUnitId
                     setAdSize(AdSize.BANNER)
@@ -128,7 +129,7 @@ object AdManager {
                         Log.w(TAG, "Banner failed to load ($adUnitId): ${error.message} (code: ${error.code})")
                         if (fallbackAdUnitId != null && fallbackAdUnitId != adUnitId) {
                             Log.d(TAG, "Retrying banner with fallback ad unit ($fallbackAdUnitId)")
-                            loadBannerInternal(activity, container, fallbackAdUnitId, if (BuildConfig.DEBUG) null else TEST_BANNER_AD_UNIT_ID)
+                            loadBannerInternal(activity, container, fallbackAdUnitId, TEST_BANNER_AD_UNIT_ID)
                         } else if (adUnitId != TEST_BANNER_AD_UNIT_ID) {
                             Log.d(TAG, "Retrying banner with test ad unit ($TEST_BANNER_AD_UNIT_ID)")
                             loadBannerInternal(activity, container, TEST_BANNER_AD_UNIT_ID, null)

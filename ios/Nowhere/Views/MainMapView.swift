@@ -468,7 +468,7 @@ struct MainMapView: View {
                         .fill(Color.white.opacity(0.2))
                         .frame(width: 32, height: 4)
 
-                    Text(isBottomDeckCollapsed ? "Show Controls" : "Hide Menu")
+                    Text(isBottomDeckCollapsed ? "Slide up or tap to show" : "Slide down or tap to hide")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.gray)
                 }
@@ -535,6 +535,20 @@ struct MainMapView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 24)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
+        .gesture(
+            DragGesture(minimumDistance: 15)
+                .onEnded { value in
+                    if value.translation.height > 25 {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                            isBottomDeckCollapsed = true
+                        }
+                    } else if value.translation.height < -25 {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                            isBottomDeckCollapsed = false
+                        }
+                    }
+                }
         )
         .padding(.horizontal, 16)
         .padding(.bottom, 20)

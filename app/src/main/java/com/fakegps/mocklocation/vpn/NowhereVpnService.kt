@@ -264,13 +264,11 @@ class NowhereVpnService : VpnService() {
                     val builder = Builder()
                         .setSession("Nowhere IP Shield - ${node.name}")
                         .addAddress("10.8.0.2", 24)
-                        .addRoute("0.0.0.0", 0) // Full default route: guarantees Android displays the system VPN Key icon
-                        .addDnsServer("1.1.1.1")
-                        .addDnsServer("8.8.8.8")
+                        .addRoute("10.8.0.0", 24) // Split route: preserves phone's full Mobile Data & Wi-Fi internet speeds
                         .setMtu(1400)
                         .setBlocking(false)
 
-                    // Bind active network if available (keeps Wi-Fi/Cellular fast; gracefully handles offline/airplane mode)
+                    // Bind active network if available (keeps Wi-Fi/Cellular fast and unblocked)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         try {
                             val activeNet = connectivityManager?.activeNetwork
@@ -279,11 +277,6 @@ class NowhereVpnService : VpnService() {
                             }
                         } catch (ignored: Exception) {}
                     }
-
-                    // Allow our app to bypass the tunnel for Nominatim, Tile downloads, and mock provider
-                    try {
-                        builder.addDisallowedApplication(packageName)
-                    } catch (ignored: Exception) {}
 
                     vpnInterface = builder.establish()
                 } catch (e: Exception) {

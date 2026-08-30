@@ -14,6 +14,7 @@ import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
@@ -768,12 +769,71 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBottomDeckToggle() {
+        fun setBottomDeckExpanded(expanded: Boolean) {
+            try {
+                android.transition.TransitionManager.beginDelayedTransition(
+                    binding.cardBottomContainer,
+                    android.transition.AutoTransition().apply {
+                        duration = 200
+                    }
+                )
+            } catch (ignored: Exception) {}
+
+            binding.layoutExpandableBottomControls.visibility = if (expanded) View.VISIBLE else View.GONE
+            binding.ivToggleBottomDeck.setImageResource(if (expanded) R.drawable.ic_chevron_down else R.drawable.ic_chevron_up)
+            binding.tvToggleBottomDeckLabel.text = if (expanded) "Slide down or tap to hide" else "Slide up or tap to show"
+        }
+
         binding.btnToggleBottomDeck.setOnClickListener {
             val isCurrentlyVisible = binding.layoutExpandableBottomControls.visibility == View.VISIBLE
-            val willBeVisible = !isCurrentlyVisible
-            binding.layoutExpandableBottomControls.visibility = if (willBeVisible) View.VISIBLE else View.GONE
-            binding.ivToggleBottomDeck.setImageResource(if (willBeVisible) R.drawable.ic_chevron_down else R.drawable.ic_chevron_up)
-            binding.tvToggleBottomDeckLabel.text = if (willBeVisible) "Hide Menu" else "Show Menu"
+            setBottomDeckExpanded(!isCurrentlyVisible)
+        }
+
+        val gestureDetector = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent): Boolean = true
+
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                binding.btnToggleBottomDeck.performClick()
+                return true
+            }
+
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                if (e1 == null) return false
+                val diffY: Float = e2.y - e1.y
+                val diffX: Float = e2.x - e1.x
+                if (Math.abs(diffY) > Math.abs(diffX)) {
+                    if (diffY > 30f || velocityY > 250f) {
+                        setBottomDeckExpanded(false)
+                        return true
+                    } else if (diffY < -30f || velocityY < -250f) {
+                        setBottomDeckExpanded(true)
+                        return true
+                    }
+                }
+                return false
+            }
+
+            override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+                if (e1 == null) return false
+                if (Math.abs(distanceY) > Math.abs(distanceX) && Math.abs(distanceY) > 20f) {
+                    if (distanceY < -15f) {
+                        setBottomDeckExpanded(false)
+                        return true
+                    } else if (distanceY > 15f) {
+                        setBottomDeckExpanded(true)
+                        return true
+                    }
+                }
+                return false
+            }
+        })
+
+        binding.btnToggleBottomDeck.setOnTouchListener { v, event ->
+            if (gestureDetector.onTouchEvent(event)) {
+                true
+            } else {
+                v.onTouchEvent(event)
+            }
         }
     }
 
