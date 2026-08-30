@@ -49,6 +49,7 @@ struct MainMapView: View {
 
     // Location name
     @State private var activeLocationName: String = "San Francisco"
+    @State private var isBottomDeckCollapsed: Bool = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -262,7 +263,7 @@ struct MainMapView: View {
                             Image(systemName: "shield.checkered")
                                 .font(.system(size: 10))
                                 .foregroundColor(storage.isGhostCloakEnabled ? .red : .gray)
-                            Text(storage.isGhostCloakEnabled ? "CLOAK ON" : "RAW GPS")
+                            Text(storage.isGhostCloakEnabled ? "CLOAK BETA" : "RAW GPS")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(storage.isGhostCloakEnabled ? .red : .gray)
                         }
@@ -451,21 +452,80 @@ struct MainMapView: View {
 
     // MARK: - Bottom Control Card
     private var bottomControlCard: some View {
-        VStack(spacing: 12) {
-            // Quick Destination 1-Tap Slots
-            quickDestinationsBar
+        VStack(spacing: 10) {
+            // Interactive Drag Handle & Collapse/Expand Toggle
+            Button(action: {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                    isBottomDeckCollapsed.toggle()
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: isBottomDeckCollapsed ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.gray)
 
-            if selectedTab == "FIXED" {
-                fixedControlsView
-            } else if selectedTab == "ROUTE" {
-                routeControlsView
-            } else if selectedTab == "JOYSTICK" {
-                joystickControlsView
+                    Capsule()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 32, height: 4)
+
+                    Text(isBottomDeckCollapsed ? "Show Controls" : "Hide Menu")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 2)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            if isBottomDeckCollapsed {
+                // Compact floating summary bar when menu is hidden
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("MOCK GPS")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.red)
+                        Text(String(format: "%.4f, %.4f", pinnedLocation.latitude, pinnedLocation.longitude))
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white)
+                    }
+                    Spacer()
+                    Button(action: {
+                        if engine.isSimulating {
+                            engine.stop()
+                        } else {
+                            teleportTo(coord: pinnedLocation, name: activeLocationName)
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: engine.isSimulating ? "stop.fill" : "bolt.fill")
+                                .font(.system(size: 10))
+                            Text(engine.isSimulating ? "STOP" : "TELEPORT")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(engine.isSimulating ? Color.red : Color.blue)
+                        .cornerRadius(12)
+                    }
+                }
+                .padding(.horizontal, 4)
             } else {
-                gpxExportView
+                // Full Expanded Controls
+                quickDestinationsBar
+
+                if selectedTab == "FIXED" {
+                    fixedControlsView
+                } else if selectedTab == "ROUTE" {
+                    routeControlsView
+                } else if selectedTab == "JOYSTICK" {
+                    joystickControlsView
+                } else {
+                    gpxExportView
+                }
             }
         }
-        .padding(16)
+        .padding(14)
         .background(
             Color(red: 0.11, green: 0.11, blue: 0.13)
                 .opacity(0.96)

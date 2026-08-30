@@ -136,6 +136,9 @@ class JoystickView @JvmOverloads constructor(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (maxTravelRadius <= 0.1f) {
+            return super.onTouchEvent(event)
+        }
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 isDragging = true
@@ -146,14 +149,21 @@ class JoystickView @JvmOverloads constructor(
                 val clampedDist = min(distance, maxTravelRadius)
                 val angleRad = atan2(dy.toDouble(), dx.toDouble())
 
-                knobX = (centerX + clampedDist * cos(angleRad)).toFloat()
-                knobY = (centerY + clampedDist * sin(angleRad)).toFloat()
+                val newKnobX = (centerX + clampedDist * cos(angleRad)).toFloat()
+                val newKnobY = (centerY + clampedDist * sin(angleRad)).toFloat()
+
+                if (!newKnobX.isNaN() && !newKnobY.isNaN()) {
+                    knobX = newKnobX
+                    knobY = newKnobY
+                }
 
                 val compassRad = atan2(dx.toDouble(), -dy.toDouble())
                 val compassDeg = ((Math.toDegrees(compassRad) + 360.0) % 360.0).toFloat()
                 val magnitude = (clampedDist / maxTravelRadius).coerceIn(0f, 1f)
 
-                listener?.onJoystickMoved(compassDeg, magnitude)
+                if (!compassDeg.isNaN() && !magnitude.isNaN()) {
+                    listener?.onJoystickMoved(compassDeg, magnitude)
+                }
                 invalidate()
                 return true
             }

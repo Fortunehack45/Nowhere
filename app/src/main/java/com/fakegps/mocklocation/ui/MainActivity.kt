@@ -156,6 +156,7 @@ class MainActivity : AppCompatActivity() {
         setupControls()
         setupRouteActions()
         setupJoystick()
+        setupBottomDeckToggle()
         setupFloatingButtons()
         setupIpShield()
         setupGhostCloak()
@@ -755,6 +756,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupJoystick() {
         binding.joystickOverlay.setOnJoystickMoveListener(object : JoystickView.OnJoystickMoveListener {
             override fun onJoystickMoved(angleDegrees: Float, magnitude: Float) {
+                if (angleDegrees.isNaN() || magnitude.isNaN()) return
                 val speedKmh = viewModel.uiState.value.joystickSpeedKmh
                 if (!viewModel.uiState.value.isServiceRunning && magnitude > 0.02f) {
                     startJoystickSpoofing()
@@ -763,6 +765,16 @@ class MainActivity : AppCompatActivity() {
                 MockLocationServiceReceiver.sendJoystickUpdate(this@MainActivity, angleDegrees, magnitude, speedKmh)
             }
         })
+    }
+
+    private fun setupBottomDeckToggle() {
+        binding.btnToggleBottomDeck.setOnClickListener {
+            val isCurrentlyVisible = binding.layoutExpandableBottomControls.visibility == View.VISIBLE
+            val willBeVisible = !isCurrentlyVisible
+            binding.layoutExpandableBottomControls.visibility = if (willBeVisible) View.VISIBLE else View.GONE
+            binding.ivToggleBottomDeck.setImageResource(if (willBeVisible) R.drawable.ic_chevron_down else R.drawable.ic_chevron_up)
+            binding.tvToggleBottomDeckLabel.text = if (willBeVisible) "Hide Menu" else "Show Menu"
+        }
     }
 
     private fun setupFloatingButtons() {
@@ -1128,7 +1140,7 @@ class MainActivity : AppCompatActivity() {
             binding.layoutGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_active_bg)
             binding.ivGhostCloakIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
             binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(this, R.color.primary_bright))
-            binding.tvGhostCloakBadge.text = "CLOAK ON"
+            binding.tvGhostCloakBadge.text = "CLOAK BETA"
         } else {
             binding.layoutGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.surface_elevated)
             binding.ivGhostCloakIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.text_muted)
@@ -1521,5 +1533,23 @@ class MainActivity : AppCompatActivity() {
             binding.mapView.onDetach()
         } catch (ignored: Exception) {}
         super.onDestroy()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        try {
+            binding.mapView.tileProvider?.clearTileCache()
+            System.gc()
+        } catch (ignored: Exception) {}
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_MODERATE) {
+            try {
+                binding.mapView.tileProvider?.clearTileCache()
+                System.gc()
+            } catch (ignored: Exception) {}
+        }
     }
 }

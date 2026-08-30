@@ -164,7 +164,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:letterSpacing="0.04"
-                                android:text="CLOAK ON"
+                                android:text="CLOAK BETA"
                                 android:textColor="@color/primary_bright"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
@@ -780,20 +780,56 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Luxury Sheet Drag Handle Indicator -->
-            <View
-                android:layout_width="36dp"
-                android:layout_height="4dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/bg_status_pill"
-                android:backgroundTint="@color/stroke_subtle" />
+            <!-- Interactive Hide/Unhide Header Handle -->
+            <LinearLayout
+                android:id="@+id/btnToggleBottomDeck"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp">
+
+                <ImageView
+                    android:id="@+id/ivToggleBottomDeck"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_chevron_down"
+                    app:tint="@color/text_muted"
+                    tools:ignore="ContentDescription" />
+
+                <View
+                    android:layout_width="32dp"
+                    android:layout_height="4dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_status_pill"
+                    android:backgroundTint="@color/stroke_subtle" />
+
+                <TextView
+                    android:id="@+id/tvToggleBottomDeckLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hide Menu"
+                    android:textColor="@color/text_muted"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutExpandableBottomControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <!-- Mode Switcher Tabs -->
         <RadioGroup
             android:id="@+id/rgModeTabs"
             android:layout_width="match_parent"
             android:layout_height="44dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/bg_segmented_tab"
             android:checkedButton="@id/rbFixedMode"
             android:orientation="horizontal"
@@ -1415,6 +1451,8 @@
                     app:icon="@drawable/ic_joystick"
                     app:iconTint="@color/primary" />
             </LinearLayout>
+        </LinearLayout>
+
         </LinearLayout>
 
         <!-- AdMob Adaptive Banner Container -->
