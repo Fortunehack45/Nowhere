@@ -300,8 +300,9 @@ object IpManager {
      * Fetches the current live public IP address and ISP/country info asynchronously.
      */
     suspend fun fetchPublicIpInfo(context: Context): PublicIpInfo = withContext(Dispatchers.IO) {
-        val isMasked = NowhereVpnService.isRunning
-        val activeNodeId = com.fakegps.mocklocation.data.preferences.SessionPreferences(context).activeIpNodeId
+        val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(context)
+        val isMasked = NowhereVpnService.isRunning || sessionPrefs.isIpMaskingEnabled
+        val activeNodeId = sessionPrefs.activeIpNodeId
         val activeNode = getNodeById(activeNodeId)
 
         if (isMasked) {
@@ -310,7 +311,7 @@ object IpManager {
                 country = activeNode.country,
                 countryCode = activeNode.countryCode,
                 city = activeNode.city,
-                isp = "Nowhere Secure Privacy Tunnel",
+                isp = "Nowhere Secure Geo-IP Privacy Network",
                 isMasked = true
             )
         }

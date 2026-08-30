@@ -452,11 +452,11 @@ class NowhereVpnService : VpnService() {
         )
 
         val statsSummary = "↓ ${stats.formatDownload()} (${stats.formatDownloadRate()})  ↑ ${stats.formatUpload()} (${stats.formatUploadRate()})"
-        val contentSubtitle = "${node.flagEmoji} ${node.name} • Virtual IP: ${node.virtualIp}\n$statsSummary\nShield Duration: ${stats.formatDuration()}"
+        val contentSubtitle = "${node.flagEmoji} Location: ${node.city}, ${node.country} (${node.countryCode})\n🔒 Virtual IP: ${node.virtualIp} (Geo-Matched)\n$statsSummary\nShield Active: ${stats.formatDuration()}"
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Nowhere IP Shield Active")
-            .setContentText("${node.flagEmoji} ${node.virtualIp} • Protected • ${stats.formatDuration()}")
+            .setContentTitle("Nowhere Geo-IP: ${node.countryCode} • ${node.city}")
+            .setContentText("${node.flagEmoji} IP: ${node.virtualIp} • ${node.city} • ${stats.formatDuration()}")
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setColor(ContextCompat.getColor(this, R.color.primary))
             .setContentIntent(openAppPendingIntent)
@@ -465,7 +465,7 @@ class NowhereVpnService : VpnService() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .setBigContentTitle("Nowhere IP Shield: ${node.name}")
+                    .setBigContentTitle("Nowhere Geo-IP Shield: ${node.name}")
                     .bigText(contentSubtitle)
             )
             .build()
