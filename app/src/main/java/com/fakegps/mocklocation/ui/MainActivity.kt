@@ -494,6 +494,22 @@ class MainActivity : AppCompatActivity() {
             showRecentHistory()
         }
 
+        binding.btnCopyCoords.setOnClickListener {
+            val coordsText = binding.tvFixedCoords.text.toString()
+            val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Mock Location Coordinates", coordsText)
+            clipboard?.setPrimaryClip(clip)
+            Toast.makeText(this, "📋 Coordinates copied: $coordsText", Toast.LENGTH_SHORT).show()
+        }
+
+        // Quick Preset Destination Chips
+        binding.chipPresetNewYork.setOnClickListener { selectPresetDestination("New York, USA", 40.7128, -74.0060) }
+        binding.chipPresetParis.setOnClickListener { selectPresetDestination("Paris, France", 48.8566, 2.3522) }
+        binding.chipPresetTokyo.setOnClickListener { selectPresetDestination("Tokyo, Japan", 35.6762, 139.6503) }
+        binding.chipPresetDubai.setOnClickListener { selectPresetDestination("Dubai, UAE", 25.2048, 55.2708) }
+        binding.chipPresetLondon.setOnClickListener { selectPresetDestination("London, UK", 51.5074, -0.1278) }
+        binding.chipPresetHonolulu.setOnClickListener { selectPresetDestination("Honolulu, Hawaii", 21.3069, -157.8583) }
+
         lifecycleScope.launch {
             viewModel.recentSearches.collectLatest { history ->
                 latestHistoryItems = history
@@ -502,6 +518,19 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun selectPresetDestination(name: String, lat: Double, lon: Double) {
+        val geoPoint = GeoPoint(lat, lon)
+        if (settingsPrefs.enableMapAnimations) {
+            binding.mapView.controller.animateTo(geoPoint)
+        } else {
+            binding.mapView.controller.setCenter(geoPoint)
+        }
+        binding.mapView.controller.setZoom(16.0)
+        viewModel.setFixedCoordinates(lat, lon)
+        updateFixedPinMarker(lat, lon)
+        Toast.makeText(this, "📍 Focused: $name", Toast.LENGTH_SHORT).show()
     }
 
     private fun showRecentHistory() {

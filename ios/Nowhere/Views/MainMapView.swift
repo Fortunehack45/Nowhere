@@ -78,6 +78,7 @@ struct MainMapView: View {
             VStack(spacing: 6) {
                 topNavigationBar
                 searchBarView
+                quickPresetChips
 
                 if isSearchFocused && (!searchService.searchResults.isEmpty || !storage.searchHistory.isEmpty) {
                     searchResultsDropdown
@@ -349,6 +350,36 @@ struct MainMapView: View {
         .padding(.horizontal, 16)
     }
 
+    // MARK: - Quick Preset Chips
+    private var quickPresetChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                presetChip(title: "🗽 New York", coord: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060), name: "New York")
+                presetChip(title: "🗼 Paris", coord: CLLocationCoordinate2D(latitude: 48.8566, longitude: 2.3522), name: "Paris")
+                presetChip(title: "⛩️ Tokyo", coord: CLLocationCoordinate2D(latitude: 35.6762, longitude: 139.6503), name: "Tokyo")
+                presetChip(title: "🌴 Dubai", coord: CLLocationCoordinate2D(latitude: 25.2048, longitude: 55.2708), name: "Dubai")
+                presetChip(title: "🇬🇧 London", coord: CLLocationCoordinate2D(latitude: 51.5074, longitude: -0.1278), name: "London")
+                presetChip(title: "🏖️ Honolulu", coord: CLLocationCoordinate2D(latitude: 21.3069, longitude: -157.8583), name: "Honolulu")
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    private func presetChip(title: String, coord: CLLocationCoordinate2D, name: String) -> some View {
+        Button(action: {
+            teleportTo(coord: coord, name: name)
+        }) {
+            Text(title)
+                .font(.system(size: 11, weight: .bold))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color(white: 0.15))
+                .foregroundColor(.white)
+                .cornerRadius(12)
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        }
+    }
+
     // MARK: - Search Results Dropdown
     private var searchResultsDropdown: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -486,6 +517,16 @@ struct MainMapView: View {
                         .foregroundColor(.white)
                 }
                 Spacer()
+
+                Button(action: {
+                    UIPasteboard.general.string = String(format: "%.5f, %.5f", pinnedLocation.latitude, pinnedLocation.longitude)
+                }) {
+                    Image(systemName: "doc.on.doc")
+                        .foregroundColor(.gray)
+                        .padding(8)
+                        .background(Color.white.opacity(0.08))
+                        .clipShape(Circle())
+                }
 
                 Button(action: {
                     storage.addFavorite(name: activeLocationName, coordinate: pinnedLocation)
