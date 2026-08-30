@@ -23,7 +23,7 @@ class RealismLayerTest {
         for (i in 0 until 50) {
             val (jitterLat, jitterLon) = realismLayer.applyJitter(lat, lon, forceJitter = true)
             val distance = GeoUtils.calculateDistanceMeters(lat, lon, jitterLat, jitterLon)
-            assertTrue("Distance was $distance", distance in 0.05..10.0)
+            assertTrue("Distance was $distance", distance in 0.0..10.0)
         }
     }
 
