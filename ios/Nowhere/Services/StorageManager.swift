@@ -33,6 +33,13 @@ class StorageManager: ObservableObject {
     @AppStorage("default_altitude") var defaultAltitude: Double = 15.0
     @AppStorage("haptic_feedback") var hapticFeedback: Bool = true
 
+    // Anti-Detection Ghost Cloak & Auto-VPN
+    @AppStorage("is_ghost_cloak_enabled") var isGhostCloakEnabled: Bool = true
+    @AppStorage("is_nmea_synthesis_enabled") var isNmeaSynthesisEnabled: Bool = true
+    @AppStorage("is_clock_drift_emulation_enabled") var isClockDriftEmulationEnabled: Bool = true
+    @AppStorage("is_sensor_kinematics_enabled") var isSensorKinematicsEnabled: Bool = true
+    @AppStorage("is_auto_vpn_sync_enabled") var isAutoVpnSyncEnabled: Bool = true
+
     private let favoritesKey = "nowhere_favorites_v1"
     private let routesKey = "nowhere_saved_routes_v1"
     private let historyKey = "nowhere_search_history_v1"

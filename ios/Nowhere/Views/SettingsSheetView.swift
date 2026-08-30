@@ -62,7 +62,23 @@ struct SettingsSheetView: View {
                     }
                 }
 
-                // Section 3: Appearance & Units
+                // Section 3: Anti-Detection Ghost Cloak Suite
+                Section(header: Text("ANTI-DETECTION & GHOST CLOAK").foregroundColor(.red)) {
+                    Toggle("Master Ghost Cloak", isOn: $storage.isGhostCloakEnabled)
+
+                    if storage.isGhostCloakEnabled {
+                        Toggle("NMEA-0183 Synthesizer", isOn: $storage.isNmeaSynthesisEnabled)
+                        Toggle("Nanosecond Clock Drift (~18.5ns)", isOn: $storage.isClockDriftEmulationEnabled)
+                        Toggle("Inertial G-Force Kinematics", isOn: $storage.isSensorKinematicsEnabled)
+                    }
+                }
+
+                // Section 4: IP Privacy Shield & Auto-Sync
+                Section(header: Text("IP PRIVACY SHIELD & AUTO-SYNC").foregroundColor(.red)) {
+                    Toggle("Auto-Sync VPN with Mock GPS", isOn: $storage.isAutoVpnSyncEnabled)
+                }
+
+                // Section 5: Appearance & Units
                 Section(header: Text("PREFERENCES").foregroundColor(.red)) {
                     Picker("Theme", selection: $storage.appTheme) {
                         Text("Dark Mode").tag("DARK")

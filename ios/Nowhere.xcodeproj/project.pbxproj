@@ -19,6 +19,16 @@
 		7B00000A2A00000000000001 /* SettingsSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A00000B2A00000000000001 /* SettingsSheetView.swift */; };
 		7B00000B2A00000000000001 /* JoystickOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A00000C2A00000000000001 /* JoystickOverlayView.swift */; };
 		7B00000C2A00000000000001 /* AppUpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A00000D2A00000000000001 /* AppUpdateChecker.swift */; };
+		7B00000D2A00000000000001 /* GhostCloakEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A00000E2A00000000000001 /* GhostCloakEngine.swift */; };
+		7B00000E2A00000000000001 /* IpNodeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A00000F2A00000000000001 /* IpNodeManager.swift */; };
+		7B00000F2A00000000000001 /* SessionTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000102A00000000000001 /* SessionTimerManager.swift */; };
+		7B0000102A00000000000001 /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000112A00000000000001 /* WeatherService.swift */; };
+		7B0000112A00000000000001 /* HotspotLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000122A00000000000001 /* HotspotLocationManager.swift */; };
+		7B0000122A00000000000001 /* AntiDetectionSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000132A00000000000001 /* AntiDetectionSheetView.swift */; };
+		7B0000132A00000000000001 /* IpChangerSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000142A00000000000001 /* IpChangerSheetView.swift */; };
+		7B0000142A00000000000001 /* SessionExtendSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000152A00000000000001 /* SessionExtendSheetView.swift */; };
+		7B0000152A00000000000001 /* HotspotTetheringSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000162A00000000000001 /* HotspotTetheringSheetView.swift */; };
+		7B0000162A00000000000001 /* WeatherSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000172A00000000000001 /* WeatherSheetView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +46,16 @@
 		7A00000B2A00000000000001 /* SettingsSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SettingsSheetView.swift; sourceTree = "<group>"; };
 		7A00000C2A00000000000001 /* JoystickOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/JoystickOverlayView.swift; sourceTree = "<group>"; };
 		7A00000D2A00000000000001 /* AppUpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/AppUpdateChecker.swift; sourceTree = "<group>"; };
+		7A00000E2A00000000000001 /* GhostCloakEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/GhostCloakEngine.swift; sourceTree = "<group>"; };
+		7A00000F2A00000000000001 /* IpNodeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/IpNodeManager.swift; sourceTree = "<group>"; };
+		7A0000102A00000000000001 /* SessionTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/SessionTimerManager.swift; sourceTree = "<group>"; };
+		7A0000112A00000000000001 /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/WeatherService.swift; sourceTree = "<group>"; };
+		7A0000122A00000000000001 /* HotspotLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/HotspotLocationManager.swift; sourceTree = "<group>"; };
+		7A0000132A00000000000001 /* AntiDetectionSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/AntiDetectionSheetView.swift; sourceTree = "<group>"; };
+		7A0000142A00000000000001 /* IpChangerSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/IpChangerSheetView.swift; sourceTree = "<group>"; };
+		7A0000152A00000000000001 /* SessionExtendSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SessionExtendSheetView.swift; sourceTree = "<group>"; };
+		7A0000162A00000000000001 /* HotspotTetheringSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/HotspotTetheringSheetView.swift; sourceTree = "<group>"; };
+		7A0000172A00000000000001 /* WeatherSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/WeatherSheetView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,11 +86,21 @@
 				7A00000A2A00000000000001 /* SavedRoutesSheetView.swift */,
 				7A00000B2A00000000000001 /* SettingsSheetView.swift */,
 				7A00000C2A00000000000001 /* JoystickOverlayView.swift */,
+				7A0000132A00000000000001 /* AntiDetectionSheetView.swift */,
+				7A0000142A00000000000001 /* IpChangerSheetView.swift */,
+				7A0000152A00000000000001 /* SessionExtendSheetView.swift */,
+				7A0000162A00000000000001 /* HotspotTetheringSheetView.swift */,
+				7A0000172A00000000000001 /* WeatherSheetView.swift */,
 				7A0000032A00000000000001 /* LocationSimulationEngine.swift */,
 				7A0000042A00000000000001 /* GPXManager.swift */,
 				7A0000072A00000000000001 /* StorageManager.swift */,
 				7A0000082A00000000000001 /* SearchService.swift */,
 				7A00000D2A00000000000001 /* AppUpdateChecker.swift */,
+				7A00000E2A00000000000001 /* GhostCloakEngine.swift */,
+				7A00000F2A00000000000001 /* IpNodeManager.swift */,
+				7A0000102A00000000000001 /* SessionTimerManager.swift */,
+				7A0000112A00000000000001 /* WeatherService.swift */,
+				7A0000122A00000000000001 /* HotspotLocationManager.swift */,
 				7A0000052A00000000000001 /* SimulationMode.swift */,
 				7A0000062A00000000000001 /* Info.plist */,
 			);
@@ -165,6 +195,16 @@
 				7B00000A2A00000000000001 /* SettingsSheetView.swift in Sources */,
 				7B00000B2A00000000000001 /* JoystickOverlayView.swift in Sources */,
 				7B00000C2A00000000000001 /* AppUpdateChecker.swift in Sources */,
+				7B00000D2A00000000000001 /* GhostCloakEngine.swift in Sources */,
+				7B00000E2A00000000000001 /* IpNodeManager.swift in Sources */,
+				7B00000F2A00000000000001 /* SessionTimerManager.swift in Sources */,
+				7B0000102A00000000000001 /* WeatherService.swift in Sources */,
+				7B0000112A00000000000001 /* HotspotLocationManager.swift in Sources */,
+				7B0000122A00000000000001 /* AntiDetectionSheetView.swift in Sources */,
+				7B0000132A00000000000001 /* IpChangerSheetView.swift in Sources */,
+				7B0000142A00000000000001 /* SessionExtendSheetView.swift in Sources */,
+				7B0000152A00000000000001 /* HotspotTetheringSheetView.swift in Sources */,
+				7B0000162A00000000000001 /* WeatherSheetView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

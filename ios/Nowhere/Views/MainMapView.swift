@@ -6,6 +6,10 @@ struct MainMapView: View {
     @StateObject private var engine = LocationSimulationEngine.shared
     @StateObject private var searchService = SearchService.shared
     @StateObject private var storage = StorageManager.shared
+    @StateObject private var ipManager = IpNodeManager.shared
+    @StateObject private var sessionTimer = SessionTimerManager.shared
+    @StateObject private var weatherService = WeatherService.shared
+    @StateObject private var hotspot = HotspotLocationManager.shared
     @EnvironmentObject var updateChecker: AppUpdateChecker
 
     @State private var region = MKCoordinateRegion(
@@ -32,6 +36,13 @@ struct MainMapView: View {
     @State private var newRouteName: String = ""
     @State private var showShareSheet: Bool = false
     @State private var gpxExportURL: URL? = nil
+
+    // HUD Sheets
+    @State private var showIpChangerSheet: Bool = false
+    @State private var showAntiDetectionSheet: Bool = false
+    @State private var showSessionTimerSheet: Bool = false
+    @State private var showHotspotSheet: Bool = false
+    @State private var showWeatherSheet: Bool = false
 
     // Update banner dismiss state
     @State private var updateBannerDismissed: Bool = false
@@ -124,6 +135,21 @@ struct MainMapView: View {
         .sheet(isPresented: $showSettingsSheet) {
             SettingsSheetView()
         }
+        .sheet(isPresented: $showIpChangerSheet) {
+            IpChangerSheetView()
+        }
+        .sheet(isPresented: $showAntiDetectionSheet) {
+            AntiDetectionSheetView()
+        }
+        .sheet(isPresented: $showSessionTimerSheet) {
+            SessionExtendSheetView()
+        }
+        .sheet(isPresented: $showHotspotSheet) {
+            HotspotTetheringSheetView()
+        }
+        .sheet(isPresented: $showWeatherSheet) {
+            WeatherSheetView()
+        }
         .sheet(isPresented: $showShareSheet) {
             if let url = gpxExportURL {
                 ShareSheet(activityItems: [url])
@@ -145,58 +171,137 @@ struct MainMapView: View {
 
     // MARK: - Top Navigation Bar
     private var topNavigationBar: some View {
-        HStack {
-            Image(systemName: "location.north.circle.fill")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundColor(.red)
+        VStack(spacing: 8) {
+            HStack {
+                Image(systemName: "location.north.circle.fill")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.red)
 
-            Text("NOWHERE")
-                .font(.system(size: 16, weight: .black))
-                .kerning(1.2)
-                .foregroundColor(.white)
+                Text("NOWHERE")
+                    .font(.system(size: 16, weight: .black))
+                    .kerning(1.2)
+                    .foregroundColor(.white)
 
-            Spacer()
+                Spacer()
 
-            // Active Glowing Country/Destination Status Pill
-            Text(engine.isSimulating ? "📍 \(activeLocationName.uppercased())" : "STANDBY")
-                .font(.system(size: 10, weight: .bold))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(engine.isSimulating ? Color.red.opacity(0.25) : Color.gray.opacity(0.25))
-                .foregroundColor(engine.isSimulating ? .red : .gray)
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(engine.isSimulating ? Color.red : Color.gray, lineWidth: 1)
-                )
+                // Top action buttons: Favorites, Routes, Settings
+                HStack(spacing: 8) {
+                    Button(action: { showFavoritesSheet = true }) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
+                    }
 
-            // Top action buttons: Favorites, Routes, Settings
-            HStack(spacing: 8) {
-                Button(action: { showFavoritesSheet = true }) {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                    Button(action: { showRoutesSheet = true }) {
+                        Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+
+                    Button(action: { showSettingsSheet = true }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
+                    }
                 }
+            }
 
-                Button(action: { showRoutesSheet = true }) {
-                    Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        .padding(8)
+            // Horizontal Scrollable HUD Pills Row
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    // Weather HUD Pill
+                    Button(action: { showWeatherSheet = true }) {
+                        HStack(spacing: 4) {
+                            Text(weatherService.currentWeather?.conditionEmoji ?? "⛅")
+                                .font(.system(size: 11))
+                            Text(weatherService.currentWeather?.temperatureFormatted ?? "--°C")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                         .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
-                }
+                        .cornerRadius(8)
+                    }
 
-                Button(action: { showSettingsSheet = true }) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        .padding(8)
+                    // IP Shield HUD Pill
+                    Button(action: { showIpChangerSheet = true }) {
+                        HStack(spacing: 4) {
+                            if case .connected(let node) = ipManager.connectionState {
+                                Text("\(node.flagEmoji) \(node.countryCode)")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.green)
+                            } else {
+                                Image(systemName: "network.badge.shield.half.filled")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.gray)
+                                Text("DIRECT")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                         .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .cornerRadius(8)
+                    }
+
+                    // Ghost Cloak Anti-Detection HUD Pill
+                    Button(action: { showAntiDetectionSheet = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "shield.checkered")
+                                .font(.system(size: 10))
+                                .foregroundColor(storage.isGhostCloakEnabled ? .red : .gray)
+                            Text(storage.isGhostCloakEnabled ? "CLOAK ON" : "RAW GPS")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(storage.isGhostCloakEnabled ? .red : .gray)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(storage.isGhostCloakEnabled ? Color.red.opacity(0.2) : Color.white.opacity(0.1))
+                        .cornerRadius(8)
+                    }
+
+                    // Hotspot GPS Sync HUD Pill
+                    Button(action: { showHotspotSheet = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "wifi")
+                                .font(.system(size: 10))
+                                .foregroundColor(hotspot.isServerRunning ? .green : .white)
+                            Text(hotspot.isServerRunning ? "SYNC (\(hotspot.connectedClientsCount))" : "HOTSPOT")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(hotspot.isServerRunning ? .green : .white)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(8)
+                    }
+
+                    // Session Timer Countdown HUD Pill
+                    Button(action: { showSessionTimerSheet = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "timer")
+                                .font(.system(size: 10))
+                                .foregroundColor(sessionTimer.isExpired ? .red : .green)
+                            Text(sessionTimer.formattedTimeRemaining)
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(sessionTimer.isExpired ? .red : .green)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(8)
+                    }
                 }
             }
         }

@@ -29,6 +29,11 @@ class LocationSimulationEngine: ObservableObject {
         activeMode = .fixed(coordinate: coordinate, altitude: altitude)
         isSimulating = true
         isPaused = false
+
+        if StorageManager.shared.isAutoVpnSyncEnabled {
+            IpNodeManager.shared.autoSyncWithLocation(coordinate: coordinate)
+        }
+        WeatherService.shared.fetchWeather(for: coordinate)
     }
 
     func startRoute(waypoints: [RoutePoint], speedKmh: Double, isLooping: Bool = true, mode: TransportMode = .vehicle) {
@@ -46,6 +51,10 @@ class LocationSimulationEngine: ObservableObject {
 
         if let first = waypoints.first {
             currentCoordinate = first.coordinate
+            if StorageManager.shared.isAutoVpnSyncEnabled {
+                IpNodeManager.shared.autoSyncWithLocation(coordinate: first.coordinate)
+            }
+            WeatherService.shared.fetchWeather(for: first.coordinate)
         }
 
         startTimer()
@@ -63,6 +72,10 @@ class LocationSimulationEngine: ObservableObject {
         activeMode = .idle
         currentSpeedKmh = 0.0
         routeProgress = 0.0
+
+        if StorageManager.shared.isAutoVpnSyncEnabled {
+            IpNodeManager.shared.disconnect()
+        }
     }
 
     private func startTimer() {
