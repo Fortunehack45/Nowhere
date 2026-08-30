@@ -176,6 +176,8 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
+        binding.switchSettingsGhostCloak.isChecked = settingsPrefs.isGhostCloakEnabled
+        binding.switchSettingsAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled
         refreshWidgetSlotsUI()
     }
 
@@ -295,6 +297,24 @@ class SettingsActivity : AppCompatActivity() {
             sessionPrefs.isPersistentBootInjectionEnabled = isChecked
             val msg = if (isChecked) "Auto-Inject on Boot: Enabled" else "Auto-Inject on Boot: Disabled"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        // Anti-Detection & Ghost Cloak Suite
+        binding.switchSettingsGhostCloak.setOnCheckedChangeListener { _, isChecked ->
+            settingsPrefs.isGhostCloakEnabled = isChecked
+            val msg = if (isChecked) "Ghost Cloak: Active (Stealth Mode ON)" else "Ghost Cloak: Inactive"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        binding.switchSettingsAutoVpnSync.setOnCheckedChangeListener { _, isChecked ->
+            settingsPrefs.isAutoVpnSyncEnabled = isChecked
+            val msg = if (isChecked) "Auto-Sync VPN: Enabled" else "Auto-Sync VPN: Disabled"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnSettingsGhostCloakManage.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.AntiDetectionBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.AntiDetectionBottomSheet.TAG)
         }
 
         // Switches & Sliders
@@ -471,6 +491,12 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.appTheme = "DARK"
         settingsPrefs.distanceUnit = "METRIC"
         settingsPrefs.enableHapticFeedback = true
+
+        settingsPrefs.isGhostCloakEnabled = true
+        settingsPrefs.isNmeaSynthesisEnabled = true
+        settingsPrefs.isClockDriftEmulationEnabled = true
+        settingsPrefs.isSensorKinematicsEnabled = true
+        settingsPrefs.isAutoVpnSyncEnabled = true
 
         settingsPrefs.widgetSlot1Name = "Paris"
         settingsPrefs.widgetSlot1Lat = 48.8566

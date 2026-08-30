@@ -20,7 +20,8 @@ import com.fakegps.mocklocation.util.PermissionHelper
 class MockLocationEngine(
     private val context: Context,
     private val realismLayer: RealismLayer = RealismLayer(),
-    private val settingsPrefs: AppSettingsPreferences = AppSettingsPreferences(context)
+    private val settingsPrefs: AppSettingsPreferences = AppSettingsPreferences(context),
+    val ghostCloakEngine: GhostCloakEngine = GhostCloakEngine(settingsPrefs)
 ) {
     companion object {
         private const val TAG = "MockLocationEngine"
@@ -183,7 +184,7 @@ class MockLocationEngine(
 
         for (provider in providersToUse) {
             try {
-                val location = Location(provider).apply {
+                val rawLocation = Location(provider).apply {
                     this.latitude = finalLat
                     this.longitude = finalLon
                     this.altitude = finalAltitude
@@ -193,25 +194,19 @@ class MockLocationEngine(
                     this.time = nowMs
                     this.elapsedRealtimeNanos = nowNanos
 
-                    val extras = Bundle().apply {
-                        putInt("satellites", 24)
-                        putInt("maxSatellites", 32)
-                    }
-                    this.extras = extras
-
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         this.bearingAccuracyDegrees = bearingAccuracy
                         this.speedAccuracyMetersPerSecond = speedAccuracy
                         this.verticalAccuracyMeters = verticalAccuracy
                     }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        this.elapsedRealtimeUncertaintyNanos = 0.0
-                    }
                 }
 
+                // Apply Ghost Cloak Anti-Detection Transformation (NMEA, Micro-Clock Drift, Satellite Constellation)
+                val cloakedLocation = ghostCloakEngine.cloakLocation(rawLocation, nowMs, nowNanos)
+
                 locationManager.setTestProviderEnabled(provider, true)
-                locationManager.setTestProviderLocation(provider, location)
-                lastSuccessfulLocation = location
+                locationManager.setTestProviderLocation(provider, cloakedLocation)
+                lastSuccessfulLocation = cloakedLocation
             } catch (e: SecurityException) {
                 Log.e(TAG, "SecurityException setting mock location for $provider: permission revoked", e)
                 isInitialized = false
@@ -230,8 +225,9 @@ class MockLocationEngine(
                         this.time = nowMs
                         this.elapsedRealtimeNanos = nowNanos
                     }
-                    locationManager.setTestProviderLocation(provider, retryLoc)
-                    lastSuccessfulLocation = retryLoc
+                    val cloakedRetry = ghostCloakEngine.cloakLocation(retryLoc, nowMs, nowNanos)
+                    locationManager.setTestProviderLocation(provider, cloakedRetry)
+                    lastSuccessfulLocation = cloakedRetry
                 } catch (ignored: Exception) {}
             }
         }

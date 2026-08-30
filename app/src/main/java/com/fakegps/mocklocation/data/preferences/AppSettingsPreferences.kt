@@ -62,7 +62,36 @@ class AppSettingsPreferences(context: Context) {
         const val KEY_MAP_ANIMATIONS = "key_map_animations"
         const val KEY_HAPTIC_FEEDBACK = "key_haptic_feedback"
         const val KEY_NOTIFICATION_DETAILS = "key_notification_details"
+
+        // Anti-Detection & Ghost Cloak Suite Keys
+        const val KEY_GHOST_CLOAK_ENABLED = "key_ghost_cloak_enabled"
+        const val KEY_NMEA_SYNTHESIS_ENABLED = "key_nmea_synthesis_enabled"
+        const val KEY_CLOCK_DRIFT_EMULATION_ENABLED = "key_clock_drift_emulation_enabled"
+        const val KEY_SENSOR_KINEMATICS_ENABLED = "key_sensor_kinematics_enabled"
+        const val KEY_AUTO_VPN_SYNC_ENABLED = "key_auto_vpn_sync_enabled"
     }
+
+    // --- Anti-Detection & Ghost Cloaking Settings ---
+
+    var isGhostCloakEnabled: Boolean
+        get() = prefs.getBoolean(KEY_GHOST_CLOAK_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_GHOST_CLOAK_ENABLED, value).apply()
+
+    var isNmeaSynthesisEnabled: Boolean
+        get() = prefs.getBoolean(KEY_NMEA_SYNTHESIS_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_NMEA_SYNTHESIS_ENABLED, value).apply()
+
+    var isClockDriftEmulationEnabled: Boolean
+        get() = prefs.getBoolean(KEY_CLOCK_DRIFT_EMULATION_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_CLOCK_DRIFT_EMULATION_ENABLED, value).apply()
+
+    var isSensorKinematicsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SENSOR_KINEMATICS_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_SENSOR_KINEMATICS_ENABLED, value).apply()
+
+    var isAutoVpnSyncEnabled: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_VPN_SYNC_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_AUTO_VPN_SYNC_ENABLED, value).apply()
 
     // --- Advanced Engine Settings ---
 

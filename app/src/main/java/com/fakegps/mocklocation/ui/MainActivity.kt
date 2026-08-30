@@ -133,6 +133,7 @@ class MainActivity : AppCompatActivity() {
         setupJoystick()
         setupFloatingButtons()
         setupIpShield()
+        setupGhostCloak()
         requestInitialPermissions()
         observeUiState()
 
@@ -287,6 +288,7 @@ class MainActivity : AppCompatActivity() {
         binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
         viewModel.refreshPermissionStates()
         checkBatteryOptimizationOnFirstLaunch()
+        renderGhostCloakBadge()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         if (com.fakegps.mocklocation.data.preferences.SessionPreferences(this).hasValidActiveSession()) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
@@ -858,6 +860,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
         try {
+            if (!settingsPrefs.isAutoVpnSyncEnabled) return
             val sessionPrefs = SessionPreferences(this)
             sessionPrefs.isIpMaskingEnabled = true
             val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
@@ -1054,6 +1057,29 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun setupGhostCloak() {
+        binding.layoutGhostCloakBadge.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.AntiDetectionBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.AntiDetectionBottomSheet.TAG)
+        }
+        renderGhostCloakBadge()
+    }
+
+    private fun renderGhostCloakBadge() {
+        val isCloaked = settingsPrefs.isGhostCloakEnabled
+        if (isCloaked) {
+            binding.layoutGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_active_bg)
+            binding.ivGhostCloakIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
+            binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(this, R.color.primary_bright))
+            binding.tvGhostCloakBadge.text = "CLOAK ON"
+        } else {
+            binding.layoutGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.surface_elevated)
+            binding.ivGhostCloakIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.text_muted)
+            binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
+            binding.tvGhostCloakBadge.text = "RAW GPS"
         }
     }
 

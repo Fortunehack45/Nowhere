@@ -137,6 +137,39 @@
                                 android:textStyle="bold" />
                         </LinearLayout>
 
+                        <!-- Ghost Cloak Anti-Detection HUD Pill -->
+                        <LinearLayout
+                            android:id="@+id/layoutGhostCloakBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_status_pill"
+                            android:backgroundTint="@color/badge_active_bg"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp">
+
+                            <ImageView
+                                android:id="@+id/ivGhostCloakIcon"
+                                android:layout_width="13dp"
+                                android:layout_height="13dp"
+                                android:src="@drawable/ic_shield_check"
+                                app:tint="@color/primary_bright"
+                                tools:ignore="ContentDescription" />
+
+                            <TextView
+                                android:id="@+id/tvGhostCloakBadge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:letterSpacing="0.04"
+                                android:text="CLOAK ON"
+                                android:textColor="@color/primary_bright"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
                         <!-- Hotspot GPS Sync HUD Pill -->
                         <LinearLayout
                             android:id="@+id/layoutHotspotBadge"

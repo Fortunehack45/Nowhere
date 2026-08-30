@@ -1070,6 +1070,7 @@ class MockLocationService : Service() {
         stopCurrentLoop()
         releaseWakeLock()
         try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
+        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
         try { engine.stop() } catch (e: Exception) {}
         serviceJob.cancel()
         super.onDestroy()

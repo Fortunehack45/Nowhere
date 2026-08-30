@@ -124,7 +124,9 @@ class NowhereVpnService : VpnService() {
     private var tunnelJob: Job? = null
     private var trafficJob: Job? = null
     private lateinit var sessionPrefs: SessionPreferences
+    private lateinit var settingsPrefs: com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 
+    private var wakeLock: android.os.PowerManager.WakeLock? = null
     private var totalRxBytes: Long = 0L
     private var totalTxBytes: Long = 0L
     private var sessionStartTimeMs: Long = 0L
@@ -134,11 +136,43 @@ class NowhereVpnService : VpnService() {
     override fun onCreate() {
         super.onCreate()
         sessionPrefs = SessionPreferences(this)
+        settingsPrefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(this)
         createNotificationChannel()
+        acquireWakeLock()
         registerNetworkWatchdog()
     }
 
+    private fun acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                val powerManager = getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+                wakeLock = powerManager?.newWakeLock(
+                    android.os.PowerManager.PARTIAL_WAKE_LOCK,
+                    "Nowhere:VpnStabilityWakeLock"
+                )?.apply {
+                    setReferenceCounted(false)
+                }
+            }
+            if (wakeLock?.isHeld == false) {
+                wakeLock?.acquire(24 * 60 * 60 * 1000L) // 24 hours max safeguard
+                Log.d(TAG, "VPN WakeLock acquired successfully.")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not acquire VPN WakeLock: ${e.message}")
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+                Log.d(TAG, "VPN WakeLock released cleanly.")
+            }
+        } catch (ignored: Exception) {}
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        acquireWakeLock()
         when (intent?.action) {
             ACTION_CONNECT -> {
                 val nodeId = intent.getStringExtra(EXTRA_NODE_ID) ?: sessionPrefs.activeIpNodeId
@@ -363,6 +397,7 @@ class NowhereVpnService : VpnService() {
         trafficJob = null
         sessionStartTimeMs = 0L
         disconnectInterface()
+        releaseWakeLock()
         _vpnState.value = VpnState.Disconnected
         _trafficStats.value = VpnTrafficStats()
         try {
