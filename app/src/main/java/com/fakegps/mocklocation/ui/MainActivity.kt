@@ -119,6 +119,31 @@ class MainActivity : AppCompatActivity() {
         viewModel.refreshPermissionStates()
     }
 
+    private var pendingVpnNodeId: String? = null
+
+    private val vpnPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val nodeId = pendingVpnNodeId ?: SessionPreferences(this).activeIpNodeId
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, nodeId)
+            Toast.makeText(this, "🛡️ VPN Privacy Shield Activated", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "VPN permission is needed to activate Privacy Shield", Toast.LENGTH_SHORT).show()
+        }
+        pendingVpnNodeId = null
+    }
+
+    fun startVpnWithPermissionCheck(nodeId: String) {
+        val prepareIntent = android.net.VpnService.prepare(this)
+        if (prepareIntent != null) {
+            pendingVpnNodeId = nodeId
+            vpnPermissionLauncher.launch(prepareIntent)
+        } else {
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, nodeId)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         settingsPrefs = AppSettingsPreferences(this)
@@ -894,7 +919,7 @@ class MainActivity : AppCompatActivity() {
             sessionPrefs.isIpMaskingEnabled = true
             val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
             sessionPrefs.activeIpNodeId = bestNode.id
-            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+            startVpnWithPermissionCheck(bestNode.id)
         } catch (ignored: Exception) {}
     }
 

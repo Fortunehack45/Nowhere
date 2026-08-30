@@ -102,6 +102,27 @@ class GhostCloakEngine {
         return 18.0 + (Double.random(in: 0...1) * 14.5)
     }
 
+    // MARK: - Satellite Multipath Drift Jitter
+
+    private var driftOffsetX: Double = 0.0
+    private var driftOffsetY: Double = 0.0
+
+    func applySatelliteJitter(coordinate: CLLocationCoordinate2D, maxRadiusMeters: Double = 1.8) -> CLLocationCoordinate2D {
+        let decay = 0.85
+        let shockX = Double.random(in: -0.45...0.45)
+        let shockY = Double.random(in: -0.45...0.45)
+        driftOffsetX = min(maxRadiusMeters, max(-maxRadiusMeters, driftOffsetX * decay + shockX))
+        driftOffsetY = min(maxRadiusMeters, max(-maxRadiusMeters, driftOffsetY * decay + shockY))
+
+        let latDelta = (driftOffsetY / 6378137.0) * (180.0 / .pi)
+        let lonDelta = (driftOffsetX / (6378137.0 * cos(coordinate.latitude * .pi / 180.0))) * (180.0 / .pi)
+
+        return CLLocationCoordinate2D(
+            latitude: coordinate.latitude + latDelta,
+            longitude: coordinate.longitude + lonDelta
+        )
+    }
+
     // MARK: - Physical Inertial Kinematics
 
     func computeInertialTelemetry(speedMps: Double, bearingDeg: Double, deltaSeconds: Double) -> InertialTelemetry {

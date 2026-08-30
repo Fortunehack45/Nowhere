@@ -264,11 +264,10 @@ class NowhereVpnService : VpnService() {
                     val builder = Builder()
                         .setSession("Nowhere IP Shield - ${node.name}")
                         .addAddress("10.8.0.2", 24)
-                        .addRoute("10.8.0.0", 24) // Private subnet only, never hijacking physical internet
+                        .addRoute("0.0.0.0", 0) // Full default route: guarantees Android displays the system VPN Key icon
                         .addDnsServer("1.1.1.1")
                         .addDnsServer("8.8.8.8")
-                        .addDnsServer("9.9.9.9")
-                        .setMtu(1500)
+                        .setMtu(1400)
                         .setBlocking(false)
 
                     // Bind active network if available (keeps Wi-Fi/Cellular fast; gracefully handles offline/airplane mode)
@@ -288,25 +287,28 @@ class NowhereVpnService : VpnService() {
 
                     vpnInterface = builder.establish()
                 } catch (e: Exception) {
-                    Log.w(TAG, "VPN builder establish warning (operating in standalone/offline mode): ${e.message}")
+                    Log.w(TAG, "VPN builder establish warning: ${e.message}")
                 }
 
-                // Guaranteed persistent connection state even in Airplane / Offline mode
-                isRunning = true
-                _vpnState.value = VpnState.Connected(node)
-                Log.i(TAG, "VPN Privacy Shield successfully active and locked for node: ${node.name} (Offline & Airplane Ready)")
-
-                launchTrafficMonitor(node)
-
-                vpnInterface?.let { pfd ->
-                    runTunnelLoop(pfd, node)
+                if (vpnInterface != null) {
+                    isRunning = true
+                    _vpnState.value = VpnState.Connected(node)
+                    Log.i(TAG, "VPN Privacy Shield successfully active and locked for node: ${node.name}")
+                    launchTrafficMonitor(node)
+                    vpnInterface?.let { pfd ->
+                        runTunnelLoop(pfd, node)
+                    }
+                } else {
+                    Log.w(TAG, "VPN builder.establish() returned null. Consent permission might be pending.")
+                    isRunning = false
+                    _vpnState.value = VpnState.Disconnected
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Non-fatal error in VPN service loop: ${e.message}", e)
-                isRunning = true
-                _vpnState.value = VpnState.Connected(node)
+                isRunning = false
+                _vpnState.value = VpnState.Disconnected
             }
         }
     }

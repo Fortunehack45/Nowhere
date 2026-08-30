@@ -14,22 +14,34 @@ class RealismLayer(
     private val settingsPrefs: AppSettingsPreferences? = null,
     private val random: Random = Random()
 ) {
+    private var driftOffsetMetersX: Double = 0.0
+    private var driftOffsetMetersY: Double = 0.0
+
     /**
-     * Applies realistic 2D polar/Gaussian jitter when explicitly enabled.
+     * Applies realistic 2D continuous Ornstein-Uhlenbeck random walk jitter (Brownian satellite drift) when enabled.
      */
     fun applyJitter(latitude: Double, longitude: Double, forceJitter: Boolean = false): Pair<Double, Double> {
         val shouldJitter = forceJitter || (settingsPrefs?.randomizeJitter == true)
         if (!shouldJitter) {
+            driftOffsetMetersX = 0.0
+            driftOffsetMetersY = 0.0
             return truncateIfNeeded(latitude, longitude)
         }
 
         val configuredRadius = settingsPrefs?.jitterRadiusMeters ?: 2.0f
-        val maxJitter = if (configuredRadius >= 0.1f) configuredRadius.toDouble() else 2.0
-        val minJitter = (maxJitter * 0.25).coerceAtLeast(0.1)
-        val radius = minJitter + (maxJitter - minJitter) * sqrt(random.nextDouble())
-        val angleDeg = random.nextFloat() * 360f
+        val maxRadius = if (configuredRadius >= 0.1f) configuredRadius.toDouble() else 2.0
 
-        val (jitteredLat, jitteredLon) = GeoUtils.computeDestinationPoint(latitude, longitude, angleDeg, radius)
+        // Ornstein-Uhlenbeck mean-reverting random walk for authentic satellite multipath drift
+        val decay = 0.85
+        val shockX = (random.nextGaussian() * 0.45)
+        val shockY = (random.nextGaussian() * 0.45)
+        driftOffsetMetersX = (driftOffsetMetersX * decay + shockX).coerceIn(-maxRadius, maxRadius)
+        driftOffsetMetersY = (driftOffsetMetersY * decay + shockY).coerceIn(-maxRadius, maxRadius)
+
+        val distance = kotlin.math.sqrt(driftOffsetMetersX * driftOffsetMetersX + driftOffsetMetersY * driftOffsetMetersY)
+        val bearing = Math.toDegrees(kotlin.math.atan2(driftOffsetMetersX, driftOffsetMetersY)).toFloat()
+
+        val (jitteredLat, jitteredLon) = GeoUtils.computeDestinationPoint(latitude, longitude, bearing, distance)
         return truncateIfNeeded(jitteredLat, jitteredLon)
     }
 

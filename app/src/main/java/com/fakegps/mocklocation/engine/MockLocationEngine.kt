@@ -19,8 +19,8 @@ import com.fakegps.mocklocation.util.PermissionHelper
  */
 class MockLocationEngine(
     private val context: Context,
-    private val realismLayer: RealismLayer = RealismLayer(),
     private val settingsPrefs: AppSettingsPreferences = AppSettingsPreferences(context),
+    private val realismLayer: RealismLayer = RealismLayer(settingsPrefs),
     val ghostCloakEngine: GhostCloakEngine = GhostCloakEngine(settingsPrefs)
 ) {
     companion object {

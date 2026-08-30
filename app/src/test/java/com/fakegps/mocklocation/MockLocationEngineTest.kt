@@ -1,4 +1,4 @@
-﻿package com.fakegps.mocklocation
+package com.fakegps.mocklocation
 
 import android.content.Context
 import android.location.LocationManager
@@ -31,7 +31,7 @@ class MockLocationEngineTest {
         shadowLocationManager = Shadows.shadowOf(locationManager)
         val settings = AppSettingsPreferences(context)
         val realism = RealismLayer(settings)
-        engine = MockLocationEngine(context, realism, settings)
+        engine = MockLocationEngine(context, settings, realism)
     }
 
     @Test

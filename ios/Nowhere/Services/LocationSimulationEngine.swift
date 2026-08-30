@@ -24,8 +24,6 @@ class LocationSimulationEngine: ObservableObject {
     func startFixed(coordinate: CLLocationCoordinate2D, altitude: Double = 15.0) {
         stop()
         currentCoordinate = coordinate
-        currentSpeedKmh = 0.0
-        currentBearing = 0.0
         activeMode = .fixed(coordinate: coordinate, altitude: altitude)
         isSimulating = true
         isPaused = false
@@ -34,6 +32,16 @@ class LocationSimulationEngine: ObservableObject {
             IpNodeManager.shared.autoSyncWithLocation(coordinate: coordinate)
         }
         WeatherService.shared.fetchWeather(for: coordinate)
+
+        // Continuous satellite jitter loop for Fixed teleport mode
+        simulationTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self, self.isSimulating, case .fixed(let baseCoord, _) = self.activeMode else { return }
+            if StorageManager.shared.isGhostCloakEnabled {
+                self.currentCoordinate = GhostCloakEngine.shared.applySatelliteJitter(coordinate: baseCoord)
+            } else {
+                self.currentCoordinate = baseCoord
+            }
+        }
     }
 
     func startRoute(waypoints: [RoutePoint], speedKmh: Double, isLooping: Bool = true, mode: TransportMode = .vehicle) {

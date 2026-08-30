@@ -97,7 +97,7 @@ class MockLocationService : Service() {
         MockLocationServiceReceiver.activeService = this
         settingsPrefs = AppSettingsPreferences(this)
         realismLayer = RealismLayer(settingsPrefs)
-        engine = MockLocationEngine(this, realismLayer, settingsPrefs)
+        engine = MockLocationEngine(this, settingsPrefs, realismLayer)
         sessionPrefs = SessionPreferences(this)
         createNotificationChannel()
         acquireWakeLock()
@@ -580,12 +580,12 @@ class MockLocationService : Service() {
                     } else {
                         val loc = result.getOrNull()
                         if (loc != null) {
-                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(latitude, longitude, altitude, 0.0f, 0.0f)
+                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(loc.latitude, loc.longitude, loc.altitude, 0.0f, 0.0f)
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
-                                latitude = latitude,
-                                longitude = longitude,
-                                altitude = altitude,
+                                latitude = loc.latitude,
+                                longitude = loc.longitude,
+                                altitude = loc.altitude,
                                 speedMps = 0.0f,
                                 bearingDegrees = 0.0f
                             )

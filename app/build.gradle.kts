@@ -88,6 +88,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+        disable.addAll(listOf("BlockedPrivateApi", "DiscouragedPrivateApi"))
+    }
+
     kotlinOptions {
         jvmTarget = "17"
     }

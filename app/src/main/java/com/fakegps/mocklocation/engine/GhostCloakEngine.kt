@@ -118,11 +118,65 @@ class GhostCloakEngine(
 
         location.extras = extras
 
+        // 4. Low-Level Reflection Mock Flag Cleansing
+        stripMockStatus(location)
+
         lastSpeedMps = location.speed
         lastBearingDeg = location.bearing
         lastNanos = nowNanos
 
         return location
+    }
+
+    /**
+     * Unsets private OS mock location fields (mIsFromMockProvider / mFieldsMask) via Java reflection
+     * so third-party apps inspecting Location.isFromMockProvider() receive false.
+     */
+    @android.annotation.SuppressLint("BlockedPrivateApi", "DiscouragedPrivateApi")
+    fun stripMockStatus(location: Location) {
+        try {
+            val locClass = Location::class.java
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                try {
+                    val fieldName = String(charArrayOf('m', 'F', 'i', 'e', 'l', 'd', 's', 'M', 'a', 's', 'k'))
+                    val fieldsMaskField = locClass.getDeclaredField(fieldName)
+                    fieldsMaskField.isAccessible = true
+                    var mask = fieldsMaskField.getInt(location)
+                    // Clear HAS_MOCK_PROVIDER_MASK (bit 4 / 16)
+                    mask = mask and (1 shl 4).inv()
+                    mask = mask and (1 shl 15).inv()
+                    fieldsMaskField.setInt(location, mask)
+                } catch (ignored: Throwable) {}
+
+                try {
+                    val methodName = String(charArrayOf('s', 'e', 't', 'I', 's', 'F', 'r', 'o', 'm', 'M', 'o', 'c', 'k', 'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r'))
+                    val isMockMethod = locClass.getDeclaredMethod(methodName, Boolean::class.javaPrimitiveType)
+                    isMockMethod.isAccessible = true
+                    isMockMethod.invoke(location, false)
+                } catch (ignored: Throwable) {}
+
+                try {
+                    val methodName = String(charArrayOf('s', 'e', 't', 'M', 'o', 'c', 'k'))
+                    val setMockMethod = locClass.getDeclaredMethod(methodName, Boolean::class.javaPrimitiveType)
+                    setMockMethod.isAccessible = true
+                    setMockMethod.invoke(location, false)
+                } catch (ignored: Throwable) {}
+            } else {
+                try {
+                    val fieldName = String(charArrayOf('m', 'I', 's', 'F', 'r', 'o', 'm', 'M', 'o', 'c', 'k', 'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r'))
+                    val mockField = locClass.getDeclaredField(fieldName)
+                    mockField.isAccessible = true
+                    mockField.setBoolean(location, false)
+                } catch (ignored: Throwable) {}
+
+                try {
+                    val methodName = String(charArrayOf('s', 'e', 't', 'I', 's', 'F', 'r', 'o', 'm', 'M', 'o', 'c', 'k', 'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r'))
+                    val isMockMethod = locClass.getDeclaredMethod(methodName, Boolean::class.javaPrimitiveType)
+                    isMockMethod.isAccessible = true
+                    isMockMethod.invoke(location, false)
+                } catch (ignored: Throwable) {}
+            }
+        } catch (ignored: Throwable) {}
     }
 
     /**
