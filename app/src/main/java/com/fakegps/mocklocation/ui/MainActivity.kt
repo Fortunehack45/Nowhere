@@ -163,6 +163,7 @@ class MainActivity : AppCompatActivity() {
         setupGhostCloak()
         requestInitialPermissions()
         observeUiState()
+        com.fakegps.mocklocation.util.AppReviewManager.incrementLaunchCount(this)
 
         binding.btnHeaderWidgets.setOnClickListener {
             WidgetGalleryBottomSheet().show(supportFragmentManager, "WIDGET_GALLERY")
@@ -899,6 +900,7 @@ class MainActivity : AppCompatActivity() {
             val state = viewModel.uiState.value
             SaveFavoriteDialog(this, state.fixedLatitude, state.fixedLongitude) { name, tag ->
                 viewModel.saveFavorite(name, state.fixedLatitude, state.fixedLongitude, tag)
+                com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
                 Toast.makeText(this, "Saved to bookmarks", Toast.LENGTH_SHORT).show()
             }.show()
         }
@@ -1026,6 +1028,7 @@ class MainActivity : AppCompatActivity() {
         }
         startForegroundServiceCompat(intent)
         mockService?.startFixed(state.fixedLatitude, state.fixedLongitude)
+        com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
     }
 
     private fun startRouteSpoofing() {
@@ -1103,6 +1106,7 @@ class MainActivity : AppCompatActivity() {
             putExtra(MockLocationService.EXTRA_TRANSPORT_MODE, state.transportMode.name)
         }
         startForegroundServiceCompat(intent)
+        com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
     }
 
     private fun startJoystickSpoofing() {
@@ -1122,6 +1126,7 @@ class MainActivity : AppCompatActivity() {
         }
         startForegroundServiceCompat(intent)
         mockService?.startJoystick(state.fixedLatitude, state.fixedLongitude, state.joystickSpeedKmh)
+        com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
     }
 
     private fun stopSpoofing() {

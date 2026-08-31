@@ -38,18 +38,20 @@ jobs:
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Build Debug & Release APKs
-        run: ./gradlew assembleDebug assembleRelease --stacktrace
+      - name: Build Debug & Release APKs and Google Play Bundle (AAB)
+        run: ./gradlew assembleDebug assembleRelease bundleRelease --stacktrace
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
 
-      - name: List Generated APK Files and Extract Version
+      - name: List Generated APK & AAB Files and Extract Version
         id: extract_version
         run: |
           echo "=== Debug APKs ==="
           ls -la app/build/outputs/apk/debug/ || true
           echo "=== Release APKs ==="
           ls -la app/build/outputs/apk/release/ || true
+          echo "=== Release Bundles (AAB) ==="
+          ls -la app/build/outputs/bundle/release/ || true
           RELEASE_APK=$(ls app/build/outputs/apk/release/Nowhere-*.apk 2>/dev/null | head -n 1)
           if [ -n "$RELEASE_APK" ]; then
             APK_BASENAME=$(basename "$RELEASE_APK")
@@ -72,23 +74,33 @@ jobs:
           files: |
             app/build/outputs/apk/release/*.apk
             app/build/outputs/apk/debug/*.apk
+            app/build/outputs/bundle/release/*.aab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Debug APK Artifact (Optional)
+      - name: Upload Google Play AAB Bundle Artifact
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: Nowhere-Debug-APK-v${{ steps.extract_version.outputs.version }}
-          path: app/build/outputs/apk/debug/*.apk
+          name: Nowhere-PlayStore-AAB-v${{ steps.extract_version.outputs.version }}
+          path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: warn
-          retention-days: 1
+          retention-days: 14
 
-      - name: Upload Release APK Artifact (Optional)
+      - name: Upload Release APK Artifact
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: Nowhere-Release-APK-v${{ steps.extract_version.outputs.version }}
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
-          retention-days: 1
+          retention-days: 14
+
+      - name: Upload Debug APK Artifact
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nowhere-Debug-APK-v${{ steps.extract_version.outputs.version }}
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+          retention-days: 7

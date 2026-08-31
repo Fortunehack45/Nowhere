@@ -106,7 +106,7 @@ object AppUpdateManager {
                         val cleanTag = tagName.removePrefix("v").removePrefix("V").trim()
                         val releaseName = targetReleaseJson.optString("name", "Nowhere v$cleanTag").ifBlank { "Nowhere v$cleanTag" }
                         val releaseNotes = targetReleaseJson.optString("body", "Performance improvements, stability upgrades, and bug fixes.")
-                        val htmlUrl = targetReleaseJson.optString("html_url", "https://github.com/Fortunehack45/Nowhere/releases")
+                        val htmlUrl = targetReleaseJson.optString("html_url", "https://play.google.com/store/apps/details?id=${context.packageName}")
 
                         var apkDownloadUrl = ""
                         val assets = targetReleaseJson.optJSONArray("assets")
@@ -121,10 +121,6 @@ object AppUpdateManager {
                                     }
                                 }
                             }
-                        }
-
-                        if (apkDownloadUrl.isEmpty() && cleanTag.isNotBlank()) {
-                            apkDownloadUrl = "https://github.com/Fortunehack45/Nowhere/releases/download/v$cleanTag/Nowhere-v$cleanTag-release.apk"
                         }
 
                         if (apkDownloadUrl.isEmpty()) {
@@ -170,8 +166,8 @@ object AppUpdateManager {
                         val tagName = firstTagObj.optString("name", "").trim()
                         val cleanTag = tagName.removePrefix("v").removePrefix("V").trim()
                         val isNewer = isNewerVersion(currentVersion, cleanTag)
-                        val htmlUrl = "https://github.com/Fortunehack45/Nowhere/releases/tag/$tagName"
-                        val downloadUrl = "https://github.com/Fortunehack45/Nowhere/releases/download/$tagName/Nowhere-v$cleanTag-release.apk"
+                        val htmlUrl = "https://play.google.com/store/apps/details?id=${context.packageName}"
+                        val downloadUrl = ""
 
                         prefs.edit().putLong(KEY_LAST_CHECK_TIME, now).apply()
 
@@ -180,7 +176,7 @@ object AppUpdateManager {
                             currentVersion = currentVersion,
                             latestVersion = cleanTag.ifEmpty { currentVersion },
                             releaseTitle = "Nowhere v$cleanTag",
-                            releaseNotes = "New features, bug fixes, and stability improvements.",
+                            releaseNotes = "Enhanced location simulation accuracy, stability upgrades, and bug fixes.",
                             downloadUrl = downloadUrl,
                             htmlUrl = htmlUrl
                         )
@@ -203,7 +199,7 @@ object AppUpdateManager {
             releaseTitle = "Current Version",
             releaseNotes = "",
             downloadUrl = "",
-            htmlUrl = "https://github.com/Fortunehack45/Nowhere/releases"
+            htmlUrl = "https://play.google.com/store/apps/details?id=${context.packageName}"
         )
     }
 
@@ -282,7 +278,7 @@ object AppUpdateManager {
 
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setContentTitle("🎉 Nowhere v${updateInfo.latestVersion} Available!")
-                .setContentText("Tap to review highlights and update seamlessly.")
+                .setContentText("Tap to review what's new and update on Google Play.")
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
                 .setColor(ContextCompat.getColor(context, R.color.primary))
                 .setContentIntent(pendingIntent)
@@ -292,9 +288,9 @@ object AppUpdateManager {
                 .setStyle(
                     NotificationCompat.BigTextStyle()
                         .setBigContentTitle("🎉 Nowhere v${updateInfo.latestVersion} Ready!")
-                        .bigText("${updateInfo.releaseTitle}\n\n${updateInfo.releaseNotes.take(250)}\n\nTap to download and update directly.")
+                        .bigText("${updateInfo.releaseTitle}\n\n${updateInfo.releaseNotes.take(250)}\n\nTap to update on Google Play.")
                 )
-                .addAction(R.drawable.ic_check_circle, "Install Update", pendingIntent)
+                .addAction(R.drawable.ic_play, "Update on Google Play", pendingIntent)
                 .build()
 
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager

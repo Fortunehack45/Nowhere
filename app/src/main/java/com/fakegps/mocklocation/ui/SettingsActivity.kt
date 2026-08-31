@@ -271,6 +271,14 @@ class SettingsActivity : AppCompatActivity() {
             showDisclaimerDialog()
         }
 
+        binding.btnOpenPrivacyPolicy.setOnClickListener {
+            showDisclaimerDialog()
+        }
+
+        binding.btnRateAppOnPlayStore.setOnClickListener {
+            com.fakegps.mocklocation.util.AppReviewManager.launchReviewFlow(this, forcePrompt = true)
+        }
+
         binding.tvAppVersionTitle.text = "Nowhere Version v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME}"
         binding.tvSettingsFooterVersion.text = "Version ${com.fakegps.mocklocation.BuildConfig.VERSION_NAME} (Build ${com.fakegps.mocklocation.BuildConfig.VERSION_CODE}) • Release"
         binding.btnCheckAppUpdates.setOnClickListener {

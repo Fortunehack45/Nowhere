@@ -36,7 +36,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.fakegps.mocklocation"
+        applicationId = "com.nowhere.gps.locationchanger"
         minSdk = 26
         targetSdk = 34
         versionCode = computedVersionCode

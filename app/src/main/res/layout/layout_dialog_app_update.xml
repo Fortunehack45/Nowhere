@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_card_glass"
-    android:padding="20dp">
+    android:padding="22dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,36 +14,50 @@
 
         <!-- Bottom Sheet Drag Handle -->
         <View
-            android:layout_width="40dp"
+            android:layout_width="44dp"
             android:layout_height="4dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="18dp"
             android:background="@drawable/bg_status_pill"
             android:backgroundTint="@color/border_subtle" />
 
-        <!-- Header -->
+        <!-- Header with Glowing App Logo & Badge -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@drawable/ic_nowhere_logo" />
+            <FrameLayout
+                android:layout_width="48dp"
+                android:layout_height="48dp">
+
+                <View
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_status_pill"
+                    android:backgroundTint="@color/primary_glow" />
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_nowhere_logo"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="14dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="New Update Available"
+                    android:letterSpacing="0.01"
+                    android:text="New Version Available"
                     android:textColor="@color/text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -52,54 +66,76 @@
                     android:id="@+id/tvUpdateVersionBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="v1.0.1 is ready to install"
-                    android:textColor="@color/primary"
+                    android:layout_marginTop="3dp"
+                    android:letterSpacing="0.03"
+                    android:text="v1.1.0 Ready to install"
+                    android:textColor="@color/primary_bright"
                     android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Changelog Card -->
+        <!-- Changelog & Highlights Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/surface_card_elevated"
-            app:cardCornerRadius="14dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/stroke_subtle"
-            app:strokeWidth="1dp">
+            app:strokeWidth="1.2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="14dp">
+                android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/tvReleaseTitle"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Nowhere Update Highlights"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_bolt"
+                        app:tint="@color/primary_bright"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/tvReleaseTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:text="What's New in this Release"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="10dp"
+                    android:background="@color/stroke_subtle" />
 
                 <TextView
                     android:id="@+id/tvReleaseChangelog"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:lineSpacingExtra="2dp"
-                    android:maxLines="6"
-                    android:text="• Performance and stability enhancements\n• Real-time updates and fixes"
+                    android:lineSpacingExtra="4dp"
+                    android:maxLines="8"
+                    android:text="• Enhanced location simulation accuracy\n• Speed telemetry and engine stability updates\n• Bug fixes and UI performance optimizations"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- In-App Download Progress Container -->
+        <!-- Download Progress Container -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardDownloadProgress"
             android:layout_width="match_parent"
@@ -110,7 +146,7 @@
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/primary"
-            app:strokeWidth="1dp"
+            app:strokeWidth="1.2dp"
             tools:visibility="visible">
 
             <LinearLayout
@@ -130,7 +166,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Downloading APK..."
+                        android:text="Preparing update..."
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -140,7 +176,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0%"
-                        android:textColor="@color/primary"
+                        android:textColor="@color/primary_bright"
                         android:textSize="13sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -161,8 +197,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="0.0 MB / 0.0 MB"
-                    android:textColor="@color/text_secondary"
+                    android:text="Connecting securely..."
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -179,27 +215,28 @@
                 android:id="@+id/btnRemindLater"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="0dp"
-                android:layout_height="50dp"
+                android:layout_height="52dp"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 android:text="Later"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp"
-                app:cornerRadius="12dp" />
+                app:cornerRadius="14dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDownloadUpdate"
                 android:layout_width="0dp"
-                android:layout_height="50dp"
+                android:layout_height="52dp"
                 android:layout_marginStart="8dp"
                 android:layout_weight="2"
                 android:backgroundTint="@color/primary"
-                android:text="Download &amp; Update"
+                android:letterSpacing="0.02"
+                android:text="Update on Google Play"
                 android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                app:cornerRadius="12dp"
-                app:icon="@drawable/ic_check_circle"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_play"
                 app:iconTint="@color/white" />
         </LinearLayout>
 
