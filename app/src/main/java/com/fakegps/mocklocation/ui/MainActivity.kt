@@ -120,6 +120,39 @@ class MainActivity : AppCompatActivity() {
         viewModel.refreshPermissionStates()
     }
 
+    private var pendingSimulationAction: (() -> Unit)? = null
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.refreshPermissionStates()
+        if (isGranted) {
+            Toast.makeText(this, "🔔 Notifications enabled", Toast.LENGTH_SHORT).show()
+        }
+        val action = pendingSimulationAction
+        pendingSimulationAction = null
+        action?.invoke()
+    }
+
+    fun checkNotificationPermissionBeforeSimulation(onProceed: () -> Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !PermissionHelper.hasNotificationPermission(this)) {
+            pendingSimulationAction = onProceed
+            com.fakegps.mocklocation.ui.dialogs.NotificationPermissionDialog(
+                activity = this,
+                onRequestPermission = {
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                },
+                onDismiss = {
+                    val action = pendingSimulationAction
+                    pendingSimulationAction = null
+                    action?.invoke()
+                }
+            ).show()
+        } else {
+            onProceed()
+        }
+    }
+
     private var pendingVpnNodeId: String? = null
 
     private val vpnPermissionLauncher = registerForActivityResult(
@@ -1015,55 +1048,59 @@ class MainActivity : AppCompatActivity() {
     private fun startFixedSpoofing() {
         if (!verifyMockAppSelected()) return
         if (!ensureActiveSessionOrPrompt { startFixedSpoofing() }) return
-        performHapticFeedbackIfEnabled()
+        checkNotificationPermissionBeforeSimulation {
+            performHapticFeedbackIfEnabled()
 
-        val state = viewModel.uiState.value
-        viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "TELEPORT")
-        autoEngageVpnForLocation(state.fixedLatitude, state.fixedLongitude)
+            val state = viewModel.uiState.value
+            viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "TELEPORT")
+            autoEngageVpnForLocation(state.fixedLatitude, state.fixedLongitude)
 
-        val intent = Intent(this, MockLocationService::class.java).apply {
-            action = MockLocationService.ACTION_START_FIXED
-            putExtra(MockLocationService.EXTRA_LATITUDE, state.fixedLatitude)
-            putExtra(MockLocationService.EXTRA_LONGITUDE, state.fixedLongitude)
+            val intent = Intent(this, MockLocationService::class.java).apply {
+                action = MockLocationService.ACTION_START_FIXED
+                putExtra(MockLocationService.EXTRA_LATITUDE, state.fixedLatitude)
+                putExtra(MockLocationService.EXTRA_LONGITUDE, state.fixedLongitude)
+            }
+            startForegroundServiceCompat(intent)
+            mockService?.startFixed(state.fixedLatitude, state.fixedLongitude)
+            com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
         }
-        startForegroundServiceCompat(intent)
-        mockService?.startFixed(state.fixedLatitude, state.fixedLongitude)
-        com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
     }
 
     private fun startRouteSpoofing() {
         if (!verifyMockAppSelected()) return
         if (!ensureActiveSessionOrPrompt { startRouteSpoofing() }) return
-        performHapticFeedbackIfEnabled()
+        checkNotificationPermissionBeforeSimulation {
+            performHapticFeedbackIfEnabled()
 
-        val state = viewModel.uiState.value
-        val effectiveWaypoints = if (state.routeWaypoints.size >= 2) state.routeWaypoints else state.userKeypoints
-        if (effectiveWaypoints.size < 2) {
-            Toast.makeText(this, "Plot at least 2 waypoints by tapping the map or importing a GPX file.", Toast.LENGTH_LONG).show()
-            return
-        }
+            val state = viewModel.uiState.value
+            val effectiveWaypoints = if (state.routeWaypoints.size >= 2) state.routeWaypoints else state.userKeypoints
+            if (effectiveWaypoints.size < 2) {
+                Toast.makeText(this, "Plot at least 2 waypoints by tapping the map or importing a GPX file.", Toast.LENGTH_LONG).show()
+                return@checkNotificationPermissionBeforeSimulation
+            }
 
-        if (state.transportMode == com.fakegps.mocklocation.simulator.TransportMode.SHIP) {
-            Toast.makeText(this, "Validating marine waters...", Toast.LENGTH_SHORT).show()
-            lifecycleScope.launch(Dispatchers.IO) {
-                val (isValid, reason) = com.fakegps.mocklocation.simulator.RoadRouter.validateMarineRoute(this@MainActivity, effectiveWaypoints)
-                withContext(Dispatchers.Main) {
-                    if (!isValid) {
-                        MaterialAlertDialogBuilder(this@MainActivity)
-                            .setTitle("⚓ Ship Cannot Sail on Land")
-                            .setMessage("Ships and marine vessels can only operate in water (oceans, seas, lakes, rivers).\n\n${reason ?: "One or more route waypoints are on land."}\n\nPlease reposition your waypoints into a water body or switch to Vehicle / Foot / Aircraft mode.")
-                            .setPositiveButton("Reposition Waypoints", null)
-                            .setNegativeButton("Switch to Vehicle") { _, _ ->
-                                viewModel.setTransportMode(com.fakegps.mocklocation.simulator.TransportMode.VEHICLE)
-                            }
-                            .show()
-                    } else {
-                        launchRouteService(state)
+            if (state.transportMode == com.fakegps.mocklocation.simulator.TransportMode.SHIP) {
+                Toast.makeText(this, "Validating marine waters...", Toast.LENGTH_SHORT).show()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val (isValid, reason) = com.fakegps.mocklocation.simulator.RoadRouter.validateMarineRoute(this@MainActivity, effectiveWaypoints)
+                    withContext(Dispatchers.Main) {
+                        if (!isValid) {
+                            MaterialAlertDialogBuilder(this@MainActivity)
+                                .setTitle("⚓ Ship Cannot Sail on Land")
+                                .setMessage("Ships and marine vessels can only operate in water (oceans, seas, lakes, rivers).\n\n${reason ?: "One or more route waypoints are on land."}\n\nPlease reposition your waypoints into a water body or switch to Vehicle / Foot / Aircraft mode.")
+                                .setPositiveButton("Reposition Waypoints", null)
+                                .setNegativeButton("Switch to Vehicle") { _, _ ->
+                                    viewModel.setTransportMode(com.fakegps.mocklocation.simulator.TransportMode.VEHICLE)
+                                }
+                                .show()
+                        } else {
+                            launchRouteService(state)
+                        }
                     }
                 }
+            } else {
+                launchRouteService(state)
             }
-        } else {
-            launchRouteService(state)
         }
     }
 
@@ -1112,21 +1149,23 @@ class MainActivity : AppCompatActivity() {
     private fun startJoystickSpoofing() {
         if (!verifyMockAppSelected()) return
         if (!ensureActiveSessionOrPrompt { startJoystickSpoofing() }) return
-        performHapticFeedbackIfEnabled()
+        checkNotificationPermissionBeforeSimulation {
+            performHapticFeedbackIfEnabled()
 
-        val state = viewModel.uiState.value
-        viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "JOYSTICK")
-        autoEngageVpnForLocation(state.fixedLatitude, state.fixedLongitude)
+            val state = viewModel.uiState.value
+            viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "JOYSTICK")
+            autoEngageVpnForLocation(state.fixedLatitude, state.fixedLongitude)
 
-        val intent = Intent(this, MockLocationService::class.java).apply {
-            action = MockLocationService.ACTION_START_JOYSTICK
-            putExtra(MockLocationService.EXTRA_LATITUDE, state.fixedLatitude)
-            putExtra(MockLocationService.EXTRA_LONGITUDE, state.fixedLongitude)
-            putExtra(MockLocationService.EXTRA_SPEED_KMH, state.joystickSpeedKmh)
+            val intent = Intent(this, MockLocationService::class.java).apply {
+                action = MockLocationService.ACTION_START_JOYSTICK
+                putExtra(MockLocationService.EXTRA_LATITUDE, state.fixedLatitude)
+                putExtra(MockLocationService.EXTRA_LONGITUDE, state.fixedLongitude)
+                putExtra(MockLocationService.EXTRA_SPEED_KMH, state.joystickSpeedKmh)
+            }
+            startForegroundServiceCompat(intent)
+            mockService?.startJoystick(state.fixedLatitude, state.fixedLongitude, state.joystickSpeedKmh)
+            com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
         }
-        startForegroundServiceCompat(intent)
-        mockService?.startJoystick(state.fixedLatitude, state.fixedLongitude, state.joystickSpeedKmh)
-        com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
     }
 
     private fun stopSpoofing() {

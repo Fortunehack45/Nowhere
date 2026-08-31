@@ -16,7 +16,9 @@ import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.ActivitySettingsBinding
 import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
 import com.fakegps.mocklocation.util.PermissionHelper
-import kotlinx.coroutines.Dispatchers
+import android.Manifest
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -25,6 +27,15 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var settingsPrefs: AppSettingsPreferences
     private lateinit var sessionPrefs: SessionPreferences
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        refreshNotificationPermissionUI()
+        if (isGranted) {
+            Toast.makeText(this, "🔔 Notifications enabled", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +60,18 @@ class SettingsActivity : AppCompatActivity() {
             com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
         }
         refreshSystemStatus()
+        refreshNotificationPermissionUI()
+    }
+
+    private fun refreshNotificationPermissionUI() {
+        val isGranted = PermissionHelper.hasNotificationPermission(this)
+        if (isGranted) {
+            binding.tvNotificationPermissionStatus.text = "Allowed"
+            binding.tvNotificationPermissionStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_success_text))
+        } else {
+            binding.tvNotificationPermissionStatus.text = "Permission Required"
+            binding.tvNotificationPermissionStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_warning_text))
+        }
     }
 
     private fun observeSessionTimer() {
@@ -273,6 +296,19 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.btnOpenPrivacyPolicy.setOnClickListener {
             showDisclaimerDialog()
+        }
+
+        binding.btnNotificationPermissions.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !PermissionHelper.hasNotificationPermission(this)) {
+                com.fakegps.mocklocation.ui.dialogs.NotificationPermissionDialog(
+                    activity = this,
+                    onRequestPermission = {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                ).show()
+            } else {
+                PermissionHelper.openAppNotificationSettings(this)
+            }
         }
 
         binding.btnRateAppOnPlayStore.setOnClickListener {

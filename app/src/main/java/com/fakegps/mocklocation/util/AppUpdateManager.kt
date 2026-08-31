@@ -254,8 +254,8 @@ object AppUpdateManager {
         try {
             createNotificationChannel(context)
 
-            if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
-                Log.w(TAG, "Notifications are disabled by user.")
+            if (!NotificationManagerCompat.from(context).areNotificationsEnabled() || !PermissionHelper.hasNotificationPermission(context)) {
+                Log.w(TAG, "Notifications are disabled by user or permission is missing.")
                 return
             }
 

@@ -229,6 +229,8 @@ object SessionTimerManager {
     }
 
     private fun notifyThreshold(context: Context, notifId: Int, title: String, message: String) {
+        if (!com.fakegps.mocklocation.util.PermissionHelper.hasNotificationPermission(context)) return
+
         val openIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("OPEN_SESSION_EXTEND_DIALOG", true)
@@ -257,6 +259,8 @@ object SessionTimerManager {
     }
 
     private fun notifySessionExpired(context: Context) {
+        if (!com.fakegps.mocklocation.util.PermissionHelper.hasNotificationPermission(context)) return
+
         val openIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("OPEN_SESSION_EXPIRED_DIALOG", true)
