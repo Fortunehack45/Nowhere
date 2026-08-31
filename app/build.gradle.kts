@@ -33,12 +33,12 @@ val computedVersionName = customVersionName ?: "$versionMajor.$versionMinor.$com
 
 android {
     namespace = "com.fakegps.mocklocation"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.nowhere.gps.locationchanger"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = computedVersionCode
         versionName = computedVersionName
 
