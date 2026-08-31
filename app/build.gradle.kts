@@ -21,15 +21,15 @@ fun getDynamicBuildNumber(): Int {
             standardOutput = stdout
         }
         stdout.toString().trim().toInt()
-    }.getOrNull() ?: 55
+    }.getOrNull() ?: 58
 
     val envRunNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
-    return gitCommitCount + envRunNumber
+    return 200 + gitCommitCount + envRunNumber
 }
 
 val computedVersionCode = getDynamicBuildNumber()
 val customVersionName = project.findProperty("versionName") as? String
-val computedVersionName = customVersionName ?: "$versionMajor.$versionMinor.$computedVersionCode"
+val computedVersionName = customVersionName ?: "1.0.$computedVersionCode"
 
 android {
     namespace = "com.fakegps.mocklocation"
