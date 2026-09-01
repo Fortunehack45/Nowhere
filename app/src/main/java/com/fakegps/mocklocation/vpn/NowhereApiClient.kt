@@ -251,4 +251,47 @@ object NowhereApiClient {
             false
         }
     }
+
+    /**
+     * Fetches live WireGuard nodes from the backend server with X-API-Key header.
+     */
+    suspend fun getNodes(context: Context): Result<List<IpNode>> = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("${getBaseUrl(context)}/api/v1/nodes")
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 5000
+                readTimeout = 5000
+                setRequestProperty("X-API-Key", getApiKey(context))
+            }
+            if (conn.responseCode in 200..299) {
+                val responseText = conn.inputStream.bufferedReader().use { it.readText() }
+                val json = JSONObject(responseText)
+                val nodesArray = json.optJSONArray("nodes") ?: JSONArray()
+                val list = mutableListOf<IpNode>()
+                for (i in 0 until nodesArray.length()) {
+                    val item = nodesArray.getJSONObject(i)
+                    list.add(
+                        IpNode(
+                            id = item.optString("id", "us_central_gcp"),
+                            name = "${item.optString("country_name", "United States")} (${item.optString("city", "US Central")})",
+                            country = item.optString("country_name", "United States"),
+                            countryCode = item.optString("country", "US"),
+                            flagEmoji = if (item.optString("country") == "US") "🇺🇸" else "🌐",
+                            city = item.optString("city", "Central"),
+                            latitude = 41.2619,
+                            longitude = -95.8608,
+                            virtualIp = item.optString("endpoint", DEFAULT_SERVER_HOST).substringBefore(":"),
+                            pingMs = 15
+                        )
+                    )
+                }
+                Result.success(if (list.isNotEmpty()) list else IpManager.GLOBAL_PRIVACY_NODES)
+            } else {
+                Result.success(IpManager.GLOBAL_PRIVACY_NODES)
+            }
+        } catch (e: Exception) {
+            Result.success(IpManager.GLOBAL_PRIVACY_NODES)
+        }
+    }
 }
