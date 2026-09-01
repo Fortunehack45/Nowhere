@@ -31,4 +31,7 @@
     <string name="widget_route_description">Live route simulator and controls</string>
     <string name="widget_search_description">Instant address search and teleporter</string>
     <string name="widget_favorites_description">Instant bookmarks and saved coordinates</string>
+    <string name="widget_weather_description">Current coordinates weather and conditions</string>
+    <string name="widget_session_timer_description">Active spoofing session countdown and timer controls</string>
+    <string name="widget_vpn_description">Stealth IP and VPN privacy shield</string>
 </resources>

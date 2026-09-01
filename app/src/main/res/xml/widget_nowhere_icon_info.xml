@@ -3,11 +3,12 @@
     android:description="@string/widget_icon_description"
     android:initialKeyguardLayout="@layout/widget_nowhere_icon_layout"
     android:initialLayout="@layout/widget_nowhere_icon_layout"
+    android:previewLayout="@layout/widget_nowhere_icon_layout"
     android:minWidth="40dp"
     android:minHeight="40dp"
     android:targetCellWidth="1"
     android:targetCellHeight="1"
-    android:previewImage="@mipmap/ic_launcher"
+    android:previewImage="@drawable/ic_launcher_monochrome"
     android:resizeMode="none"
     android:updatePeriodMillis="0"
     android:widgetCategory="home_screen" />

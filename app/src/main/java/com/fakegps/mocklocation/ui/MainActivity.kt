@@ -271,14 +271,11 @@ class MainActivity : AppCompatActivity() {
 
         com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
 
-        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            kotlinx.coroutines.delay(2000L)
-            val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.checkForUpdates(this@MainActivity, forceCheck = false)
-            if (updateInfo.isUpdateAvailable && !isFinishing && !isDestroyed) {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    val bottomSheet = com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.newInstance(updateInfo)
-                    bottomSheet.show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.TAG)
-                }
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(2500L)
+            val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.checkForUpdates(this@MainActivity)
+            if (updateInfo.isUpdateAvailable && updateInfo.appUpdateInfo != null && !isFinishing && !isDestroyed) {
+                com.fakegps.mocklocation.util.AppUpdateManager.startPlayUpdateFlow(this@MainActivity, updateInfo.appUpdateInfo)
             }
         }
 
@@ -327,26 +324,6 @@ class MainActivity : AppCompatActivity() {
         if (intent.getBooleanExtra("OPEN_PREMIUM_DIALOG", false) || intent.getBooleanExtra("open_premium", false)) {
             com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance()
                 .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
-        }
-
-        if (intent.getBooleanExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_OPEN_UPDATE_DIALOG, false)) {
-            val latestVersion = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_VERSION) ?: ""
-            val releaseTitle = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_TITLE) ?: "Nowhere Update"
-            val releaseNotes = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_NOTES) ?: ""
-            val downloadUrl = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_DOWNLOAD_URL) ?: ""
-            val htmlUrl = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_HTML_URL) ?: ""
-
-            val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.UpdateInfo(
-                isUpdateAvailable = true,
-                currentVersion = com.fakegps.mocklocation.BuildConfig.VERSION_NAME,
-                latestVersion = latestVersion.ifEmpty { com.fakegps.mocklocation.BuildConfig.VERSION_NAME },
-                releaseTitle = releaseTitle,
-                releaseNotes = releaseNotes,
-                downloadUrl = downloadUrl,
-                htmlUrl = htmlUrl
-            )
-            com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.newInstance(updateInfo)
-                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.TAG)
         }
     }
 

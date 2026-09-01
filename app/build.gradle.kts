@@ -146,6 +146,10 @@ dependencies {
     // Google Play Billing (Subscriptions & In-App Purchases) - Version 8.0.0
     implementation("com.android.billingclient:billing:8.0.0")
 
+    // Google Play In-App Updates
+    implementation("com.google.android.play:app-update:2.1.0")
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+
     // QR Code Generation for Hotspot Tethering
     implementation("com.google.zxing:core:3.5.3")
 

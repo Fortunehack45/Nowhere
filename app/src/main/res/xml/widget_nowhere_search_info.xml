@@ -6,6 +6,7 @@
     android:targetCellHeight="2"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_nowhere_search_layout"
+    android:previewLayout="@layout/widget_nowhere_search_layout"
     android:previewImage="@drawable/ic_launcher_monochrome"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"

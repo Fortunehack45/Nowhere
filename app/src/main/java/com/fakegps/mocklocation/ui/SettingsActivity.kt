@@ -420,20 +420,17 @@ class SettingsActivity : AppCompatActivity() {
         binding.tvAppVersionTitle.text = "Nowhere Version v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME}"
         binding.tvSettingsFooterVersion.text = "Version ${com.fakegps.mocklocation.BuildConfig.VERSION_NAME} (Build ${com.fakegps.mocklocation.BuildConfig.VERSION_CODE}) • Release"
         binding.btnCheckAppUpdates.setOnClickListener {
-            binding.tvCheckUpdateStatus.text = "Checking..."
+            binding.tvCheckUpdateStatus.text = "Checking Google Play..."
             binding.btnCheckAppUpdates.isEnabled = false
-            lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.checkForUpdates(this@SettingsActivity, forceCheck = true)
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    binding.btnCheckAppUpdates.isEnabled = true
-                    if (updateInfo.isUpdateAvailable) {
-                        binding.tvCheckUpdateStatus.text = "Update Available!"
-                        val bottomSheet = com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.newInstance(updateInfo)
-                        bottomSheet.show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.AppUpdateBottomSheet.TAG)
-                    } else {
-                        binding.tvCheckUpdateStatus.text = "Up to date"
-                        Toast.makeText(this@SettingsActivity, "🎉 You're running the latest version (v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME})", Toast.LENGTH_SHORT).show()
-                    }
+            lifecycleScope.launch {
+                val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.checkForUpdates(this@SettingsActivity)
+                binding.btnCheckAppUpdates.isEnabled = true
+                if (updateInfo.isUpdateAvailable && updateInfo.appUpdateInfo != null) {
+                    binding.tvCheckUpdateStatus.text = "Update Available"
+                    com.fakegps.mocklocation.util.AppUpdateManager.startPlayUpdateFlow(this@SettingsActivity, updateInfo.appUpdateInfo)
+                } else {
+                    binding.tvCheckUpdateStatus.text = "Up to date"
+                    Toast.makeText(this@SettingsActivity, "You are running the latest version from Google Play (v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME})", Toast.LENGTH_SHORT).show()
                 }
             }
         }
