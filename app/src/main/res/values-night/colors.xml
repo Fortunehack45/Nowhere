@@ -1,72 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Red Brand Tokens (Shared) -->
+    <!-- Brand Tokens (Clean Apple Dark Mode) -->
     <color name="primary">#E41B1B</color>
-    <color name="primary_bright">#FF3B3B</color>
+    <color name="primary_bright">#FF453A</color>
     <color name="primary_dark">#B91C1C</color>
-    <color name="primary_glow">#40E41B1B</color>
+    <color name="primary_glow">#1AFFFFFF</color>
 
     <color name="white">#FFFFFF</color>
     <color name="white_soft">#F8FAFC</color>
     <color name="white_muted">#E2E8F0</color>
     <color name="white_translucent">#1AFFFFFF</color>
-    <color name="white_border">#33FFFFFF</color>
+    <color name="white_border">#26FFFFFF</color>
 
-    <!-- Surfaces (Dark Mode) -->
-    <color name="surface_dark">#0A0D14</color>
-    <color name="surface_obsidian">#0F141F</color>
-    <color name="surface_card">#141B29</color>
-    <color name="surface_card_elevated">#1A2234</color>
-    <color name="surface_elevated">#1A2234</color>
-    <color name="surface_glass">#141B29</color>
-    <color name="surface_search">#1C2436</color>
-    <color name="card_dark">#141B29</color>
+    <!-- Surfaces (Dark Mode - Apple System Colors) -->
+    <color name="surface_dark">#000000</color>
+    <color name="surface_obsidian">#1C1C1E</color>
+    <color name="surface_card">#1C1C1E</color>
+    <color name="surface_card_elevated">#2C2C2E</color>
+    <color name="surface_elevated">#2C2C2E</color>
+    <color name="surface_glass">#1C1C1E</color>
+    <color name="surface_search">#2C2C2E</color>
+    <color name="card_dark">#1C1C1E</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->
-    <color name="edge_blur_top_start">#E60A0D14</color>
-    <color name="edge_blur_top_mid">#800A0D14</color>
-    <color name="edge_blur_top_end">#000A0D14</color>
-    <color name="edge_blur_bottom_start">#000A0D14</color>
-    <color name="edge_blur_bottom_mid">#990A0D14</color>
-    <color name="edge_blur_bottom_end">#F20A0D14</color>
+    <color name="edge_blur_top_start">#E6000000</color>
+    <color name="edge_blur_top_mid">#80000000</color>
+    <color name="edge_blur_top_end">#00000000</color>
+    <color name="edge_blur_bottom_start">#00000000</color>
+    <color name="edge_blur_bottom_mid">#99000000</color>
+    <color name="edge_blur_bottom_end">#F2000000</color>
 
-    <!-- Strokes & Highlights -->
-    <color name="stroke_subtle">#2A354D</color>
-    <color name="border_subtle">#2A354D</color>
-    <color name="surface_card_stroke">#2A354D</color>
-    <color name="stroke_red_glow">#80E41B1B</color>
-    <color name="stroke_white_glow">#40FFFFFF</color>
+    <!-- Strokes & Hairline Dividers -->
+    <color name="stroke_subtle">#38383A</color>
+    <color name="border_subtle">#38383A</color>
+    <color name="surface_card_stroke">#38383A</color>
+    <color name="stroke_red_glow">#FF453A</color>
+    <color name="stroke_white_glow">#20FFFFFF</color>
 
     <!-- Typography & Accents (Dark Mode) -->
     <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#CBD5E1</color>
-    <color name="text_muted">#94A3B8</color>
-    <color name="text_red">#FF4D4D</color>
+    <color name="text_secondary">#EBEBF5</color>
+    <color name="text_muted">#8E8E93</color>
+    <color name="text_red">#FF453A</color>
     <color name="text_cyan">#FFFFFF</color>
-    <color name="accent_rose">#E41B1B</color>
+    <color name="accent_rose">#FF453A</color>
 
-    <!-- Status Badges (100% Opaque Solid Surfaces) -->
-    <color name="badge_active_bg">#3B1414</color>
-    <color name="badge_active_text">#FF4D4D</color>
-    <color name="badge_success_bg">#064E3B</color>
-    <color name="badge_success_text">#34D399</color>
-    <color name="badge_standby_bg">#1E293B</color>
-    <color name="badge_standby_text">#CBD5E1</color>
+    <!-- Status Badges (Clean Solid & Subtle Tinted Surfaces) -->
+    <color name="badge_active_bg">#3A1A1A</color>
+    <color name="badge_active_text">#FF453A</color>
+    <color name="badge_success_bg">#143825</color>
+    <color name="badge_success_text">#30D158</color>
+    <color name="badge_standby_bg">#2C2C2E</color>
+    <color name="badge_standby_text">#AEAEB2</color>
     <color name="badge_warning_bg">#3D2E14</color>
-    <color name="badge_warning_text">#FBBF24</color>
-    <color name="badge_error_bg">#3B1414</color>
-    <color name="badge_error_text">#F87171</color>
+    <color name="badge_warning_text">#FFD60A</color>
+    <color name="badge_error_bg">#3A1A1A</color>
+    <color name="badge_error_text">#FF453A</color>
 
-    <!-- Simulation Stop Action Button (Dark Mode: Deep card crimson with vibrant text) -->
-    <color name="btn_stop_bg">#3B1414</color>
-    <color name="btn_stop_text">#FCA5A5</color>
+    <!-- Simulation Stop Action Button -->
+    <color name="btn_stop_bg">#3A1A1A</color>
+    <color name="btn_stop_text">#FF453A</color>
 
-    <!-- Widget Dynamic Themed Icon Tokens (Dark Mode Fallback) -->
-    <color name="widget_icon_bg">#141B29</color>
-    <color name="widget_icon_bg_active">#241014</color>
+    <!-- Widget Dynamic Themed Icon Tokens -->
+    <color name="widget_icon_bg">#1C1C1E</color>
+    <color name="widget_icon_bg_active">#3A1A1A</color>
     <color name="widget_icon_fg">#FFFFFF</color>
-    <color name="widget_icon_stroke">#2A354D</color>
-    <color name="widget_icon_stroke_active">#FF4D4D</color>
+    <color name="widget_icon_stroke">#38383A</color>
+    <color name="widget_icon_stroke_active">#FF453A</color>
     <color name="widget_icon_text">#FFFFFF</color>
 
     <!-- Basics -->

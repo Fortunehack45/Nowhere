@@ -769,7 +769,7 @@ class MockLocationService : Service() {
             )
 
             val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("🚀 Route Simulation Started")
+                .setContentTitle("Route Simulation Active")
                 .setContentText("$waypointsCount waypoints • $distStr • Speed: ${speedKmh.toInt()} km/h • ETA: $etaStr")
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
                 .setColor(ContextCompat.getColor(this, R.color.primary))
@@ -800,8 +800,8 @@ class MockLocationService : Service() {
             )
 
             val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("🏁 Route Simulation Completed!")
-                .setContentText("Destination reached ($coordsStr) • Total: $distStr")
+                .setContentTitle("Destination Reached")
+                .setContentText("$coordsStr • Total distance: $distStr")
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
                 .setColor(ContextCompat.getColor(this, R.color.primary))
                 .setContentIntent(pendingIntent)

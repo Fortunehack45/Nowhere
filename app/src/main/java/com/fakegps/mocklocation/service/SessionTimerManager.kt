@@ -41,7 +41,8 @@ object SessionTimerManager {
         val totalAllocatedMillis: Long = 0L,
         val formattedRemaining: String = "00:00:00",
         val formattedTotal: String = "2h 00m",
-        val progressPercent: Int = 100
+        val progressPercent: Int = 100,
+        val isUnlimited: Boolean = false
     )
 
     private val _timerState = MutableStateFlow(SessionTimerState())
@@ -81,6 +82,7 @@ object SessionTimerManager {
     fun extendSession(context: Context, extraMillis: Long = SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS) {
         val sessionPrefs = SessionPreferences(context)
         sessionPrefs.extendSession(extraMillis)
+        AppSettingsPreferences(context).incrementSessionExtensionCount()
         resetThresholdFlags()
 
         cancelNotification(context, NOTIF_ID_60S)
@@ -129,65 +131,91 @@ object SessionTimerManager {
         timerJob = timerScope?.launch {
             while (isActive) {
                 val sessionPrefs = SessionPreferences(appContext)
-                val remainingMillis = sessionPrefs.getTimeRemainingMillis()
-                val totalAllocated = sessionPrefs.sessionAllocatedDurationMillis
 
                 if (!sessionPrefs.isSessionActive) {
                     _timerState.value = SessionTimerState()
                     break
                 }
 
-                if (remainingMillis <= 0L) {
-                    sessionPrefs.isSessionExpired = true
-                    val state = SessionTimerState(
-                        isRunning = false,
-                        isExpired = true,
-                        remainingMillis = 0L,
-                        totalAllocatedMillis = totalAllocated,
-                        formattedRemaining = "00:00:00",
-                        formattedTotal = sessionPrefs.formatAllocatedDuration(),
-                        progressPercent = 0
-                    )
-                    _timerState.value = state
-
-                    if (!hasFiredExpired) {
-                        hasFiredExpired = true
-                        notifySessionExpired(appContext)
-                        // Trigger service expiration pause/stop
-                        withContext(Dispatchers.Main) {
-                            val stopIntent = Intent(appContext, MockLocationService::class.java).apply {
-                                action = MockLocationService.ACTION_STOP
-                            }
-                            appContext.startService(stopIntent)
-                        }
-                    }
-                    NowhereAppWidgetProvider.updateAllWidgets(appContext)
-                    break
-                } else {
-                    val remainingSecs = remainingMillis / 1000L
-                    checkAndNotifyThresholds(appContext, remainingSecs)
-
-                    val percent = if (totalAllocated > 0) {
-                        ((remainingMillis.toDouble() / totalAllocated.toDouble()) * 100).toInt().coerceIn(0, 100)
-                    } else 0
-
+                if (sessionPrefs.isPremiumActive()) {
+                    // Genuine Unlimited Mode for Premium Users
                     _timerState.value = SessionTimerState(
                         isRunning = true,
                         isExpired = false,
-                        remainingMillis = remainingMillis,
-                        totalAllocatedMillis = totalAllocated,
-                        formattedRemaining = sessionPrefs.formatRemainingTime(),
-                        formattedTotal = sessionPrefs.formatAllocatedDuration(),
-                        progressPercent = percent
+                        remainingMillis = Long.MAX_VALUE,
+                        totalAllocatedMillis = Long.MAX_VALUE,
+                        formattedRemaining = "UNLIMITED",
+                        formattedTotal = "Unlimited",
+                        progressPercent = 100,
+                        isUnlimited = true
                     )
 
-                    // Real-time 1-second direct home screen widget refresh
+                    // Home screen widgets refresh
                     NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
                     if (sessionPrefs.activeMode == "ROUTE") {
                         NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
                     }
                     if (sessionPrefs.isIpMaskingEnabled) {
                         NowhereVpnWidgetProvider.updateAllVpnWidgets(appContext)
+                    }
+                } else {
+                    val remainingMillis = sessionPrefs.getTimeRemainingMillis()
+                    val totalAllocated = sessionPrefs.sessionAllocatedDurationMillis
+
+                    if (remainingMillis <= 0L) {
+                        sessionPrefs.isSessionExpired = true
+                        val state = SessionTimerState(
+                            isRunning = false,
+                            isExpired = true,
+                            remainingMillis = 0L,
+                            totalAllocatedMillis = totalAllocated,
+                            formattedRemaining = "00:00:00",
+                            formattedTotal = sessionPrefs.formatAllocatedDuration(),
+                            progressPercent = 0,
+                            isUnlimited = false
+                        )
+                        _timerState.value = state
+
+                        if (!hasFiredExpired) {
+                            hasFiredExpired = true
+                            notifySessionExpired(appContext)
+                            // Trigger service expiration pause/stop
+                            withContext(Dispatchers.Main) {
+                                val stopIntent = Intent(appContext, MockLocationService::class.java).apply {
+                                    action = MockLocationService.ACTION_STOP
+                                }
+                                appContext.startService(stopIntent)
+                            }
+                        }
+                        NowhereAppWidgetProvider.updateAllWidgets(appContext)
+                        break
+                    } else {
+                        val remainingSecs = remainingMillis / 1000L
+                        checkAndNotifyThresholds(appContext, remainingSecs)
+
+                        val percent = if (totalAllocated > 0) {
+                            ((remainingMillis.toDouble() / totalAllocated.toDouble()) * 100).toInt().coerceIn(0, 100)
+                        } else 0
+
+                        _timerState.value = SessionTimerState(
+                            isRunning = true,
+                            isExpired = false,
+                            remainingMillis = remainingMillis,
+                            totalAllocatedMillis = totalAllocated,
+                            formattedRemaining = sessionPrefs.formatRemainingTime(),
+                            formattedTotal = sessionPrefs.formatAllocatedDuration(),
+                            progressPercent = percent,
+                            isUnlimited = false
+                        )
+
+                        // Real-time 1-second direct home screen widget refresh
+                        NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                        if (sessionPrefs.activeMode == "ROUTE") {
+                            NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
+                        }
+                        if (sessionPrefs.isIpMaskingEnabled) {
+                            NowhereVpnWidgetProvider.updateAllVpnWidgets(appContext)
+                        }
                     }
                 }
 
@@ -198,6 +226,20 @@ object SessionTimerManager {
 
     private fun updateState(context: Context) {
         val sessionPrefs = SessionPreferences(context)
+        if (sessionPrefs.isPremiumActive()) {
+            _timerState.value = SessionTimerState(
+                isRunning = sessionPrefs.isSessionActive,
+                isExpired = false,
+                remainingMillis = Long.MAX_VALUE,
+                totalAllocatedMillis = Long.MAX_VALUE,
+                formattedRemaining = "UNLIMITED",
+                formattedTotal = "Unlimited",
+                progressPercent = 100,
+                isUnlimited = true
+            )
+            return
+        }
+
         val remainingMillis = sessionPrefs.getTimeRemainingMillis()
         val totalAllocated = sessionPrefs.sessionAllocatedDurationMillis
         val percent = if (totalAllocated > 0) {
@@ -211,20 +253,21 @@ object SessionTimerManager {
             totalAllocatedMillis = totalAllocated,
             formattedRemaining = sessionPrefs.formatRemainingTime(),
             formattedTotal = sessionPrefs.formatAllocatedDuration(),
-            progressPercent = percent
+            progressPercent = percent,
+            isUnlimited = false
         )
     }
 
     private fun checkAndNotifyThresholds(context: Context, remainingSecs: Long) {
         if (remainingSecs in 51..60 && !hasFired60s) {
             hasFired60s = true
-            notifyThreshold(context, NOTIF_ID_60S, "⚠️ 1 Minute Remaining", "Your mock location simulation expires in 60 seconds! Tap to extend by +2 hours.")
+            notifyThreshold(context, NOTIF_ID_60S, "1 Minute Remaining", "Your simulation session expires in 60 seconds. Tap to extend.")
         } else if (remainingSecs in 21..30 && !hasFired30s) {
             hasFired30s = true
-            notifyThreshold(context, NOTIF_ID_30S, "⏳ 30 Seconds Remaining", "Simulation will pause in 30 seconds. Watch a short video to add +2 hours.")
+            notifyThreshold(context, NOTIF_ID_30S, "30 Seconds Remaining", "Simulation will pause in 30 seconds. Tap to extend.")
         } else if (remainingSecs in 1..10 && !hasFired10s) {
             hasFired10s = true
-            notifyThreshold(context, NOTIF_ID_10S, "🚨 10 Seconds Left!", "Simulation is about to expire! Tap here immediately to keep spoofing active.")
+            notifyThreshold(context, NOTIF_ID_10S, "Session Expiring", "Simulation is about to end. Tap to keep active.")
         }
     }
 
@@ -259,6 +302,7 @@ object SessionTimerManager {
     }
 
     private fun notifySessionExpired(context: Context) {
+        AppSettingsPreferences(context).incrementSessionExpiryCount()
         if (!com.fakegps.mocklocation.util.PermissionHelper.hasNotificationPermission(context)) return
 
         val openIntent = Intent(context, MainActivity::class.java).apply {
@@ -274,9 +318,9 @@ object SessionTimerManager {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
-            .setContentTitle("🔴 Mock Location Session Expired")
-            .setContentText("Your simulation time has ended. Tap to extend +2 hours with rewarded ad or reconnect.")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Your simulation session has ended. Tap below to extend by +2 Hours by watching an ad, or reconnect for +20 mins free."))
+            .setContentTitle("Simulation Session Expired")
+            .setContentText("Your session has ended. Tap to extend +2 hours or reconnect.")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Your simulation session has ended. Tap below to extend by +2 Hours with an ad or reconnect for +20 mins free."))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)

@@ -46,11 +46,15 @@ class AppOpenAdManager(private val application: Application) :
         loadAd(application)
     }
 
+    private fun isPremium(): Boolean {
+        return com.fakegps.mocklocation.billing.BillingManager.getInstance(application).isPremium.value
+    }
+
     /**
      * Request an App Open Ad with automatic fallback.
      */
     fun loadAd(context: Context) {
-        if (isLoadingAd || isAdAvailable()) {
+        if (isPremium() || isLoadingAd || isAdAvailable()) {
             return
         }
 
@@ -59,6 +63,11 @@ class AppOpenAdManager(private val application: Application) :
     }
 
     private fun loadAdInternal(context: Context, adUnitId: String, fallbackUnitId: String? = null) {
+        if (isPremium()) {
+            isLoadingAd = false
+            appOpenAd = null
+            return
+        }
         isLoadingAd = true
         val request = AdRequest.Builder().build()
 
@@ -68,6 +77,11 @@ class AppOpenAdManager(private val application: Application) :
             request,
             object : AppOpenAd.AppOpenAdLoadCallback() {
                 override fun onAdLoaded(ad: AppOpenAd) {
+                    if (isPremium()) {
+                        isLoadingAd = false
+                        appOpenAd = null
+                        return
+                    }
                     appOpenAd = ad
                     isLoadingAd = false
                     loadTime = Date().time
@@ -78,7 +92,7 @@ class AppOpenAdManager(private val application: Application) :
                     isLoadingAd = false
                     appOpenAd = null
                     Log.w(TAG, "App Open Ad failed to load ($adUnitId): ${loadAdError.message}")
-                    if (fallbackUnitId != null && fallbackUnitId != adUnitId) {
+                    if (fallbackUnitId != null && fallbackUnitId != adUnitId && !isPremium()) {
                         loadAdInternal(context, fallbackUnitId, null)
                     }
                 }
@@ -96,13 +110,17 @@ class AppOpenAdManager(private val application: Application) :
     }
 
     private fun isAdAvailable(): Boolean {
-        return appOpenAd != null && wasLoadTimeLessThanNHoursAgo(4)
+        return !isPremium() && appOpenAd != null && wasLoadTimeLessThanNHoursAgo(4)
     }
 
     /**
      * Shows the ad if available when the app is brought to foreground.
      */
     fun showAdIfAvailable(activity: Activity, onShowAdCompleteListener: OnShowAdCompleteListener? = null) {
+        if (isPremium()) {
+            onShowAdCompleteListener?.onShowAdComplete()
+            return
+        }
 
         if (isShowingAd) {
             Log.d(TAG, "The app open ad is already showing.")

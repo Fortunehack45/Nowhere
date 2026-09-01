@@ -7,6 +7,7 @@
     android:background="@color/surface_dark">
 
     <ScrollView
+        android:id="@+id/scrollWelcome"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:fillViewport="true"
@@ -33,7 +34,7 @@
                     android:layout_width="100dp"
                     android:layout_height="100dp"
                     android:background="@drawable/bg_status_pill"
-                    android:backgroundTint="@color/primary_glow" />
+                    android:backgroundTint="@color/surface_card_elevated" />
 
                 <ImageView
                     android:id="@+id/ivWelcomeLogo"
@@ -242,7 +243,7 @@
                 app:cardBackgroundColor="@color/surface_card_elevated"
                 app:cardCornerRadius="14dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/stroke_red_glow"
+                app:strokeColor="@color/stroke_subtle"
                 app:strokeWidth="1dp">
 
                 <LinearLayout

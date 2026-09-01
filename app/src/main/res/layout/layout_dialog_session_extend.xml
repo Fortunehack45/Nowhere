@@ -219,7 +219,17 @@
             app:iconTint="@color/text_primary"
             app:strokeColor="@color/stroke_subtle" />
 
-
+        <!-- Premium Option: Unlimited Duration & No Ads -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExtendPremiumUpgrade"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="6dp"
+            android:text="⭐ Upgrade to Premium (Unlimited Time &amp; No Ads)"
+            android:textColor="@color/primary_bright"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -198,12 +198,42 @@ class MainActivity : AppCompatActivity() {
         observeUiState()
         com.fakegps.mocklocation.util.AppReviewManager.incrementLaunchCount(this)
 
+        // Handle edge-to-edge system bar insets (Android 15+ & targetSdk 35)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+
+            val baseTopPadding = (16 * resources.displayMetrics.density).toInt()
+            binding.layoutTopHeader.setPadding(
+                binding.layoutTopHeader.paddingLeft,
+                baseTopPadding + statusBarInset.top,
+                binding.layoutTopHeader.paddingRight,
+                binding.layoutTopHeader.paddingBottom
+            )
+
+            val baseBottomPadding = (16 * resources.displayMetrics.density).toInt()
+            binding.layoutBottomContainer.setPadding(
+                binding.layoutBottomContainer.paddingLeft,
+                binding.layoutBottomContainer.paddingTop,
+                binding.layoutBottomContainer.paddingRight,
+                baseBottomPadding + navBarInset.bottom
+            )
+
+            insets
+        }
+
         binding.btnHeaderWidgets.setOnClickListener {
             WidgetGalleryBottomSheet().show(supportFragmentManager, "WIDGET_GALLERY")
         }
 
         binding.btnHeaderSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        binding.layoutPremiumBadge.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
         }
 
         binding.layoutWeatherBadge.setOnClickListener {
@@ -294,6 +324,11 @@ class MainActivity : AppCompatActivity() {
             }.show()
         }
 
+        if (intent.getBooleanExtra("OPEN_PREMIUM_DIALOG", false) || intent.getBooleanExtra("open_premium", false)) {
+            com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
+        }
+
         if (intent.getBooleanExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_OPEN_UPDATE_DIALOG, false)) {
             val latestVersion = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_VERSION) ?: ""
             val releaseTitle = intent.getStringExtra(com.fakegps.mocklocation.util.AppUpdateManager.EXTRA_UPDATE_TITLE) ?: "Nowhere Update"
@@ -351,11 +386,16 @@ class MainActivity : AppCompatActivity() {
         checkBatteryOptimizationOnFirstLaunch()
         renderGhostCloakBadge()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
+        com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
         if (com.fakegps.mocklocation.data.preferences.SessionPreferences(this).hasValidActiveSession()) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
         }
-        if (binding.adBannerContainer.childCount == 0) {
-            com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
+        if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
+            if (binding.adBannerContainer.childCount == 0) {
+                com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
+            }
+        } else {
+            com.fakegps.mocklocation.ads.AdManager.clearBanner(binding.adBannerContainer)
         }
     }
 
@@ -994,6 +1034,20 @@ class MainActivity : AppCompatActivity() {
             ).show(supportFragmentManager, "HISTORY_DIALOG")
         }
 
+        binding.fabMapLayers.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.MapLayersBottomSheet { selectedSource ->
+                binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
+                binding.mapView.invalidate()
+                val label = when (selectedSource) {
+                    "MAPNIK" -> "Standard Street Map"
+                    "SATELLITE" -> "Satellite Hybrid"
+                    "TOPO" -> "OpenTopo Terrain"
+                    else -> "Standard Map"
+                }
+                Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()
+            }.show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.MapLayersBottomSheet.TAG)
+        }
+
         binding.fabAppTutorial.setOnClickListener {
             com.fakegps.mocklocation.ui.dialogs.AppTutorialDialog(this).show()
         }
@@ -1276,9 +1330,38 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
+            com.fakegps.mocklocation.billing.BillingManager.getInstance(this@MainActivity).isPremium.collectLatest { isPremium ->
+                if (!isFinishing && !isDestroyed) {
+                    if (isPremium) {
+                        binding.tvPremiumBadge.text = "PREMIUM"
+                        binding.tvPremiumBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
+                        binding.ivPremiumBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
+                        binding.layoutPremiumBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_bg)
+                        com.fakegps.mocklocation.ads.AdManager.clearBanner(binding.adBannerContainer)
+                    } else {
+                        val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this@MainActivity)
+                        binding.tvPremiumBadge.text = if (isVip) "PRO (15% OFF)" else "GET PRO"
+                        binding.tvPremiumBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.primary_bright))
+                        binding.ivPremiumBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.primary_bright)
+                        binding.layoutPremiumBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
+                        if (binding.adBannerContainer.childCount == 0) {
+                            com.fakegps.mocklocation.ads.AdManager.loadBanner(this@MainActivity, binding.adBannerContainer, isHomeBanner = true)
+                        }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
             com.fakegps.mocklocation.service.SessionTimerManager.timerState.collectLatest { timerState ->
                 if (!isFinishing && !isDestroyed) {
-                    if (timerState.isRunning) {
+                    if (timerState.isUnlimited) {
+                        binding.layoutSessionTimerBadge.visibility = View.VISIBLE
+                        binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_bg)
+                        binding.tvSessionTimerBadge.text = "UNLIMITED"
+                        binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
+                        binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
+                    } else if (timerState.isRunning) {
                         binding.layoutSessionTimerBadge.visibility = View.VISIBLE
                         binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
                         binding.tvSessionTimerBadge.text = timerState.formattedRemaining

@@ -48,7 +48,7 @@
         app:cornerRadius="12dp"
         app:icon="@drawable/ic_bolt"
         app:iconTint="@color/primary_bright"
-        app:strokeColor="@color/stroke_red_glow"
+        app:strokeColor="@color/primary"
         app:strokeWidth="1dp" />
 
     <com.google.android.material.button.MaterialButton

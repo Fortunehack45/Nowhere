@@ -19,6 +19,7 @@ import com.fakegps.mocklocation.util.PermissionHelper
 import android.Manifest
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.updatePadding
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -44,20 +45,48 @@ class SettingsActivity : AppCompatActivity() {
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Handle edge-to-edge system bar insets (Android 15+ & targetSdk 35)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+
+            binding.layoutSettingsHeader.updatePadding(top = statusBarInset.top)
+
+            val scrollView = binding.root.getChildAt(1) as? android.widget.ScrollView
+            val scrollChild = scrollView?.getChildAt(0) as? android.widget.LinearLayout
+            scrollChild?.setPadding(
+                scrollChild.paddingLeft,
+                scrollChild.paddingTop,
+                scrollChild.paddingRight,
+                (16 * resources.displayMetrics.density).toInt() + navBarInset.bottom
+            )
+
+            insets
+        }
+
         loadInitialValues()
         setupListeners()
         observeSessionTimer()
+        observeBillingState()
 
-        com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
+        if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
+            com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
         if (sessionPrefs.hasValidActiveSession()) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
         }
-        if (binding.adBannerContainer.childCount == 0) {
-            com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
+        if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
+            if (binding.adBannerContainer.childCount == 0) {
+                com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
+            }
+        } else {
+            com.fakegps.mocklocation.ads.AdManager.clearBanner(binding.adBannerContainer)
         }
         refreshSystemStatus()
         refreshNotificationPermissionUI()
@@ -74,6 +103,52 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun observeBillingState() {
+        val billingManager = com.fakegps.mocklocation.billing.BillingManager.getInstance(this)
+        lifecycleScope.launch {
+            billingManager.entitlementState.collect { entitlement ->
+                if (!isFinishing && !isDestroyed) {
+                    renderPremiumSettingsUI(entitlement, billingManager)
+                }
+            }
+        }
+    }
+
+    private fun renderPremiumSettingsUI(
+        entitlement: com.fakegps.mocklocation.billing.PremiumEntitlement,
+        billingManager: com.fakegps.mocklocation.billing.BillingManager
+    ) {
+        val formattedPrice = entitlement.formattedPrice ?: billingManager.getFormattedPrice()
+        if (entitlement.isPremium) {
+            binding.tvSettingsPremiumTitle.text = "Nowhere Premium Active"
+            binding.tvSettingsPremiumSubtitle.text = "Unlimited session duration & zero ads enabled"
+            binding.btnSettingsPremiumAction.text = "MANAGE"
+            binding.btnSettingsPremiumAction.setIconResource(R.drawable.ic_shield_check)
+            binding.btnSettingsPremiumAction.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_success_bg)
+            binding.btnSettingsPremiumAction.setTextColor(ContextCompat.getColor(this, R.color.badge_success_text))
+            binding.btnSettingsPremiumAction.iconTint = ContextCompat.getColorStateList(this, R.color.badge_success_text)
+            binding.ivSettingsPremiumIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.badge_success_text)
+            com.fakegps.mocklocation.ads.AdManager.clearBanner(binding.adBannerContainer)
+        } else {
+            val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this)
+            val discount = com.fakegps.mocklocation.billing.PromotionManager.getYearlyDiscountPercent(this)
+
+            binding.tvSettingsPremiumTitle.text = "Nowhere Pro Engine"
+            binding.tvSettingsPremiumSubtitle.text = when {
+                isVip -> "🔥 VIP Offer: Save $discount% on Annual Pass • Unlimited & Zero Ads"
+                entitlement.hasFreeTrial -> "✨ Free Trial Available • Unlimited duration & zero ads"
+                formattedPrice != null -> "From $formattedPrice/mo • Unlimited duration & zero ads"
+                else -> "Unlimited session duration & 100% zero ads"
+            }
+            binding.btnSettingsPremiumAction.text = if (isVip) "SAVE $discount%" else "UPGRADE"
+            binding.btnSettingsPremiumAction.setIconResource(R.drawable.ic_bolt)
+            binding.btnSettingsPremiumAction.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)
+            binding.btnSettingsPremiumAction.setTextColor(ContextCompat.getColor(this, R.color.white))
+            binding.btnSettingsPremiumAction.iconTint = ContextCompat.getColorStateList(this, R.color.white)
+            binding.ivSettingsPremiumIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
+        }
+    }
+
     private fun observeSessionTimer() {
         lifecycleScope.launch {
             com.fakegps.mocklocation.service.SessionTimerManager.timerState.collect { timerState ->
@@ -85,6 +160,18 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun renderSessionTimerUI(timerState: com.fakegps.mocklocation.service.SessionTimerManager.SessionTimerState) {
+        if (timerState.isUnlimited || sessionPrefs.isPremiumActive()) {
+            binding.tvSettingsSessionBadge.text = "UNLIMITED"
+            binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_success_text))
+            binding.tvSettingsSessionBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_success_bg)
+            binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.badge_success_text)
+
+            binding.tvSettingsSessionTime.text = "UNLIMITED"
+            binding.tvSettingsSessionTotal.text = "Premium Active: Unlimited Simulation"
+            binding.pbSettingsSessionProgress.progress = 100
+            return
+        }
+
         val remaining = sessionPrefs.getTimeRemainingMillis()
         val formattedRemaining = sessionPrefs.formatRemainingTime()
 
@@ -210,6 +297,21 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnResetDefaults.setOnClickListener {
             resetToDefaults()
             Toast.makeText(this, "Settings reset to defaults", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnSettingsPremiumAction.setOnClickListener {
+            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
+            if (isPremium) {
+                com.fakegps.mocklocation.billing.BillingManager.getInstance(this).openManageSubscriptions(this)
+            } else {
+                com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance()
+                    .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
+            }
+        }
+
+        binding.cardPremiumSettings.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
         }
 
         binding.btnSettingsExtendOneHour.setOnClickListener {

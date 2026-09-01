@@ -101,6 +101,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // --- Route Waypoint Management with Undo & Redo ---
 
     private var pendingRoadSnapKeypoints: List<RoutePoint>? = null
+    private var routeResolutionJob: kotlinx.coroutines.Job? = null
 
     fun addRouteWaypoint(latitude: Double, longitude: Double) {
         val currentKeys = _uiState.value.userKeypoints
@@ -164,7 +165,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun retryPendingRoadRouting() {
         val keys = pendingRoadSnapKeypoints ?: return
         if (keys.size >= 2) {
-            viewModelScope.launch(Dispatchers.IO) {
+            routeResolutionJob?.cancel()
+            routeResolutionJob = viewModelScope.launch(Dispatchers.IO) {
                 val result = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRouteWithStatus(keys, _uiState.value.transportMode)
                 if (!result.isFallbackDirectPath) {
                     pendingRoadSnapKeypoints = null
@@ -182,6 +184,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun applyKeypoints(keys: List<RoutePoint>) {
+        routeResolutionJob?.cancel()
+
         _uiState.update {
             it.copy(
                 userKeypoints = keys,
@@ -203,7 +207,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             sessionPrefs.saveWaypoints(directPath)
             _uiState.update { it.copy(routeWaypoints = directPath, isUsingDirectRouteFallback = false) }
 
-            viewModelScope.launch(Dispatchers.IO) {
+            routeResolutionJob = viewModelScope.launch(Dispatchers.IO) {
                 val result = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRouteWithStatus(keys, _uiState.value.transportMode)
                 sessionPrefs.saveWaypoints(result.waypoints)
                 if (result.isFallbackDirectPath) {
@@ -338,7 +342,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         val keys = if (_uiState.value.userKeypoints.size >= 2) _uiState.value.userKeypoints else _uiState.value.routeWaypoints
         if (keys.size >= 2) {
-            viewModelScope.launch(Dispatchers.IO) {
+            routeResolutionJob?.cancel()
+            routeResolutionJob = viewModelScope.launch(Dispatchers.IO) {
                 val resolved = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRoute(keys, mode)
                 sessionPrefs.saveWaypoints(resolved)
                 _uiState.update { it.copy(routeWaypoints = resolved) }

@@ -215,6 +215,34 @@ class AppSettingsPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_HAS_COMPLETED_FEATURE_WALKTHROUGH, false)
         set(value) = prefs.edit().putBoolean(KEY_HAS_COMPLETED_FEATURE_WALKTHROUGH, value).apply()
 
+    var firstInstallTimestamp: Long
+        get() {
+            val ts = prefs.getLong("key_first_install_timestamp", 0L)
+            if (ts == 0L) {
+                val now = System.currentTimeMillis()
+                prefs.edit().putLong("key_first_install_timestamp", now).apply()
+                return now
+            }
+            return ts
+        }
+        set(value) = prefs.edit().putLong("key_first_install_timestamp", value).apply()
+
+    var sessionExtensionCount: Int
+        get() = prefs.getInt("key_session_extension_count", 0)
+        set(value) = prefs.edit().putInt("key_session_extension_count", value).apply()
+
+    var sessionExpiryCount: Int
+        get() = prefs.getInt("key_session_expiry_count", 0)
+        set(value) = prefs.edit().putInt("key_session_expiry_count", value).apply()
+
+    fun incrementSessionExtensionCount() {
+        sessionExtensionCount = sessionExtensionCount + 1
+    }
+
+    fun incrementSessionExpiryCount() {
+        sessionExpiryCount = sessionExpiryCount + 1
+    }
+
     fun applyTheme(theme: String = appTheme) {
         when (theme) {
             "DARK" -> androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES)

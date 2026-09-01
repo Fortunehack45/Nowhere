@@ -48,6 +48,9 @@ class MockLocationApp : Application() {
         val settingsPrefs = AppSettingsPreferences(this)
         settingsPrefs.applyTheme()
 
+        // Initialize Google Play Billing Manager (Subscriptions & Entitlements)
+        com.fakegps.mocklocation.billing.BillingManager.getInstance(this)
+
         // Initialize Google Mobile Ads SDK (AdMob)
         AdManager.initialize(this)
 

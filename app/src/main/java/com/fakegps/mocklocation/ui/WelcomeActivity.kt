@@ -38,6 +38,29 @@ class WelcomeActivity : AppCompatActivity() {
         binding = ActivityWelcomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Handle edge-to-edge system bar insets (Android 15+ & targetSdk 35)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+
+            binding.scrollWelcome.setPadding(
+                binding.scrollWelcome.paddingLeft,
+                statusBarInset.top,
+                binding.scrollWelcome.paddingRight,
+                binding.scrollWelcome.paddingBottom
+            )
+
+            binding.layoutBottomAction.setPadding(
+                binding.layoutBottomAction.paddingLeft,
+                binding.layoutBottomAction.paddingTop,
+                binding.layoutBottomAction.paddingRight,
+                (16 * resources.displayMetrics.density).toInt() + navBarInset.bottom
+            )
+
+            insets
+        }
+
         animateEntry()
         setupListeners()
         requestEssentialPermissions()

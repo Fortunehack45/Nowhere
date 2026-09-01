@@ -30,19 +30,19 @@ class JoystickView @JvmOverloads constructor(
     // Paint definitions
     private val baseGlassPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.parseColor("#E6121826") // Deep obsidian glass
+        color = Color.parseColor("#E61C1C1E") // Apple dark system background
     }
 
     private val outerRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 3f
-        color = Color.parseColor("#80E41B1B") // Glowing crimson stroke
+        strokeWidth = 2f
+        color = Color.parseColor("#38383A") // Minimal hairline border
     }
 
     private val innerRingsPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 1.5f
-        color = Color.parseColor("#33FFFFFF") // Subtle white rings
+        strokeWidth = 1f
+        color = Color.parseColor("#1AFFFFFF") // Subtle minimal ring
     }
 
     private val crosshairPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

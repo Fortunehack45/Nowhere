@@ -143,6 +143,9 @@ dependencies {
     // Google Mobile Ads (AdMob)
     implementation("com.google.android.gms:play-services-ads:23.0.0")
 
+    // Google Play Billing (Subscriptions & In-App Purchases)
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
+
     // QR Code Generation for Hotspot Tethering
     implementation("com.google.zxing:core:3.5.3")
 

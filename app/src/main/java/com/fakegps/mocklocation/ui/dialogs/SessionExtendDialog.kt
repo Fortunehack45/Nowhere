@@ -79,6 +79,13 @@ class SessionExtendDialog(
         binding.btnReconnectFallback.setOnClickListener {
             handleReconnectFallback()
         }
+
+        binding.btnExtendPremiumUpgrade.setOnClickListener {
+            dismiss()
+            if (activity is androidx.fragment.app.FragmentActivity) {
+                PremiumBottomSheet.newInstance().show(activity.supportFragmentManager, PremiumBottomSheet.TAG)
+            }
+        }
     }
 
     private fun handleWatchAdToExtend() {
@@ -113,6 +120,21 @@ class SessionExtendDialog(
     private fun observeTimer() {
         dialogScope.launch {
             SessionTimerManager.timerState.collectLatest { state ->
+                if (state.isUnlimited) {
+                    binding.tvDialogTimeRemaining.text = "UNLIMITED"
+                    binding.tvDialogTotalAllocated.text = "Nowhere Premium Active"
+                    binding.tvDialogProgressPercent.text = "100%"
+                    binding.progressDialogSession.progress = 100
+                    binding.layoutExtendStatusBadge.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_success_bg)
+                    binding.viewExtendDot.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
+                    binding.tvExtendBadgeText.text = "PREMIUM ACTIVE"
+                    binding.tvExtendBadgeText.setTextColor(ContextCompat.getColor(context, R.color.badge_success_text))
+                    binding.btnExtendOneHour.visibility = View.GONE
+                    binding.btnReconnectFallback.visibility = View.GONE
+                    binding.btnExtendPremiumUpgrade.text = "⭐ Manage Nowhere Premium Subscription"
+                    return@collectLatest
+                }
+
                 binding.tvDialogTimeRemaining.text = state.formattedRemaining
                 binding.tvDialogTotalAllocated.text = "Total: ${state.formattedTotal}"
                 binding.tvDialogProgressPercent.text = "${state.progressPercent}%"

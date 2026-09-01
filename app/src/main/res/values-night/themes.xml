@@ -29,7 +29,7 @@
         <item name="thumbColor">@color/white</item>
         <item name="trackColorActive">@color/primary</item>
         <item name="trackColorInactive">@color/stroke_subtle</item>
-        <item name="haloColor">@color/primary_glow</item>
+        <item name="haloColor">@color/transparent</item>
         <item name="thumbRadius">9dp</item>
         <item name="trackHeight">6dp</item>
     </style>

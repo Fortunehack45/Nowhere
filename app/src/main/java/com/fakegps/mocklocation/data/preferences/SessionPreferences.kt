@@ -146,7 +146,12 @@ class SessionPreferences(private val context: Context) {
         get() = prefs.getBoolean("key_is_session_expired", false)
         set(value) = prefs.edit().putBoolean("key_is_session_expired", value).apply()
 
+    fun isPremiumActive(): Boolean {
+        return com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
+    }
+
     fun hasValidActiveSession(): Boolean {
+        if (isPremiumActive()) return isSessionActive
         if (sessionExpiresTimestamp == 0L) {
             return false
         }
@@ -156,6 +161,11 @@ class SessionPreferences(private val context: Context) {
 
     fun startNewSession(durationMillis: Long = DEFAULT_SESSION_DURATION_MILLIS, forceRestart: Boolean = false) {
         val now = System.currentTimeMillis()
+        if (isPremiumActive()) {
+            isSessionActive = true
+            isSessionExpired = false
+            return
+        }
         if (!forceRestart && !isSessionExpired && sessionExpiresTimestamp > now) {
             isSessionActive = true
             return
@@ -167,6 +177,11 @@ class SessionPreferences(private val context: Context) {
     }
 
     fun extendSession(extraMillis: Long = REWARD_EXTENSION_DURATION_MILLIS) {
+        if (isPremiumActive()) {
+            isSessionActive = true
+            isSessionExpired = false
+            return
+        }
         val now = System.currentTimeMillis()
         val currentExpiry = if (sessionExpiresTimestamp > now) sessionExpiresTimestamp else now
         sessionExpiresTimestamp = currentExpiry + extraMillis
@@ -176,15 +191,18 @@ class SessionPreferences(private val context: Context) {
     }
 
     fun getEffectiveExpiryTimestamp(): Long {
+        if (isPremiumActive()) return Long.MAX_VALUE
         return sessionExpiresTimestamp
     }
 
     fun getTimeRemainingMillis(): Long {
+        if (isPremiumActive()) return Long.MAX_VALUE
         val remaining = getEffectiveExpiryTimestamp() - System.currentTimeMillis()
         return if (remaining > 0) remaining else 0L
     }
 
     fun formatRemainingTime(): String {
+        if (isPremiumActive()) return "UNLIMITED"
         val remainingMillis = getTimeRemainingMillis()
         val totalSecs = remainingMillis / 1000
         val hours = totalSecs / 3600
@@ -194,6 +212,7 @@ class SessionPreferences(private val context: Context) {
     }
 
     fun formatAllocatedDuration(): String {
+        if (isPremiumActive()) return "Unlimited"
         val totalSecs = sessionAllocatedDurationMillis / 1000
         val hours = totalSecs / 3600
         val mins = (totalSecs % 3600) / 60

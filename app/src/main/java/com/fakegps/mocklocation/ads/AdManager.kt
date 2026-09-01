@@ -69,9 +69,29 @@ object AdManager {
     private var rewardedAd: RewardedAd? = null
     private var rewardedInterstitialAd: RewardedInterstitialAd? = null
     private var lastInterstitialShowTime: Long = 0
-    private const val INTERSTITIAL_COOLDOWN_MS = 60_000L // 1 minute cooldown
+    private const val INTERSTITIAL_COOLDOWN_MS = 240_000L // 4 minute cooldown (reduced frequency by >50%)
+    private var simulationActionCounter = 0
+    private const val ACTIONS_BETWEEN_INTERSTITIALS = 6 // Require 6 simulation actions between interstitials
+
+    fun isPremium(context: Context): Boolean {
+        return com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
+    }
+
+    /**
+     * Clear and collapse any ad banner container (used when premium is activated/restored).
+     */
+    fun clearBanner(container: FrameLayout) {
+        try {
+            container.removeAllViews()
+            container.visibility = View.GONE
+        } catch (ignored: Exception) {}
+    }
 
     fun initialize(context: Context) {
+        if (isPremium(context)) {
+            Log.d(TAG, "User is Premium. Skipping AdMob initialization.")
+            return
+        }
         try {
             MobileAds.initialize(context) { status ->
                 isInitialized = true
@@ -84,6 +104,7 @@ object AdManager {
     }
 
     private fun preloadAllAds(context: Context) {
+        if (isPremium(context)) return
         preloadInterstitial(context)
         preloadRewardedAd(context)
         preloadRewardedInterstitialAd(context)
@@ -93,6 +114,10 @@ object AdManager {
      * Loads an Adaptive/Standard Banner Ad into the specified container with automatic fallback.
      */
     fun loadBanner(activity: Activity, container: FrameLayout, isHomeBanner: Boolean = false) {
+        if (isPremium(activity)) {
+            clearBanner(container)
+            return
+        }
         val primaryAdUnit = if (BuildConfig.DEBUG) {
             TEST_BANNER_AD_UNIT_ID
         } else {
@@ -109,7 +134,10 @@ object AdManager {
         adUnitId: String,
         fallbackAdUnitId: String? = null
     ) {
-        if (activity.isFinishing || activity.isDestroyed) return
+        if (activity.isFinishing || activity.isDestroyed || isPremium(activity)) {
+            clearBanner(container)
+            return
+        }
 
         activity.runOnUiThread {
             try {
@@ -151,6 +179,10 @@ object AdManager {
      * Loads a Native Advanced Ad into the specified container with automatic fallback.
      */
     fun loadNativeAd(activity: Activity, container: FrameLayout) {
+        if (isPremium(activity)) {
+            clearBanner(container)
+            return
+        }
         val primaryUnit = if (BuildConfig.DEBUG) TEST_NATIVE_AD_UNIT_ID else PROD_NATIVE_AD_UNIT_ID
         loadNativeAdInternal(activity, container, primaryUnit, if (BuildConfig.DEBUG) null else TEST_NATIVE_AD_UNIT_ID)
     }
@@ -161,13 +193,17 @@ object AdManager {
         adUnitId: String,
         fallbackUnitId: String? = null
     ) {
-        if (activity.isFinishing || activity.isDestroyed) return
+        if (activity.isFinishing || activity.isDestroyed || isPremium(activity)) {
+            clearBanner(container)
+            return
+        }
 
         try {
             val adLoader = AdLoader.Builder(activity, adUnitId)
                 .forNativeAd { nativeAd ->
-                    if (activity.isFinishing || activity.isDestroyed) {
+                    if (activity.isFinishing || activity.isDestroyed || isPremium(activity)) {
                         nativeAd.destroy()
+                        clearBanner(container)
                         return@forNativeAd
                     }
 
@@ -290,6 +326,7 @@ object AdManager {
     // --- Interstitial Ads ---
 
     fun preloadInterstitial(context: Context) {
+        if (isPremium(context)) return
         val primaryUnit = TEST_INTERSTITIAL_AD_UNIT_ID
         loadInterstitialInternal(context, primaryUnit)
     }
@@ -321,6 +358,10 @@ object AdManager {
     fun isInterstitialAdReady(): Boolean = interstitialAd != null
 
     fun showInterstitialAd(activity: Activity, onDismissed: () -> Unit) {
+        if (isPremium(activity)) {
+            onDismissed()
+            return
+        }
         interstitialAd?.let { ad ->
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
@@ -344,6 +385,12 @@ object AdManager {
     }
 
     fun showInterstitialIfReady(activity: Activity) {
+        if (isPremium(activity)) return
+        simulationActionCounter++
+        if (simulationActionCounter < ACTIONS_BETWEEN_INTERSTITIALS) {
+            return
+        }
+
         val now = System.currentTimeMillis()
         if (now - lastInterstitialShowTime < INTERSTITIAL_COOLDOWN_MS) {
             return
@@ -351,6 +398,7 @@ object AdManager {
 
         interstitialAd?.let { ad ->
             lastInterstitialShowTime = now
+            simulationActionCounter = 0
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     interstitialAd = null
@@ -371,6 +419,7 @@ object AdManager {
     // --- Rewarded Ads ---
 
     fun preloadRewardedAd(context: Context) {
+        if (isPremium(context)) return
         val primaryUnit = if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else PROD_REWARDED_AD_UNIT_ID
         loadRewardedAdInternal(context, primaryUnit, if (BuildConfig.DEBUG) null else TEST_REWARDED_AD_UNIT_ID)
     }
@@ -410,6 +459,14 @@ object AdManager {
         onUserEarnedReward: (RewardItem) -> Unit,
         onAdClosed: () -> Unit
     ) {
+        if (isPremium(activity)) {
+            onUserEarnedReward(object : RewardItem {
+                override fun getAmount(): Int = 1
+                override fun getType(): String = "premium"
+            })
+            onAdClosed()
+            return
+        }
         rewardedAd?.let { ad ->
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
@@ -439,6 +496,7 @@ object AdManager {
     // --- Rewarded Interstitial Ads (Interstellar Reward Ads) ---
 
     fun preloadRewardedInterstitialAd(context: Context) {
+        if (isPremium(context)) return
         val primaryUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
         loadRewardedInterstitialInternal(context, primaryUnit, if (BuildConfig.DEBUG) null else TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID)
     }
@@ -478,6 +536,14 @@ object AdManager {
         onUserEarnedReward: (RewardItem) -> Unit,
         onAdClosed: () -> Unit
     ) {
+        if (isPremium(activity)) {
+            onUserEarnedReward(object : RewardItem {
+                override fun getAmount(): Int = 1
+                override fun getType(): String = "premium"
+            })
+            onAdClosed()
+            return
+        }
         rewardedInterstitialAd?.let { ad ->
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
@@ -516,6 +582,12 @@ object AdManager {
         onAdClosed: (() -> Unit)? = null
     ) {
         if (activity.isFinishing || activity.isDestroyed) return
+
+        if (isPremium(activity)) {
+            onUserEarnedReward()
+            onAdClosed?.invoke()
+            return
+        }
 
         // 1. If Rewarded Interstitial is preloaded and ready, show immediately!
         if (isRewardedInterstitialAdReady()) {

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Red Brand Tokens (Shared) -->
+    <!-- Brand Tokens (Clean Apple Style) -->
     <color name="primary">#E41B1B</color>
-    <color name="primary_bright">#FF3B3B</color>
+    <color name="primary_bright">#E41B1B</color>
     <color name="primary_dark">#B91C1C</color>
-    <color name="primary_glow">#33E41B1B</color>
+    <color name="primary_glow">#14E41B1B</color>
 
     <color name="white">#FFFFFF</color>
     <color name="white_soft">#F8FAFC</color>
@@ -13,61 +13,61 @@
     <color name="white_border">#20000000</color>
 
     <!-- Surfaces (Light Mode) -->
-    <color name="surface_dark">#F1F5F9</color>
+    <color name="surface_dark">#F2F2F7</color>
     <color name="surface_obsidian">#FFFFFF</color>
     <color name="surface_card">#FFFFFF</color>
-    <color name="surface_card_elevated">#F8FAFC</color>
+    <color name="surface_card_elevated">#F2F2F7</color>
     <color name="surface_elevated">#FFFFFF</color>
     <color name="surface_glass">#FFFFFF</color>
-    <color name="surface_search">#F1F5F9</color>
-    <color name="card_dark">#F8FAFC</color>
+    <color name="surface_search">#E5E5EA</color>
+    <color name="card_dark">#FFFFFF</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->
-    <color name="edge_blur_top_start">#E6F1F5F9</color>
-    <color name="edge_blur_top_mid">#80F1F5F9</color>
-    <color name="edge_blur_top_end">#00F1F5F9</color>
-    <color name="edge_blur_bottom_start">#00F1F5F9</color>
-    <color name="edge_blur_bottom_mid">#99F1F5F9</color>
-    <color name="edge_blur_bottom_end">#F2F1F5F9</color>
+    <color name="edge_blur_top_start">#E6F2F2F7</color>
+    <color name="edge_blur_top_mid">#80F2F2F7</color>
+    <color name="edge_blur_top_end">#00F2F2F7</color>
+    <color name="edge_blur_bottom_start">#00F2F2F7</color>
+    <color name="edge_blur_bottom_mid">#99F2F2F7</color>
+    <color name="edge_blur_bottom_end">#F2F2F2F7</color>
 
-    <!-- Strokes & Highlights -->
-    <color name="stroke_subtle">#CBD5E1</color>
-    <color name="border_subtle">#CBD5E1</color>
-    <color name="surface_card_stroke">#CBD5E1</color>
-    <color name="stroke_red_glow">#80E41B1B</color>
-    <color name="stroke_white_glow">#33000000</color>
+    <!-- Strokes & Hairline Dividers -->
+    <color name="stroke_subtle">#E5E5EA</color>
+    <color name="border_subtle">#E5E5EA</color>
+    <color name="surface_card_stroke">#E5E5EA</color>
+    <color name="stroke_red_glow">#E41B1B</color>
+    <color name="stroke_white_glow">#20000000</color>
 
     <!-- Typography & Accents (Light Mode) -->
-    <color name="text_primary">#0F172A</color>
-    <color name="text_secondary">#334155</color>
-    <color name="text_muted">#64748B</color>
+    <color name="text_primary">#000000</color>
+    <color name="text_secondary">#3C3C43</color>
+    <color name="text_muted">#8E8E93</color>
     <color name="text_red">#E41B1B</color>
-    <color name="text_cyan">#0F172A</color>
+    <color name="text_cyan">#000000</color>
     <color name="accent_rose">#E41B1B</color>
 
-    <!-- Status Badges (100% Opaque Solid Surfaces) -->
+    <!-- Status Badges (Clean Solid & Subtle Tinted Surfaces) -->
     <color name="badge_active_bg">#FEE2E2</color>
     <color name="badge_active_text">#E41B1B</color>
     <color name="badge_success_bg">#D1FAE5</color>
     <color name="badge_success_text">#059669</color>
-    <color name="badge_standby_bg">#F1F5F9</color>
-    <color name="badge_standby_text">#475569</color>
+    <color name="badge_standby_bg">#F2F2F7</color>
+    <color name="badge_standby_text">#636366</color>
     <color name="badge_warning_bg">#FEF3C7</color>
     <color name="badge_warning_text">#D97706</color>
     <color name="badge_error_bg">#FEE2E2</color>
     <color name="badge_error_text">#DC2626</color>
 
-    <!-- Simulation Stop Action Button (Light Mode: Visible light red, not washed out) -->
-    <color name="btn_stop_bg">#FCA5A5</color>
-    <color name="btn_stop_text">#7F1D1D</color>
+    <!-- Simulation Stop Action Button -->
+    <color name="btn_stop_bg">#FEE2E2</color>
+    <color name="btn_stop_text">#B91C1C</color>
 
-    <!-- Widget Dynamic Themed Icon Tokens (Light Mode Fallback) -->
-    <color name="widget_icon_bg">#E2E8F0</color>
+    <!-- Widget Dynamic Themed Icon Tokens -->
+    <color name="widget_icon_bg">#E5E5EA</color>
     <color name="widget_icon_bg_active">#FEE2E2</color>
-    <color name="widget_icon_fg">#0F172A</color>
-    <color name="widget_icon_stroke">#CBD5E1</color>
+    <color name="widget_icon_fg">#000000</color>
+    <color name="widget_icon_stroke">#D1D1D6</color>
     <color name="widget_icon_stroke_active">#E41B1B</color>
-    <color name="widget_icon_text">#0F172A</color>
+    <color name="widget_icon_text">#000000</color>
 
     <!-- Basics -->
     <color name="black">#000000</color>

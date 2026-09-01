@@ -90,7 +90,7 @@ object RoadRouter {
             return@withContext RouteResolutionResult(downsampleWaypointsIfNeeded(mapped, maxPoints = 5000), isFallbackDirectPath = false)
         }
 
-        // If direct query fails, stitch leg by leg
+        // If direct query fails or returns insufficient points, stitch leg by leg cleanly
         val stitchedRoute = mutableListOf<RoutePoint>()
         var usedDirectFallback = false
 
@@ -109,8 +109,15 @@ object RoadRouter {
                     withDwell[withDwell.lastIndex] = withDwell.last().copy(stopDurationSeconds = legEnd.stopDurationSeconds)
                 }
 
-                if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == withDwell.first()) {
-                    stitchedRoute.addAll(withDwell.subList(1, withDwell.size))
+                if (stitchedRoute.isNotEmpty()) {
+                    val lastPt = stitchedRoute.last()
+                    val firstPt = withDwell.first()
+                    val gapDist = GeoUtils.calculateDistanceMeters(lastPt.latitude, lastPt.longitude, firstPt.latitude, firstPt.longitude)
+                    if (gapDist < 35.0) {
+                        stitchedRoute.addAll(withDwell.subList(1, withDwell.size))
+                    } else {
+                        stitchedRoute.addAll(withDwell)
+                    }
                 } else {
                     stitchedRoute.addAll(withDwell)
                 }
@@ -118,8 +125,15 @@ object RoadRouter {
                 usedDirectFallback = true
                 // Shortest direct geodesic path between the two points
                 val directLeg = generateShortestDirectPath(legStart, legEnd, mode)
-                if (stitchedRoute.isNotEmpty() && stitchedRoute.last() == directLeg.first()) {
-                    stitchedRoute.addAll(directLeg.subList(1, directLeg.size))
+                if (stitchedRoute.isNotEmpty()) {
+                    val lastPt = stitchedRoute.last()
+                    val firstPt = directLeg.first()
+                    val gapDist = GeoUtils.calculateDistanceMeters(lastPt.latitude, lastPt.longitude, firstPt.latitude, firstPt.longitude)
+                    if (gapDist < 35.0) {
+                        stitchedRoute.addAll(directLeg.subList(1, directLeg.size))
+                    } else {
+                        stitchedRoute.addAll(directLeg)
+                    }
                 } else {
                     stitchedRoute.addAll(directLeg)
                 }
@@ -127,8 +141,9 @@ object RoadRouter {
         }
 
         if (stitchedRoute.size >= 2) {
+            val cleaned = deduplicateConsecutivePoints(stitchedRoute)
             return@withContext RouteResolutionResult(
-                downsampleWaypointsIfNeeded(stitchedRoute, maxPoints = 5000),
+                downsampleWaypointsIfNeeded(cleaned, maxPoints = 5000),
                 isFallbackDirectPath = usedDirectFallback
             )
         }
@@ -267,7 +282,7 @@ object RoadRouter {
         for (endpoint in ROUTING_ENDPOINTS) {
             try {
                 val profile = if (mode == TransportMode.FOOT) endpoint.footProfile else endpoint.carProfile
-                val urlString = "${endpoint.baseUrl}/$profile/$coordinatesParam?overview=full&geometries=geojson&continue_straight=default"
+                val urlString = "${endpoint.baseUrl}/$profile/$coordinatesParam?overview=full&geometries=geojson&steps=false&continue_straight=false"
                 val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
                     requestMethod = "GET"
                     connectTimeout = 3000
@@ -354,6 +369,22 @@ object RoadRouter {
             }
         }
         return result
+    }
+
+    private fun deduplicateConsecutivePoints(points: List<RoutePoint>): List<RoutePoint> {
+        if (points.size <= 2) return points
+        val cleaned = mutableListOf<RoutePoint>()
+        cleaned.add(points.first())
+
+        for (i in 1 until points.size) {
+            val prev = cleaned.last()
+            val curr = points[i]
+            val dist = GeoUtils.calculateDistanceMeters(prev.latitude, prev.longitude, curr.latitude, curr.longitude)
+            if (dist >= 1.2 || i == points.lastIndex) {
+                cleaned.add(curr)
+            }
+        }
+        return cleaned
     }
 
     private fun downsampleWaypointsIfNeeded(points: List<RoutePoint>, maxPoints: Int = 5000): List<RoutePoint> {

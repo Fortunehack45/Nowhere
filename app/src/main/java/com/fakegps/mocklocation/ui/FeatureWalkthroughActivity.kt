@@ -69,6 +69,29 @@ class FeatureWalkthroughActivity : AppCompatActivity() {
         binding = ActivityFeatureWalkthroughBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Handle edge-to-edge system bar insets (Android 15+ & targetSdk 35)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+
+            binding.layoutWalkthroughTop.setPadding(
+                binding.layoutWalkthroughTop.paddingLeft,
+                statusBarInset.top,
+                binding.layoutWalkthroughTop.paddingRight,
+                binding.layoutWalkthroughTop.paddingBottom
+            )
+
+            binding.layoutWalkthroughBottom.setPadding(
+                binding.layoutWalkthroughBottom.paddingLeft,
+                binding.layoutWalkthroughBottom.paddingTop,
+                binding.layoutWalkthroughBottom.paddingRight,
+                (24 * resources.displayMetrics.density).toInt() + navBarInset.bottom
+            )
+
+            insets
+        }
+
         setupCarousel()
         setupListeners()
     }

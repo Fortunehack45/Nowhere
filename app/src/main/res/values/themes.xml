@@ -10,8 +10,8 @@
         <item name="android:windowBackground">@color/surface_dark</item>
         <item name="android:statusBarColor">@color/surface_dark</item>
         <item name="android:navigationBarColor">@color/surface_dark</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
         <item name="sliderStyle">@style/Widget.Nowhere.Slider</item>
         <item name="materialSwitchStyle">@style/Widget.Nowhere.Switch</item>
         <item name="bottomSheetDialogTheme">@style/Theme.Nowhere.BottomSheetDialog</item>
@@ -29,7 +29,7 @@
         <item name="thumbColor">@color/white</item>
         <item name="trackColorActive">@color/primary</item>
         <item name="trackColorInactive">@color/stroke_subtle</item>
-        <item name="haloColor">@color/primary_glow</item>
+        <item name="haloColor">@color/transparent</item>
         <item name="thumbRadius">9dp</item>
         <item name="trackHeight">6dp</item>
     </style>
