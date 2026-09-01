@@ -40,7 +40,7 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_vpn_layout)
             val sessionPrefs = SessionPreferences(context)
             val isRunning = NowhereVpnService.isRunning
-            val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_NODES.first()
+            val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
 
             val stats = NowhereVpnService.trafficStats.value
             if (isRunning) {
@@ -104,7 +104,7 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
                     NowhereVpnService.stopVpn(context)
                 } else {
                     val sessionPrefs = SessionPreferences(context)
-                    val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_NODES.first()
+                    val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
                     NowhereVpnService.startVpn(context, node)
                 }
                 updateAllVpnWidgets(context)
