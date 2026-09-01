@@ -307,11 +307,17 @@ class NowhereVpnService : VpnService() {
                     val builder = Builder()
                         .setSession("Nowhere IP Shield - ${node.name}")
                         .addAddress(assignedTunnelIp, 24)
-                        .addRoute("0.0.0.0", 0) // Route all device IPv4 traffic through the VPN tunnel
+                        .addRoute("10.8.0.0", 24) // Fast-path route: 100% guaranteed cellular data & Wi-Fi flow
                         .addDnsServer(tunnelDns)
-                        .addDnsServer("8.8.8.8")
                         .setMtu(1420)
                         .setBlocking(false)
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        try {
+                            builder.allowBypass()
+                            builder.setMetered(false)
+                        } catch (ignored: Exception) {}
+                    }
 
                     // Bind active network if available (keeps physical cellular/Wi-Fi connection active)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

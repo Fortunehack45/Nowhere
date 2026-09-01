@@ -542,14 +542,15 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically activate VPN — wrapped in try-catch to prevent VPN errors crashing simulation
-        try {
-            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
-            sessionPrefs.activeIpNodeId = bestNode.id
-            sessionPrefs.isIpMaskingEnabled = true
-            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
-        } catch (e: Exception) {
-            Log.w(TAG, "VPN auto-start failed (non-fatal): ${e.message}")
+        // Activate VPN only if explicitly enabled by user
+        if (sessionPrefs.isIpMaskingEnabled) {
+            try {
+                val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
+                sessionPrefs.activeIpNodeId = bestNode.id
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+            } catch (e: Exception) {
+                Log.w(TAG, "VPN start failed (non-fatal): ${e.message}")
+            }
         }
 
         serviceScope.launch(Dispatchers.IO) {
@@ -634,15 +635,14 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically activate VPN — wrapped in try-catch to prevent VPN errors crashing simulation
-        if (waypoints.isNotEmpty()) {
+        // Activate VPN only if explicitly enabled by user
+        if (sessionPrefs.isIpMaskingEnabled && waypoints.isNotEmpty()) {
             try {
                 val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(waypoints[0].latitude, waypoints[0].longitude)
                 sessionPrefs.activeIpNodeId = bestNode.id
-                sessionPrefs.isIpMaskingEnabled = true
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
             } catch (e: Exception) {
-                Log.w(TAG, "VPN auto-start failed on route (non-fatal): ${e.message}")
+                Log.w(TAG, "VPN start failed on route (non-fatal): ${e.message}")
             }
         }
 
