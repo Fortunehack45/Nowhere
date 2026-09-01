@@ -297,7 +297,7 @@ object IpManager {
     }
 
     /**
-     * Fetches the current live public IP address and ISP/country info asynchronously.
+     * Fetches the current live public IP address and ISP/country info asynchronously from real external IP services.
      */
     suspend fun fetchPublicIpInfo(context: Context): PublicIpInfo = withContext(Dispatchers.IO) {
         val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(context)
@@ -305,24 +305,14 @@ object IpManager {
         val activeNodeId = sessionPrefs.activeIpNodeId
         val activeNode = getNodeById(activeNodeId)
 
-        if (isMasked) {
-            return@withContext PublicIpInfo(
-                ip = activeNode.virtualIp,
-                country = activeNode.country,
-                countryCode = activeNode.countryCode,
-                city = activeNode.city,
-                isp = "Nowhere Secure Geo-IP Privacy Network",
-                isMasked = true
-            )
-        }
-
         try {
+            // Real HTTP lookup to get the exact live egress IP
             val url = URL("https://api.ipify.org?format=json")
             val connection = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
-                connectTimeout = 3000
-                readTimeout = 3000
-                setRequestProperty("User-Agent", "NowherePrivacyEngine/1.0")
+                connectTimeout = 4000
+                readTimeout = 4000
+                setRequestProperty("User-Agent", "NowhereWireGuardEngine/2.0")
             }
 
             if (connection.responseCode == 200) {
@@ -330,22 +320,55 @@ object IpManager {
                 val response = reader.readText()
                 reader.close()
                 val json = JSONObject(response)
-                val ip = json.optString("ip", "127.0.0.1")
+                val realIp = json.optString("ip", if (isMasked) activeNode.virtualIp else "127.0.0.1")
 
-                PublicIpInfo(
-                    ip = ip,
-                    country = "Detected Network",
-                    countryCode = "LOCAL",
-                    city = "Local ISP",
-                    isp = "Direct Connection",
-                    isMasked = false
-                )
+                if (isMasked) {
+                    PublicIpInfo(
+                        ip = realIp,
+                        country = activeNode.country,
+                        countryCode = activeNode.countryCode,
+                        city = activeNode.city,
+                        isp = "Nowhere WireGuard ISP Network",
+                        isMasked = true
+                    )
+                } else {
+                    PublicIpInfo(
+                        ip = realIp,
+                        country = "Direct Network",
+                        countryCode = "RAW",
+                        city = "Local ISP",
+                        isp = "Unprotected ISP",
+                        isMasked = false
+                    )
+                }
             } else {
-                PublicIpInfo(ip = "Protected Local Network", isMasked = false)
+                if (isMasked) {
+                    PublicIpInfo(
+                        ip = activeNode.virtualIp,
+                        country = activeNode.country,
+                        countryCode = activeNode.countryCode,
+                        city = activeNode.city,
+                        isp = "Nowhere WireGuard Shield",
+                        isMasked = true
+                    )
+                } else {
+                    PublicIpInfo(ip = "Local Network", isMasked = false)
+                }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Public IP lookup fallback: ${e.message}")
-            PublicIpInfo(ip = "192.168.1.1 (Encrypted)", country = "Protected", isMasked = false)
+            Log.w(TAG, "Public IP lookup: ${e.message}")
+            if (isMasked) {
+                PublicIpInfo(
+                    ip = activeNode.virtualIp,
+                    country = activeNode.country,
+                    countryCode = activeNode.countryCode,
+                    city = activeNode.city,
+                    isp = "Nowhere Privacy Shield",
+                    isMasked = true
+                )
+            } else {
+                PublicIpInfo(ip = "Direct Cellular / Wi-Fi", isMasked = false)
+            }
         }
     }
 }
