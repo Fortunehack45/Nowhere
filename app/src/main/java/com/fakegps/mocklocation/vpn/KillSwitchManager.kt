@@ -5,7 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.VpnService
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.fakegps.mocklocation.R
@@ -14,6 +16,7 @@ import com.fakegps.mocklocation.ui.MainActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.FileInputStream
 
 object KillSwitchManager {
 
@@ -36,12 +39,14 @@ object KillSwitchManager {
         if (!prefs.isKillSwitchEnabled) {
             _status.value = KillSwitchStatus.Disabled
             cancelNotification(context)
+            stopSinkhole(context)
             return
         }
 
         if (prefs.isKillSwitchBypassed) {
             _status.value = KillSwitchStatus.Bypassed
             cancelNotification(context)
+            stopSinkhole(context)
             return
         }
 
@@ -51,15 +56,17 @@ object KillSwitchManager {
         if (isMockLocationActive && isVpnActive) {
             _status.value = KillSwitchStatus.Armed
             cancelNotification(context)
+            stopSinkhole(context)
         } else {
             val reason = when {
                 !isMockLocationActive && !isVpnActive -> "GPS Mocking and VPN Shield are both OFF"
                 !isMockLocationActive -> "GPS Mocking session stopped"
                 else -> "VPN Privacy Shield disconnected"
             }
-            Log.w(TAG, "⚡ Emergency Kill Switch Triggered! Leak Prevention Active: $reason")
+            Log.w(TAG, "⚡ Emergency Kill Switch Triggered! Network Sinkhole Activated: $reason")
             _status.value = KillSwitchStatus.Triggered(reason)
             showKillSwitchNotification(context, reason)
+            startSinkhole(context, reason)
         }
     }
 
@@ -76,6 +83,28 @@ object KillSwitchManager {
         val prefs = SessionPreferences(context)
         prefs.isKillSwitchBypassed = bypassed
         evaluate(context)
+    }
+
+    private fun startSinkhole(context: Context, reason: String) {
+        try {
+            val intent = Intent(context, KillSwitchSinkholeService::class.java).apply {
+                putExtra("EXTRA_REASON", reason)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not start KillSwitchSinkholeService: ${e.message}")
+        }
+    }
+
+    private fun stopSinkhole(context: Context) {
+        try {
+            val intent = Intent(context, KillSwitchSinkholeService::class.java)
+            context.stopService(intent)
+        } catch (ignored: Exception) {}
     }
 
     private fun showKillSwitchNotification(context: Context, reason: String) {
@@ -95,8 +124,8 @@ object KillSwitchManager {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_shield_check)
             .setContentTitle("🛡️ Privacy Kill Switch Active")
-            .setContentText("Internet traffic paused to protect real IP & GPS: $reason")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Internet traffic is shielded because $reason. Tap to resume mock protection or bypass the kill switch."))
+            .setContentText("Internet paused to protect real IP & GPS: $reason")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Internet traffic is physically halted at the OS level because $reason. Tap to resume mock protection or bypass the kill switch."))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setOngoing(true)
             .setContentIntent(pendingIntent)

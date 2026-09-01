@@ -497,6 +497,9 @@ class NowhereVpnService : VpnService() {
         _vpnState.value = VpnState.Disconnected
         _trafficStats.value = VpnTrafficStats()
         try {
+            KillSwitchManager.evaluate(this)
+        } catch (ignored: Exception) {}
+        try {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } catch (ignored: Exception) {}
         stopSelf()
