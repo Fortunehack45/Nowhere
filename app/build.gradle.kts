@@ -33,12 +33,12 @@ val computedVersionName = customVersionName ?: "1.0.$computedVersionCode"
 
 android {
     namespace = "com.fakegps.mocklocation"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.nowhere.gps.locationchanger"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = computedVersionCode
         versionName = computedVersionName
 
@@ -143,8 +143,8 @@ dependencies {
     // Google Mobile Ads (AdMob)
     implementation("com.google.android.gms:play-services-ads:23.0.0")
 
-    // Google Play Billing (Subscriptions & In-App Purchases)
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    // Google Play Billing (Subscriptions & In-App Purchases) - Version 8.0.0
+    implementation("com.android.billingclient:billing:8.0.0")
 
     // QR Code Generation for Hotspot Tethering
     implementation("com.google.zxing:core:3.5.3")

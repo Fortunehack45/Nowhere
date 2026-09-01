@@ -170,8 +170,9 @@ class BillingManager private constructor(private val context: Context) : Purchas
             .setProductList(productList)
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        billingClient.queryProductDetailsAsync(params) { billingResult, queryResult ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                val productDetailsList = queryResult.productDetailsList
                 val monthlyDetails = productDetailsList.firstOrNull { it.productId == PremiumEntitlement.PRODUCT_ID_PREMIUM }
                 val yearlyDetails = productDetailsList.firstOrNull { it.productId == PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY }
 
