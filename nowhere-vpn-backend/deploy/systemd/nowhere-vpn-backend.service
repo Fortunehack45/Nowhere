@@ -1,0 +1,27 @@
+[Unit]
+Description=Nowhere VPN Control Plane Backend Service
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/nowhere-vpn-backend
+ExecStart=/opt/nowhere-vpn-backend/nowhere-vpn-backend -port=8080 -config=/opt/nowhere-vpn-backend/config -ssh-key=/opt/nowhere-vpn-backend/secrets/nowhere_deploy.pem
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5s
+
+# Security Hardening
+LimitNOFILE=65535
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Environment
+Environment=PORT=8080
+Environment=CONFIG_DIR=/opt/nowhere-vpn-backend/config
+Environment=SSH_DEFAULT_KEY=/opt/nowhere-vpn-backend/secrets/nowhere_deploy.pem
+Environment=API_KEYS=nowhere_live_prod_key_77a9c84e1b
+
+[Install]
+WantedBy=multi-user.target

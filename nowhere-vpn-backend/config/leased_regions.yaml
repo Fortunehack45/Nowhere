@@ -1,0 +1,64 @@
+# Nowhere VPN - Leased Proxy Exit Regions
+# For countries where no major VPS datacenter physically exists.
+# Traffic connects via a real regional WireGuard gateway node and exits via geolocated upstream proxies.
+
+leased_regions:
+  - id: bz_bze
+    country: BZ
+    country_name: Belize
+    city: Belize City
+    gateway_node_id: us_mia_1
+    provider: BrightData
+    proxy_type: residential_socks5
+    proxy_host: residential.proxy-provider.net
+    proxy_port: 20001
+    proxy_user: user-country-bz
+    proxy_pass_env: PROXY_PASS_BZ
+
+  - id: bs_nas
+    country: BS
+    country_name: Bahamas
+    city: Nassau
+    gateway_node_id: us_mia_1
+    provider: BrightData
+    proxy_type: residential_socks5
+    proxy_host: residential.proxy-provider.net
+    proxy_port: 20002
+    proxy_user: user-country-bs
+    proxy_pass_env: PROXY_PASS_BS
+
+  - id: is_rey
+    country: IS
+    country_name: Iceland
+    city: Reykjavik
+    gateway_node_id: uk_lon_1
+    provider: IPRoyal
+    proxy_type: residential_socks5
+    proxy_host: geo.iproyal.com
+    proxy_port: 12321
+    proxy_user: user-is
+    proxy_pass_env: PROXY_PASS_IS
+
+  - id: mt_val
+    country: MT
+    country_name: Malta
+    city: Valletta
+    gateway_node_id: fr_par_1
+    provider: Oxylabs
+    proxy_type: residential_socks5
+    proxy_host: pr.oxylabs.io
+    proxy_port: 7777
+    proxy_user: user-mt
+    proxy_pass_env: PROXY_PASS_MT
+
+  - id: mc_mon
+    country: MC
+    country_name: Monaco
+    city: Monaco
+    gateway_node_id: fr_par_1
+    provider: Oxylabs
+    proxy_type: residential_socks5
+    proxy_host: pr.oxylabs.io
+    proxy_port: 7778
+    proxy_user: user-mc
+    proxy_pass_env: PROXY_PASS_MC
