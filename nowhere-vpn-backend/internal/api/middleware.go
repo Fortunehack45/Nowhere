@@ -46,6 +46,13 @@ func AuthMiddleware(apiKeys []string) func(http.Handler) http.Handler {
 					apiKey = strings.TrimPrefix(authHeader, "Bearer ")
 				}
 			}
+			if apiKey == "" {
+				// Check URL query parameters (?api_key=... or ?key=...)
+				apiKey = r.URL.Query().Get("api_key")
+				if apiKey == "" {
+					apiKey = r.URL.Query().Get("key")
+				}
+			}
 
 			if apiKey == "" || !validKeys[apiKey] {
 				w.Header().Set("Content-Type", "application/json")
