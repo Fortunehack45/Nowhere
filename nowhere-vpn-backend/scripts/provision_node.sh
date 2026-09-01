@@ -56,12 +56,23 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq wireguard iptables ufw curl net-tools iproute2
 
-# 5. Enable Kernel IPv4 and IPv6 Forwarding
-echo "▶ Configuring kernel IP packet forwarding..."
+# 5. Enable Kernel IPv4/IPv6 Forwarding & Google BBR Low-Latency Gaming Congestion Control
+echo "▶ Configuring kernel IP packet forwarding, Google BBR, and gaming buffer tuning..."
 cat <<EOF > /etc/sysctl.d/99-nowhere-wireguard.conf
+# IP Forwarding
 net.ipv4.ip_forward=1
 net.ipv4.conf.all.forwarding=1
 net.ipv6.conf.all.forwarding=1
+
+# Google BBR Low-Latency & Zero-Jitter Congestion Control
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+
+# High-Throughput UDP Buffers for Gaming Packets
+net.core.rmem_max=16777216
+net.core.wmem_max=16777216
+net.ipv4.udp_rmem_min=8192
+net.ipv4.udp_wmem_min=8192
 EOF
 sysctl -p /etc/sysctl.d/99-nowhere-wireguard.conf > /dev/null
 
@@ -78,8 +89,8 @@ echo "$SERVER_PUBKEY" > /etc/wireguard/server_public.key
 chmod 600 /etc/wireguard/server_private.key
 chmod 644 /etc/wireguard/server_public.key
 
-# 7. Write /etc/wireguard/wg0.conf
-echo "▶ Writing /etc/wireguard/wg0.conf..."
+# 7. Write /etc/wireguard/wg0.conf (with TCP MSS Clamping & Anti-Detection)
+echo "▶ Writing /etc/wireguard/wg0.conf with MSS Clamping and NAT..."
 cat <<EOF > /etc/wireguard/wg0.conf
 [Interface]
 Address = ${GATEWAY_IP}
@@ -87,9 +98,9 @@ ListenPort = ${WG_PORT}
 PrivateKey = ${SERVER_PRIVKEY}
 SaveConfig = false
 
-# NAT Masquerading & Packet Forwarding Rules
-PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o ${ETH_INTERFACE} -j MASQUERADE
-PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o ${ETH_INTERFACE} -j MASQUERADE
+# NAT Masquerading, Packet Forwarding, and TCP MSS Clamping (Anti-Detection)
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o ${ETH_INTERFACE} -j MASQUERADE; iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o ${ETH_INTERFACE} -j MASQUERADE; iptables -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
 EOF
 
 chmod 600 /etc/wireguard/wg0.conf

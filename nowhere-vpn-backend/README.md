@@ -8,6 +8,7 @@ A lightweight, stateless WireGuard control-plane service written in Go. It issue
 
 - **Stateless & Zero Database**: No SQL/NoSQL databases, no ORM, and no local session persistence. Each WireGuard server's own `wg show` kernel state is the single source of truth.
 - **Dynamic Peer Allocation**: Generates Curve25519 keypairs, queries live allocated IPs on the target server via SSH, assigns the lowest free IP in the region's subnet, and runs `wg set` live.
+- **Millisecond Game Boost & Anti-Detection QoS**: Dedicated low-latency gaming engine with kernel BBR congestion control, high-throughput UDP socket buffers, and DSCP 46 Expedited Forwarding packet prioritization for popular titles (COD Mobile, PUBG, Free Fire, Roblox, MLBB, EA FC, Genshin Impact).
 - **Load-Aware Routing**: Group multiple servers under a `region_group` (e.g. `us_nyc`). The backend queries live `wg show <iface> transfer` in parallel and automatically assigns new clients to the server with the lowest load.
 - **Leased Proxy Exit Regions**: For countries without physical commercial datacenters (small islands, specific regions), client tunnels to a regional gateway node and egresses through geolocated residential/mobile proxy streams via transparent server-side policy routing.
 - **Single Static Go Binary**: Highly concurrent, lightweight, and deployable via Docker, Docker Compose, or systemd.

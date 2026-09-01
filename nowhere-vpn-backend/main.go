@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/cors"
 	"nowhere-vpn-backend/internal/api"
 	"nowhere-vpn-backend/internal/config"
+	"nowhere-vpn-backend/internal/gameboost"
 	"nowhere-vpn-backend/internal/proxy"
 	"nowhere-vpn-backend/internal/ssh"
 	"nowhere-vpn-backend/internal/wireguard"
@@ -32,6 +33,7 @@ func main() {
 
 	log.Println("================================================================")
 	log.Println("⚡ NOWHERE VPN BACKEND — High-Performance WireGuard Control Plane")
+	log.Println("🎮 Millisecond Game Booster & Anti-Detection QoS Active")
 	log.Println("================================================================")
 
 	// 1. Initialize Configuration Registry
@@ -47,12 +49,13 @@ func main() {
 	sshPool := ssh.NewClientPool(*sshKeyFlag, 8*time.Second)
 	defer sshPool.Close()
 
-	// 3. Initialize WireGuard & Proxy Managers
+	// 3. Initialize WireGuard, Proxy & Game Optimizer
 	wgManager := wireguard.NewManager(sshPool)
 	leasedHandler := proxy.NewLeasedExitHandler(wgManager, sshPool, registry)
+	gameOptimizer := gameboost.NewOptimizer(registry, wgManager, sshPool)
 
 	// 4. Initialize API Server
-	apiServer := api.NewServer(registry, wgManager, leasedHandler)
+	apiServer := api.NewServer(registry, wgManager, leasedHandler, gameOptimizer)
 
 	// 5. Setup Router & Middleware
 	r := chi.NewRouter()
@@ -85,11 +88,16 @@ func main() {
 	r.Group(func(protected chi.Router) {
 		protected.Use(api.AuthMiddleware(apiKeys))
 
+		// Core VPN
 		protected.Get("/api/v1/nodes", apiServer.HandleListNodes)
 		protected.Get("/api/v1/regions", apiServer.HandleListRegions)
 		protected.Post("/api/v1/connect", apiServer.HandleConnect)
 		protected.Delete("/api/v1/disconnect", apiServer.HandleDisconnect)
 		protected.Post("/api/v1/reload", apiServer.HandleReload)
+
+		// Game Boost (Millisecond Latency Optimization)
+		protected.Get("/api/v1/game-boost/games", apiServer.HandleListGames)
+		protected.Post("/api/v1/game-boost/optimize", apiServer.HandleGameOptimize)
 	})
 
 	server := &http.Server{

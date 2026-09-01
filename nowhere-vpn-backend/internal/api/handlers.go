@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"nowhere-vpn-backend/internal/config"
+	"nowhere-vpn-backend/internal/gameboost"
 	"nowhere-vpn-backend/internal/proxy"
 	"nowhere-vpn-backend/internal/wireguard"
 )
@@ -25,12 +26,20 @@ type DisconnectRequest struct {
 	ClientPublicKey string `json:"client_public_key"`
 }
 
+// GameBoostRequest represents the payload for low-latency game optimization.
+type GameBoostRequest struct {
+	GameID          string `json:"game_id"`
+	RegionCode      string `json:"region_code"`
+	ClientPublicKey string `json:"client_public_key"`
+}
+
 // Server provides HTTP routing and handlers for Nowhere VPN control-plane.
 type Server struct {
-	registry     *config.Registry
-	wgManager    *wireguard.Manager
-	leasedExit   *proxy.LeasedExitHandler
-	startTime    time.Time
+	registry      *config.Registry
+	wgManager     *wireguard.Manager
+	leasedExit    *proxy.LeasedExitHandler
+	gameOptimizer *gameboost.Optimizer
+	startTime     time.Time
 }
 
 // NewServer creates a new API server instance.
@@ -38,12 +47,14 @@ func NewServer(
 	registry *config.Registry,
 	wgManager *wireguard.Manager,
 	leasedExit *proxy.LeasedExitHandler,
+	gameOptimizer *gameboost.Optimizer,
 ) *Server {
 	return &Server{
-		registry:   registry,
-		wgManager:  wgManager,
-		leasedExit: leasedExit,
-		startTime:  time.Now(),
+		registry:      registry,
+		wgManager:     wgManager,
+		leasedExit:    leasedExit,
+		gameOptimizer: gameOptimizer,
+		startTime:     time.Now(),
 	}
 }
 
@@ -213,6 +224,37 @@ func (s *Server) HandleListRegions(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// HandleListGames processes GET /api/v1/game-boost/games.
+func (s *Server) HandleListGames(w http.ResponseWriter, r *http.Request) {
+	games := gameboost.SupportedGames()
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"status": "success",
+		"count":  len(games),
+		"games":  games,
+	})
+}
+
+// HandleGameOptimize processes POST /api/v1/game-boost/optimize.
+func (s *Server) HandleGameOptimize(w http.ResponseWriter, r *http.Request) {
+	var req GameBoostRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondJSON(w, http.StatusBadRequest, map[string]string{"status": "error", "message": "invalid JSON payload"})
+		return
+	}
+
+	ctx := r.Context()
+	boostedConfig, err := s.gameOptimizer.OptimizeForGame(ctx, req.GameID, req.RegionCode, req.ClientPublicKey, "")
+	if err != nil {
+		respondJSON(w, http.StatusInternalServerError, map[string]string{
+			"status":  "error",
+			"message": "failed optimizing game route: " + err.Error(),
+		})
+		return
+	}
+
+	respondJSON(w, http.StatusOK, boostedConfig)
+}
+
 // HandleReload processes POST /api/v1/reload.
 func (s *Server) HandleReload(w http.ResponseWriter, r *http.Request) {
 	if err := s.registry.Reload(); err != nil {
@@ -235,11 +277,12 @@ func (s *Server) HandleReload(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	uptime := time.Since(s.startTime).String()
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"status":  "healthy",
-		"uptime":  uptime,
-		"service": "nowhere-vpn-backend",
-		"nodes":   len(s.registry.GetNodes()),
-		"leased":  len(s.registry.GetLeasedRegions()),
+		"status":     "healthy",
+		"uptime":     uptime,
+		"service":    "nowhere-vpn-backend",
+		"game_boost": "active",
+		"nodes":      len(s.registry.GetNodes()),
+		"leased":     len(s.registry.GetLeasedRegions()),
 	})
 }
 
