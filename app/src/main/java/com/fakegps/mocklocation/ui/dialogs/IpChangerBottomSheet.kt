@@ -17,6 +17,8 @@ import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.LayoutDialogIpChangerBinding
 import com.fakegps.mocklocation.vpn.IpManager
 import com.fakegps.mocklocation.vpn.IpNode
+import com.fakegps.mocklocation.vpn.KillSwitchManager
+import com.fakegps.mocklocation.vpn.NowhereApiClient
 import com.fakegps.mocklocation.vpn.NowhereVpnService
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.collectLatest
@@ -48,7 +50,9 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
     private lateinit var sessionPrefs: SessionPreferences
     private lateinit var adapter: IpNodeAdapter
+    private lateinit var gameAdapter: GameBoostAdapter
     private var pendingNodeToConnect: IpNode? = null
+    private var activeTab: Int = 0 // 0: Nodes, 1: Game Boost, 2: Kill Switch
 
     private val vpnPrepareLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -87,14 +91,76 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         super.onViewCreated(view, savedInstanceState)
         sessionPrefs = SessionPreferences(requireContext())
 
+        setupTabs()
         setupNodesList()
+        setupGameBoostList()
+        setupKillSwitchControls()
         setupListeners()
         observeVpnState()
+        observeKillSwitchState()
         refreshIpTelemetry()
 
         if (sessionPrefs.isSessionActive && !NowhereVpnService.isRunning) {
             val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
             requestConnectVpn(node)
+        }
+    }
+
+    private fun setupTabs() {
+        switchTab(0)
+
+        binding.tabBtnNodes.setOnClickListener { switchTab(0) }
+        binding.tabBtnGameBoost.setOnClickListener { switchTab(1) }
+        binding.tabBtnKillSwitch.setOnClickListener { switchTab(2) }
+    }
+
+    private fun switchTab(tabIndex: Int) {
+        activeTab = tabIndex
+        val ctx = context ?: return
+
+        val activeBg = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
+        val inactiveBg = ContextCompat.getColorStateList(ctx, android.R.color.transparent)
+
+        val activeText = ContextCompat.getColor(ctx, R.color.text_primary)
+        val inactiveText = ContextCompat.getColor(ctx, R.color.text_muted)
+
+        when (tabIndex) {
+            0 -> {
+                binding.tabBtnNodes.backgroundTintList = activeBg
+                binding.tabBtnNodes.setTextColor(activeText)
+                binding.tabBtnGameBoost.backgroundTintList = inactiveBg
+                binding.tabBtnGameBoost.setTextColor(inactiveText)
+                binding.tabBtnKillSwitch.backgroundTintList = inactiveBg
+                binding.tabBtnKillSwitch.setTextColor(inactiveText)
+
+                binding.layoutNodesView.visibility = View.VISIBLE
+                binding.layoutGameBoostView.visibility = View.GONE
+                binding.layoutKillSwitchView.visibility = View.GONE
+            }
+            1 -> {
+                binding.tabBtnNodes.backgroundTintList = inactiveBg
+                binding.tabBtnNodes.setTextColor(inactiveText)
+                binding.tabBtnGameBoost.backgroundTintList = activeBg
+                binding.tabBtnGameBoost.setTextColor(activeText)
+                binding.tabBtnKillSwitch.backgroundTintList = inactiveBg
+                binding.tabBtnKillSwitch.setTextColor(inactiveText)
+
+                binding.layoutNodesView.visibility = View.GONE
+                binding.layoutGameBoostView.visibility = View.VISIBLE
+                binding.layoutKillSwitchView.visibility = View.GONE
+            }
+            2 -> {
+                binding.tabBtnNodes.backgroundTintList = inactiveBg
+                binding.tabBtnNodes.setTextColor(inactiveText)
+                binding.tabBtnGameBoost.backgroundTintList = inactiveBg
+                binding.tabBtnGameBoost.setTextColor(inactiveText)
+                binding.tabBtnKillSwitch.backgroundTintList = activeBg
+                binding.tabBtnKillSwitch.setTextColor(activeText)
+
+                binding.layoutNodesView.visibility = View.GONE
+                binding.layoutGameBoostView.visibility = View.GONE
+                binding.layoutKillSwitchView.visibility = View.VISIBLE
+            }
         }
     }
 
@@ -110,6 +176,106 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         binding.rvIpNodes.setHasFixedSize(true)
         binding.rvIpNodes.itemAnimator = null
         binding.rvIpNodes.adapter = adapter
+    }
+
+    private fun setupGameBoostList() {
+        val games = listOf(
+            GameBoostModel("cod_mobile", "Call of Duty: Mobile / Warzone", "🎯", "US East • Google BBR • DSCP 46 EF", 14),
+            GameBoostModel("pubg_mobile", "PUBG Mobile / BGMI", "🪂", "US / EU Servers • Zero Jitter", 15),
+            GameBoostModel("free_fire", "Free Fire / Free Fire MAX", "🔥", "Fast-Path UDP Routing", 16),
+            GameBoostModel("roblox", "Roblox Multi-Server", "🧱", "Low-Latency Anycast Gateway", 12),
+            GameBoostModel("mobile_legends", "Mobile Legends: Bang Bang", "⚔️", "Optimized Socket Queues", 11),
+            GameBoostModel("brawl_stars", "Brawl Stars / Clash", "⭐", "Direct Server Peering", 12),
+            GameBoostModel("genshin_impact", "Genshin Impact / Honkai", "✨", "High-Throughput UDP Route", 14),
+            GameBoostModel("ea_fc_mobile", "EA SPORTS FC Mobile / FIFA", "⚽", "Low-Ping Matchmaking Engine", 13)
+        )
+
+        gameAdapter = GameBoostAdapter(games, null) { selectedGame ->
+            val ctx = context ?: return@GameBoostAdapter
+            Toast.makeText(ctx, "⚡ Optimizing ${selectedGame.name} (Estimated Ping: ${selectedGame.pingMs} ms)...", Toast.LENGTH_SHORT).show()
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                val result = NowhereApiClient.optimizeGame(
+                    context = ctx,
+                    gameId = selectedGame.id
+                )
+                if (result.isSuccess) {
+                    val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
+                    startVpnTunnel(node)
+                    Toast.makeText(ctx, "🚀 Game Boost Active: ${selectedGame.name} locked to ${selectedGame.pingMs}ms!", Toast.LENGTH_LONG).show()
+                } else {
+                    val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
+                    startVpnTunnel(node)
+                }
+            }
+        }
+
+        binding.rvGameBoostList.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvGameBoostList.setHasFixedSize(true)
+        binding.rvGameBoostList.adapter = gameAdapter
+    }
+
+    private fun setupKillSwitchControls() {
+        binding.switchKillSwitchMaster.isChecked = sessionPrefs.isKillSwitchEnabled
+        binding.switchKillSwitchMaster.setOnCheckedChangeListener { _, isChecked ->
+            context?.let { ctx ->
+                KillSwitchManager.setEnabled(ctx, isChecked)
+                Toast.makeText(ctx, if (isChecked) "🛡️ Kill Switch Armed: Leak Protection ON" else "Kill Switch Disabled", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.btnKillSwitchBypass.setOnClickListener {
+            context?.let { ctx ->
+                val newBypassState = !sessionPrefs.isKillSwitchBypassed
+                KillSwitchManager.setBypassed(ctx, newBypassState)
+                if (newBypassState) {
+                    Toast.makeText(ctx, "⚡ Emergency Bypass Active (Internet allowed)", Toast.LENGTH_SHORT).show()
+                    binding.btnKillSwitchBypass.text = "🔒 Re-Arm Kill Switch Shield"
+                } else {
+                    Toast.makeText(ctx, "🛡️ Kill Switch Re-Armed", Toast.LENGTH_SHORT).show()
+                    binding.btnKillSwitchBypass.text = "⚡ Temporary Emergency Bypass (Allow Internet)"
+                }
+            }
+        }
+    }
+
+    private fun observeKillSwitchState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            KillSwitchManager.status.collectLatest { status ->
+                if (_binding == null || !isAdded) return@collectLatest
+                val ctx = context ?: return@collectLatest
+
+                when (status) {
+                    is KillSwitchManager.KillSwitchStatus.Armed -> {
+                        binding.tvKillSwitchStateTitle.text = "Kill Switch Armed & Active"
+                        binding.tvKillSwitchBadge.text = "ARMED"
+                        binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_success_text))
+                        binding.tvKillSwitchDescription.text = "All outgoing traffic is actively monitored. If mock GPS or VPN turns off, real IP/GPS leak prevention engages instantly."
+                        binding.ivKillSwitchShield.setColorFilter(ContextCompat.getColor(ctx, R.color.badge_success_text))
+                    }
+                    is KillSwitchManager.KillSwitchStatus.Triggered -> {
+                        binding.tvKillSwitchStateTitle.text = "⚡ Kill Switch Engaged"
+                        binding.tvKillSwitchBadge.text = "LEAK SHIELDED"
+                        binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.btn_stop_text))
+                        binding.tvKillSwitchDescription.text = "Internet access paused because ${status.reason}. Tap Resume to continue or use Temporary Bypass."
+                        binding.ivKillSwitchShield.setColorFilter(ContextCompat.getColor(ctx, R.color.btn_stop_text))
+                    }
+                    is KillSwitchManager.KillSwitchStatus.Bypassed -> {
+                        binding.tvKillSwitchStateTitle.text = "Kill Switch Bypassed"
+                        binding.tvKillSwitchBadge.text = "BYPASS ON"
+                        binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.primary))
+                        binding.tvKillSwitchDescription.text = "Temporary bypass is active. Internet is flowing freely without leak interruption."
+                    }
+                    is KillSwitchManager.KillSwitchStatus.Disabled -> {
+                        binding.tvKillSwitchStateTitle.text = "Kill Switch Disabled"
+                        binding.tvKillSwitchBadge.text = "OFF"
+                        binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
+                        binding.tvKillSwitchDescription.text = "Enable the Emergency Kill Switch to ensure your real IP and GPS coordinates are never exposed if protection stops."
+                        binding.ivKillSwitchShield.setColorFilter(ContextCompat.getColor(ctx, R.color.text_muted))
+                    }
+                }
+            }
+        }
     }
 
     private fun setupListeners() {
@@ -171,6 +337,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
             if (NowhereVpnService.isRunning) {
                 NowhereVpnService.stop(ctx)
                 sessionPrefs.isIpMaskingEnabled = false
+                KillSwitchManager.evaluate(ctx)
                 Toast.makeText(ctx, "Privacy Shield Disconnected", Toast.LENGTH_SHORT).show()
                 onShieldStateChanged?.invoke()
             } else {
@@ -194,6 +361,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
     private fun startVpnTunnel(node: IpNode) {
         val ctx = context ?: return
         NowhereVpnService.start(ctx, node.id)
+        KillSwitchManager.evaluate(ctx)
         Toast.makeText(ctx, "Switched Privacy Node to ${node.country} (${node.city})", Toast.LENGTH_SHORT).show()
         onShieldStateChanged?.invoke()
     }

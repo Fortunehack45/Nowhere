@@ -84,6 +84,18 @@ class SessionPreferences(private val context: Context) {
         get() = prefs.getBoolean("key_auto_match_ip_with_gps", true)
         set(value) = prefs.edit().putBoolean("key_auto_match_ip_with_gps", value).apply()
 
+    var isKillSwitchEnabled: Boolean
+        get() = prefs.getBoolean("key_kill_switch_enabled", false)
+        set(value) = prefs.edit().putBoolean("key_kill_switch_enabled", value).apply()
+
+    var isKillSwitchBypassed: Boolean
+        get() = prefs.getBoolean("key_kill_switch_bypassed", false)
+        set(value) = prefs.edit().putBoolean("key_kill_switch_bypassed", value).apply()
+
+    var killSwitchBypassApps: Set<String>
+        get() = prefs.getStringSet("key_kill_switch_bypass_apps", emptySet()) ?: emptySet()
+        set(value) = prefs.edit().putStringSet("key_kill_switch_bypass_apps", value).apply()
+
     var routeTotalDistanceMeters: Double
         get() = Double.fromBits(prefs.getLong("key_route_total_distance", 0L))
         set(value) = prefs.edit().putLong("key_route_total_distance", value.toBits()).apply()

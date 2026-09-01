@@ -40,7 +40,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_weight="1"
-                android:text="IP Privacy Shield"
+                android:text="Privacy Shield &amp; Game Boost"
                 android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -59,67 +59,62 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Change your device IP address and encrypt network traffic without interrupting mock GPS simulation."
+            android:text="Stateless WireGuard tunneling, millisecond latency gaming accelerator, and leak-proof kill switch."
             android:textColor="@color/text_muted"
             android:textSize="12sp" />
 
-        <!-- Persistence & Tunnel Transparency Disclaimer Card -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- Apple-Style Segmented Navigation Tabs -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/surface_elevated"
-            app:cardCornerRadius="14dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/border_subtle"
-            app:strokeWidth="1dp">
+            android:layout_height="44dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_segmented_tab"
+            android:orientation="horizontal"
+            android:padding="3dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp">
+            <TextView
+                android:id="@+id/tabBtnNodes"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_status_pill"
+                android:backgroundTint="@color/surface_elevated"
+                android:gravity="center"
+                android:text="🌐 VPN Nodes"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tabBtnGameBoost"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:text="🎮 Game Boost"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:src="@drawable/ic_shield_check"
-                        app:tint="@color/primary"
-                        tools:ignore="ContentDescription" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:letterSpacing="0.04"
-                        android:text="BACKGROUND KEEP-ALIVE &amp; PRIVACY ENGINE"
-                        android:textColor="@color/primary"
-                        android:textSize="10.5sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:lineSpacingMultiplier="1.2"
-                    android:text="The Nowhere Privacy Tunnel runs a dedicated foreground loopback network service. This provides IP obfuscation and acts as an unbreakable system-level keep-alive lock to prevent OEM battery management from terminating your background mock GPS simulations. Tapping any country node below immediately routes and locks your privacy profile."
-                    android:textColor="@color/text_muted"
-                    android:textSize="11sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/tabBtnKillSwitch"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:text="🛡️ Kill Switch"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <!-- Live IP Telemetry Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             app:cardBackgroundColor="@color/surface_elevated"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
@@ -130,7 +125,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="14dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -143,9 +138,9 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:letterSpacing="0.05"
-                        android:text="CURRENT NETWORK IP"
+                        android:text="CURRENT EGRESS NETWORK IP"
                         android:textColor="@color/text_muted"
-                        android:textSize="11sp"
+                        android:textSize="10.5sp"
                         android:textStyle="bold" />
 
                     <!-- Status Pill -->
@@ -185,7 +180,7 @@
                     android:textColor="@color/text_primary"
                     android:textSize="17sp"
                     android:textStyle="bold"
-                    tools:text="198.51.100.42" />
+                    tools:text="104.197.128.154" />
 
                 <TextView
                     android:id="@+id/tvIpDetails"
@@ -194,16 +189,16 @@
                     android:layout_marginTop="2dp"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp"
-                    tools:text="🇺🇸 New York, United States • Nowhere Privacy Network" />
+                    tools:text="🇺🇸 United States • Nowhere WireGuard Network" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Live VPN Data Consumption & Traffic Card -->
+        <!-- Live VPN Traffic Telemetry Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardVpnTraffic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             app:cardBackgroundColor="@color/surface_elevated"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
@@ -214,7 +209,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="14dp">
+                android:padding="12dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -227,9 +222,9 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:letterSpacing="0.05"
-                        android:text="REAL-TIME DATA CONSUMPTION"
+                        android:text="REAL-TIME INTERFACE DATA"
                         android:textColor="@color/primary"
-                        android:textSize="11sp"
+                        android:textSize="10.5sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -245,7 +240,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="8dp"
                     android:orientation="horizontal">
 
                     <!-- Download Stats -->
@@ -255,35 +250,34 @@
                         android:layout_weight="1"
                         android:background="@drawable/bg_segmented_tab"
                         android:orientation="vertical"
-                        android:padding="10dp">
+                        android:padding="8dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="DOWNLOAD"
                             android:textColor="@color/badge_success_text"
-                            android:textSize="10sp"
+                            android:textSize="9.5sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tvVpnDownloadData"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="1dp"
                             android:fontFamily="monospace"
                             android:text="0.00 KB"
                             android:textColor="@color/text_primary"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tvVpnDownloadRate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="1dp"
                             android:text="0.0 KB/s"
                             android:textColor="@color/text_muted"
-                            android:textSize="10sp" />
+                            android:textSize="9.5sp" />
                     </LinearLayout>
 
                     <View
@@ -297,236 +291,461 @@
                         android:layout_weight="1"
                         android:background="@drawable/bg_segmented_tab"
                         android:orientation="vertical"
-                        android:padding="10dp">
+                        android:padding="8dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="UPLOAD"
                             android:textColor="@color/primary"
-                            android:textSize="10sp"
+                            android:textSize="9.5sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tvVpnUploadData"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="1dp"
                             android:fontFamily="monospace"
                             android:text="0.00 KB"
                             android:textColor="@color/text_primary"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tvVpnUploadRate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="1dp"
                             android:text="0.0 KB/s"
                             android:textColor="@color/text_muted"
-                            android:textSize="10sp" />
+                            android:textSize="9.5sp" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Auto-Match GPS with IP Switch Card -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- ============================================================= -->
+        <!-- TAB 1: VPN NODES CONTAINER -->
+        <!-- ============================================================= -->
+        <LinearLayout
+            android:id="@+id/layoutNodesView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/surface_elevated"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/border_subtle"
-            app:strokeWidth="1dp">
+            android:orientation="vertical"
+            android:visibility="visible">
 
+            <!-- Auto-Match GPS Switch Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardBackgroundColor="@color/surface_elevated"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_teleport"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Auto-Match IP with Mock GPS"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="1dp"
+                            android:text="Picks closest country IP when teleporting"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchAutoMatchGps"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:thumbTint="@color/switch_thumb_selector"
+                        app:trackTint="@color/switch_track_selector" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Search Input Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="8dp"
+                app:cardBackgroundColor="@color/surface_card_elevated"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/stroke_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/text_muted"
+                        tools:ignore="ContentDescription" />
+
+                    <EditText
+                        android:id="@+id/etIpSearch"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="Search countries, cities, or ISO codes..."
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_muted"
+                        android:textSize="13sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnClearIpSearch"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_clear"
+                        android:visibility="gone"
+                        app:tint="@color/text_muted"
+                        tools:ignore="ContentDescription"
+                        tools:visibility="visible" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Node Header & Count -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
+                android:orientation="horizontal">
 
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_teleport"
-                    app:tint="@color/primary"
-                    tools:ignore="ContentDescription" />
-
-                <LinearLayout
+                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:letterSpacing="0.04"
+                    android:text="AVAILABLE WIREGUARD NODES"
+                    android:textColor="@color/text_muted"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvNodeCountBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_status_pill"
+                    android:backgroundTint="@color/surface_card_elevated"
+                    android:fontFamily="monospace"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:textColor="@color/text_muted"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    tools:text="175 NODES" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutNoIpNodes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No matching nodes found"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvNoNodesMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Try another country or city name."
+                    android:textColor="@color/text_muted"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvIpNodes"
+                android:layout_width="match_parent"
+                android:layout_height="280dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="true"
+                android:overScrollMode="ifContentScrolls"
+                android:scrollbars="vertical"
+                tools:itemCount="5"
+                tools:listitem="@layout/item_ip_node" />
+        </LinearLayout>
+
+        <!-- ============================================================= -->
+        <!-- TAB 2: GAME BOOSTER CONTAINER -->
+        <!-- ============================================================= -->
+        <LinearLayout
+            android:id="@+id/layoutGameBoostView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- Game Boost Info Banner -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardBackgroundColor="@color/surface_elevated"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚡"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="MILLISECOND LATENCY ACCELERATOR"
+                            android:textColor="@color/badge_success_text"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Auto-Match IP with Mock GPS"
-                        android:textColor="@color/text_primary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Automatically picks the closest country IP when teleporing"
+                        android:layout_marginTop="4dp"
+                        android:text="Optimizes kernel UDP queues with Google BBR and DSCP 46 Expedited Forwarding, locking your ping to the lowest regional dedicated game cluster."
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchAutoMatchGps"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:thumbTint="@color/switch_thumb_selector"
-                    app:trackTint="@color/switch_track_selector" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Node Selection Header & Search Bar -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:letterSpacing="0.05"
-                android:text="SELECT PRIVACY NODE"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:letterSpacing="0.04"
+                android:text="SELECT GAME TO ACCELERATE"
                 android:textColor="@color/text_muted"
-                android:textSize="11sp"
+                android:textSize="10.5sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvNodeCountBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_status_pill"
-                android:backgroundTint="@color/surface_card_elevated"
-                android:fontFamily="monospace"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp"
-                android:textColor="@color/text_muted"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                tools:text="175 NODES" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvGameBoostList"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="true"
+                android:overScrollMode="ifContentScrolls"
+                android:scrollbars="vertical"
+                tools:itemCount="4"
+                tools:listitem="@layout/item_game_boost" />
         </LinearLayout>
 
-        <!-- Live Country / City Search Input Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="46dp"
-            android:layout_marginBottom="10dp"
-            app:cardBackgroundColor="@color/surface_card_elevated"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_subtle"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="12dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_search"
-                    app:tint="@color/text_muted"
-                    tools:ignore="ContentDescription" />
-
-                <EditText
-                    android:id="@+id/etIpSearch"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:background="@null"
-                    android:hint="Search 175+ countries, cities, or ISO codes..."
-                    android:imeOptions="actionSearch"
-                    android:inputType="text"
-                    android:maxLines="1"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_muted"
-                    android:textSize="13sp" />
-
-                <ImageButton
-                    android:id="@+id/btnClearIpSearch"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_clear"
-                    android:visibility="gone"
-                    app:tint="@color/text_muted"
-                    tools:ignore="ContentDescription"
-                    tools:visibility="visible" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Empty Search Results State -->
+        <!-- ============================================================= -->
+        <!-- TAB 3: EMERGENCY KILL SWITCH CONTAINER -->
+        <!-- ============================================================= -->
         <LinearLayout
-            android:id="@+id/layoutNoIpNodes"
+            android:id="@+id/layoutKillSwitchView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:orientation="vertical"
-            android:padding="24dp"
             android:visibility="gone">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_search"
-                app:tint="@color/text_muted"
-                tools:ignore="ContentDescription" />
-
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Kill Switch Status Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardKillSwitchStatus"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="No privacy nodes found"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="10dp"
+                app:cardBackgroundColor="@color/surface_elevated"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
 
-            <TextView
-                android:id="@+id/tvNoNodesMessage"
-                android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/ivKillSwitchShield"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_shield_check"
+                            app:tint="@color/primary"
+                            tools:ignore="ContentDescription" />
+
+                        <TextView
+                            android:id="@+id/tvKillSwitchStateTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="Kill Switch Armed &amp; Active"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvKillSwitchBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_status_pill"
+                            android:backgroundTint="#1A30D158"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp"
+                            android:text="ARMED"
+                            android:textColor="@color/badge_success_text"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvKillSwitchDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingMultiplier="1.2"
+                        android:text="If mock GPS location or VPN protection stops unexpectedly, the Emergency Kill Switch instantly pauses device internet access to prevent real IP or location exposure."
+                        android:textColor="@color/text_muted"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Master Kill Switch Toggle Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Try searching with a different country or city name."
-                android:textColor="@color/text_muted"
-                android:textSize="12sp" />
+                android:layout_marginTop="10dp"
+                app:cardBackgroundColor="@color/surface_elevated"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Emergency Network Kill Switch"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Enforces 100% leak protection when offline"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchKillSwitchMaster"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:thumbTint="@color/switch_thumb_selector"
+                        app:trackTint="@color/switch_track_selector" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 1-Tap Bypass Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKillSwitchBypass"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="10dp"
+                android:text="⚡ Temporary Emergency Bypass (Allow Internet)"
+                android:textColor="@color/primary"
+                android:textSize="12.5sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
         </LinearLayout>
 
-        <!-- Nodes List (Efficient recycled viewport) -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvIpNodes"
-            android:layout_width="match_parent"
-            android:layout_height="320dp"
-            android:clipToPadding="false"
-            android:nestedScrollingEnabled="true"
-            android:overScrollMode="ifContentScrolls"
-            android:scrollbars="vertical"
-            tools:itemCount="5"
-            tools:listitem="@layout/item_ip_node" />
-
-        <!-- Connect / Switch Action Button -->
+        <!-- Main Toggle / Switch Shield Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnToggleShield"
             android:layout_width="match_parent"
