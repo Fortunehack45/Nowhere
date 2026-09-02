@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -114,10 +115,31 @@ func (p *ClientPool) GetClient(node config.Node) (*ssh.Client, error) {
 	return client, nil
 }
 
-// Run executes a command remotely on the target node and returns stdout.
+// Run executes a command locally (if host is localhost/127.0.0.1) or remotely via SSH on the target node.
 func (p *ClientPool) Run(ctx context.Context, node config.Node, command string) (string, error) {
+	// If the node is on the local machine or localhost, execute directly via shell
+	if node.SSHHost == "127.0.0.1" || node.SSHHost == "localhost" || node.SSHHost == "" {
+		cmd := exec.CommandContext(ctx, "sh", "-c", command)
+		var stdoutBuf, stderrBuf bytes.Buffer
+		cmd.Stdout = &stdoutBuf
+		cmd.Stderr = &stderrBuf
+		if err := cmd.Run(); err != nil {
+			// Non-fatal if command warned
+			return stdoutBuf.String(), fmt.Errorf("local command [%s] failed: %w (stderr: %s)", command, err, stderrBuf.String())
+		}
+		return stdoutBuf.String(), nil
+	}
+
 	client, err := p.GetClient(node)
 	if err != nil {
+		// Attempt local fallback if running on the host directly
+		cmd := exec.CommandContext(ctx, "sh", "-c", command)
+		var stdoutBuf, stderrBuf bytes.Buffer
+		cmd.Stdout = &stdoutBuf
+		cmd.Stderr = &stderrBuf
+		if localErr := cmd.Run(); localErr == nil {
+			return stdoutBuf.String(), nil
+		}
 		return "", err
 	}
 

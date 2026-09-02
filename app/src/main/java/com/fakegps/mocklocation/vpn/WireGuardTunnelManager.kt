@@ -88,17 +88,21 @@ object WireGuardTunnelManager {
             val ifaceBuilder = Interface.Builder()
                 .parsePrivateKey(clientPrivKey)
                 .addAddress(InetNetwork.parse(cleanAssignedIp))
+                .setMtu(mtu.coerceAtMost(1360))
 
             try {
                 ifaceBuilder.addDnsServer(InetAddress.getByName(dnsServer))
-            } catch (ignored: Exception) {
+            } catch (ignored: Exception) {}
+            try {
                 ifaceBuilder.addDnsServer(InetAddress.getByName("1.1.1.1"))
-            }
+                ifaceBuilder.addDnsServer(InetAddress.getByName("8.8.8.8"))
+            } catch (ignored: Exception) {}
 
             val peerBuilder = Peer.Builder()
                 .parsePublicKey(serverPublicKey)
                 .setEndpoint(InetEndpoint.parse(serverEndpoint))
                 .addAllowedIp(InetNetwork.parse("0.0.0.0/0"))
+                .setPersistentKeepalive(25) // Keeps mobile LTE/5G NAT mappings alive 24/7
 
             val config = Config.Builder()
                 .setInterface(ifaceBuilder.build())
@@ -112,6 +116,30 @@ object WireGuardTunnelManager {
             Log.e(TAG, "Failed starting WireGuard tunnel: ${e.message}", e)
             Result.failure(e)
         }
+    }
+
+    /**
+     * Polls WireGuard GoBackend to verify that an actual cryptographic handshake was completed
+     * (meaning return packets were received from the remote WireGuard server).
+     */
+    suspend fun verifyHandshake(context: Context, maxWaitMs: Long = 6000L): Boolean = withContext(Dispatchers.IO) {
+        val wgBackend = getBackend(context)
+        val tunnel = activeTunnel ?: return@withContext false
+        val startTime = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() - startTime < maxWaitMs) {
+            kotlinx.coroutines.delay(400L)
+            try {
+                val stats = wgBackend.getStatistics(tunnel)
+                if (stats.totalRx() > 0) {
+                    Log.i(TAG, "WireGuard Handshake confirmed! RX: ${stats.totalRx()} bytes, TX: ${stats.totalTx()} bytes")
+                    return@withContext true
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Polling WireGuard statistics warning: ${e.message}")
+            }
+        }
+        false
     }
 
     /**

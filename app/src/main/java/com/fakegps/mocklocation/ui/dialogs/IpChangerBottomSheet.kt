@@ -192,7 +192,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
         gameAdapter = GameBoostAdapter(games, null) { selectedGame ->
             val ctx = context ?: return@GameBoostAdapter
-            Toast.makeText(ctx, "⚡ Optimizing ${selectedGame.name} (Estimated Ping: ${selectedGame.pingMs} ms)...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, "⚡ Optimizing ${selectedGame.name} routing...", Toast.LENGTH_SHORT).show()
 
             viewLifecycleOwner.lifecycleScope.launch {
                 val result = NowhereApiClient.optimizeGame(
@@ -200,12 +200,20 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                     gameId = selectedGame.id
                 )
                 if (result.isSuccess) {
-                    val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
-                    startVpnTunnel(node)
-                    Toast.makeText(ctx, "🚀 Game Boost Active: ${selectedGame.name} locked to ${selectedGame.pingMs}ms!", Toast.LENGTH_LONG).show()
+                    val tunnelConfig = result.getOrNull()
+                    if (tunnelConfig != null) {
+                        NowhereVpnService.startWithTunnelResponse(
+                            context = ctx,
+                            response = tunnelConfig,
+                            customName = "🚀 Game Boost: ${selectedGame.name}"
+                        )
+                        Toast.makeText(ctx, "🚀 Game Boost Active: ${selectedGame.name} (${tunnelConfig.countryName}, ${tunnelConfig.estimatedPingMs}ms)!", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(ctx, "⚠️ Game Boost optimization returned empty data", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
-                    val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
-                    startVpnTunnel(node)
+                    val errMsg = result.exceptionOrNull()?.message ?: "Game boost server unavailable"
+                    Toast.makeText(ctx, "❌ Game Boost Failed: $errMsg", Toast.LENGTH_LONG).show()
                 }
             }
         }
