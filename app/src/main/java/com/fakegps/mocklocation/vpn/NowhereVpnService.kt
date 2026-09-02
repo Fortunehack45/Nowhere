@@ -265,41 +265,7 @@ class NowhereVpnService : VpnService() {
         tunnelJob = serviceScope.launch {
             try {
                 disconnectInterface()
-
-                val rawIp = assignedIp
-                val assignedTunnelIp = if (rawIp.contains("/")) rawIp.substringBefore("/") else rawIp
-
-                Log.i(TAG, "Starting direct WireGuard tunnel for ${node.name} [Endpoint: $endpoint, IP: $assignedTunnelIp]")
-
-                val wgStartResult = WireGuardTunnelManager.startTunnel(
-                    context = this@NowhereVpnService,
-                    serverEndpoint = endpoint,
-                    serverPublicKey = serverPubkey,
-                    assignedClientIp = assignedTunnelIp,
-                    dnsServer = dns
-                )
-
-                if (wgStartResult.isFailure) {
-                    val err = wgStartResult.exceptionOrNull()?.message ?: "Direct WireGuard startup failed"
-                    Log.e(TAG, "WireGuard direct start failed: $err")
-                    isRunning = false
-                    sessionPrefs.isIpMaskingEnabled = false
-                    _vpnState.value = VpnState.Error("WireGuard startup failed: $err")
-                    WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-                    disconnectInterface()
-                    try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
-                    return@launch
-                }
-
-                val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 6000L)
-                if (!handshakeConfirmed) {
-                    Log.w(TAG, "WireGuard handshake pending with $endpoint. Direct connection established.")
-                }
-
-                isRunning = true
-                _vpnState.value = VpnState.Connected(node)
-                Log.i(TAG, "Direct WireGuard Tunnel active for node: ${node.name}")
-                launchTrafficMonitor(node)
+                bringUpTunnel(node, endpoint, serverPubkey, assignedIp, dns)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -428,38 +394,7 @@ class NowhereVpnService : VpnService() {
 
                 Log.i(TAG, "Provisioned WireGuard peer! Server: $serverEndpoint, Assigned IP: $assignedTunnelIp")
 
-                // 3. Start native WireGuard GoBackend
-                val wgStartResult = WireGuardTunnelManager.startTunnel(
-                    context = this@NowhereVpnService,
-                    serverEndpoint = serverEndpoint,
-                    serverPublicKey = serverPubkey,
-                    assignedClientIp = assignedTunnelIp,
-                    dnsServer = tunnelDns
-                )
-
-                if (wgStartResult.isFailure) {
-                    val err = wgStartResult.exceptionOrNull()?.message ?: "Unknown WireGuard startup error"
-                    Log.e(TAG, "WireGuard GoBackend failed to start: $err")
-                    isRunning = false
-                    sessionPrefs.isIpMaskingEnabled = false
-                    _vpnState.value = VpnState.Error("WireGuard startup failed: $err")
-                    WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-                    disconnectInterface()
-                    try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
-                    return@launch
-                }
-
-                // 4. Verify actual cryptographic handshake (wait for return packets from server)
-                Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-                val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 6000L)
-                if (!handshakeConfirmed) {
-                    Log.w(TAG, "WireGuard handshake pending with $serverEndpoint. Connection established.")
-                }
-
-                isRunning = true
-                _vpnState.value = VpnState.Connected(node)
-                Log.i(TAG, "WireGuard Tunnel active for node: ${node.name} [IP: $assignedTunnelIp, Endpoint: $serverEndpoint]")
-                launchTrafficMonitor(node)
+                bringUpTunnel(node, serverEndpoint, serverPubkey, assignedTunnelIp, tunnelDns)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -472,6 +407,55 @@ class NowhereVpnService : VpnService() {
                 try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
             }
         }
+    }
+
+    private suspend fun bringUpTunnel(
+        node: IpNode,
+        serverEndpoint: String,
+        serverPubkey: String,
+        assignedTunnelIp: String,
+        tunnelDns: String
+    ) {
+        val cleanAssignedIp = if (assignedTunnelIp.contains("/")) assignedTunnelIp.substringBefore("/") else assignedTunnelIp
+        Log.i(TAG, "Starting WireGuard GoBackend for ${node.name} [Endpoint: $serverEndpoint, IP: $cleanAssignedIp, DNS: $tunnelDns]")
+
+        val wgStartResult = WireGuardTunnelManager.startTunnel(
+            context = this@NowhereVpnService,
+            serverEndpoint = serverEndpoint,
+            serverPublicKey = serverPubkey,
+            assignedClientIp = cleanAssignedIp,
+            dnsServer = tunnelDns
+        )
+
+        if (wgStartResult.isFailure) {
+            val err = wgStartResult.exceptionOrNull()?.message ?: "Unknown WireGuard startup error"
+            Log.e(TAG, "WireGuard GoBackend failed to start: $err")
+            isRunning = false
+            sessionPrefs.isIpMaskingEnabled = false
+            _vpnState.value = VpnState.Error("WireGuard startup failed: $err")
+            WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
+            disconnectInterface()
+            try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+            return
+        }
+
+        Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 6000L)
+        if (!handshakeConfirmed) {
+            Log.e(TAG, "WireGuard handshake failed with $serverEndpoint after 6s — tearing down")
+            isRunning = false
+            sessionPrefs.isIpMaskingEnabled = false
+            _vpnState.value = VpnState.Error("Server unreachable — handshake failed")
+            WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
+            disconnectInterface()
+            try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+            return
+        }
+
+        isRunning = true
+        _vpnState.value = VpnState.Connected(node)
+        Log.i(TAG, "WireGuard Tunnel active and verified for node: ${node.name} [IP: $cleanAssignedIp, Endpoint: $serverEndpoint]")
+        launchTrafficMonitor(node)
     }
 
     private fun launchTrafficMonitor(node: IpNode) {

@@ -90,13 +90,16 @@ object WireGuardTunnelManager {
                 .addAddress(InetNetwork.parse(cleanAssignedIp))
                 .setMtu(mtu.coerceAtMost(1360))
 
-            try {
-                ifaceBuilder.addDnsServer(InetAddress.getByName(dnsServer))
-            } catch (ignored: Exception) {}
-            try {
-                ifaceBuilder.addDnsServer(InetAddress.getByName("1.1.1.1"))
-                ifaceBuilder.addDnsServer(InetAddress.getByName("8.8.8.8"))
-            } catch (ignored: Exception) {}
+            val dnsCandidates = linkedSetOf<String>().apply {
+                if (dnsServer.isNotBlank()) add(dnsServer.trim())
+                add("1.1.1.1")
+                add("8.8.8.8")
+            }
+            for (dns in dnsCandidates) {
+                try {
+                    ifaceBuilder.addDnsServer(InetAddress.getByName(dns))
+                } catch (ignored: Exception) {}
+            }
 
             val peerBuilder = Peer.Builder()
                 .parsePublicKey(serverPublicKey)

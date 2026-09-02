@@ -132,15 +132,7 @@ func (p *ClientPool) Run(ctx context.Context, node config.Node, command string) 
 
 	client, err := p.GetClient(node)
 	if err != nil {
-		// Attempt local fallback if running on the host directly
-		cmd := exec.CommandContext(ctx, "sh", "-c", command)
-		var stdoutBuf, stderrBuf bytes.Buffer
-		cmd.Stdout = &stdoutBuf
-		cmd.Stderr = &stderrBuf
-		if localErr := cmd.Run(); localErr == nil {
-			return stdoutBuf.String(), nil
-		}
-		return "", err
+		return "", fmt.Errorf("failed connecting to remote node %s (%s:%d): %w", node.ID, node.SSHHost, node.SSHPort, err)
 	}
 
 	session, err := client.NewSession()

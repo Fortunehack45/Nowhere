@@ -52,16 +52,33 @@ class IpChangerBottomSheet @JvmOverloads constructor(
     private lateinit var adapter: IpNodeAdapter
     private lateinit var gameAdapter: GameBoostAdapter
     private var pendingNodeToConnect: IpNode? = null
+    private var pendingTunnelConfigToConnect: NowhereApiClient.TunnelResponse? = null
+    private var pendingGameCustomName: String? = null
     private var activeTab: Int = 0 // 0: Nodes, 1: Game Boost, 2: Kill Switch
 
     private val vpnPrepareLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            pendingNodeToConnect?.let { node ->
-                startVpnTunnel(node)
+            val pendingConfig = pendingTunnelConfigToConnect
+            val pendingNode = pendingNodeToConnect
+            val gameName = pendingGameCustomName
+
+            pendingTunnelConfigToConnect = null
+            pendingNodeToConnect = null
+            pendingGameCustomName = null
+
+            if (pendingConfig != null) {
+                context?.let { ctx ->
+                    NowhereVpnService.startWithTunnelResponse(ctx, pendingConfig, gameName)
+                }
+            } else if (pendingNode != null) {
+                startVpnTunnel(pendingNode)
             }
         } else {
+            pendingTunnelConfigToConnect = null
+            pendingNodeToConnect = null
+            pendingGameCustomName = null
             context?.let { ctx ->
                 Toast.makeText(ctx, "VPN Permission was denied", Toast.LENGTH_SHORT).show()
             }
@@ -202,12 +219,20 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 if (result.isSuccess) {
                     val tunnelConfig = result.getOrNull()
                     if (tunnelConfig != null) {
-                        NowhereVpnService.startWithTunnelResponse(
-                            context = ctx,
-                            response = tunnelConfig,
-                            customName = "🚀 Game Boost: ${selectedGame.name}"
-                        )
-                        Toast.makeText(ctx, "🚀 Game Boost Active: ${selectedGame.name} (${tunnelConfig.countryName}, ${tunnelConfig.estimatedPingMs}ms)!", Toast.LENGTH_LONG).show()
+                        val customName = "🚀 Game Boost: ${selectedGame.name}"
+                        val vpnIntent = VpnService.prepare(ctx)
+                        if (vpnIntent != null) {
+                            pendingTunnelConfigToConnect = tunnelConfig
+                            pendingGameCustomName = customName
+                            vpnPrepareLauncher.launch(vpnIntent)
+                        } else {
+                            NowhereVpnService.startWithTunnelResponse(
+                                context = ctx,
+                                response = tunnelConfig,
+                                customName = customName
+                            )
+                            Toast.makeText(ctx, "🚀 Game Boost Active: ${selectedGame.name} (${tunnelConfig.countryName}, ${tunnelConfig.estimatedPingMs}ms)!", Toast.LENGTH_LONG).show()
+                        }
                     } else {
                         Toast.makeText(ctx, "⚠️ Game Boost optimization returned empty data", Toast.LENGTH_SHORT).show()
                     }
