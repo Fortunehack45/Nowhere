@@ -27,6 +27,7 @@ type Node struct {
 	DNS           string `yaml:"dns" json:"dns"`
 	Interface     string `yaml:"interface" json:"-"`
 	CapacityPeers int    `yaml:"capacity_peers" json:"capacity_peers"`
+	Enabled       *bool  `yaml:"enabled,omitempty" json:"enabled,omitempty"`
 }
 
 // LeasedRegion represents a country/region with no local VPS, routed via upstream proxy.
@@ -105,6 +106,9 @@ func (r *Registry) Reload() error {
 	for _, node := range nf.Nodes {
 		if node.ID == "" || node.Endpoint == "" || node.ServerPubkey == "" {
 			continue
+		}
+		if node.Enabled != nil && !*node.Enabled {
+			continue // Exclude disabled/unprovisioned nodes from active routing
 		}
 		if node.SSHPort == 0 {
 			node.SSHPort = 22

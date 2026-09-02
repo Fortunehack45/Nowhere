@@ -1,9 +1,10 @@
 # Nowhere VPN - Real Production WireGuard Server Inventory
 # Single source of truth for physical/VPS node instances.
+# Only live, physically provisioned and verified WireGuard nodes are enabled.
 
 nodes:
   # ============================================================================
-  # GOOGLE CLOUD PRODUCTION NODES (LIVE)
+  # GOOGLE CLOUD PRODUCTION NODE (LIVE - VERIFIED)
   # ============================================================================
   - id: us_central_gcp
     region_group: us_central
@@ -20,39 +21,11 @@ nodes:
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
+    enabled: true
 
-  - id: us_nyc_1
-    region_group: us_nyc
-    country: US
-    country_name: United States
-    city: New York
-    endpoint: 104.197.128.154:51820
-    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
-    ssh_host: 127.0.0.1
-    ssh_port: 22
-    ssh_user: deploy
-    ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.0.0/24
-    dns: 1.1.1.1,1.0.0.1
-    interface: wg0
-    capacity_peers: 250
-
-  - id: us_sfo_1
-    region_group: us_sfo
-    country: US
-    country_name: United States
-    city: San Francisco
-    endpoint: 104.197.128.154:51820
-    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
-    ssh_host: 127.0.0.1
-    ssh_port: 22
-    ssh_user: deploy
-    ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.0.0/24
-    dns: 1.1.1.1,1.0.0.1
-    interface: wg0
-    capacity_peers: 250
-
+  # ============================================================================
+  # FUTURE REGIONAL NODES (Disabled until separate physical VPS is provisioned)
+  # ============================================================================
   - id: uk_lon_1
     region_group: uk_lon
     country: GB
@@ -68,6 +41,7 @@ nodes:
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
+    enabled: false
 
   - id: de_fra_1
     region_group: de_fra
@@ -84,6 +58,7 @@ nodes:
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
+    enabled: false
 
   - id: jp_tyo_1
     region_group: jp_tyo
@@ -100,6 +75,7 @@ nodes:
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
+    enabled: false
 
   - id: sg_sin_1
     region_group: sg_sin
@@ -116,19 +92,4 @@ nodes:
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
-
-  - id: br_sao_1
-    region_group: br_sao
-    country: BR
-    country_name: Brazil
-    city: Sao Paulo
-    endpoint: 104.197.128.154:51820
-    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
-    ssh_host: 127.0.0.1
-    ssh_port: 22
-    ssh_user: deploy
-    ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.0.0/24
-    dns: 1.1.1.1,1.0.0.1
-    interface: wg0
-    capacity_peers: 250
+    enabled: false

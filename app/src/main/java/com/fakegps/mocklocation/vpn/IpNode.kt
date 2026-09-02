@@ -10,7 +10,8 @@ data class IpNode(
     val latitude: Double,
     val longitude: Double,
     val virtualIp: String,
-    val pingMs: Int
+    val pingMs: Int,
+    val isAvailable: Boolean = true
 )
 
 data class PublicIpInfo(
