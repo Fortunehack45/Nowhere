@@ -217,6 +217,20 @@
                 android:resource="@xml/widget_nowhere_vpn_info" />
         </receiver>
 
+        <!-- Home Screen App Widget: Game Booster FastPath Widget -->
+        <receiver
+            android:name=".ui.widget.NowhereGameBoostWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_GAME_BOOST" />
+                <action android:name="com.fakegps.mocklocation.ACTION_GAME_BOOST_TOGGLE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_nowhere_game_boost_info" />
+        </receiver>
+
         <!-- Home Screen App Widget: Location Weather Radar Widget -->
         <receiver
             android:name=".ui.widget.NowhereWeatherWidgetProvider"

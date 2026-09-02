@@ -487,6 +487,8 @@ class NowhereVpnService : VpnService() {
                 if (notificationCounter >= 3) {
                     notificationCounter = 0
                     updateNotification(node, stats)
+                    com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this@NowhereVpnService)
+                    com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(this@NowhereVpnService)
                 }
             }
         }
@@ -531,6 +533,10 @@ class NowhereVpnService : VpnService() {
             KillSwitchManager.evaluate(this)
         } catch (ignored: Exception) {}
         try {
+            com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this)
+            com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(this)
+        } catch (ignored: Exception) {}
+        try {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } catch (ignored: Exception) {}
         stopSelf()
@@ -570,9 +576,14 @@ class NowhereVpnService : VpnService() {
     }
 
     private fun buildNotification(node: IpNode, stats: VpnTrafficStats): android.app.Notification {
+        val isGameBoost = node.name.startsWith("🚀") || node.name.contains("Game Boost", ignoreCase = true)
+
         val openIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("OPEN_VPN_DIALOG", true)
+            if (isGameBoost) {
+                putExtra("INITIAL_TAB", 1)
+            }
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -591,16 +602,27 @@ class NowhereVpnService : VpnService() {
             PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_shield_check)
-            .setContentTitle("🔒 Nowhere IP Shield Active • ${node.country}")
-            .setContentText("↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Masked Egress IP: ${node.virtualIp} (${node.city}, ${node.country})\nTotal Bandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(if (isGameBoost) R.drawable.ic_launcher_monochrome else R.drawable.ic_shield_check)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
-            .addAction(R.drawable.ic_close, "Disconnect", disconnectPendingIntent)
-            .build()
+
+        if (isGameBoost) {
+            val gameTitle = node.name.removePrefix("🚀 Game Boost: ").trim()
+            builder.setContentTitle("⚡ Game Boost Active • $gameTitle")
+                .setContentText("⚡ FastPath Active • ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
+                .setStyle(NotificationCompat.BigTextStyle().bigText("🎮 Optimized Game: $gameTitle\n⚡ Route: ${node.virtualIp} (${node.city}) • Google BBR DSCP 46 EF\n📊 Bandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
+                .addAction(R.drawable.ic_launcher_monochrome, "Switch Game", pendingIntent)
+                .addAction(R.drawable.ic_close, "Stop Boost", disconnectPendingIntent)
+        } else {
+            builder.setContentTitle("🔒 Nowhere IP Shield Active • ${node.country}")
+                .setContentText("↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
+                .setStyle(NotificationCompat.BigTextStyle().bigText("Masked Egress IP: ${node.virtualIp} (${node.city}, ${node.country})\nTotal Bandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
+                .addAction(R.drawable.ic_close, "Disconnect", disconnectPendingIntent)
+        }
+
+        return builder.build()
     }
 
     override fun onDestroy() {

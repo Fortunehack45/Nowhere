@@ -85,6 +85,13 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
                 providerClass = NowhereVpnWidgetProvider::class.java
             ),
             WidgetPreviewItem(
+                title = "Game Booster FastPath & QoS",
+                sizeLabel = "4 x 2",
+                description = "1-Tap gaming route optimization with real-time ping (14ms), Google BBR FastPath, and traffic telemetry.",
+                layoutResId = R.layout.widget_nowhere_game_boost_layout,
+                providerClass = com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider::class.java
+            ),
+            WidgetPreviewItem(
                 title = "Location Weather Radar",
                 sizeLabel = "4 x 2",
                 description = "Live temperature, weather condition icon, humidity, wind, and forecast for your mock GPS coordinates.",

@@ -303,7 +303,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (intent.getBooleanExtra("OPEN_VPN_DIALOG", false)) {
-            IpChangerBottomSheet().show(supportFragmentManager, "IP_CHANGER_DIALOG")
+            val initialTab = intent.getIntExtra("INITIAL_TAB", 0)
+            IpChangerBottomSheet.newInstance(initialTab = initialTab).show(supportFragmentManager, "IP_CHANGER_DIALOG")
         }
 
         if (intent.getBooleanExtra("OPEN_HOTSPOT_DIALOG", false)) {

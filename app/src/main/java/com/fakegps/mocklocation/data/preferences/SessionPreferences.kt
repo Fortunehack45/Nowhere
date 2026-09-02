@@ -96,6 +96,18 @@ class SessionPreferences(private val context: Context) {
         get() = prefs.getStringSet("key_kill_switch_bypass_apps", emptySet()) ?: emptySet()
         set(value) = prefs.edit().putStringSet("key_kill_switch_bypass_apps", value).apply()
 
+    var lastSelectedGameId: String
+        get() = prefs.getString("key_last_selected_game_id", "cod_mobile") ?: "cod_mobile"
+        set(value) = prefs.edit().putString("key_last_selected_game_id", value).apply()
+
+    var lastSelectedGameName: String
+        get() = prefs.getString("key_last_selected_game_name", "Call of Duty: Mobile / Warzone") ?: "Call of Duty: Mobile / Warzone"
+        set(value) = prefs.edit().putString("key_last_selected_game_name", value).apply()
+
+    var lastSelectedGameIcon: String
+        get() = prefs.getString("key_last_selected_game_icon", "🎯") ?: "🎯"
+        set(value) = prefs.edit().putString("key_last_selected_game_icon", value).apply()
+
     var routeTotalDistanceMeters: Double
         get() = Double.fromBits(prefs.getLong("key_route_total_distance", 0L))
         set(value) = prefs.edit().putLong("key_route_total_distance", value.toBits()).apply()

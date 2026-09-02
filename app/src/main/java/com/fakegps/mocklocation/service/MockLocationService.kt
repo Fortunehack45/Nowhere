@@ -116,6 +116,7 @@ class MockLocationService : Service() {
         com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider.updateAllWeatherWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereIconWidgetProvider.updateAllIconWidgets(this)
     }
 

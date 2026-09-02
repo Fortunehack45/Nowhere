@@ -34,12 +34,14 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         const val TAG = "IpChangerBottomSheet"
         private const val ARG_LAT = "arg_lat"
         private const val ARG_LON = "arg_lon"
+        private const val ARG_INITIAL_TAB = "arg_initial_tab"
 
-        fun newInstance(lat: Double? = null, lon: Double? = null): IpChangerBottomSheet {
+        fun newInstance(lat: Double? = null, lon: Double? = null, initialTab: Int = 0): IpChangerBottomSheet {
             return IpChangerBottomSheet(lat, lon).apply {
                 arguments = Bundle().apply {
                     if (lat != null) putDouble(ARG_LAT, lat)
                     if (lon != null) putDouble(ARG_LON, lon)
+                    putInt(ARG_INITIAL_TAB, initialTab)
                 }
             }
         }
@@ -93,6 +95,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         if (currentMockLon == null && arguments?.containsKey(ARG_LON) == true) {
             currentMockLon = arguments?.getDouble(ARG_LON)
         }
+        activeTab = arguments?.getInt(ARG_INITIAL_TAB, 0) ?: 0
     }
 
     override fun onCreateView(
@@ -124,7 +127,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
     }
 
     private fun setupTabs() {
-        switchTab(0)
+        switchTab(activeTab)
 
         binding.tabBtnNodes.setOnClickListener { switchTab(0) }
         binding.tabBtnGameBoost.setOnClickListener { switchTab(1) }
@@ -209,6 +212,11 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
         gameAdapter = GameBoostAdapter(games, null) { selectedGame ->
             val ctx = context ?: return@GameBoostAdapter
+            sessionPrefs.lastSelectedGameId = selectedGame.id
+            sessionPrefs.lastSelectedGameName = selectedGame.name
+            sessionPrefs.lastSelectedGameIcon = selectedGame.emoji
+            com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(ctx)
+
             Toast.makeText(ctx, "⚡ Optimizing ${selectedGame.name} routing...", Toast.LENGTH_SHORT).show()
 
             viewLifecycleOwner.lifecycleScope.launch {
