@@ -391,7 +391,12 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.btnOpenAppTutorial.setOnClickListener {
-            com.fakegps.mocklocation.ui.dialogs.AppTutorialDialog(this).show()
+            val intent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("EXTRA_START_SPOTLIGHT_TOUR", true)
+            }
+            startActivity(intent)
+            finish()
         }
 
         binding.btnOpenDisclaimer.setOnClickListener {
@@ -537,37 +542,23 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun refreshThemeColorUI() {
-        val colorName = when (settingsPrefs.appThemeColor) {
-            "CYAN" -> "Cyberpunk Cyan (#00E5FF)"
-            "GREEN" -> "Matrix Emerald (#00E676)"
-            "PURPLE" -> "Royal Purple (#A855F7)"
-            "GOLD" -> "Sunset Amber (#FF9100)"
-            "PINK" -> "Neon Rose (#FF2D55)"
-            else -> "Crimson Red (Default • #E53935)"
-        }
-        binding.tvSettingsThemeColorDesc.text = colorName
-        binding.viewThemeColorDot.backgroundTintList = android.content.res.ColorStateList.valueOf(settingsPrefs.getThemeColorInt())
+        val theme = com.fakegps.mocklocation.util.ThemeColorManager.getCurrentTheme(this)
+        binding.tvSettingsThemeColorDesc.text = "${theme.displayName} (${theme.primaryColorHex})"
+        binding.viewThemeColorDot.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
     }
 
     private fun showThemeColorPickerDialog() {
-        val colors = arrayOf(
-            "🔴 Crimson Red (Default)",
-            "🔵 Cyberpunk Cyan",
-            "🟢 Matrix Emerald",
-            "🟣 Royal Purple",
-            "🟠 Sunset Amber",
-            "🌸 Neon Rose"
-        )
-        val colorKeys = arrayOf("RED", "CYAN", "GREEN", "PURPLE", "GOLD", "PINK")
-        val currentIndex = colorKeys.indexOf(settingsPrefs.appThemeColor).coerceAtLeast(0)
+        val themes = com.fakegps.mocklocation.util.ThemeColorManager.THEMES
+        val options = themes.map { "${it.emoji} ${it.displayName}" }.toTypedArray()
+        val currentIndex = themes.indexOfFirst { it.id.equals(settingsPrefs.appThemeColor, ignoreCase = true) }.coerceAtLeast(0)
 
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("🎨 Choose App Theme Accent")
-            .setSingleChoiceItems(colors, currentIndex) { dialog, which ->
-                val chosenKey = colorKeys[which]
-                settingsPrefs.appThemeColor = chosenKey
+            .setSingleChoiceItems(options, currentIndex) { dialog, which ->
+                val chosenTheme = themes[which]
+                settingsPrefs.appThemeColor = chosenTheme.id
                 refreshThemeColorUI()
-                Toast.makeText(this, "Accent color updated to ${colors[which].substring(2)}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Accent color updated to ${chosenTheme.displayName}", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
             .setNegativeButton("Cancel", null)

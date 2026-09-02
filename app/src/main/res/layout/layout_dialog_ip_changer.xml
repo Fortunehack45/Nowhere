@@ -95,7 +95,7 @@
                 android:background="@drawable/bg_segmented_pill_item"
                 android:button="@null"
                 android:gravity="center"
-                android:text="Game Booster"
+                android:text="Game Boost (BETA)"
                 android:textColor="@color/color_segmented_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -558,18 +558,17 @@
                         android:orientation="horizontal">
 
                         <ImageView
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
                             android:src="@drawable/ic_bolt"
-                            app:tint="@color/badge_success_text"
-                            tools:ignore="ContentDescription" />
+                            app:tint="@color/badge_warning_text" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:text="LOW LATENCY ROUTE ACCELERATOR"
-                            android:textColor="@color/badge_success_text"
+                            android:text="GAME ACCELERATOR (BETA • UNDER DEVELOPMENT)"
+                            android:textColor="@color/badge_warning_text"
                             android:textSize="10.5sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -578,7 +577,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Optimizes kernel UDP queues with Google BBR and DSCP 46 Expedited Forwarding, locking your ping to the lowest regional dedicated game cluster."
+                        android:text="Status: Under active development. Regional low-ping esports relay nodes are currently being provisioned to ensure optimal zero-jitter gameplay."
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>

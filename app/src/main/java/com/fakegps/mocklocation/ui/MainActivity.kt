@@ -327,6 +327,12 @@ class MainActivity : AppCompatActivity() {
             com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance()
                 .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
         }
+
+        if (intent.getBooleanExtra("EXTRA_START_SPOTLIGHT_TOUR", false)) {
+            binding.root.postDelayed({
+                startInteractiveHomeSpotlightTour()
+            }, 400L)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -1402,9 +1408,9 @@ class MainActivity : AppCompatActivity() {
             com.fakegps.mocklocation.vpn.NowhereVpnService.vpnState.collectLatest { vpnState ->
                 when (vpnState) {
                     is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connected -> {
-                        binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
-                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_text)
-                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_active_text))
+                        binding.layoutIpShieldBadge.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this@MainActivity)
+                        binding.ivShieldIcon.imageTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this@MainActivity)
+                        binding.tvIpShieldBadge.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity))
                         binding.tvIpShieldBadge.text = "${vpnState.node.flagEmoji} ${vpnState.node.countryCode}"
                     }
                     is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connecting -> {
@@ -1445,11 +1451,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyDynamicThemeAccent() {
-        val accentColor = settingsPrefs.getThemeColorInt()
-        val csl = android.content.res.ColorStateList.valueOf(accentColor)
-        binding.tvRouteDistanceRemaining.setTextColor(accentColor)
-        binding.pbRouteLiveProgress.progressTintList = csl
-        binding.tvWaypointsCount.setTextColor(accentColor)
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
+        val primaryCsl = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
+        val lightTintCsl = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
+
+        binding.tvRouteDistanceRemaining.setTextColor(primaryColor)
+        binding.pbRouteLiveProgress.progressTintList = primaryCsl
+        binding.tvWaypointsCount.setTextColor(primaryColor)
+
+        binding.sliderRouteSpeed.thumbTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+        binding.sliderRouteSpeed.trackActiveTintList = primaryCsl
+        binding.sliderJoystickSpeed.thumbTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+        binding.sliderJoystickSpeed.trackActiveTintList = primaryCsl
+
+        // Update Ghost Cloak badge if active
+        if (settingsPrefs.isGhostCloakEnabled) {
+            binding.layoutGhostCloakBadge.backgroundTintList = lightTintCsl
+            binding.ivGhostCloakIcon.imageTintList = primaryCsl
+            binding.tvGhostCloakBadge.setTextColor(primaryColor)
+        }
+
+        // Update Spotlight Tour overlay colors
+        binding.spotlightTourOverlay.setTourColors(primaryColor, com.fakegps.mocklocation.util.ThemeColorManager.getGlowColor(this))
     }
 
     private fun observeUiState() {
@@ -1530,9 +1553,9 @@ class MainActivity : AppCompatActivity() {
         // Status Pill Badge
         if (state.isServiceRunning) {
             binding.tvStatusBadge.text = getString(R.string.status_mock_active)
-            binding.tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
-            binding.viewStatusDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_active_text)
-            binding.layoutStatusBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_active_bg)
+            binding.tvStatusBadge.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
+            binding.viewStatusDot.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
+            binding.layoutStatusBadge.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
         } else {
             binding.tvStatusBadge.text = getString(R.string.status_standby)
             binding.tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_standby_text))
@@ -1599,7 +1622,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             binding.btnFixedToggle.text = getString(R.string.btn_start_teleport)
             binding.btnFixedToggle.setIconResource(R.drawable.ic_teleport)
-            binding.btnFixedToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)
+            binding.btnFixedToggle.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
             binding.btnFixedToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnFixedToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
         }
@@ -1687,7 +1710,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             binding.btnRouteToggle.text = getString(R.string.btn_start_route)
             binding.btnRouteToggle.setIconResource(R.drawable.ic_play)
-            binding.btnRouteToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)
+            binding.btnRouteToggle.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
             binding.btnRouteToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnRouteToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
             binding.btnRoutePause.visibility = View.GONE
@@ -1742,7 +1765,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             binding.btnJoystickToggle.text = "Engage Joystick"
             binding.btnJoystickToggle.setIconResource(R.drawable.ic_play)
-            binding.btnJoystickToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)
+            binding.btnJoystickToggle.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
             binding.btnJoystickToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnJoystickToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
         }

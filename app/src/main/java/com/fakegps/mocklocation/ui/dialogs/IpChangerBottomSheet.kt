@@ -200,44 +200,11 @@ class IpChangerBottomSheet @JvmOverloads constructor(
             sessionPrefs.lastSelectedGameIcon = selectedGame.emoji
             com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(ctx)
 
-            Toast.makeText(ctx, "Optimizing ${selectedGame.name} routing...", Toast.LENGTH_SHORT).show()
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                val clientPubkey = com.fakegps.mocklocation.vpn.WireGuardTunnelManager.getClientPublicKeyBase64()
-                val result = NowhereApiClient.optimizeGame(
-                    context = ctx,
-                    gameId = selectedGame.id,
-                    clientPublicKey = clientPubkey
-                )
-                val customName = "🚀 Game Boost: ${selectedGame.name}"
-                val tunnelConfig = result.getOrNull()
-
-                if (tunnelConfig != null) {
-                    val vpnIntent = VpnService.prepare(ctx)
-                    if (vpnIntent != null) {
-                        pendingTunnelConfigToConnect = tunnelConfig
-                        pendingGameCustomName = customName
-                        vpnPrepareLauncher.launch(vpnIntent)
-                    } else {
-                        NowhereVpnService.startWithTunnelResponse(
-                            context = ctx,
-                            response = tunnelConfig,
-                            customName = customName
-                        )
-                        Toast.makeText(ctx, "🚀 Game Boost Active: ${selectedGame.name} (${tunnelConfig.estimatedPingMs}ms • Zero Jitter)", Toast.LENGTH_LONG).show()
-                    }
-                } else {
-                    // Fallback: route through verified live US Gateway with gaming QoS
-                    val vpnIntent = VpnService.prepare(ctx)
-                    if (vpnIntent != null) {
-                        pendingGameCustomName = customName
-                        vpnPrepareLauncher.launch(vpnIntent)
-                    } else {
-                        NowhereVpnService.start(ctx, "us_central_gcp")
-                        Toast.makeText(ctx, "🚀 Game Boost Active: ${selectedGame.name} (US Gateway • 14ms)", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+                .setTitle("🎮 ${selectedGame.name} (BETA)")
+                .setMessage("Game Accelerator is currently in Beta & Under Active Development.\n\nDedicated regional low-latency esports peering routes are currently being tuned so your in-game ping remains optimal without packet loss.")
+                .setPositiveButton("Understood", null)
+                .show()
         }
 
         binding.rvGameBoostList.layoutManager = LinearLayoutManager(requireContext())

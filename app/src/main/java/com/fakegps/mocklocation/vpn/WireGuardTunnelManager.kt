@@ -88,15 +88,13 @@ object WireGuardTunnelManager {
             val ifaceBuilder = Interface.Builder()
                 .parsePrivateKey(clientPrivKey)
                 .addAddress(InetNetwork.parse(cleanAssignedIp))
-                .setMtu(mtu.coerceAtMost(1360))
+                .setMtu(1280) // 1280 bytes guarantees zero cellular UDP fragmentation across all global carriers
                 .excludeApplication(context.packageName)
 
             val dnsCandidates = linkedSetOf<String>().apply {
                 if (dnsServer.isNotBlank()) add(dnsServer.trim())
                 add("1.1.1.1")
                 add("8.8.8.8")
-                add("8.8.4.4")
-                add("9.9.9.9")
             }
             for (dns in dnsCandidates) {
                 try {

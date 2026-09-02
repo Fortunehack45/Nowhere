@@ -105,7 +105,7 @@ class AppSettingsPreferences(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_SENSOR_KINEMATICS_ENABLED, value).apply()
 
     var isAutoVpnSyncEnabled: Boolean
-        get() = prefs.getBoolean(KEY_AUTO_VPN_SYNC_ENABLED, false)
+        get() = prefs.getBoolean(KEY_AUTO_VPN_SYNC_ENABLED, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_VPN_SYNC_ENABLED, value).apply()
 
     var appThemeColor: String

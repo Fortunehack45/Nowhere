@@ -2,6 +2,7 @@ package com.fakegps.mocklocation.ui.tour
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -138,6 +139,15 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
             }
             start()
         }
+    }
+
+    fun setTourColors(accentColor: Int, pulseColor: Int) {
+        strokePaint.color = accentColor
+        pulsePaint.color = pulseColor
+        cardTooltip.strokeColor = accentColor
+        btnNext.backgroundTintList = ColorStateList.valueOf(accentColor)
+        pbSpotlightProgress.setIndicatorColor(accentColor)
+        invalidate()
     }
 
     fun startTour(tourSteps: List<SpotlightStep>, onFinished: (() -> Unit)? = null) {
