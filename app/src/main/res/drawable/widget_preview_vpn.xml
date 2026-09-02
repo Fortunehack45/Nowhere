@@ -1,0 +1,42 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="110dp"
+    android:viewportWidth="250"
+    android:viewportHeight="110">
+
+    <!-- Card Background -->
+    <path
+        android:fillColor="#1C1F26"
+        android:pathData="M16,0 L234,0 A16,16 0 0,1 250,16 L250,94 A16,16 0 0,1 234,110 L16,110 A16,16 0 0,1 0,94 L0,16 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Card Border -->
+    <path
+        android:strokeColor="#303644"
+        android:strokeWidth="1.5"
+        android:pathData="M16,0 L234,0 A16,16 0 0,1 250,16 L250,94 A16,16 0 0,1 234,110 L16,110 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Shield Icon -->
+    <path
+        android:fillColor="#26A69A"
+        android:pathData="M30,20 L44,24 L44,36 C44,44 30,50 30,50 C30,50 16,44 16,36 L16,24 Z" />
+
+    <!-- Title: IP Privacy Shield -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,24 L140,24 A3,3 0 0,1 143,27 L143,31 A3,3 0 0,1 140,34 L54,34 A3,3 0 0,1 51,27 L51,27 A3,3 0 0,1 54,24 Z" />
+
+    <!-- Active Gateway Subtitle -->
+    <path
+        android:fillColor="#8C93A3"
+        android:pathData="M16,56 L150,56 A2,2 0 0,1 152,58 L152,62 A2,2 0 0,1 150,64 L16,64 A2,2 0 0,1 14,62 L14,58 A2,2 0 0,1 16,56 Z" />
+
+    <!-- Shield Toggle Button -->
+    <path
+        android:fillColor="#26A69A"
+        android:pathData="M16,74 L110,74 A8,8 0 0,1 118,82 L118,90 A8,8 0 0,1 110,98 L16,98 A8,8 0 0,1 8,90 L8,82 A8,8 0 0,1 16,74 Z" />
+
+    <!-- Change Node Button -->
+    <path
+        android:fillColor="#2A2F3D"
+        android:pathData="M130,74 L234,74 A8,8 0 0,1 242,82 L242,90 A8,8 0 0,1 234,98 L130,98 A8,8 0 0,1 122,90 L122,82 A8,8 0 0,1 130,74 Z" />
+</vector>

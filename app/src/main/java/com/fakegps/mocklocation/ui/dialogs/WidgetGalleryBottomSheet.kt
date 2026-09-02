@@ -18,7 +18,6 @@ import com.fakegps.mocklocation.databinding.ItemWidgetPreviewBinding
 import com.fakegps.mocklocation.databinding.LayoutDialogWidgetGalleryBinding
 import com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider
 import com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider
-import com.fakegps.mocklocation.ui.widget.NowhereIconWidgetProvider
 import com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider
 import com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider
 import com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider
@@ -118,13 +117,6 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
                 description = "Live simulation countdown clock (HH:MM:SS), connection status, and 1-tap +2 Hours extension trigger.",
                 layoutResId = R.layout.widget_nowhere_session_timer_layout,
                 providerClass = NowhereSessionTimerWidgetProvider::class.java
-            ),
-            WidgetPreviewItem(
-                title = "1x1 Compact Quick-Action Pill",
-                sizeLabel = "1 x 1",
-                description = "Minimalist icon widget for quick 1-tap spoofing toggle right from your home screen dock.",
-                layoutResId = R.layout.widget_nowhere_icon_layout,
-                providerClass = NowhereIconWidgetProvider::class.java
             )
         )
 

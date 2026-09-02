@@ -1,0 +1,47 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="110dp"
+    android:viewportWidth="250"
+    android:viewportHeight="110">
+
+    <!-- Card Background -->
+    <path
+        android:fillColor="#1C1F26"
+        android:pathData="M16,0 L234,0 A16,16 0 0,1 250,16 L250,94 A16,16 0 0,1 234,110 L16,110 A16,16 0 0,1 16,110 A16,16 0 0,1 0,94 L0,16 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Card Border -->
+    <path
+        android:strokeColor="#303644"
+        android:strokeWidth="1.5"
+        android:pathData="M16,0 L234,0 A16,16 0 0,1 250,16 L250,94 A16,16 0 0,1 234,110 L16,110 A16,16 0 0,1 16,110 A16,16 0 0,1 0,94 L0,16 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Route Mode Title -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,18 L110,18 A3,3 0 0,1 113,21 L113,25 A3,3 0 0,1 110,28 L16,28 A3,3 0 0,1 13,25 L13,21 A3,3 0 0,1 16,18 Z" />
+
+    <!-- Progress Bar Track -->
+    <path
+        android:fillColor="#2A2F3D"
+        android:pathData="M16,42 L234,42 A4,4 0 0,1 238,46 L238,48 A4,4 0 0,1 234,52 L16,52 A4,4 0 0,1 12,48 L12,46 A4,4 0 0,1 16,42 Z" />
+
+    <!-- Progress Fill -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M16,42 L150,42 A4,4 0 0,1 154,46 L154,48 A4,4 0 0,1 150,52 L16,52 A4,4 0 0,1 12,48 L12,46 A4,4 0 0,1 16,42 Z" />
+
+    <!-- Distance & ETA text bars -->
+    <path
+        android:fillColor="#8C93A3"
+        android:pathData="M16,62 L90,62 A2,2 0 0,1 92,64 L92,67 A2,2 0 0,1 90,69 L16,69 A2,2 0 0,1 14,67 L14,64 A2,2 0 0,1 16,62 Z" />
+
+    <!-- Play/Pause Control Button -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M16,80 L70,80 A6,6 0 0,1 76,86 L76,96 A6,6 0 0,1 70,102 L16,102 A6,6 0 0,1 10,96 L10,86 A6,6 0 0,1 16,80 Z" />
+
+    <!-- Stop Route Button -->
+    <path
+        android:fillColor="#2A2F3D"
+        android:pathData="M84,80 L138,80 A6,6 0 0,1 144,86 L144,96 A6,6 0 0,1 138,102 L84,102 A6,6 0 0,1 78,96 L78,86 A6,6 0 0,1 84,80 Z" />
+</vector>

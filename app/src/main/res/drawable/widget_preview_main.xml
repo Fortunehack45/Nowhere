@@ -1,0 +1,50 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="110dp"
+    android:viewportWidth="250"
+    android:viewportHeight="110">
+
+    <!-- Card Background -->
+    <path
+        android:fillColor="#1C1F26"
+        android:pathData="M16,0 L234,0 A16,16 0 0,1 250,16 L250,94 A16,16 0 0,1 234,110 L16,110 A16,16 0 0,1 0,94 L0,16 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Card Border -->
+    <path
+        android:strokeColor="#303644"
+        android:strokeWidth="1.5"
+        android:pathData="M16,0 L234,0 A16,16 0 0,1 250,16 L250,94 A16,16 0 0,1 234,110 L16,110 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Pin Icon Circle -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M24,20 A10,10 0 1,1 24,40 A10,10 0 1,1 24,20 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,25 A4,4 0 1,1 24,33 A4,4 0 1,1 24,25 Z" />
+
+    <!-- Location Name Bar -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,24 L130,24 A3,3 0 0,1 133,27 L133,31 A3,3 0 0,1 130,34 L42,34 A3,3 0 0,1 39,27 L39,27 A3,3 0 0,1 42,24 Z" />
+
+    <!-- Status Chip -->
+    <path
+        android:fillColor="#26A69A"
+        android:pathData="M190,22 L232,22 A6,6 0 0,1 238,28 L238,30 A6,6 0 0,1 232,36 L190,36 A6,6 0 0,1 184,30 L184,28 A6,6 0 0,1 190,22 Z" />
+
+    <!-- Coordinates Subtitle Bar -->
+    <path
+        android:fillColor="#8C93A3"
+        android:pathData="M16,52 L140,52 A2,2 0 0,1 142,54 L142,57 A2,2 0 0,1 140,59 L16,59 A2,2 0 0,1 14,57 L14,54 A2,2 0 0,1 16,52 Z" />
+
+    <!-- Teleport / Stop Button -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M16,74 L110,74 A8,8 0 0,1 118,82 L118,90 A8,8 0 0,1 110,98 L16,98 A8,8 0 0,1 8,90 L8,82 A8,8 0 0,1 16,74 Z" />
+
+    <!-- Quick Mode Button -->
+    <path
+        android:fillColor="#2A2F3D"
+        android:pathData="M130,74 L234,74 A8,8 0 0,1 242,82 L242,90 A8,8 0 0,1 234,98 L130,98 A8,8 0 0,1 122,90 L122,82 A8,8 0 0,1 130,74 Z" />
+</vector>

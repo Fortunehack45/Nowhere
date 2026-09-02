@@ -117,7 +117,6 @@ class MockLocationService : Service() {
         com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(this)
-        com.fakegps.mocklocation.ui.widget.NowhereIconWidgetProvider.updateAllIconWidgets(this)
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -344,14 +343,20 @@ class MockLocationService : Service() {
                 val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
                 val placeName = if (!cachedName.isNullOrBlank()) {
                     cachedName
+                } else if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+                    sessionPrefs.lastLocationName
                 } else {
                     // Trigger background resolution for future ticks
                     serviceScope.launch(Dispatchers.IO) {
-                        com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
+                        val resolved = com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
                             this@MockLocationService,
                             lat,
                             lon
                         )
+                        if (resolved.isNotBlank()) {
+                            sessionPrefs.lastLocationName = resolved
+                            updateLocationNotification(lat, lon, modeDescription)
+                        }
                     }
                     String.format(Locale.US, "%.5f°, %.5f°", lat, lon)
                 }
@@ -543,12 +548,11 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Activate VPN only if explicitly enabled by user
-        if (sessionPrefs.isIpMaskingEnabled) {
+        // Activate VPN only if explicitly enabled by user and not already active
+        if (sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             try {
-                val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
-                sessionPrefs.activeIpNodeId = bestNode.id
-                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+                sessionPrefs.activeIpNodeId = "us_central_gcp"
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
             } catch (e: Exception) {
                 Log.w(TAG, "VPN start failed (non-fatal): ${e.message}")
             }
@@ -559,7 +563,15 @@ class MockLocationService : Service() {
         }
 
         com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(latitude, longitude, altitude, 0.0f, 0.0f)
-        startForegroundNotification(String.format("Fixed: %.5f, %.5f", latitude, longitude))
+        val placeName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+            sessionPrefs.lastLocationName
+        } else {
+            com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(latitude, longitude) ?: String.format(Locale.US, "%.5f°, %.5f°", latitude, longitude)
+        }
+        startForegroundNotification(
+            "📍 $placeName",
+            String.format(Locale.US, "Fixed Location • %.5f°, %.5f°", latitude, longitude)
+        )
         updateLocationNotification(latitude, longitude, "Teleported / Fixed")
 
         simulationJob = serviceScope.launch {
@@ -636,12 +648,11 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Activate VPN only if explicitly enabled by user
-        if (sessionPrefs.isIpMaskingEnabled && waypoints.isNotEmpty()) {
+        // Activate VPN only if explicitly enabled by user and not already active
+        if (sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning && waypoints.isNotEmpty()) {
             try {
-                val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(waypoints[0].latitude, waypoints[0].longitude)
-                sessionPrefs.activeIpNodeId = bestNode.id
-                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
+                sessionPrefs.activeIpNodeId = "us_central_gcp"
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
             } catch (e: Exception) {
                 Log.w(TAG, "VPN start failed on route (non-fatal): ${e.message}")
             }
@@ -885,19 +896,25 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically activate VPN — wrapped in try-catch to prevent VPN errors crashing simulation
-        try {
-            val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(startLat, startLon)
-            sessionPrefs.activeIpNodeId = bestNode.id
-            sessionPrefs.isIpMaskingEnabled = true
-            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, bestNode.id)
-        } catch (e: Exception) {
-            Log.w(TAG, "VPN auto-start failed on joystick (non-fatal): ${e.message}")
+        // Automatically activate VPN only if not already running
+        if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+            try {
+                sessionPrefs.activeIpNodeId = "us_central_gcp"
+                sessionPrefs.isIpMaskingEnabled = true
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+            } catch (e: Exception) {
+                Log.w(TAG, "VPN auto-start failed on joystick (non-fatal): ${e.message}")
+            }
         }
 
+        val placeName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+            sessionPrefs.lastLocationName
+        } else {
+            com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(startLat, startLon) ?: String.format(Locale.US, "%.5f°, %.5f°", startLat, startLon)
+        }
         startForegroundNotification(
-            String.format("Joystick: %.5f, %.5f", startLat, startLon),
-            String.format("Speed: %.1f KM/H", speedKmh)
+            "📍 $placeName",
+            String.format("Joystick Active • %.5f°, %.5f° • %.1f KM/H", startLat, startLon, speedKmh)
         )
         updateLocationNotification(startLat, startLon, "Joystick Active")
 

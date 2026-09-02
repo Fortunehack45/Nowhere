@@ -44,7 +44,6 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             NowhereRouteWidgetProvider.updateAllRouteWidgets(context)
             NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(context)
             NowhereSearchWidgetProvider.updateAllSearchWidgets(context)
-            NowhereIconWidgetProvider.updateAllIconWidgets(context)
             NowhereVpnWidgetProvider.updateAllVpnWidgets(context)
             NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(context)
             NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
@@ -58,7 +57,10 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             val isActive = sessionPrefs.isSessionActive
             val lat = sessionPrefs.lastLatitude
             val lon = sessionPrefs.lastLongitude
-            val locName = if (sessionPrefs.lastLocationName.isNotBlank()) {
+            val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
+            val locName = if (!cachedName.isNullOrBlank()) {
+                cachedName
+            } else if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
                 sessionPrefs.lastLocationName
             } else {
                 val latDir = if (lat >= 0) "N" else "S"

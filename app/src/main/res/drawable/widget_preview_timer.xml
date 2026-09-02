@@ -1,0 +1,37 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="110dp"
+    android:viewportWidth="250"
+    android:viewportHeight="110">
+
+    <!-- Card Background -->
+    <path
+        android:fillColor="#1C1F26"
+        android:pathData="M16,0 L234,0 A16,16 0 0,1 250,16 L250,94 A16,16 0 0,1 234,110 L16,110 A16,16 0 0,1 0,94 L0,16 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Card Border -->
+    <path
+        android:strokeColor="#303644"
+        android:strokeWidth="1.5"
+        android:pathData="M16,0 L234,0 A16,16 0 0,1 250,16 L250,94 A16,16 0 0,1 234,110 L16,110 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Clock Icon -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M30,22 A10,10 0 1,1 30,42 A10,10 0 1,1 30,22 Z" />
+
+    <!-- Title: Session Guard -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,24 L140,24 A3,3 0 0,1 143,27 L143,31 A3,3 0 0,1 140,34 L48,34 A3,3 0 0,1 45,27 L45,27 A3,3 0 0,1 48,24 Z" />
+
+    <!-- Big Countdown Time Display: 01:59:45 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,50 L120,50 A4,4 0 0,1 124,54 L124,66 A4,4 0 0,1 120,70 L16,70 A4,4 0 0,1 12,66 L12,54 A4,4 0 0,1 16,50 Z" />
+
+    <!-- +2 Hours Extension Button -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M140,48 L234,48 A8,8 0 0,1 242,56 L242,76 A8,8 0 0,1 234,84 L140,84 A8,8 0 0,1 132,76 L132,56 A8,8 0 0,1 140,48 Z" />
+</vector>

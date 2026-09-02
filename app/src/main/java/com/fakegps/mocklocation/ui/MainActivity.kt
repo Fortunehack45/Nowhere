@@ -528,83 +528,60 @@ class MainActivity : AppCompatActivity() {
         })
         binding.mapView.overlays.add(0, mapEventsOverlay)
 
-        val density = resources.displayMetrics.density
-        binding.mapView.cameraDistance = density * 6000f
-        binding.mapView.pivotY = resources.displayMetrics.heightPixels * 0.70f
+        binding.mapView.rotationX = 0f
 
-        var isDoubleTapDragging = false
-        var lastDoubleTapDragY = 0f
+        var doubleTapDetectedTime = 0L
+        var isOneHandedZoomActive = false
+        var lastTouchY = 0f
 
-        val doubleTapGestureDetector = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
+        val oneHandedGestureDetector = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: android.view.MotionEvent): Boolean {
-                isDoubleTapDragging = true
-                lastDoubleTapDragY = e.y
-                return true
-            }
-
-            override fun onDoubleTapEvent(e: android.view.MotionEvent): Boolean {
-                when (e.actionMasked) {
-                    android.view.MotionEvent.ACTION_MOVE -> {
-                        if (isDoubleTapDragging) {
-                            val deltaY = lastDoubleTapDragY - e.y
-                            if (Math.abs(deltaY) > 2f) {
-                                val currentZoom = binding.mapView.zoomLevelDouble
-                                val zoomChange = deltaY * 0.008
-                                val targetZoom = (currentZoom + zoomChange).coerceIn(3.0, 21.0)
-                                binding.mapView.controller.setZoom(targetZoom)
-                                lastDoubleTapDragY = e.y
-                            }
-                            return true
-                        }
-                    }
-                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                        isDoubleTapDragging = false
-                    }
-                }
+                doubleTapDetectedTime = System.currentTimeMillis()
                 return false
             }
         })
 
-        var initialTwoFingerY = 0f
-        var isTwoFingerTilting = false
-        var currentMapTilt = 0f
+        binding.mapView.setOnTouchListener { v, event ->
+            oneHandedGestureDetector.onTouchEvent(event)
 
-        binding.mapView.setOnTouchListener { _, event ->
-            if (event.pointerCount == 2) {
-                val y0 = event.getY(0)
-                val y1 = event.getY(1)
-                val avgY = (y0 + y1) / 2f
-                val deltaYBetweenFingers = Math.abs(y0 - y1)
-
+            if (event.pointerCount == 1) {
                 when (event.actionMasked) {
-                    android.view.MotionEvent.ACTION_POINTER_DOWN -> {
-                        if (deltaYBetweenFingers < 220f * density) {
-                            initialTwoFingerY = avgY
-                            isTwoFingerTilting = true
-                        }
-                    }
-                    android.view.MotionEvent.ACTION_MOVE -> {
-                        if (isTwoFingerTilting) {
-                            val deltaY = initialTwoFingerY - avgY
-                            if (Math.abs(deltaY) > 3f) {
-                                currentMapTilt = (currentMapTilt + deltaY * 0.18f).coerceIn(0f, 55f)
-                                binding.mapView.rotationX = currentMapTilt
-                                initialTwoFingerY = avgY
-                            }
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        val timeSinceDoubleTap = System.currentTimeMillis() - doubleTapDetectedTime
+                        if (timeSinceDoubleTap < 380L && doubleTapDetectedTime > 0L) {
+                            isOneHandedZoomActive = true
+                            lastTouchY = event.y
+                            v.parent?.requestDisallowInterceptTouchEvent(true)
                             return@setOnTouchListener true
                         }
                     }
-                    android.view.MotionEvent.ACTION_POINTER_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                        isTwoFingerTilting = false
+                    android.view.MotionEvent.ACTION_MOVE -> {
+                        if (isOneHandedZoomActive) {
+                            val deltaY = lastTouchY - event.y
+                            if (Math.abs(deltaY) > 2f) {
+                                val zoomDelta = deltaY * 0.0025
+                                val currentZoom = binding.mapView.zoomLevelDouble
+                                val newZoom = (currentZoom + zoomDelta).coerceIn(3.0, 21.0)
+                                binding.mapView.controller.setZoom(newZoom)
+                                lastTouchY = event.y
+                            }
+                            v.parent?.requestDisallowInterceptTouchEvent(true)
+                            return@setOnTouchListener true
+                        }
+                    }
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        if (isOneHandedZoomActive) {
+                            isOneHandedZoomActive = false
+                            doubleTapDetectedTime = 0L
+                            v.parent?.requestDisallowInterceptTouchEvent(false)
+                            return@setOnTouchListener true
+                        }
                     }
                 }
             } else {
-                isTwoFingerTilting = false
-                doubleTapGestureDetector.onTouchEvent(event)
-                if (isDoubleTapDragging) {
-                    return@setOnTouchListener true
-                }
+                isOneHandedZoomActive = false
             }
+
             false
         }
 
@@ -1164,13 +1141,14 @@ class MainActivity : AppCompatActivity() {
 
         binding.fabMapLayers.setOnClickListener {
             com.fakegps.mocklocation.ui.dialogs.MapLayersBottomSheet { selectedSource ->
+                binding.mapView.rotationX = 0f
                 binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
                 binding.mapView.invalidate()
                 val label = when (selectedSource) {
                     "MAPNIK" -> "Standard Street Map"
                     "SATELLITE" -> "Satellite Hybrid"
                     "TOPO" -> "OpenTopo Terrain"
-                    "3D_VECTOR" -> "3D Vector & Perspective"
+                    "3D_VECTOR" -> "Modern Vector Map"
                     else -> "Standard Map"
                 }
                 Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()

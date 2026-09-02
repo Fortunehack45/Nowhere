@@ -1,0 +1,55 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="90dp"
+    android:viewportWidth="240"
+    android:viewportHeight="90">
+
+    <!-- Card Background -->
+    <path
+        android:fillColor="#1C1F26"
+        android:pathData="M16,0 L224,0 A16,16 0 0,1 240,16 L240,74 A16,16 0 0,1 224,90 L16,90 A16,16 0 0,1 0,74 L0,16 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Card Border -->
+    <path
+        android:strokeColor="#303644"
+        android:strokeWidth="1.5"
+        android:pathData="M16,0 L224,0 A16,16 0 0,1 240,16 L240,74 A16,16 0 0,1 224,90 L16,90 A16,16 0 0,1 0,74 L0,16 A16,16 0 0,1 16,0 Z" />
+
+    <!-- Header Title -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,16 L80,16 A2,2 0 0,1 82,18 L82,22 A2,2 0 0,1 80,24 L16,24 A2,2 0 0,1 14,22 L14,18 A2,2 0 0,1 16,16 Z" />
+
+    <!-- 4 Destination Slot Chips -->
+    <!-- Slot 1: New York -->
+    <path
+        android:fillColor="#2A2F3D"
+        android:pathData="M14,38 L60,38 A6,6 0 0,1 66,44 L66,66 A6,6 0 0,1 60,72 L14,72 A6,6 0 0,1 8,66 L8,44 A6,6 0 0,1 14,38 Z" />
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M18,48 L46,48 A2,2 0 0,1 48,50 L48,53 A2,2 0 0,1 46,55 L18,55 A2,2 0 0,1 16,53 L16,50 A2,2 0 0,1 18,48 Z" />
+
+    <!-- Slot 2: Paris -->
+    <path
+        android:fillColor="#2A2F3D"
+        android:pathData="M74,38 L120,38 A6,6 0 0,1 126,44 L126,66 A6,6 0 0,1 120,72 L74,72 A6,6 0 0,1 68,66 L68,44 A6,6 0 0,1 74,38 Z" />
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M78,48 L106,48 A2,2 0 0,1 108,50 L108,53 A2,2 0 0,1 106,55 L78,55 A2,2 0 0,1 76,53 L76,50 A2,2 0 0,1 78,48 Z" />
+
+    <!-- Slot 3: Tokyo -->
+    <path
+        android:fillColor="#2A2F3D"
+        android:pathData="M134,38 L180,38 A6,6 0 0,1 186,44 L186,66 A6,6 0 0,1 180,72 L134,72 A6,6 0 0,1 128,66 L128,44 A6,6 0 0,1 134,38 Z" />
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M138,48 L166,48 A2,2 0 0,1 168,50 L168,53 A2,2 0 0,1 166,55 L138,55 A2,2 0 0,1 136,53 L136,50 A2,2 0 0,1 138,48 Z" />
+
+    <!-- Slot 4: London -->
+    <path
+        android:fillColor="#2A2F3D"
+        android:pathData="M194,38 L226,38 A6,6 0 0,1 232,44 L232,66 A6,6 0 0,1 226,72 L194,72 A6,6 0 0,1 188,66 L188,44 A6,6 0 0,1 194,38 Z" />
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M198,48 L222,48 A2,2 0 0,1 224,50 L224,53 A2,2 0 0,1 222,55 L198,55 A2,2 0 0,1 196,53 L196,50 A2,2 0 0,1 198,48 Z" />
+</vector>

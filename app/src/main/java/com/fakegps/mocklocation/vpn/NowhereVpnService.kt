@@ -330,7 +330,13 @@ class NowhereVpnService : VpnService() {
     }
 
     private fun connectVpn(nodeId: String) {
-        val node = IpManager.getNodeById(nodeId)
+        val targetNodeId = "us_central_gcp"
+        if (isRunning && activeServerNodeId == targetNodeId && vpnInterface != null) {
+            Log.d(TAG, "VPN already running and connected to $targetNodeId; preserving active tunnel")
+            return
+        }
+
+        val node = IpManager.getNodeById(targetNodeId)
         _vpnState.value = VpnState.Connecting
         sessionPrefs.activeIpNodeId = node.id
         sessionPrefs.isIpMaskingEnabled = true

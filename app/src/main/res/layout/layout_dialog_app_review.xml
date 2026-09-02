@@ -59,7 +59,7 @@
             android:layout_marginTop="8dp"
             android:gravity="center"
             android:lineSpacingExtra="3dp"
-            android:text="Your 5-star rating on Google Play keeps Nowhere 100% free, fast, and constantly updated with new features!"
+            android:text="Your 5-star rating on Google Play supports continuous development, fast updates, and advanced GPS simulation features!"
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 

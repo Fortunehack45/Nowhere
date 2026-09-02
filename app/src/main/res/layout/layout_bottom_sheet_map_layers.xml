@@ -258,7 +258,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="3D Vector Map &amp; Perspective"
+                    android:text="Modern Vector Map"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -266,7 +266,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="3D building extrusion &amp; tilted perspective navigation"
+                    android:text="High-contrast urban buildings, streets &amp; landmarks"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
