@@ -32,7 +32,7 @@ nodes:
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.1.0/24
+    tunnel_subnet: 10.8.0.0/24
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
@@ -48,7 +48,7 @@ nodes:
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.2.0/24
+    tunnel_subnet: 10.8.0.0/24
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
@@ -64,7 +64,7 @@ nodes:
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.3.0/24
+    tunnel_subnet: 10.8.0.0/24
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
@@ -80,7 +80,7 @@ nodes:
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.4.0/24
+    tunnel_subnet: 10.8.0.0/24
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
@@ -96,7 +96,7 @@ nodes:
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.5.0/24
+    tunnel_subnet: 10.8.0.0/24
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
@@ -112,7 +112,7 @@ nodes:
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.6.0/24
+    tunnel_subnet: 10.8.0.0/24
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
@@ -128,7 +128,7 @@ nodes:
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.7.0/24
+    tunnel_subnet: 10.8.0.0/24
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
     capacity_peers: 250
