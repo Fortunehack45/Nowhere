@@ -11,7 +11,7 @@ nodes:
     country_name: United States
     city: Council Bluffs (US Central)
     endpoint: 104.197.128.154:51820
-    server_pubkey: W6mO2R7Bf+4pT3ZyH9qH1n2zSyJ0+6Q1P3gN5O6Q7RA=
+    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
     ssh_host: 127.0.0.1
     ssh_port: 22
     ssh_user: deploy
@@ -27,8 +27,8 @@ nodes:
     country_name: United States
     city: New York
     endpoint: 104.197.128.154:51820
-    server_pubkey: 8XpQZ+3VjW0Q/2bXyU1nF0k9kEwPvG6+3N7M9dK1L2MA=
-    ssh_host: 104.197.128.154
+    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
+    ssh_host: 127.0.0.1
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
@@ -43,8 +43,8 @@ nodes:
     country_name: United States
     city: San Francisco
     endpoint: 104.197.128.154:51820
-    server_pubkey: U4kM0P5Zd+2nR1WxF7oF9l0xQwH8+4O9N1eL3M4O5PA=
-    ssh_host: 104.197.128.154
+    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
+    ssh_host: 127.0.0.1
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
@@ -59,8 +59,8 @@ nodes:
     country_name: United Kingdom
     city: London
     endpoint: 104.197.128.154:51820
-    server_pubkey: B2cD3eF4g+9uY8EdL4vM6s7dXdO5+1V6U8lS0T1V2WA=
-    ssh_host: 104.197.128.154
+    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
+    ssh_host: 127.0.0.1
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
@@ -75,8 +75,8 @@ nodes:
     country_name: Germany
     city: Frankfurt
     endpoint: 104.197.128.154:51820
-    server_pubkey: D4eF5gH6i+1wJ0GfN6xO8u9fZfQ7+3X8W0nU2V3X4YA=
-    ssh_host: 104.197.128.154
+    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
+    ssh_host: 127.0.0.1
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
@@ -91,8 +91,8 @@ nodes:
     country_name: Japan
     city: Tokyo
     endpoint: 104.197.128.154:51820
-    server_pubkey: I9jK0lM1n+6bO5LkS1cT3z4kEkV2+8C3B5sZ7A8C9DA=
-    ssh_host: 104.197.128.154
+    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
+    ssh_host: 127.0.0.1
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
@@ -107,8 +107,8 @@ nodes:
     country_name: Singapore
     city: Singapore
     endpoint: 104.197.128.154:51820
-    server_pubkey: J0kL1mN2o+7cP6MlT2dU4a5lFlW3+9D4C6tA8B9D0EA=
-    ssh_host: 104.197.128.154
+    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
+    ssh_host: 127.0.0.1
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
@@ -123,8 +123,8 @@ nodes:
     country_name: Brazil
     city: Sao Paulo
     endpoint: 104.197.128.154:51820
-    server_pubkey: M3nO4pQ5r+0fS9PoW5gX7d8oIoY6+2G7F9wD1E2G3HA=
-    ssh_host: 104.197.128.154
+    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
+    ssh_host: 127.0.0.1
     ssh_port: 22
     ssh_user: deploy
     ssh_key_path: /secrets/nowhere_deploy.pem
