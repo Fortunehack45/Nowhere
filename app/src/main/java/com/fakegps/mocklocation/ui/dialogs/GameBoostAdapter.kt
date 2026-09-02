@@ -37,7 +37,7 @@ class GameBoostAdapter(
         holder.binding.tvGameIcon.text = item.emoji
         holder.binding.tvGameName.text = item.name
         holder.binding.tvGameHub.text = item.hubInfo
-        holder.binding.tvGamePing.text = "⚡ ${item.pingMs} ms"
+        holder.binding.tvGamePing.text = "${item.pingMs} ms"
 
         if (isSelected) {
             holder.binding.btnBoostGame.text = "ACTIVE"

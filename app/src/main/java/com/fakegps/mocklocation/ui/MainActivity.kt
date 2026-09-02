@@ -22,6 +22,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.fakegps.mocklocation.ui.tour.SpotlightStep
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -161,7 +162,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             val nodeId = pendingVpnNodeId ?: SessionPreferences(this).activeIpNodeId
             com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, nodeId)
-            Toast.makeText(this, "🛡️ VPN Privacy Shield Activated", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "VPN Privacy Shield Activated", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "VPN permission is needed to activate Privacy Shield", Toast.LENGTH_SHORT).show()
         }
@@ -183,7 +184,7 @@ class MainActivity : AppCompatActivity() {
         settingsPrefs = AppSettingsPreferences(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        setupTouchIsolation()
         setupMap()
         setupSearch()
         setupModeTabs()
@@ -404,22 +405,88 @@ class MainActivity : AppCompatActivity() {
         permissionLauncher.launch(permissions.toTypedArray())
     }
 
+    private fun setupTouchIsolation() {
+        // Prevent touches on overlay cards and menus from bleeding into the underlying MapView
+        val consumeTouch = View.OnTouchListener { _, _ -> true }
+        binding.cardBottomContainer.setOnTouchListener(consumeTouch)
+        binding.layoutBottomContainer.setOnTouchListener(consumeTouch)
+        binding.cardSideButtons.setOnTouchListener(consumeTouch)
+        binding.cardTopBrandBar.setOnTouchListener(consumeTouch)
+        binding.cardSearchBar.setOnTouchListener(consumeTouch)
+    }
+
     private fun checkBatteryOptimizationOnFirstLaunch() {
         val prefs = SessionPreferences(this)
         if (!settingsPrefs.hasCompletedFeatureWalkthrough) {
-            settingsPrefs.hasCompletedFeatureWalkthrough = true
-            com.fakegps.mocklocation.ui.dialogs.AppTutorialDialog(this) {
-                if (!prefs.hasPromptedBatteryOptimization && !PermissionHelper.isIgnoringBatteryOptimizations(this)) {
-                    prefs.hasPromptedBatteryOptimization = true
-                    com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
+            binding.root.postDelayed({
+                startInteractiveHomeSpotlightTour {
+                    if (!prefs.hasPromptedBatteryOptimization && !PermissionHelper.isIgnoringBatteryOptimizations(this)) {
+                        prefs.hasPromptedBatteryOptimization = true
+                        com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
+                    }
                 }
-            }.show()
+            }, 600L)
         } else if (!prefs.hasPromptedBatteryOptimization && !PermissionHelper.isIgnoringBatteryOptimizations(this)) {
             prefs.hasPromptedBatteryOptimization = true
             com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
         } else if (!prefs.hasPromptedExactAlarmPermission && !PermissionHelper.canScheduleExactAlarms(this)) {
             prefs.hasPromptedExactAlarmPermission = true
             com.fakegps.mocklocation.ui.dialogs.ExactAlarmPermissionDialog(this).show()
+        }
+    }
+
+    private fun startInteractiveHomeSpotlightTour(onFinished: (() -> Unit)? = null) {
+        val steps = listOf(
+            SpotlightStep(
+                targetViewProvider = { binding.cardSearchBar },
+                title = "Global Address & Coordinates",
+                description = "Search any city, street address, or exact GPS coordinates. Or tap preset destination chips to warp instantly.",
+                iconRes = R.drawable.ic_search,
+                stepNumber = 1,
+                totalSteps = 5,
+                paddingDp = 6f
+            ),
+            SpotlightStep(
+                targetViewProvider = { binding.cardTopBrandBar },
+                title = "Status HUD & Privacy Engine",
+                description = "Live Weather Radar, WireGuard IP Privacy Shield, Ghost Cloaking, and Game Booster live in your top status bar.",
+                iconRes = R.drawable.ic_shield_check,
+                stepNumber = 2,
+                totalSteps = 5,
+                paddingDp = 6f
+            ),
+            SpotlightStep(
+                targetViewProvider = { binding.cardSideButtons },
+                title = "Quick Map Controls",
+                description = "Instant access to Zoom In/Out, Center Target, Save Bookmarks, History, Map Layers (Satellite/Vector), and Altitude settings.",
+                iconRes = R.drawable.ic_layers,
+                stepNumber = 3,
+                totalSteps = 5,
+                paddingDp = 6f
+            ),
+            SpotlightStep(
+                targetViewProvider = { binding.rgModeTabs },
+                title = "Simulation Modes",
+                description = "Switch between 3 simulation engines: Fixed Pin Teleport, Multi-Point Route Simulation, and 360° Real-time Joystick.",
+                iconRes = R.drawable.ic_teleport,
+                stepNumber = 4,
+                totalSteps = 5,
+                paddingDp = 6f
+            ),
+            SpotlightStep(
+                targetViewProvider = { binding.btnFixedToggle },
+                title = "Master Teleport Control",
+                description = "Tap Start to engage mock location system-wide across all apps and games. Tap Stop anytime to restore real GPS.",
+                iconRes = R.drawable.ic_play,
+                stepNumber = 5,
+                totalSteps = 5,
+                paddingDp = 8f
+            )
+        )
+
+        binding.spotlightTourOverlay.startTour(steps) {
+            settingsPrefs.hasCompletedFeatureWalkthrough = true
+            onFinished?.invoke()
         }
     }
 
@@ -521,6 +588,10 @@ class MainActivity : AppCompatActivity() {
                     longitude = lon
                 )
 
+                val sessionPrefs = SessionPreferences(this@MainActivity)
+                sessionPrefs.lastLocationName = title
+                com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
+
                 binding.rvSearchResults.visibility = View.GONE
                 binding.etAddressSearch.setText(title)
                 binding.etAddressSearch.setSelection(title.length)
@@ -578,7 +649,7 @@ class MainActivity : AppCompatActivity() {
             val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Mock Location Coordinates", coordsText)
             clipboard?.setPrimaryClip(clip)
-            Toast.makeText(this, "📋 Coordinates copied: $coordsText", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Coordinates copied: $coordsText", Toast.LENGTH_SHORT).show()
         }
 
         // Quick Preset Destination Chips
@@ -609,7 +680,12 @@ class MainActivity : AppCompatActivity() {
         binding.mapView.controller.setZoom(16.0)
         viewModel.setFixedCoordinates(lat, lon)
         updateFixedPinMarker(lat, lon)
-        Toast.makeText(this, "📍 Focused: $name", Toast.LENGTH_SHORT).show()
+
+        val sessionPrefs = SessionPreferences(this)
+        sessionPrefs.lastLocationName = name
+        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+
+        Toast.makeText(this, "Focused: $name", Toast.LENGTH_SHORT).show()
     }
 
     private fun showRecentHistory() {
@@ -1027,7 +1103,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.fabAppTutorial.setOnClickListener {
-            com.fakegps.mocklocation.ui.dialogs.AppTutorialDialog(this).show()
+            startInteractiveHomeSpotlightTour()
         }
     }
 

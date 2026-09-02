@@ -169,7 +169,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
             performHapticFeedback()
             if (isChecked) {
                 HotspotLocationServer.startServer(requireContext())
-                Toast.makeText(requireContext(), "🛰️ Hotspot GPS Broadcast Started (BETA)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Hotspot GPS Broadcast Active", Toast.LENGTH_SHORT).show()
             } else {
                 HotspotLocationServer.stopServer()
                 Toast.makeText(requireContext(), "Hotspot GPS Broadcast Stopped", Toast.LENGTH_SHORT).show()
@@ -182,7 +182,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
             val clip = ClipData.newPlainText("Hotspot GPS URL", url)
             clipboard.setPrimaryClip(clip)
             showCopySuccessFeedback(binding.btnCopyHotspotUrl)
-            Toast.makeText(requireContext(), "✅ URL copied to clipboard: $url", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "URL copied to clipboard: $url", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnCopyHotspotUrl.setOnClickListener {

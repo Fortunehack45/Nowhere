@@ -48,6 +48,10 @@ class SessionPreferences(private val context: Context) {
         get() = Double.fromBits(prefs.getLong(KEY_LAST_ALTITUDE, 15.0.toBits()))
         set(value) = prefs.edit().putLong(KEY_LAST_ALTITUDE, value.toBits()).apply()
 
+    var lastLocationName: String
+        get() = prefs.getString("key_last_location_name", "") ?: ""
+        set(value) = prefs.edit().putString("key_last_location_name", value).apply()
+
     var lastSpeedKmh: Float
         get() = prefs.getFloat(KEY_LAST_SPEED_KMH, 20.0f)
         set(value) = prefs.edit().putFloat(KEY_LAST_SPEED_KMH, value).apply()

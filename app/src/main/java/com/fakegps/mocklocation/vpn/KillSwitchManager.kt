@@ -123,7 +123,7 @@ object KillSwitchManager {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_shield_check)
-            .setContentTitle("🛡️ Privacy Kill Switch Active")
+            .setContentTitle("Privacy Kill Switch Active")
             .setContentText("Internet paused to protect real IP & GPS: $reason")
             .setStyle(NotificationCompat.BigTextStyle().bigText("Internet traffic is physically halted at the OS level because $reason. Tap to resume mock protection or bypass the kill switch."))
             .setPriority(NotificationCompat.PRIORITY_HIGH)

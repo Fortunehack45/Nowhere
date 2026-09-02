@@ -107,7 +107,7 @@ class KillSwitchSinkholeService : VpnService() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_shield_check)
-            .setContentTitle("🛡️ Kill Switch: Internet Halted")
+            .setContentTitle("Kill Switch: Internet Halted")
             .setContentText("Protected: $reason")
             .setStyle(NotificationCompat.BigTextStyle().bigText("All device internet traffic is stopped at the OS level to protect your real location. Tap to resume mock GPS or 1-tap bypass."))
             .setPriority(NotificationCompat.PRIORITY_HIGH)

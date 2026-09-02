@@ -1,4 +1,4 @@
-﻿package com.fakegps.mocklocation.ui.widget
+package com.fakegps.mocklocation.ui.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -53,16 +53,16 @@ class NowhereGameBoostWidgetProvider : AppWidgetProvider() {
             if (isRunning) {
                 views.setTextViewText(R.id.tvWidgetGameStatus, "BOOSTED")
                 views.setTextColor(R.id.tvWidgetGameStatus, ContextCompat.getColor(context, R.color.badge_active_text))
-                views.setTextViewText(R.id.btnWidgetGameBoostToggle, "⏹️ Stop Boost")
-                views.setTextViewText(R.id.tvWidgetGameName, "$activeGameIcon $activeGameName")
-                views.setTextViewText(R.id.tvWidgetGameStats, "⚡ FastPath Active • 14ms • DSCP 46 EF")
+                views.setTextViewText(R.id.btnWidgetGameBoostToggle, "Stop Boost")
+                views.setTextViewText(R.id.tvWidgetGameName, activeGameName)
+                views.setTextViewText(R.id.tvWidgetGameStats, "FastPath Active • 14ms • DSCP 46 EF")
                 views.setTextViewText(R.id.tvWidgetGameData, "↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
             } else {
                 views.setTextViewText(R.id.tvWidgetGameStatus, "READY")
                 views.setTextColor(R.id.tvWidgetGameStatus, ContextCompat.getColor(context, R.color.text_muted))
-                views.setTextViewText(R.id.btnWidgetGameBoostToggle, "⚡ Boost Now")
-                views.setTextViewText(R.id.tvWidgetGameName, "$activeGameIcon $activeGameName")
-                views.setTextViewText(R.id.tvWidgetGameStats, "⚡ Google BBR FastPath • 10 Gbps Pipeline")
+                views.setTextViewText(R.id.btnWidgetGameBoostToggle, "Boost Now")
+                views.setTextViewText(R.id.tvWidgetGameName, activeGameName)
+                views.setTextViewText(R.id.tvWidgetGameStats, "Google BBR FastPath • 10 Gbps Pipeline")
                 views.setTextViewText(R.id.tvWidgetGameData, "↓ 0.00 KB  ↑ 0.00 KB (Standby)")
             }
 
@@ -128,7 +128,7 @@ class NowhereGameBoostWidgetProvider : AppWidgetProvider() {
                     } else {
                         val gameId = sessionPrefs.lastSelectedGameId.ifEmpty { "cod_mobile" }
                         val gameName = sessionPrefs.lastSelectedGameName.ifEmpty { "Call of Duty: Mobile / Warzone" }
-                        Toast.makeText(context, "⚡ Optimizing FastPath routing for $gameName...", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Optimizing FastPath routing for $gameName...", Toast.LENGTH_SHORT).show()
 
                         CoroutineScope(Dispatchers.IO).launch {
                             val result = NowhereApiClient.optimizeGame(context, gameId)
@@ -138,7 +138,7 @@ class NowhereGameBoostWidgetProvider : AppWidgetProvider() {
                                     NowhereVpnService.startWithTunnelResponse(
                                         context = context,
                                         response = tunnelConfig,
-                                        customName = "🚀 Game Boost: $gameName"
+                                        customName = "Game Boost: $gameName"
                                     )
                                 }
                             }

@@ -135,7 +135,7 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
                 matchSlot3 -> s3Name.uppercase()
                 else -> "ACTIVE"
             }
-            views.setTextViewText(R.id.tvFavWidgetStatus, "📍 $activeName")
+            views.setTextViewText(R.id.tvFavWidgetStatus, activeName)
             views.setTextColor(R.id.tvFavWidgetStatus, ContextCompat.getColor(context, R.color.badge_active_text))
         } else {
             views.setTextViewText(R.id.tvFavWidgetStatus, "STANDBY")

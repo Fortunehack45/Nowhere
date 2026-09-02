@@ -58,6 +58,14 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             val isActive = sessionPrefs.isSessionActive
             val lat = sessionPrefs.lastLatitude
             val lon = sessionPrefs.lastLongitude
+            val locName = if (sessionPrefs.lastLocationName.isNotBlank()) {
+                sessionPrefs.lastLocationName
+            } else {
+                val latDir = if (lat >= 0) "N" else "S"
+                val lonDir = if (lon >= 0) "E" else "W"
+                String.format(java.util.Locale.US, "%.4f° %s, %.4f° %s", Math.abs(lat), latDir, Math.abs(lon), lonDir)
+            }
+            views.setTextViewText(R.id.tvWidgetLocationName, locName)
 
             if (isActive) {
                 views.setTextViewText(R.id.tvWidgetStatus, "ACTIVE")

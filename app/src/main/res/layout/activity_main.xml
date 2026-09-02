@@ -623,6 +623,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
+        android:clickable="true"
+        android:focusable="true"
         app:cardBackgroundColor="@color/surface_card"
         app:cardCornerRadius="18dp"
         app:cardElevation="0dp"
@@ -815,6 +817,8 @@
         android:id="@+id/cardBottomContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clickable="true"
+        android:focusable="true"
         app:cardBackgroundColor="@color/surface_card"
         app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
@@ -826,6 +830,8 @@
             android:id="@+id/layoutBottomContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
             android:orientation="vertical"
             android:padding="16dp">
 
@@ -1516,5 +1522,16 @@
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <!-- Apple-Minimal Interactive Spotlight Walkthrough Overlay -->
+    <com.fakegps.mocklocation.ui.tour.SpotlightTourOverlayView
+        android:id="@+id/spotlightTourOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

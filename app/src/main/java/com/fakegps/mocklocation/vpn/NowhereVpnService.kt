@@ -609,14 +609,14 @@ class NowhereVpnService : VpnService() {
             .setContentIntent(pendingIntent)
 
         if (isGameBoost) {
-            val gameTitle = node.name.removePrefix("🚀 Game Boost: ").trim()
-            builder.setContentTitle("⚡ Game Boost Active • $gameTitle")
-                .setContentText("⚡ FastPath Active • ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
-                .setStyle(NotificationCompat.BigTextStyle().bigText("🎮 Optimized Game: $gameTitle\n⚡ Route: ${node.virtualIp} (${node.city}) • Google BBR DSCP 46 EF\n📊 Bandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
+            val gameTitle = node.name.removePrefix("Game Boost: ").removePrefix("🚀 Game Boost: ").trim()
+            builder.setContentTitle("Game Boost Active • $gameTitle")
+                .setContentText("FastPath Active • ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
+                .setStyle(NotificationCompat.BigTextStyle().bigText("Optimized Game: $gameTitle\nRoute: ${node.virtualIp} (${node.city}) • Google BBR DSCP 46 EF\nBandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
                 .addAction(R.drawable.ic_launcher_monochrome, "Switch Game", pendingIntent)
                 .addAction(R.drawable.ic_close, "Stop Boost", disconnectPendingIntent)
         } else {
-            builder.setContentTitle("🔒 Nowhere IP Shield Active • ${node.country}")
+            builder.setContentTitle("Nowhere IP Shield • ${node.country}")
                 .setContentText("↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
                 .setStyle(NotificationCompat.BigTextStyle().bigText("Masked Egress IP: ${node.virtualIp} (${node.city}, ${node.country})\nTotal Bandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
                 .addAction(R.drawable.ic_close, "Disconnect", disconnectPendingIntent)

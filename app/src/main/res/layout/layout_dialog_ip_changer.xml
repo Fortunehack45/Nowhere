@@ -80,7 +80,7 @@
                 android:background="@drawable/bg_status_pill"
                 android:backgroundTint="@color/surface_elevated"
                 android:gravity="center"
-                android:text="🌐 VPN Nodes"
+                android:text="VPN Gateways"
                 android:textColor="@color/text_primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -92,7 +92,7 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:gravity="center"
-                android:text="🎮 Game Boost"
+                android:text="Game Booster"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -104,7 +104,7 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:gravity="center"
-                android:text="🛡️ Kill Switch"
+                android:text="Kill Switch"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -553,17 +553,18 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="⚡"
-                            android:textSize="16sp" />
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:src="@drawable/ic_bolt"
+                            app:tint="@color/badge_success_text"
+                            tools:ignore="ContentDescription" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:text="MILLISECOND LATENCY ACCELERATOR"
+                            android:text="LOW LATENCY ROUTE ACCELERATOR"
                             android:textColor="@color/badge_success_text"
                             android:textSize="10.5sp"
                             android:textStyle="bold" />
@@ -738,7 +739,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="10dp"
-                android:text="⚡ Temporary Emergency Bypass (Allow Internet)"
+                android:text="Temporary Emergency Bypass (Allow Internet)"
                 android:textColor="@color/primary"
                 android:textSize="12.5sp"
                 android:textStyle="bold"

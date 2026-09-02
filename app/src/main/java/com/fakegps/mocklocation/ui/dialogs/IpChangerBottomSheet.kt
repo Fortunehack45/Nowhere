@@ -217,7 +217,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
             sessionPrefs.lastSelectedGameIcon = selectedGame.emoji
             com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(ctx)
 
-            Toast.makeText(ctx, "⚡ Optimizing ${selectedGame.name} routing...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, "Optimizing ${selectedGame.name} routing...", Toast.LENGTH_SHORT).show()
 
             viewLifecycleOwner.lifecycleScope.launch {
                 val result = NowhereApiClient.optimizeGame(
@@ -227,7 +227,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 if (result.isSuccess) {
                     val tunnelConfig = result.getOrNull()
                     if (tunnelConfig != null) {
-                        val customName = "🚀 Game Boost: ${selectedGame.name}"
+                        val customName = "Game Boost: ${selectedGame.name}"
                         val vpnIntent = VpnService.prepare(ctx)
                         if (vpnIntent != null) {
                             pendingTunnelConfigToConnect = tunnelConfig
@@ -239,14 +239,14 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                                 response = tunnelConfig,
                                 customName = customName
                             )
-                            Toast.makeText(ctx, "🚀 Game Boost Active: ${selectedGame.name} (${tunnelConfig.countryName}, ${tunnelConfig.estimatedPingMs}ms)!", Toast.LENGTH_LONG).show()
+                            Toast.makeText(ctx, "Game Boost Active: ${selectedGame.name} (${tunnelConfig.countryName}, ${tunnelConfig.estimatedPingMs}ms)", Toast.LENGTH_LONG).show()
                         }
                     } else {
-                        Toast.makeText(ctx, "⚠️ Game Boost optimization returned empty data", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(ctx, "Game Boost optimization returned empty data", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     val errMsg = result.exceptionOrNull()?.message ?: "Game boost server unavailable"
-                    Toast.makeText(ctx, "❌ Game Boost Failed: $errMsg", Toast.LENGTH_LONG).show()
+                    Toast.makeText(ctx, "Game Boost Failed: $errMsg", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -261,7 +261,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         binding.switchKillSwitchMaster.setOnCheckedChangeListener { _, isChecked ->
             context?.let { ctx ->
                 KillSwitchManager.setEnabled(ctx, isChecked)
-                Toast.makeText(ctx, if (isChecked) "🛡️ Kill Switch Armed: Leak Protection ON" else "Kill Switch Disabled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, if (isChecked) "Kill Switch Armed: Leak Protection ON" else "Kill Switch Disabled", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -270,11 +270,11 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 val newBypassState = !sessionPrefs.isKillSwitchBypassed
                 KillSwitchManager.setBypassed(ctx, newBypassState)
                 if (newBypassState) {
-                    Toast.makeText(ctx, "⚡ Emergency Bypass Active (Internet allowed)", Toast.LENGTH_SHORT).show()
-                    binding.btnKillSwitchBypass.text = "🔒 Re-Arm Kill Switch Shield"
+                    Toast.makeText(ctx, "Emergency Bypass Active (Internet allowed)", Toast.LENGTH_SHORT).show()
+                    binding.btnKillSwitchBypass.text = "Re-Arm Kill Switch Shield"
                 } else {
-                    Toast.makeText(ctx, "🛡️ Kill Switch Re-Armed", Toast.LENGTH_SHORT).show()
-                    binding.btnKillSwitchBypass.text = "⚡ Temporary Emergency Bypass (Allow Internet)"
+                    Toast.makeText(ctx, "Kill Switch Re-Armed", Toast.LENGTH_SHORT).show()
+                    binding.btnKillSwitchBypass.text = "Temporary Emergency Bypass (Allow Internet)"
                 }
             }
         }
@@ -295,7 +295,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                         binding.ivKillSwitchShield.setColorFilter(ContextCompat.getColor(ctx, R.color.badge_success_text))
                     }
                     is KillSwitchManager.KillSwitchStatus.Triggered -> {
-                        binding.tvKillSwitchStateTitle.text = "⚡ Kill Switch Engaged"
+                        binding.tvKillSwitchStateTitle.text = "Kill Switch Engaged"
                         binding.tvKillSwitchBadge.text = "LEAK SHIELDED"
                         binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.btn_stop_text))
                         binding.tvKillSwitchDescription.text = "Internet access paused because ${status.reason}. Tap Resume to continue or use Temporary Bypass."
