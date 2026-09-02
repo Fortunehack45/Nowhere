@@ -57,7 +57,15 @@ class UnifiedSearchAdapter(
                     binding.ivItemTypeIcon.setColorFilter(ContextCompat.getColor(itemView.context, R.color.text_muted))
                     binding.btnItemDelete.visibility = View.VISIBLE
                     binding.btnItemDelete.setOnClickListener {
-                        onDeleteHistoryClicked(entry.item)
+                        val pos = adapterPosition
+                        if (pos != RecyclerView.NO_POSITION && pos < entries.size) {
+                            val removedItem = (entries[pos] as? SearchEntry.History)?.item
+                            entries.removeAt(pos)
+                            notifyItemRemoved(pos)
+                            if (removedItem != null) {
+                                onDeleteHistoryClicked(removedItem)
+                            }
+                        }
                     }
                     binding.root.setOnClickListener {
                         onEntryClicked(entry.item.title, entry.item.snippet, entry.item.latitude, entry.item.longitude)

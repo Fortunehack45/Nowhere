@@ -22,22 +22,23 @@ class MockLocationApp : Application() {
             load(this@MockLocationApp, sharedPrefs)
             userAgentValue = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36 NowhereLocationSimulator/1.0"
             if (isLowRam) {
-                cacheMapTileOvershoot = 2
-                cacheMapTileCount = 24.toShort()
-                tileDownloadThreads = 3.toShort()
-                tileDownloadMaxQueueSize = 20.toShort()
-                tileFileSystemThreads = 2.toShort()
-                tileFileSystemCacheMaxBytes = 50L * 1024L * 1024L
-                tileFileSystemCacheTrimBytes = 40L * 1024L * 1024L
-            } else {
-                cacheMapTileOvershoot = 4
-                cacheMapTileCount = 60.toShort()
-                tileDownloadThreads = 8.toShort()
+                cacheMapTileOvershoot = 3
+                cacheMapTileCount = 40.toShort()
+                tileDownloadThreads = 6.toShort()
                 tileDownloadMaxQueueSize = 40.toShort()
                 tileFileSystemThreads = 4.toShort()
-                tileFileSystemCacheMaxBytes = 200L * 1024L * 1024L
-                tileFileSystemCacheTrimBytes = 160L * 1024L * 1024L
+                tileFileSystemCacheMaxBytes = 100L * 1024L * 1024L
+                tileFileSystemCacheTrimBytes = 80L * 1024L * 1024L
+            } else {
+                cacheMapTileOvershoot = 6
+                cacheMapTileCount = 120.toShort()
+                tileDownloadThreads = 12.toShort()
+                tileDownloadMaxQueueSize = 80.toShort()
+                tileFileSystemThreads = 6.toShort()
+                tileFileSystemCacheMaxBytes = 500L * 1024L * 1024L
+                tileFileSystemCacheTrimBytes = 400L * 1024L * 1024L
             }
+            expirationExtendedDuration = 1000L * 60L * 60L * 24L * 30L
             isMapViewHardwareAccelerated = true
         }
 

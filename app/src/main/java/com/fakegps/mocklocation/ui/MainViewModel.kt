@@ -208,6 +208,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update { it.copy(routeWaypoints = directPath, isUsingDirectRouteFallback = false) }
 
             routeResolutionJob = viewModelScope.launch(Dispatchers.IO) {
+                // Smart terrain & water analysis: auto-switch transport mode if needed
+                val optimalMode = com.fakegps.mocklocation.simulator.RoadRouter.determineOptimalTransportMode(
+                    getApplication(),
+                    keys,
+                    _uiState.value.transportMode
+                )
+
+                if (optimalMode != _uiState.value.transportMode) {
+                    withContext(Dispatchers.Main) {
+                        setTransportMode(optimalMode)
+                    }
+                    return@launch
+                }
+
                 val result = com.fakegps.mocklocation.simulator.RoadRouter.resolveRealWorldRouteWithStatus(keys, _uiState.value.transportMode)
                 sessionPrefs.saveWaypoints(result.waypoints)
                 if (result.isFallbackDirectPath) {

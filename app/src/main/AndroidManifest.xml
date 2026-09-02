@@ -39,9 +39,9 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.MockLocation">
 
-        <!-- Feature Walkthrough Onboarding Carousel -->
+        <!-- System & Permission Readiness Screen (Initial App Gateway) -->
         <activity
-            android:name=".ui.FeatureWalkthroughActivity"
+            android:name=".ui.WelcomeActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:theme="@style/Theme.MockLocation">
@@ -50,13 +50,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- System & Permission Readiness Screen -->
-        <activity
-            android:name=".ui.WelcomeActivity"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:theme="@style/Theme.MockLocation" />
 
         <!-- Main Simulation HUD Dashboard -->
         <activity

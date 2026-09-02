@@ -25,28 +25,63 @@
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
 
-    <!-- Name Input -->
-    <com.google.android.material.textfield.TextInputLayout
+    <!-- Name Input with Auto-Lookup -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:hint="City or Country Name"
-        app:boxBackgroundColor="@color/surface_card"
-        app:boxCornerRadiusBottomEnd="10dp"
-        app:boxCornerRadiusBottomStart="10dp"
-        app:boxCornerRadiusTopEnd="10dp"
-        app:boxCornerRadiusTopStart="10dp"
-        app:boxStrokeColor="@color/primary"
-        app:hintTextColor="@color/primary">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etSlotName"
-            android:layout_width="match_parent"
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:inputType="textCapWords"
-            android:textColor="@color/text_primary"
-            android:textSize="14sp" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_weight="1"
+            android:hint="City or Country Name (e.g. Paris)"
+            app:boxBackgroundColor="@color/surface_card"
+            app:boxCornerRadiusBottomEnd="10dp"
+            app:boxCornerRadiusBottomStart="10dp"
+            app:boxCornerRadiusTopEnd="10dp"
+            app:boxCornerRadiusTopStart="10dp"
+            app:boxStrokeColor="@color/primary"
+            app:hintTextColor="@color/primary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSlotName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapWords"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLookupCoords"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@color/surface_card_elevated"
+            android:text="Find"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            app:cornerRadius="10dp"
+            app:icon="@drawable/ic_search"
+            app:iconPadding="4dp"
+            app:iconSize="16dp"
+            app:iconTint="@color/primary" />
+    </LinearLayout>
+
+    <!-- Geocoding Feedback / Status -->
+    <TextView
+        android:id="@+id/tvGeocodingStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:layout_marginStart="4dp"
+        android:text="💡 Type any city/place and tap Find to auto-fill coordinates"
+        android:textColor="@color/text_muted"
+        android:textSize="11sp" />
 
     <!-- Latitude Input -->
     <com.google.android.material.textfield.TextInputLayout

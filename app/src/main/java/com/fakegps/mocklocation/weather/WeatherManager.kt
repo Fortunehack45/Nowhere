@@ -1,9 +1,11 @@
 package com.fakegps.mocklocation.weather
 
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -28,7 +30,7 @@ object WeatherManager {
 
     private const val TAG = "WeatherManager"
     private const val WEATHER_NOTIFICATION_ID = 5005
-    private const val WEATHER_CHANNEL_ID = "nowhere_service_channel"
+    private const val WEATHER_CHANNEL_ID = "nowhere_weather_channel"
 
     private var cachedReport: LocationWeatherReport? = null
     private var lastFetchTimestamp: Long = 0L
@@ -230,12 +232,37 @@ object WeatherManager {
         return@withContext fallbackReport
     }
 
+    private fun ensureNotificationChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = context.getSystemService(NotificationManager::class.java) ?: return
+            val existing = manager.getNotificationChannel(WEATHER_CHANNEL_ID)
+            if (existing == null) {
+                val channel = NotificationChannel(
+                    WEATHER_CHANNEL_ID,
+                    "Nowhere Weather Alerts",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "Alerts you when significant weather conditions change at your mock or current location"
+                    enableLights(true)
+                    setShowBadge(true)
+                }
+                manager.createNotificationChannel(channel)
+            }
+        }
+    }
+
     private fun sendWeatherChangeNotification(
         context: Context,
         oldReport: LocationWeatherReport,
         newReport: LocationWeatherReport
     ) {
         try {
+            ensureNotificationChannel(context)
+            if (!androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+                Log.d(TAG, "Notifications disabled, skipping weather change alert")
+                return
+            }
+
             val place = newReport.locationName.substringBefore(",").ifBlank { "Current Location" }
             val newTempStr = String.format(Locale.US, "%.1f°C", newReport.current.temperatureC)
             val oldTempStr = String.format(Locale.US, "%.1f°C", oldReport.current.temperatureC)

@@ -4,9 +4,16 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Material You Themed Icon Pure Silhouette Layer with Cutout -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M54,22 C67.25,22 78,32.75 78,46 C78,61.2 54,86 54,86 C54,86 30,61.2 30,46 C30,32.75 40.75,22 54,22 Z M54,36 C48.48,36 44,40.48 44,46 C44,51.52 48.48,56 54,56 C59.52,56 64,51.52 64,46 C64,40.48 59.52,36 54,36 Z" />
+    <!-- Scaled group: 20% zoom out (0.8x) for safe circular/squircle mask margins -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.8"
+        android:scaleY="0.8">
+        <!-- Material You Themed Icon Pure Silhouette Layer with Cutout -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M54,22 C67.25,22 78,32.75 78,46 C78,61.2 54,86 54,86 C54,86 30,61.2 30,46 C30,32.75 40.75,22 54,22 Z M54,36 C48.48,36 44,40.48 44,46 C44,51.52 48.48,56 54,56 C59.52,56 64,51.52 64,46 C64,40.48 59.52,36 54,36 Z" />
+    </group>
 </vector>

@@ -79,9 +79,16 @@ object NowhereApiClient {
                 setRequestProperty("X-API-Key", getApiKey(context))
             }
 
+            val effectiveNodeId = if (nodeId.isNullOrEmpty() || nodeId.startsWith("uk_") || nodeId.startsWith("de_") || nodeId.startsWith("jp_") || nodeId.startsWith("sg_") || nodeId.startsWith("ca_") || nodeId.startsWith("au_") || nodeId.startsWith("in_") || nodeId.startsWith("br_") || nodeId.startsWith("za_")) {
+                "us_central_gcp"
+            } else {
+                nodeId
+            }
+            val effectiveCountry = if (effectiveNodeId == "us_central_gcp") "US" else (country ?: "US")
+
             val jsonBody = JSONObject().apply {
-                if (!nodeId.isNullOrEmpty()) put("node_id", nodeId)
-                if (!country.isNullOrEmpty()) put("country", country)
+                put("node_id", effectiveNodeId)
+                put("country", effectiveCountry)
                 if (!clientPublicKey.isNullOrEmpty()) put("client_public_key", clientPublicKey)
             }
 

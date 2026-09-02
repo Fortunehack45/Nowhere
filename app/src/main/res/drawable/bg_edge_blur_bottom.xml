@@ -1,10 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <gradient
-        android:angle="90"
-        android:startColor="@color/edge_blur_bottom_end"
-        android:centerColor="@color/edge_blur_bottom_mid"
-        android:endColor="@color/edge_blur_bottom_start"
-        android:type="linear" />
-</shape>
+<!-- Silky-smooth multi-layer cubic easing gradient — zero visible line -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Gentle deep base falloff -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:startColor="#59000000"
+                android:endColor="#00000000"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- Mid-range dispersion -->
+    <item android:top="60dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:startColor="#8C000000"
+                android:endColor="#00000000"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- Bottom solid navigation mask -->
+    <item android:top="140dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:startColor="#E6000000"
+                android:endColor="#00000000"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

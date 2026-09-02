@@ -62,6 +62,45 @@ object RoadRouter {
         }
 
     /**
+     * Evaluates waypoints and automatically determines the most realistic transport mode:
+     * - SHIP: When origin and destination are located in marine water bodies (oceans, seas, lakes, rivers).
+     * - AIRCRAFT: When waypoints cross open sea/ocean with no road bridges, or no road route exists.
+     * - VEHICLE / FOOT: When a valid road network connects the waypoints.
+     */
+    suspend fun determineOptimalTransportMode(
+        context: Context,
+        waypoints: List<RoutePoint>,
+        currentMode: TransportMode
+    ): TransportMode = withContext(Dispatchers.IO) {
+        if (waypoints.size < 2) return@withContext currentMode
+
+        val start = waypoints.first()
+        val end = waypoints.last()
+
+        val isStartWater = LocationNameResolver.isWaterCoordinate(context, start.latitude, start.longitude)
+        val isEndWater = LocationNameResolver.isWaterCoordinate(context, end.latitude, end.longitude)
+
+        // 1. Water-to-Water -> Ship navigation
+        if (isStartWater && isEndWater) {
+            return@withContext TransportMode.SHIP
+        }
+
+        // 2. Test if OSRM can route along real-world road networks
+        val testRoad = tryFetchOsrmRoute(listOf(start, end), TransportMode.VEHICLE)
+        if (testRoad.size >= 2) {
+            return@withContext if (currentMode == TransportMode.FOOT) TransportMode.FOOT else TransportMode.VEHICLE
+        }
+
+        // 3. No road route connecting the points (e.g. crossing sea/ocean or separate continents/islands) -> Aircraft
+        val distMeters = GeoUtils.calculateDistanceMeters(start.latitude, start.longitude, end.latitude, end.longitude)
+        if (distMeters > 15000.0) {
+            return@withContext TransportMode.AIRCRAFT
+        }
+
+        return@withContext currentMode
+    }
+
+    /**
      * Resolves the shortest real-world route between waypoints with status reporting:
      * - VEHICLE / FOOT: Follows shortest real roads/streets via OSRM, or degrades gracefully to direct path when offline.
      * - AIRCRAFT: Follows shortest Great-Circle flight paths with realistic climb, cruise (9500m), and descent curves.

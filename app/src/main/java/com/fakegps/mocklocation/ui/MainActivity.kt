@@ -443,7 +443,7 @@ class MainActivity : AppCompatActivity() {
                 description = "Type any global city, address, or exact GPS coordinates (e.g. 37.7749, -122.4194) to immediately center the target pin.",
                 iconRes = R.drawable.ic_search,
                 stepNumber = 1,
-                totalSteps = 6,
+                totalSteps = 5,
                 paddingDp = 6f
             ),
             SpotlightStep(
@@ -452,7 +452,7 @@ class MainActivity : AppCompatActivity() {
                 description = "1-tap teleport shortcuts to famous world cities (Paris, New York, Tokyo, Dubai, London, Honolulu) without typing.",
                 iconRes = R.drawable.ic_location_pin,
                 stepNumber = 2,
-                totalSteps = 6,
+                totalSteps = 5,
                 paddingDp = 6f
             ),
             SpotlightStep(
@@ -461,7 +461,7 @@ class MainActivity : AppCompatActivity() {
                 description = "Monitor your WireGuard IP Shield, Ghost Cloak anti-detection suite, local weather radar, and active session countdown timer.",
                 iconRes = R.drawable.ic_shield_check,
                 stepNumber = 3,
-                totalSteps = 6,
+                totalSteps = 5,
                 paddingDp = 6f
             ),
             SpotlightStep(
@@ -470,26 +470,20 @@ class MainActivity : AppCompatActivity() {
                 description = "Instant access to zoom controls, Center On Target, Bookmark Favorites, Simulation History, and Map Layer selection.",
                 iconRes = R.drawable.ic_layers,
                 stepNumber = 4,
-                totalSteps = 6,
+                totalSteps = 5,
                 paddingDp = 6f
             ),
             SpotlightStep(
-                targetViewProvider = { binding.rgModeTabs },
-                title = "Simulation Modes",
-                description = "Switch between Fixed Pin teleport, Multi-Point Route Simulation with custom realistic speed, or 360° Floating Joystick.",
+                targetViewProvider = {
+                    setBottomDeckExpanded(true)
+                    binding.cardBottomContainer
+                },
+                title = "Control Deck & Simulation Modes",
+                description = "Switch between Fixed Pin teleport, Multi-Point Route Simulation, and 360° Floating Joystick. Tap Start Mocking to inject GPS globally across all apps.",
                 iconRes = R.drawable.ic_route,
                 stepNumber = 5,
-                totalSteps = 6,
-                paddingDp = 6f
-            ),
-            SpotlightStep(
-                targetViewProvider = { binding.btnFixedToggle },
-                title = "Master Mock GPS Injection",
-                description = "Tap to start injecting your simulated GPS coordinates across all Android apps, games, and browsers. Tap Stop anytime to restore real GPS.",
-                iconRes = R.drawable.ic_play,
-                stepNumber = 6,
-                totalSteps = 6,
-                paddingDp = 8f
+                totalSteps = 5,
+                paddingDp = 4f
             )
         )
 
@@ -534,43 +528,81 @@ class MainActivity : AppCompatActivity() {
         })
         binding.mapView.overlays.add(0, mapEventsOverlay)
 
-        var lastDoubleTapDownTime = 0L
-        var isDoubleTapDragZooming = false
-        var doubleTapStartY = 0f
+        val density = resources.displayMetrics.density
+        binding.mapView.cameraDistance = density * 6000f
+        binding.mapView.pivotY = resources.displayMetrics.heightPixels * 0.70f
 
-        val gestureDetector = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
+        var isDoubleTapDragging = false
+        var lastDoubleTapDragY = 0f
+
+        val doubleTapGestureDetector = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: android.view.MotionEvent): Boolean {
-                lastDoubleTapDownTime = System.currentTimeMillis()
-                doubleTapStartY = e.y
+                isDoubleTapDragging = true
+                lastDoubleTapDragY = e.y
+                return true
+            }
+
+            override fun onDoubleTapEvent(e: android.view.MotionEvent): Boolean {
+                when (e.actionMasked) {
+                    android.view.MotionEvent.ACTION_MOVE -> {
+                        if (isDoubleTapDragging) {
+                            val deltaY = lastDoubleTapDragY - e.y
+                            if (Math.abs(deltaY) > 2f) {
+                                val currentZoom = binding.mapView.zoomLevelDouble
+                                val zoomChange = deltaY * 0.008
+                                val targetZoom = (currentZoom + zoomChange).coerceIn(3.0, 21.0)
+                                binding.mapView.controller.setZoom(targetZoom)
+                                lastDoubleTapDragY = e.y
+                            }
+                            return true
+                        }
+                    }
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        isDoubleTapDragging = false
+                    }
+                }
                 return false
             }
         })
 
+        var initialTwoFingerY = 0f
+        var isTwoFingerTilting = false
+        var currentMapTilt = 0f
+
         binding.mapView.setOnTouchListener { _, event ->
-            gestureDetector.onTouchEvent(event)
-            when (event.actionMasked) {
-                android.view.MotionEvent.ACTION_DOWN -> {
-                    val now = System.currentTimeMillis()
-                    if (now - lastDoubleTapDownTime < 350L) {
-                        isDoubleTapDragZooming = true
-                        doubleTapStartY = event.y
-                    }
-                }
-                android.view.MotionEvent.ACTION_MOVE -> {
-                    if (isDoubleTapDragZooming) {
-                        val deltaY = doubleTapStartY - event.y
-                        if (Math.abs(deltaY) > 6f) {
-                            val zoomChange = (deltaY / 200.0)
-                            val currentZoom = binding.mapView.zoomLevelDouble
-                            val targetZoom = (currentZoom + zoomChange).coerceIn(3.0, 21.0)
-                            binding.mapView.controller.setZoom(targetZoom)
-                            doubleTapStartY = event.y
+            if (event.pointerCount == 2) {
+                val y0 = event.getY(0)
+                val y1 = event.getY(1)
+                val avgY = (y0 + y1) / 2f
+                val deltaYBetweenFingers = Math.abs(y0 - y1)
+
+                when (event.actionMasked) {
+                    android.view.MotionEvent.ACTION_POINTER_DOWN -> {
+                        if (deltaYBetweenFingers < 220f * density) {
+                            initialTwoFingerY = avgY
+                            isTwoFingerTilting = true
                         }
-                        return@setOnTouchListener true
+                    }
+                    android.view.MotionEvent.ACTION_MOVE -> {
+                        if (isTwoFingerTilting) {
+                            val deltaY = initialTwoFingerY - avgY
+                            if (Math.abs(deltaY) > 3f) {
+                                currentMapTilt = (currentMapTilt + deltaY * 0.18f).coerceIn(0f, 55f)
+                                binding.mapView.rotationX = currentMapTilt
+                                initialTwoFingerY = avgY
+                            }
+                            return@setOnTouchListener true
+                        }
+                    }
+                    android.view.MotionEvent.ACTION_POINTER_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        isTwoFingerTilting = false
                     }
                 }
-                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                    isDoubleTapDragZooming = false
+            } else {
+                isTwoFingerTilting = false
+                doubleTapGestureDetector.onTouchEvent(event)
+                if (isDoubleTapDragging) {
+                    return@setOnTouchListener true
                 }
             }
             false
@@ -653,6 +685,10 @@ class MainActivity : AppCompatActivity() {
             },
             onDeleteHistoryClicked = { item ->
                 viewModel.deleteSearchHistoryItem(item)
+                latestHistoryItems = latestHistoryItems.filter { it.id != item.id }
+                if (latestHistoryItems.isEmpty()) {
+                    binding.rvSearchResults.visibility = View.GONE
+                }
             }
         )
 
@@ -714,7 +750,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.recentSearches.collectLatest { history ->
                 latestHistoryItems = history
-                if (binding.etAddressSearch.text.isNullOrBlank() && binding.etAddressSearch.hasFocus()) {
+                if (binding.rvSearchResults.visibility == View.VISIBLE && binding.etAddressSearch.text.isNullOrBlank()) {
                     showRecentHistory()
                 }
             }
@@ -947,22 +983,22 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun setBottomDeckExpanded(expanded: Boolean) {
+        try {
+            android.transition.TransitionManager.beginDelayedTransition(
+                binding.cardBottomContainer,
+                android.transition.AutoTransition().apply {
+                    duration = 200
+                }
+            )
+        } catch (ignored: Exception) {}
+
+        binding.layoutExpandableBottomControls.visibility = if (expanded) View.VISIBLE else View.GONE
+        binding.ivToggleBottomDeck.setImageResource(if (expanded) R.drawable.ic_chevron_down else R.drawable.ic_chevron_up)
+        binding.tvToggleBottomDeckLabel.text = if (expanded) "Slide down or tap to hide" else "Slide up or tap to show"
+    }
+
     private fun setupBottomDeckToggle() {
-        fun setBottomDeckExpanded(expanded: Boolean) {
-            try {
-                android.transition.TransitionManager.beginDelayedTransition(
-                    binding.cardBottomContainer,
-                    android.transition.AutoTransition().apply {
-                        duration = 200
-                    }
-                )
-            } catch (ignored: Exception) {}
-
-            binding.layoutExpandableBottomControls.visibility = if (expanded) View.VISIBLE else View.GONE
-            binding.ivToggleBottomDeck.setImageResource(if (expanded) R.drawable.ic_chevron_down else R.drawable.ic_chevron_up)
-            binding.tvToggleBottomDeckLabel.text = if (expanded) "Slide down or tap to hide" else "Slide up or tap to show"
-        }
-
         binding.btnToggleBottomDeck.setOnClickListener {
             val isCurrentlyVisible = binding.layoutExpandableBottomControls.visibility == View.VISIBLE
             setBottomDeckExpanded(!isCurrentlyVisible)
@@ -1047,11 +1083,18 @@ class MainActivity : AppCompatActivity() {
                 state.fixedLongitude
             }
             val geoPoint = GeoPoint(centerLat, centerLon)
-            if (settingsPrefs.enableMapAnimations) {
-                binding.mapView.controller.animateTo(geoPoint)
+            val currentZoom = binding.mapView.zoomLevelDouble
+            if (currentZoom < 16.0) {
+                // If zoomed out, smoothly animate position AND zoom in to street level (16.5) just like Google Maps
+                binding.mapView.controller.animateTo(geoPoint, 16.5, 850L)
             } else {
-                binding.mapView.controller.setCenter(geoPoint)
+                if (settingsPrefs.enableMapAnimations) {
+                    binding.mapView.controller.animateTo(geoPoint)
+                } else {
+                    binding.mapView.controller.setCenter(geoPoint)
+                }
             }
+            Toast.makeText(this, "Target centered", Toast.LENGTH_SHORT).show()
         }
 
         binding.fabSaveFavorite.setOnClickListener {

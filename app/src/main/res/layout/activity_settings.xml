@@ -121,6 +121,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
+                            android:layout_marginEnd="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -128,7 +129,9 @@
                                 android:id="@+id/tvSettingsPremiumTitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Nowhere Premium"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="Nowhere Pro Engine"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14.5sp"
                                 android:textStyle="bold" />
@@ -137,7 +140,9 @@
                                 android:id="@+id/tvSettingsPremiumSubtitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="1dp"
+                                android:layout_marginTop="2dp"
+                                android:ellipsize="end"
+                                android:maxLines="2"
                                 android:text="Unlimited session duration &amp; 100% zero ads"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="11.5sp" />
@@ -147,6 +152,9 @@
                             android:id="@+id/btnSettingsPremiumAction"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
+                            android:minWidth="88dp"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="0dp"
                             android:backgroundTint="@color/primary"
                             android:text="UPGRADE"
                             android:textColor="@color/white"
@@ -155,6 +163,8 @@
                             app:cornerRadius="8dp"
                             app:icon="@drawable/ic_bolt"
                             app:iconGravity="textStart"
+                            app:iconPadding="4dp"
+                            app:iconSize="14dp"
                             app:iconTint="@color/white" />
                     </LinearLayout>
                 </LinearLayout>
@@ -1502,7 +1512,7 @@
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/ic_globe"
+                            android:src="@drawable/ic_web_globe"
                             app:tint="@color/primary" />
 
                         <TextView

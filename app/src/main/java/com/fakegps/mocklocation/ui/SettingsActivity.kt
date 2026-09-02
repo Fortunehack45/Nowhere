@@ -20,6 +20,7 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.updatePadding
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -547,6 +548,8 @@ class SettingsActivity : AppCompatActivity() {
         val etName = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSlotName)
         val etLat = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSlotLat)
         val etLon = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSlotLon)
+        val btnLookup = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnLookupCoords)
+        val tvGeocodingStatus = dialogView.findViewById<android.widget.TextView>(R.id.tvGeocodingStatus)
         val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancelSlot)
         val btnSave = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSaveSlot)
 
@@ -567,6 +570,31 @@ class SettingsActivity : AppCompatActivity() {
                 etName.setText(settingsPrefs.widgetSlot3Name)
                 etLat.setText(settingsPrefs.widgetSlot3Lat.toString())
                 etLon.setText(settingsPrefs.widgetSlot3Lon.toString())
+            }
+        }
+
+        btnLookup.setOnClickListener {
+            val query = etName.text.toString().trim()
+            if (query.isBlank()) {
+                tvGeocodingStatus.text = "⚠️ Please enter a city or country name first"
+                tvGeocodingStatus.setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.badge_warning_text))
+                return@setOnClickListener
+            }
+            tvGeocodingStatus.text = "🔍 Searching coordinates for \"$query\"..."
+            tvGeocodingStatus.setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.primary))
+            btnLookup.isEnabled = false
+
+            resolvePlaceCoordinates(query) { lat, lon, resolvedName ->
+                btnLookup.isEnabled = true
+                if (lat != null && lon != null) {
+                    etLat.setText(String.format(java.util.Locale.US, "%.4f", lat))
+                    etLon.setText(String.format(java.util.Locale.US, "%.4f", lon))
+                    tvGeocodingStatus.text = "📍 Auto-filled: ${resolvedName ?: query} (${String.format(java.util.Locale.US, "%.4f", lat)}, ${String.format(java.util.Locale.US, "%.4f", lon)})"
+                    tvGeocodingStatus.setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.badge_success_text))
+                } else {
+                    tvGeocodingStatus.text = "⚠️ Could not auto-detect. Please check spelling or enter coordinates manually."
+                    tvGeocodingStatus.setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.badge_warning_text))
+                }
             }
         }
 
@@ -607,6 +635,73 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    private fun resolvePlaceCoordinates(query: String, onResult: (Double?, Double?, String?) -> Unit) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            var lat: Double? = null
+            var lon: Double? = null
+            var resolvedName: String? = null
+
+            // 1. Android Geocoder
+            try {
+                if (android.location.Geocoder.isPresent()) {
+                    val geocoder = android.location.Geocoder(this@SettingsActivity, java.util.Locale.US)
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        val lock = Object()
+                        geocoder.getFromLocationName(query, 1) { addresses ->
+                            synchronized(lock) {
+                                if (!addresses.isNullOrEmpty()) {
+                                    lat = addresses[0].latitude
+                                    lon = addresses[0].longitude
+                                    resolvedName = addresses[0].locality ?: addresses[0].featureName ?: addresses[0].countryName
+                                }
+                                lock.notifyAll()
+                            }
+                        }
+                        synchronized(lock) {
+                            if (lat == null) lock.wait(1000)
+                        }
+                    } else {
+                        @Suppress("DEPRECATION")
+                        val addresses = geocoder.getFromLocationName(query, 1)
+                        if (!addresses.isNullOrEmpty()) {
+                            lat = addresses[0].latitude
+                            lon = addresses[0].longitude
+                            resolvedName = addresses[0].locality ?: addresses[0].featureName ?: addresses[0].countryName
+                        }
+                    }
+                }
+            } catch (ignored: Exception) {}
+
+            // 2. OpenStreetMap Nominatim fallback
+            if (lat == null || lon == null) {
+                try {
+                    val encoded = java.net.URLEncoder.encode(query, "UTF-8")
+                    val url = java.net.URL("https://nominatim.openstreetmap.org/search?format=json&q=$encoded&limit=1")
+                    val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+                        requestMethod = "GET"
+                        connectTimeout = 4000
+                        readTimeout = 4000
+                        setRequestProperty("User-Agent", "NowhereWidgetGeocoder/1.0 (Android)")
+                    }
+                    if (conn.responseCode in 200..299) {
+                        val body = conn.inputStream.bufferedReader().use { it.readText() }
+                        val arr = org.json.JSONArray(body)
+                        if (arr.length() > 0) {
+                            val first = arr.getJSONObject(0)
+                            lat = first.optString("lat").toDoubleOrNull()
+                            lon = first.optString("lon").toDoubleOrNull()
+                            resolvedName = first.optString("display_name").substringBefore(",")
+                        }
+                    }
+                } catch (ignored: Exception) {}
+            }
+
+            withContext(Dispatchers.Main) {
+                onResult(lat, lon, resolvedName)
+            }
+        }
     }
 
     private fun openBrowser(url: String) {

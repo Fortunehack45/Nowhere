@@ -88,7 +88,7 @@
             <ImageView
                 android:layout_width="26dp"
                 android:layout_height="26dp"
-                android:src="@drawable/ic_globe"
+                android:src="@drawable/ic_map_street"
                 app:tint="@color/primary"
                 tools:ignore="ContentDescription" />
 
@@ -140,7 +140,7 @@
             <ImageView
                 android:layout_width="26dp"
                 android:layout_height="26dp"
-                android:src="@drawable/ic_layers"
+                android:src="@drawable/ic_satellite_alt"
                 app:tint="@color/primary"
                 tools:ignore="ContentDescription" />
 
@@ -192,7 +192,7 @@
             <ImageView
                 android:layout_width="26dp"
                 android:layout_height="26dp"
-                android:src="@drawable/ic_layers"
+                android:src="@drawable/ic_terrain_mountains"
                 app:tint="@color/primary"
                 tools:ignore="ContentDescription" />
 
@@ -244,7 +244,7 @@
             <ImageView
                 android:layout_width="26dp"
                 android:layout_height="26dp"
-                android:src="@drawable/ic_3d"
+                android:src="@drawable/ic_3d_cube"
                 app:tint="@color/primary"
                 tools:ignore="ContentDescription" />
 

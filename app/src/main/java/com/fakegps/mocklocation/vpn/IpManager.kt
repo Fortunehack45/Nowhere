@@ -44,18 +44,8 @@ object IpManager {
     }
 
     fun findClosestNodeForCoordinates(latitude: Double, longitude: Double): IpNode {
-        val availableNodes = GLOBAL_PRIVACY_NODES.filter { it.isAvailable }
-        var closestNode = availableNodes.firstOrNull() ?: GLOBAL_PRIVACY_NODES.first()
-        var minDistance = Double.MAX_VALUE
-
-        for (node in availableNodes) {
-            val dist = GeoUtils.calculateDistanceMeters(latitude, longitude, node.latitude, node.longitude)
-            if (dist < minDistance) {
-                minDistance = dist
-                closestNode = node
-            }
-        }
-        return closestNode
+        // Always connect to verified live US Central Gateway so data/internet never drops
+        return GLOBAL_PRIVACY_NODES.first { it.id == "us_central_gcp" }
     }
 
     /**
