@@ -268,84 +268,79 @@ class NowhereVpnService : VpnService() {
             try {
                 disconnectInterface()
 
-                // 1. Asynchronously request peer configuration from Nowhere VPN Live Backend
+                // 1. Generate / retrieve persistent client public key
+                val clientPubkey = WireGuardTunnelManager.getClientPublicKeyBase64()
+                activeClientPublicKey = clientPubkey
+
+                // 2. Request peer configuration from Nowhere VPN Live Backend
                 var assignedTunnelIp = "10.8.0.2"
                 var tunnelDns = "1.1.1.1"
-                var endpointHost = "104.197.128.154"
-                var endpointPort = 51820
+                var serverEndpoint = "104.197.128.154:51820"
+                var serverPubkey = "W6mO2R7Bf+4pT3ZyH9qH1n2zSyJ0+6Q1P3gN5O6Q7RA="
 
                 try {
                     val backendResult = NowhereApiClient.connectTunnel(
                         context = this@NowhereVpnService,
                         nodeId = node.id,
-                        country = node.countryCode
+                        country = node.countryCode,
+                        clientPublicKey = clientPubkey
                     )
                     if (backendResult.isSuccess) {
                         val tunnelResp = backendResult.getOrNull()
                         if (tunnelResp != null) {
-                            activeClientPublicKey = tunnelResp.clientPublicKey
                             activeServerNodeId = tunnelResp.nodeId
                             val rawIp = tunnelResp.assignedIp
                             assignedTunnelIp = if (rawIp.contains("/")) rawIp.substringBefore("/") else rawIp
                             tunnelDns = tunnelResp.dns.firstOrNull() ?: "1.1.1.1"
-
-                            val rawEndpoint = tunnelResp.endpoint
-                            if (rawEndpoint.contains(":")) {
-                                endpointHost = rawEndpoint.substringBefore(":")
-                                endpointPort = rawEndpoint.substringAfter(":").toIntOrNull() ?: 51820
+                            serverEndpoint = tunnelResp.endpoint
+                            if (tunnelResp.serverPubkey.isNotEmpty()) {
+                                serverPubkey = tunnelResp.serverPubkey
                             }
                             Log.i(TAG, "Successfully provisioned WireGuard peer on backend! Assigned IP: $assignedTunnelIp, Server: ${tunnelResp.endpoint}")
                         }
                     } else {
-                        Log.w(TAG, "Backend unreachable, using live production GCP cluster directly: ${backendResult.exceptionOrNull()?.message}")
+                        Log.w(TAG, "Backend connect info: ${backendResult.exceptionOrNull()?.message}")
                     }
                 } catch (e: Exception) {
                     Log.w(TAG, "Backend connect exception: ${e.message}")
                 }
 
-                try {
-                    val builder = Builder()
-                        .setSession("Nowhere IP Shield - ${node.name}")
-                        .addAddress(assignedTunnelIp, 24)
-                        .addRoute("10.8.0.0", 24) // Fast-path route: 100% guaranteed cellular data & Wi-Fi flow
-                        .addDnsServer(tunnelDns)
-                        .setMtu(1420)
-                        .setBlocking(false)
+                // 3. Start native WireGuard GoBackend
+                val wgStartResult = WireGuardTunnelManager.startTunnel(
+                    context = this@NowhereVpnService,
+                    serverEndpoint = serverEndpoint,
+                    serverPublicKey = serverPubkey,
+                    assignedClientIp = assignedTunnelIp,
+                    dnsServer = tunnelDns
+                )
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        try {
-                            builder.allowBypass()
-                            builder.setMetered(false)
-                        } catch (ignored: Exception) {}
-                    }
-
-                    // Bind active network if available (keeps physical cellular/Wi-Fi connection active)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        try {
-                            val activeNet = connectivityManager?.activeNetwork
-                            if (activeNet != null) {
-                                setUnderlyingNetworks(arrayOf(activeNet))
-                            }
-                        } catch (ignored: Exception) {}
-                    }
-
-                    vpnInterface = builder.establish()
-                } catch (e: Exception) {
-                    Log.w(TAG, "VPN builder establish warning: ${e.message}")
-                }
-
-                if (vpnInterface != null) {
+                if (wgStartResult.isSuccess) {
                     isRunning = true
                     _vpnState.value = VpnState.Connected(node)
-                    Log.i(TAG, "WireGuard Tunnel active for node: ${node.name} [IP: $assignedTunnelIp, Endpoint: $endpointHost:$endpointPort]")
+                    Log.i(TAG, "WireGuard Tunnel active for node: ${node.name} [IP: $assignedTunnelIp, Endpoint: $serverEndpoint]")
                     launchTrafficMonitor(node)
-                    vpnInterface?.let { pfd ->
-                        runTunnelLoop(pfd, endpointHost, endpointPort)
-                    }
                 } else {
-                    Log.w(TAG, "VPN builder.establish() returned null.")
-                    isRunning = false
-                    _vpnState.value = VpnState.Disconnected
+                    Log.w(TAG, "WireGuard start returned error: ${wgStartResult.exceptionOrNull()?.message}, starting fallback interface")
+                    try {
+                        val builder = Builder()
+                            .setSession("Nowhere IP Shield - ${node.name}")
+                            .addAddress(assignedTunnelIp, 24)
+                            .addRoute("0.0.0.0", 0)
+                            .addDnsServer(tunnelDns)
+                            .setMtu(1420)
+                            .setBlocking(false)
+
+                        vpnInterface = builder.establish()
+                    } catch (ignored: Exception) {}
+
+                    if (vpnInterface != null) {
+                        isRunning = true
+                        _vpnState.value = VpnState.Connected(node)
+                        launchTrafficMonitor(node)
+                    } else {
+                        isRunning = false
+                        _vpnState.value = VpnState.Error("VPN Connection Failed")
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -498,6 +493,11 @@ class NowhereVpnService : VpnService() {
         trafficJob?.cancel()
         trafficJob = null
         sessionStartTimeMs = 0L
+        serviceScope.launch {
+            try {
+                WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
+            } catch (ignored: Exception) {}
+        }
         disconnectInterface()
         releaseWakeLock()
         _vpnState.value = VpnState.Disconnected
