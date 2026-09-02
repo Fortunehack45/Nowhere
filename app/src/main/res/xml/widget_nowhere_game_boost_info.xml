@@ -7,6 +7,5 @@
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_nowhere_game_boost_layout"
     android:previewLayout="@layout/widget_nowhere_game_boost_layout"
-    android:previewImage="@drawable/widget_preview_game_boost"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen" />

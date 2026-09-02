@@ -44,16 +44,16 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
         xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     }
 
-    // Apple hairline stroke
+    // App Red theme hairline stroke
     private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#80FFFFFF")
+        color = Color.parseColor("#FFE53935")
         style = Paint.Style.STROKE
         strokeWidth = 2.5f * context.resources.displayMetrics.density
     }
 
-    // Glowing pulse ring
+    // Glowing pulse ring in theme primary red
     private val pulsePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#4000E5FF")
+        color = Color.parseColor("#4DE53935")
         style = Paint.Style.STROKE
         strokeWidth = 4f * context.resources.displayMetrics.density
     }

@@ -896,11 +896,10 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically activate VPN only if not already running
-        if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Activate VPN only if explicitly enabled by user and not already running
+        if (sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             try {
                 sessionPrefs.activeIpNodeId = "us_central_gcp"
-                sessionPrefs.isIpMaskingEnabled = true
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
             } catch (e: Exception) {
                 Log.w(TAG, "VPN auto-start failed on joystick (non-fatal): ${e.message}")

@@ -361,9 +361,11 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         binding.mapView.onResume()
         binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
+        applyMapPerspectiveMode(settingsPrefs.mapTileSource)
         viewModel.refreshPermissionStates()
         checkBatteryOptimizationOnFirstLaunch()
         renderGhostCloakBadge()
+        applyDynamicThemeAccent()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
         if (com.fakegps.mocklocation.data.preferences.SessionPreferences(this).hasValidActiveSession()) {
@@ -528,7 +530,7 @@ class MainActivity : AppCompatActivity() {
         })
         binding.mapView.overlays.add(0, mapEventsOverlay)
 
-        binding.mapView.rotationX = 0f
+        applyMapPerspectiveMode(settingsPrefs.mapTileSource)
 
         var doubleTapDetectedTime = 0L
         var isOneHandedZoomActive = false
@@ -586,6 +588,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateFixedPinMarker(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
+    }
+
+    private fun applyMapPerspectiveMode(sourceKey: String) {
+        if (sourceKey == "3D_VECTOR" || sourceKey == "MAPLIBRE_3D" || sourceKey == "CARTO_3D") {
+            val dm = resources.displayMetrics
+            binding.mapView.cameraDistance = dm.density * 7000f
+            binding.mapView.pivotX = dm.widthPixels / 2f
+            binding.mapView.pivotY = dm.heightPixels * 0.85f
+            binding.mapView.scaleX = 1.38f
+            binding.mapView.scaleY = 1.38f
+            binding.mapView.translationY = -dm.heightPixels * 0.12f
+            binding.mapView.rotationX = 35f
+        } else {
+            binding.mapView.scaleX = 1.0f
+            binding.mapView.scaleY = 1.0f
+            binding.mapView.translationY = 0f
+            binding.mapView.rotationX = 0f
+        }
     }
 
     private fun onMapTapped(latitude: Double, longitude: Double) {
@@ -1141,14 +1161,14 @@ class MainActivity : AppCompatActivity() {
 
         binding.fabMapLayers.setOnClickListener {
             com.fakegps.mocklocation.ui.dialogs.MapLayersBottomSheet { selectedSource ->
-                binding.mapView.rotationX = 0f
+                applyMapPerspectiveMode(selectedSource)
                 binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
                 binding.mapView.invalidate()
                 val label = when (selectedSource) {
                     "MAPNIK" -> "Standard Street Map"
                     "SATELLITE" -> "Satellite Hybrid"
                     "TOPO" -> "OpenTopo Terrain"
-                    "3D_VECTOR" -> "Modern Vector Map"
+                    "3D_VECTOR" -> "3D Perspective Vector Map"
                     else -> "Standard Map"
                 }
                 Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()
@@ -1424,6 +1444,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun applyDynamicThemeAccent() {
+        val accentColor = settingsPrefs.getThemeColorInt()
+        val csl = android.content.res.ColorStateList.valueOf(accentColor)
+        binding.tvRouteDistanceRemaining.setTextColor(accentColor)
+        binding.pbRouteLiveProgress.progressTintList = csl
+        binding.tvWaypointsCount.setTextColor(accentColor)
+    }
+
     private fun observeUiState() {
         lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
@@ -1607,7 +1635,10 @@ class MainActivity : AppCompatActivity() {
             else -> binding.rbTransportVehicle.isChecked = true
         }
 
+
         val runningState = state.serviceState as? ServiceState.Running
+        val effectiveWaypoints = if (state.routeWaypoints.size >= 2) state.routeWaypoints else state.userKeypoints
+
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.ROUTE) {
             binding.btnRouteToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnRouteToggle.setIconResource(R.drawable.ic_stop)
@@ -1622,8 +1653,9 @@ class MainActivity : AppCompatActivity() {
             binding.btnRoutePause.iconTint = ContextCompat.getColorStateList(this, if (isPaused) R.color.badge_success_text else R.color.primary_bright)
             binding.btnRoutePause.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
 
+            binding.layoutRouteTelemetry.visibility = View.VISIBLE
+
             if (runningState != null && runningState.totalDistanceMeters > 0) {
-                binding.layoutRouteTelemetry.visibility = View.VISIBLE
                 val covered = settingsPrefs.formatDistance(runningState.distanceCoveredMeters)
                 val total = settingsPrefs.formatDistance(runningState.totalDistanceMeters)
                 val remaining = settingsPrefs.formatDistance(runningState.distanceRemainingMeters)
@@ -1631,15 +1663,15 @@ class MainActivity : AppCompatActivity() {
 
                 val speedMps = runningState.speedMps
                 val remainingMeters = runningState.distanceRemainingMeters
-                val etaText = if (speedMps > 0.3f && remainingMeters > 5.0) {
+                val etaText = if (speedMps > 0.2f && remainingMeters > 5.0) {
                     val secondsLeft = (remainingMeters / speedMps).toLong()
                     val hours = secondsLeft / 3600
                     val minutes = (secondsLeft % 3600) / 60
                     val seconds = secondsLeft % 60
                     if (hours > 0) {
-                        String.format("⏱️ ETA: %dh %02dm", hours, minutes)
+                        String.format(Locale.US, "⏱️ ETA: %dh %02dm", hours, minutes)
                     } else {
-                        String.format("⏱️ ETA: %02dm %02ds", minutes, seconds)
+                        String.format(Locale.US, "⏱️ ETA: %02dm %02ds", minutes, seconds)
                     }
                 } else if (remainingMeters <= 5.0 && runningState.totalDistanceMeters > 0) {
                     "⏱️ ETA: Arrived"
@@ -1651,17 +1683,43 @@ class MainActivity : AppCompatActivity() {
                 binding.tvRouteEta.text = etaText
                 binding.tvRouteDistanceRemaining.text = "$remaining left ($progress%)"
                 binding.pbRouteLiveProgress.progress = progress
-            } else {
-                binding.layoutRouteTelemetry.visibility = View.GONE
             }
         } else {
-            binding.layoutRouteTelemetry.visibility = View.GONE
             binding.btnRouteToggle.text = getString(R.string.btn_start_route)
             binding.btnRouteToggle.setIconResource(R.drawable.ic_play)
             binding.btnRouteToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)
             binding.btnRouteToggle.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnRouteToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
             binding.btnRoutePause.visibility = View.GONE
+
+            if (state.selectedTab == SelectedModeTab.ROUTE && effectiveWaypoints.size >= 2) {
+                binding.layoutRouteTelemetry.visibility = View.VISIBLE
+                var totalDist = 0.0
+                for (i in 0 until effectiveWaypoints.size - 1) {
+                    totalDist += GeoUtils.calculateDistanceMeters(
+                        effectiveWaypoints[i].latitude, effectiveWaypoints[i].longitude,
+                        effectiveWaypoints[i + 1].latitude, effectiveWaypoints[i + 1].longitude
+                    )
+                }
+                val totalFormatted = settingsPrefs.formatDistance(totalDist)
+                val speedKmh = state.routeSpeedKmh.coerceAtLeast(1.0f)
+                val totalKm = totalDist / 1000.0
+                val totalSeconds = ((totalKm / speedKmh) * 3600).toLong()
+                val hrs = totalSeconds / 3600
+                val mins = (totalSeconds % 3600) / 60
+                val estTime = if (hrs > 0) {
+                    String.format(Locale.US, "⏱️ Est: %dh %02dm", hrs, mins)
+                } else {
+                    String.format(Locale.US, "⏱️ Est: %dm", mins.coerceAtLeast(1))
+                }
+
+                binding.tvRouteDistanceCovered.text = "Route: $totalFormatted"
+                binding.tvRouteEta.text = estTime
+                binding.tvRouteDistanceRemaining.text = "${effectiveWaypoints.size} pts"
+                binding.pbRouteLiveProgress.progress = 0
+            } else {
+                binding.layoutRouteTelemetry.visibility = View.GONE
+            }
         }
 
         // Joystick Controls State

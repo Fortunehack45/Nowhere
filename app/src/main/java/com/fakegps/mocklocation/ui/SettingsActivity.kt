@@ -289,6 +289,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchSettingsGhostCloak.isChecked = settingsPrefs.isGhostCloakEnabled
         binding.switchSettingsAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled
+        refreshThemeColorUI()
         refreshWidgetSlotsUI()
     }
 
@@ -525,10 +526,52 @@ class SettingsActivity : AppCompatActivity() {
             pinNowhereShortcut()
         }
 
+        binding.layoutSettingsThemeColor.setOnClickListener {
+            showThemeColorPickerDialog()
+        }
+
         // Widget Slot Customization Buttons
         binding.btnEditWidgetSlot1.setOnClickListener { showEditSlotDialog(1) }
         binding.btnEditWidgetSlot2.setOnClickListener { showEditSlotDialog(2) }
         binding.btnEditWidgetSlot3.setOnClickListener { showEditSlotDialog(3) }
+    }
+
+    private fun refreshThemeColorUI() {
+        val colorName = when (settingsPrefs.appThemeColor) {
+            "CYAN" -> "Cyberpunk Cyan (#00E5FF)"
+            "GREEN" -> "Matrix Emerald (#00E676)"
+            "PURPLE" -> "Royal Purple (#A855F7)"
+            "GOLD" -> "Sunset Amber (#FF9100)"
+            "PINK" -> "Neon Rose (#FF2D55)"
+            else -> "Crimson Red (Default • #E53935)"
+        }
+        binding.tvSettingsThemeColorDesc.text = colorName
+        binding.viewThemeColorDot.backgroundTintList = android.content.res.ColorStateList.valueOf(settingsPrefs.getThemeColorInt())
+    }
+
+    private fun showThemeColorPickerDialog() {
+        val colors = arrayOf(
+            "🔴 Crimson Red (Default)",
+            "🔵 Cyberpunk Cyan",
+            "🟢 Matrix Emerald",
+            "🟣 Royal Purple",
+            "🟠 Sunset Amber",
+            "🌸 Neon Rose"
+        )
+        val colorKeys = arrayOf("RED", "CYAN", "GREEN", "PURPLE", "GOLD", "PINK")
+        val currentIndex = colorKeys.indexOf(settingsPrefs.appThemeColor).coerceAtLeast(0)
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("🎨 Choose App Theme Accent")
+            .setSingleChoiceItems(colors, currentIndex) { dialog, which ->
+                val chosenKey = colorKeys[which]
+                settingsPrefs.appThemeColor = chosenKey
+                refreshThemeColorUI()
+                Toast.makeText(this, "Accent color updated to ${colors[which].substring(2)}", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun refreshWidgetSlotsUI() {

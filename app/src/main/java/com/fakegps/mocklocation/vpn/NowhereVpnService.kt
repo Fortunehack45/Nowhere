@@ -219,7 +219,7 @@ class NowhereVpnService : VpnService() {
                 disconnectVpn()
             }
             else -> {
-                if (sessionPrefs.isIpMaskingEnabled || sessionPrefs.isSessionActive) {
+                if (sessionPrefs.isIpMaskingEnabled) {
                     connectVpn(sessionPrefs.activeIpNodeId)
                 }
             }

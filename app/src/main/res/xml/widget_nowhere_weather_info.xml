@@ -7,7 +7,6 @@
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_nowhere_weather_layout"
     android:previewLayout="@layout/widget_nowhere_weather_layout"
-    android:previewImage="@drawable/widget_preview_weather"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:description="@string/widget_weather_description" />

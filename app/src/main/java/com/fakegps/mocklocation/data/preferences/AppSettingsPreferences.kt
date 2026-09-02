@@ -105,8 +105,27 @@ class AppSettingsPreferences(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_SENSOR_KINEMATICS_ENABLED, value).apply()
 
     var isAutoVpnSyncEnabled: Boolean
-        get() = prefs.getBoolean(KEY_AUTO_VPN_SYNC_ENABLED, true)
+        get() = prefs.getBoolean(KEY_AUTO_VPN_SYNC_ENABLED, false)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_VPN_SYNC_ENABLED, value).apply()
+
+    var appThemeColor: String
+        get() = prefs.getString("key_app_theme_color", "RED") ?: "RED"
+        set(value) = prefs.edit().putString("key_app_theme_color", value).apply()
+
+    fun getThemeColorHex(): String {
+        return when (appThemeColor) {
+            "CYAN" -> "#00E5FF"
+            "GREEN" -> "#00E676"
+            "PURPLE" -> "#A855F7"
+            "GOLD" -> "#FF9100"
+            "PINK" -> "#FF2D55"
+            else -> "#E53935"
+        }
+    }
+
+    fun getThemeColorInt(): Int {
+        return android.graphics.Color.parseColor(getThemeColorHex())
+    }
 
     // --- Advanced Engine Settings ---
 
