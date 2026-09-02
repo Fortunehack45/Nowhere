@@ -80,6 +80,21 @@ class JoystickView @JvmOverloads constructor(
         color = Color.parseColor("#E41B1B") // Red core
     }
 
+    init {
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        setJoystickColor(primaryColor)
+    }
+
+    fun setJoystickColor(primaryColor: Int) {
+        knobCorePaint.color = primaryColor
+        val alpha = (0.8f * 255).toInt()
+        val r = Color.red(primaryColor)
+        val g = Color.green(primaryColor)
+        val b = Color.blue(primaryColor)
+        vectorLinePaint.color = Color.argb(alpha, r, g, b)
+        invalidate()
+    }
+
     private var centerX = 0f
     private var centerY = 0f
     private var baseRadius = 0f

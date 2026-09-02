@@ -26,10 +26,12 @@ class SetupGuideDialog(
         binding.btnAutoGrantRoot.setOnClickListener {
             val success = PermissionHelper.tryAutoGrantRootMockPermission(context)
             if (success) {
-                Toast.makeText(context, "Root Mock Location Granted Successfully! 🎉", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "🎉 Mock Location Auto-Granted! Nowhere is ready.", Toast.LENGTH_LONG).show()
                 dialog.dismiss()
             } else {
-                Toast.makeText(context, "Root grant unavailable. Please select Nowhere in Developer Options manually.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "👉 Scroll to 'Debugging' -> Tap 'Select mock location app' -> Choose Nowhere", Toast.LENGTH_LONG).show()
+                onOpenSettingsClicked()
+                dialog.dismiss()
             }
         }
 

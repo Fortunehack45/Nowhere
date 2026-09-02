@@ -1464,6 +1464,22 @@ class MainActivity : AppCompatActivity() {
         binding.sliderJoystickSpeed.thumbTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
         binding.sliderJoystickSpeed.trackActiveTintList = primaryCsl
 
+        // Dynamic Segmented Pill Backgrounds
+        binding.rbFixedMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.rbRouteMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.rbJoystickMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+
+        // Dynamic Map FAB icon tints
+        binding.fabMyLocation.imageTintList = primaryCsl
+        binding.fabMapLayers.imageTintList = primaryCsl
+        binding.fabSaveFavorite.imageTintList = primaryCsl
+        binding.fabOpenFavorites.imageTintList = primaryCsl
+        binding.fabOpenHistory.imageTintList = primaryCsl
+        binding.ivSearchIcon.imageTintList = primaryCsl
+
+        // Dynamic Joystick Colors
+        binding.joystickOverlay.setJoystickColor(primaryColor)
+
         // Update Ghost Cloak badge if active
         if (settingsPrefs.isGhostCloakEnabled) {
             binding.layoutGhostCloakBadge.backgroundTintList = lightTintCsl
@@ -1473,9 +1489,20 @@ class MainActivity : AppCompatActivity() {
 
         // Update Spotlight Tour overlay colors
         binding.spotlightTourOverlay.setTourColors(primaryColor, com.fakegps.mocklocation.util.ThemeColorManager.getGlowColor(this))
+
+        // Recursively theme all other views across the screen
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
     }
 
     private fun observeUiState() {
+        lifecycleScope.launch {
+            com.fakegps.mocklocation.util.ThemeColorManager.themeChangeFlow.collectLatest {
+                applyDynamicThemeAccent()
+                renderUiState(viewModel.uiState.value)
+                binding.mapView.invalidate()
+            }
+        }
+
         lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
                 renderUiState(state)
@@ -1616,9 +1643,9 @@ class MainActivity : AppCompatActivity() {
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.FIXED) {
             binding.btnFixedToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnFixedToggle.setIconResource(R.drawable.ic_stop)
-            binding.btnFixedToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btn_stop_bg)
-            binding.btnFixedToggle.setTextColor(ContextCompat.getColor(this, R.color.btn_stop_text))
-            binding.btnFixedToggle.iconTint = ContextCompat.getColorStateList(this, R.color.btn_stop_text)
+            binding.btnFixedToggle.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
+            binding.btnFixedToggle.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this))
+            binding.btnFixedToggle.iconTint = android.content.res.ColorStateList.valueOf(com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this))
         } else {
             binding.btnFixedToggle.text = getString(R.string.btn_start_teleport)
             binding.btnFixedToggle.setIconResource(R.drawable.ic_teleport)
@@ -1665,9 +1692,9 @@ class MainActivity : AppCompatActivity() {
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.ROUTE) {
             binding.btnRouteToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnRouteToggle.setIconResource(R.drawable.ic_stop)
-            binding.btnRouteToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btn_stop_bg)
-            binding.btnRouteToggle.setTextColor(ContextCompat.getColor(this, R.color.btn_stop_text))
-            binding.btnRouteToggle.iconTint = ContextCompat.getColorStateList(this, R.color.btn_stop_text)
+            binding.btnRouteToggle.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
+            binding.btnRouteToggle.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this))
+            binding.btnRouteToggle.iconTint = android.content.res.ColorStateList.valueOf(com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this))
             binding.btnRoutePause.visibility = View.VISIBLE
 
             val isPaused = runningState?.isPaused == true
@@ -1753,9 +1780,9 @@ class MainActivity : AppCompatActivity() {
         if (state.isServiceRunning && state.selectedTab == SelectedModeTab.JOYSTICK) {
             binding.btnJoystickToggle.text = getString(R.string.btn_stop_simulation)
             binding.btnJoystickToggle.setIconResource(R.drawable.ic_stop)
-            binding.btnJoystickToggle.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btn_stop_bg)
-            binding.btnJoystickToggle.setTextColor(ContextCompat.getColor(this, R.color.btn_stop_text))
-            binding.btnJoystickToggle.iconTint = ContextCompat.getColorStateList(this, R.color.btn_stop_text)
+            binding.btnJoystickToggle.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
+            binding.btnJoystickToggle.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this))
+            binding.btnJoystickToggle.iconTint = android.content.res.ColorStateList.valueOf(com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this))
 
             val running = state.serviceState as? ServiceState.Running
             if (running != null && running.mode is SimulationMode.Joystick) {
@@ -1831,7 +1858,7 @@ class MainActivity : AppCompatActivity() {
                 if (geoPoints.size >= 2) {
                     routePolyline = Polyline().apply {
                         setPoints(geoPoints)
-                        outlinePaint.color = Color.parseColor("#E41B1B")
+                        outlinePaint.color = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity)
                         outlinePaint.strokeWidth = 8f
                         setOnClickListener { _, _, _ -> false }
                     }

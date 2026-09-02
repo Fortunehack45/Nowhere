@@ -23,6 +23,9 @@ import androidx.core.view.updatePadding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.view.View
+import android.widget.TextView
+import android.widget.RadioButton
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -91,6 +94,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         refreshSystemStatus()
         refreshNotificationPermissionUI()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
     }
 
     private fun refreshNotificationPermissionUI() {
@@ -291,6 +295,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchSettingsAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled
         refreshThemeColorUI()
         refreshWidgetSlotsUI()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
     }
 
     private fun setupListeners() {
@@ -339,17 +344,17 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnSettingsAutoGrantRoot.setOnClickListener {
             val granted = PermissionHelper.tryAutoGrantRootMockPermission(this)
             if (granted) {
-                Toast.makeText(this, "Root Mock Location Granted Successfully! 🎉", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "🎉 Mock Location Auto-Granted! Nowhere is ready.", Toast.LENGTH_LONG).show()
                 refreshSystemStatus()
             } else {
-                Toast.makeText(this, "Root auto-grant failed or device is not rooted. Use Configure to set manually.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "👉 Scroll to 'Debugging' -> Tap 'Select mock location app' -> Choose Nowhere", Toast.LENGTH_LONG).show()
+                PermissionHelper.openDeveloperSettings(this)
             }
         }
 
         binding.btnSettingsDevOptions.setOnClickListener {
-            SetupGuideDialog(this) {
-                PermissionHelper.openDeveloperSettings(this)
-            }.show()
+            Toast.makeText(this, "👉 Scroll to 'Debugging' -> Tap 'Select mock location app' -> Choose Nowhere", Toast.LENGTH_LONG).show()
+            PermissionHelper.openDeveloperSettings(this)
         }
 
         binding.btnSettingsBattery.setOnClickListener {
@@ -549,20 +554,47 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun showThemeColorPickerDialog() {
         val themes = com.fakegps.mocklocation.util.ThemeColorManager.THEMES
-        val options = themes.map { "${it.emoji} ${it.displayName}" }.toTypedArray()
-        val currentIndex = themes.indexOfFirst { it.id.equals(settingsPrefs.appThemeColor, ignoreCase = true) }.coerceAtLeast(0)
+        val currentThemeId = settingsPrefs.appThemeColor
 
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("🎨 Choose App Theme Accent")
-            .setSingleChoiceItems(options, currentIndex) { dialog, which ->
-                val chosenTheme = themes[which]
-                settingsPrefs.appThemeColor = chosenTheme.id
-                refreshThemeColorUI()
-                Toast.makeText(this, "Accent color updated to ${chosenTheme.displayName}", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
+        val adapter = object : android.widget.ArrayAdapter<com.fakegps.mocklocation.util.ColorTheme>(
+            this,
+            R.layout.item_theme_color_option,
+            themes
+        ) {
+            override fun getView(position: Int, convertView: View?, parent: android.view.ViewGroup): View {
+                val row = convertView ?: layoutInflater.inflate(R.layout.item_theme_color_option, parent, false)
+                val item = getItem(position) ?: return row
+                val viewColorCircle = row.findViewById<View>(R.id.viewColorCircle)
+                val tvColorName = row.findViewById<TextView>(R.id.tvColorName)
+                val rbSelected = row.findViewById<android.widget.RadioButton>(R.id.rbSelected)
+
+                val colorInt = android.graphics.Color.parseColor(item.primaryColorHex)
+                viewColorCircle.background = com.fakegps.mocklocation.util.ThemeColorManager.createCircleDrawable(colorInt)
+                tvColorName.text = item.displayName
+                rbSelected.isChecked = item.id.equals(currentThemeId, ignoreCase = true)
+                rbSelected.buttonTintList = android.content.res.ColorStateList.valueOf(colorInt)
+
+                return row
             }
+        }
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Choose App Theme Accent")
+            .setAdapter(adapter, null)
             .setNegativeButton("Cancel", null)
-            .show()
+            .create()
+
+        dialog.listView.setOnItemClickListener { _, _, position, _ ->
+            val chosenTheme = themes[position]
+            settingsPrefs.appThemeColor = chosenTheme.id
+            com.fakegps.mocklocation.util.ThemeColorManager.setAppThemeColor(this, chosenTheme.id)
+            com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
+            refreshThemeColorUI()
+            Toast.makeText(this, "App Theme Updated to ${chosenTheme.displayName}!", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun refreshWidgetSlotsUI() {

@@ -212,36 +212,52 @@ object PermissionHelper {
      * Attempts to automatically grant mock location appops and permissions via Root (su).
      */
     fun tryAutoGrantRootMockPermission(context: Context): Boolean {
-        return try {
-            val pkg = context.packageName
-            val commands = arrayOf(
-                "cmd appops set $pkg android:mock_location allow",
-                "cmd appops set $pkg MOCK_LOCATION allow",
-                "appops set $pkg android:mock_location allow",
-                "pm grant $pkg android.permission.ACCESS_MOCK_LOCATION",
-                "settings put secure mock_location 1"
-            )
-            val process = Runtime.getRuntime().exec("su")
-            val outputStream = DataOutputStream(process.outputStream)
-            for (cmd in commands) {
-                outputStream.writeBytes("$cmd\n")
-            }
-            outputStream.writeBytes("exit\n")
-            outputStream.flush()
-            val exitCode = process.waitFor()
-            exitCode == 0 && isMockLocationEnabled(context)
-        } catch (e: Exception) {
-            false
+        val pkg = context.packageName
+        val suBinaries = arrayOf("su", "/system/bin/su", "/system/xbin/su", "/sbin/su", "/data/adb/magisk/su", "/data/adb/ksu/bin/su", "/data/adb/ap/bin/su")
+        val commands = arrayOf(
+            "settings put secure mock_location 1",
+            "settings put secure mock_location_app $pkg",
+            "cmd appops set $pkg android:mock_location allow",
+            "cmd appops set $pkg MOCK_LOCATION allow",
+            "cmd appops set $pkg 58 allow",
+            "appops set $pkg android:mock_location allow",
+            "appops set $pkg MOCK_LOCATION allow",
+            "pm grant $pkg android.permission.ACCESS_MOCK_LOCATION"
+        )
+        for (su in suBinaries) {
+            try {
+                val process = Runtime.getRuntime().exec(su)
+                val outputStream = DataOutputStream(process.outputStream)
+                for (cmd in commands) {
+                    outputStream.writeBytes("$cmd\n")
+                }
+                outputStream.writeBytes("exit\n")
+                outputStream.flush()
+                val exitCode = process.waitFor()
+                if (exitCode == 0) {
+                    Thread.sleep(150L) // Wait for system_server AppOps update
+                    if (isMockLocationEnabled(context)) {
+                        return true
+                    }
+                }
+            } catch (ignored: Exception) {}
         }
+        return isMockLocationEnabled(context)
     }
 
     fun openDeveloperSettings(activity: Activity) {
         try {
-            val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+            val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
             activity.startActivity(intent)
         } catch (e: Exception) {
-            val intent = Intent(Settings.ACTION_SETTINGS)
-            activity.startActivity(intent)
+            try {
+                val intent = Intent(Settings.ACTION_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                activity.startActivity(intent)
+            } catch (ignored: Exception) {}
         }
     }
 }
