@@ -6,6 +6,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -32,25 +33,40 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+    // Dark obsidian scrim background (88% opacity)
     private val scrimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#B305070A") // 70% Obsidian dark scrim
+        color = Color.parseColor("#E6040608")
         style = Paint.Style.FILL
     }
 
+    // Aperture clear cutout
     private val clearPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     }
 
+    // Apple hairline stroke
     private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#40FFFFFF") // Minimalist subtle Apple white hairline border
+        color = Color.parseColor("#80FFFFFF")
         style = Paint.Style.STROKE
-        strokeWidth = 2f * context.resources.displayMetrics.density
+        strokeWidth = 2.5f * context.resources.displayMetrics.density
+    }
+
+    // Glowing pulse ring
+    private val pulsePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#4000E5FF")
+        style = Paint.Style.STROKE
+        strokeWidth = 4f * context.resources.displayMetrics.density
     }
 
     private var currentTargetRect = RectF()
     private var animatedTargetRect = RectF()
+    private var animatedCornerRadius = 16f * context.resources.displayMetrics.density
+    private var targetCornerRadius = 16f * context.resources.displayMetrics.density
     private var isCircular = false
-    private var cornerRadius = 16f * context.resources.displayMetrics.density
+
+    private var pulseScale = 1.0f
+    private var pulseAlpha = 1.0f
+    private var pulseAnimator: ValueAnimator? = null
 
     private var steps: List<SpotlightStep> = emptyList()
     private var currentStepIndex = 0
@@ -62,6 +78,7 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
     private val ivStepIcon: ImageView
     private val tvStepTitle: TextView
     private val tvStepDescription: TextView
+    private val pbSpotlightProgress: com.google.android.material.progressindicator.LinearProgressIndicator
     private val btnSkip: MaterialButton
     private val btnNext: MaterialButton
 
@@ -81,6 +98,7 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
         ivStepIcon = view.findViewById(R.id.ivSpotlightStepIcon)
         tvStepTitle = view.findViewById(R.id.tvSpotlightStepTitle)
         tvStepDescription = view.findViewById(R.id.tvSpotlightStepDescription)
+        pbSpotlightProgress = view.findViewById(R.id.pbSpotlightProgress)
         btnSkip = view.findViewById(R.id.btnSpotlightSkip)
         btnNext = view.findViewById(R.id.btnSpotlightNext)
 
@@ -92,13 +110,33 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
             nextStep()
         }
 
-        // Tap outside card advances or focuses
+        // Tapping the darkened scrim advances to next step
         setOnClickListener {
-            // Prevent accidental dismiss; advance next step
             nextStep()
         }
+
         cardTooltip.setOnClickListener {
-            // Consume click on card so it doesn't trigger parent click
+            // Consume card clicks so they don't trigger scrim advance
+        }
+
+        startPulseAnimation()
+    }
+
+    private fun startPulseAnimation() {
+        pulseAnimator?.cancel()
+        pulseAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 1400
+            repeatMode = ValueAnimator.REVERSE
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = AccelerateDecelerateInterpolator()
+            addUpdateListener { va ->
+                val frac = va.animatedValue as Float
+                pulseScale = 1.0f + (frac * 0.04f)
+                pulseAlpha = 0.4f + (frac * 0.6f)
+                pulsePaint.alpha = (pulseAlpha * 90).toInt()
+                invalidate()
+            }
+            start()
         }
     }
 
@@ -112,7 +150,7 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
         onTourFinishedListener = onFinished
         visibility = View.VISIBLE
         alpha = 0f
-        animate().alpha(1f).setDuration(250).start()
+        animate().alpha(1f).setDuration(280).start()
         showStep(0)
     }
 
@@ -124,11 +162,17 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
         currentStepIndex = index
         val step = steps[index]
 
-        tvStepBadge.text = "${step.stepNumber} OF ${step.totalSteps}"
+        tvStepBadge.text = "STEP ${step.stepNumber} OF ${step.totalSteps}"
         ivStepIcon.setImageResource(step.iconRes)
         tvStepTitle.text = step.title
         tvStepDescription.text = step.description
-        btnNext.text = if (index == steps.size - 1) "Get Started" else "Next"
+        pbSpotlightProgress.max = step.totalSteps
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            pbSpotlightProgress.setProgress(step.stepNumber, true)
+        } else {
+            pbSpotlightProgress.progress = step.stepNumber
+        }
+        btnNext.text = if (index == steps.size - 1) "Got It" else "Next"
         btnSkip.visibility = if (index == steps.size - 1) View.GONE else View.VISIBLE
 
         val targetView = step.targetViewProvider.invoke()
@@ -148,7 +192,7 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
 
                 val newRect = RectF(left, top, right, bottom)
                 isCircular = step.isCircular
-                cornerRadius = if (isCircular) (newRect.width() / 2f) else (14f * density)
+                targetCornerRadius = if (isCircular) (newRect.width() / 2f) else (16f * density)
 
                 animateToRect(newRect)
                 positionTooltip(newRect)
@@ -157,7 +201,9 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
             // Fallback centered cutout if target is off-screen
             val cx = width / 2f
             val cy = height / 2f
-            val newRect = RectF(cx - 100, cy - 100, cx + 100, cy + 100)
+            val density = resources.displayMetrics.density
+            val newRect = RectF(cx - (80f * density), cy - (40f * density), cx + (80f * density), cy + (40f * density))
+            targetCornerRadius = 16f * density
             animateToRect(newRect)
             positionTooltip(newRect)
         }
@@ -166,15 +212,17 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
     private fun animateToRect(target: RectF) {
         rectAnimator?.cancel()
         val startRect = RectF(if (animatedTargetRect.isEmpty) target else animatedTargetRect)
+        val startRadius = animatedCornerRadius
         rectAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 300
-            interpolator = DecelerateInterpolator()
+            duration = 340
+            interpolator = DecelerateInterpolator(1.8f)
             addUpdateListener { va ->
                 val fraction = va.animatedFraction
                 animatedTargetRect.left = startRect.left + (target.left - startRect.left) * fraction
                 animatedTargetRect.top = startRect.top + (target.top - startRect.top) * fraction
                 animatedTargetRect.right = startRect.right + (target.right - startRect.right) * fraction
                 animatedTargetRect.bottom = startRect.bottom + (target.bottom - startRect.bottom) * fraction
+                animatedCornerRadius = startRadius + (targetCornerRadius - startRadius) * fraction
                 invalidate()
             }
             start()
@@ -184,11 +232,12 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
     private fun positionTooltip(targetRect: RectF) {
         val screenHeight = resources.displayMetrics.heightPixels
         val density = resources.displayMetrics.density
-        val margin = 20f * density
+        val margin = 16f * density
 
         cardTooltip.post {
             val cardHeight = cardTooltip.height.toFloat()
-            val placeBelow = targetRect.centerY() < (screenHeight * 0.45f)
+            // Place below if target is in the top 50% of the screen; otherwise place above
+            val placeBelow = targetRect.centerY() < (screenHeight * 0.48f)
 
             val targetY = if (placeBelow) {
                 targetRect.bottom + margin
@@ -196,12 +245,16 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
                 targetRect.top - cardHeight - margin
             }
 
-            val clampedY = targetY.coerceIn(margin + (40f * density), (screenHeight - cardHeight - margin - (40f * density)))
+            val clampedY = targetY.coerceIn(
+                margin + (36f * density),
+                (screenHeight - cardHeight - margin - (36f * density))
+            )
 
             cardTooltip.animate()
                 .y(clampedY)
                 .alpha(1f)
-                .setDuration(250)
+                .setDuration(280)
+                .setInterpolator(DecelerateInterpolator())
                 .start()
         }
     }
@@ -215,7 +268,8 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
     }
 
     fun finishTour() {
-        animate().alpha(0f).setDuration(200).withEndAction {
+        pulseAnimator?.cancel()
+        animate().alpha(0f).setDuration(220).withEndAction {
             visibility = View.GONE
             onTourFinishedListener?.invoke()
         }.start()
@@ -229,12 +283,26 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
             if (isCircular) {
                 val cx = animatedTargetRect.centerX()
                 val cy = animatedTargetRect.centerY()
-                val radius = (animatedTargetRect.width() / 2f).coerceAtLeast(animatedTargetRect.height() / 2f)
-                canvas.drawCircle(cx, cy, radius, clearPaint)
-                canvas.drawCircle(cx, cy, radius, strokePaint)
+                val baseRadius = (animatedTargetRect.width() / 2f).coerceAtLeast(animatedTargetRect.height() / 2f)
+                canvas.drawCircle(cx, cy, baseRadius, clearPaint)
+
+                // Pulsing glow ring
+                val pulsedRadius = baseRadius * pulseScale
+                canvas.drawCircle(cx, cy, pulsedRadius, pulsePaint)
+                canvas.drawCircle(cx, cy, baseRadius, strokePaint)
             } else {
-                canvas.drawRoundRect(animatedTargetRect, cornerRadius, cornerRadius, clearPaint)
-                canvas.drawRoundRect(animatedTargetRect, cornerRadius, cornerRadius, strokePaint)
+                canvas.drawRoundRect(animatedTargetRect, animatedCornerRadius, animatedCornerRadius, clearPaint)
+
+                // Pulsing outer rounded rect
+                val inset = -((pulseScale - 1.0f) * 20f)
+                val pulsedRect = RectF(
+                    animatedTargetRect.left + inset,
+                    animatedTargetRect.top + inset,
+                    animatedTargetRect.right - inset,
+                    animatedTargetRect.bottom - inset
+                )
+                canvas.drawRoundRect(pulsedRect, animatedCornerRadius + 2f, animatedCornerRadius + 2f, pulsePaint)
+                canvas.drawRoundRect(animatedTargetRect, animatedCornerRadius, animatedCornerRadius, strokePaint)
             }
         }
     }

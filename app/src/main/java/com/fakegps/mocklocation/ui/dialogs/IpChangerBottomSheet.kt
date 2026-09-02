@@ -127,56 +127,39 @@ class IpChangerBottomSheet @JvmOverloads constructor(
     }
 
     private fun setupTabs() {
-        switchTab(activeTab)
-
-        binding.tabBtnNodes.setOnClickListener { switchTab(0) }
-        binding.tabBtnGameBoost.setOnClickListener { switchTab(1) }
-        binding.tabBtnKillSwitch.setOnClickListener { switchTab(2) }
+        binding.rgIpChangerTabs.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.tabBtnNodes -> switchTab(0, updateRadio = false)
+                R.id.tabBtnGameBoost -> switchTab(1, updateRadio = false)
+                R.id.tabBtnKillSwitch -> switchTab(2, updateRadio = false)
+            }
+        }
+        switchTab(activeTab, updateRadio = true)
     }
 
-    private fun switchTab(tabIndex: Int) {
+    private fun switchTab(tabIndex: Int, updateRadio: Boolean = true) {
         activeTab = tabIndex
-        val ctx = context ?: return
 
-        val activeBg = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
-        val inactiveBg = ContextCompat.getColorStateList(ctx, android.R.color.transparent)
-
-        val activeText = ContextCompat.getColor(ctx, R.color.text_primary)
-        val inactiveText = ContextCompat.getColor(ctx, R.color.text_muted)
+        if (updateRadio) {
+            when (tabIndex) {
+                0 -> binding.rgIpChangerTabs.check(R.id.tabBtnNodes)
+                1 -> binding.rgIpChangerTabs.check(R.id.tabBtnGameBoost)
+                2 -> binding.rgIpChangerTabs.check(R.id.tabBtnKillSwitch)
+            }
+        }
 
         when (tabIndex) {
             0 -> {
-                binding.tabBtnNodes.backgroundTintList = activeBg
-                binding.tabBtnNodes.setTextColor(activeText)
-                binding.tabBtnGameBoost.backgroundTintList = inactiveBg
-                binding.tabBtnGameBoost.setTextColor(inactiveText)
-                binding.tabBtnKillSwitch.backgroundTintList = inactiveBg
-                binding.tabBtnKillSwitch.setTextColor(inactiveText)
-
                 binding.layoutNodesView.visibility = View.VISIBLE
                 binding.layoutGameBoostView.visibility = View.GONE
                 binding.layoutKillSwitchView.visibility = View.GONE
             }
             1 -> {
-                binding.tabBtnNodes.backgroundTintList = inactiveBg
-                binding.tabBtnNodes.setTextColor(inactiveText)
-                binding.tabBtnGameBoost.backgroundTintList = activeBg
-                binding.tabBtnGameBoost.setTextColor(activeText)
-                binding.tabBtnKillSwitch.backgroundTintList = inactiveBg
-                binding.tabBtnKillSwitch.setTextColor(inactiveText)
-
                 binding.layoutNodesView.visibility = View.GONE
                 binding.layoutGameBoostView.visibility = View.VISIBLE
                 binding.layoutKillSwitchView.visibility = View.GONE
             }
             2 -> {
-                binding.tabBtnNodes.backgroundTintList = inactiveBg
-                binding.tabBtnNodes.setTextColor(inactiveText)
-                binding.tabBtnGameBoost.backgroundTintList = inactiveBg
-                binding.tabBtnGameBoost.setTextColor(inactiveText)
-                binding.tabBtnKillSwitch.backgroundTintList = activeBg
-                binding.tabBtnKillSwitch.setTextColor(activeText)
-
                 binding.layoutNodesView.visibility = View.GONE
                 binding.layoutGameBoostView.visibility = View.GONE
                 binding.layoutKillSwitchView.visibility = View.VISIBLE

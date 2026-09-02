@@ -102,41 +102,33 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupTabs() {
-        binding.tabHostMode.setOnClickListener {
+        binding.rgHotspotModeTabs.setOnCheckedChangeListener { _, checkedId ->
             performHapticFeedback()
-            switchToHostMode()
-        }
-
-        binding.tabClientMode.setOnClickListener {
-            performHapticFeedback()
-            switchToClientMode()
+            when (checkedId) {
+                R.id.tabHostMode -> switchToHostMode(updateRadio = false)
+                R.id.tabClientMode -> switchToClientMode(updateRadio = false)
+            }
         }
     }
 
-    private fun switchToHostMode() {
+    private fun switchToHostMode(updateRadio: Boolean = true) {
         isHostTabActive = true
+        if (updateRadio) {
+            binding.rgHotspotModeTabs.check(R.id.tabHostMode)
+        }
         binding.layoutHostContainer.visibility = View.VISIBLE
         binding.layoutClientContainer.visibility = View.GONE
-
-        binding.tabHostMode.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.primary))
-        binding.tabHostMode.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-
-        binding.tabClientMode.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.transparent))
-        binding.tabClientMode.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
 
         HotspotLocationServer.startServer(requireContext())
     }
 
-    private fun switchToClientMode() {
+    private fun switchToClientMode(updateRadio: Boolean = true) {
         isHostTabActive = false
+        if (updateRadio) {
+            binding.rgHotspotModeTabs.check(R.id.tabClientMode)
+        }
         binding.layoutHostContainer.visibility = View.GONE
         binding.layoutClientContainer.visibility = View.VISIBLE
-
-        binding.tabClientMode.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.primary))
-        binding.tabClientMode.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-
-        binding.tabHostMode.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.transparent))
-        binding.tabHostMode.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
 
         if (binding.etHostPhoneUrl.text.isNullOrBlank()) {
             val hostIp = HotspotLocationServer.getHotspotOrWifiIpAddress(requireContext())

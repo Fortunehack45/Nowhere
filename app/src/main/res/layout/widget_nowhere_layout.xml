@@ -58,7 +58,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="San Francisco, CA"
+            android:text="Target Location"
             android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -69,7 +69,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:fontFamily="monospace"
-            android:text="37.77490° N, 122.41940° W"
+            android:text="0.00000° N, 0.00000° E"
             android:textColor="@color/text_muted"
             android:textSize="12sp" />
     </LinearLayout>

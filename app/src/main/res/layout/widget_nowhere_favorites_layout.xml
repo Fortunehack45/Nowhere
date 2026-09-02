@@ -59,7 +59,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_widget_button_primary"
             android:gravity="center"
-            android:text="Paris"
+            android:text="Slot 1"
             android:textColor="@color/white"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -72,7 +72,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
-            android:text="Tokyo"
+            android:text="Slot 2"
             android:textColor="@color/text_primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -85,7 +85,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
-            android:text="New York"
+            android:text="Slot 3"
             android:textColor="@color/text_primary"
             android:textSize="11sp"
             android:textStyle="bold" />

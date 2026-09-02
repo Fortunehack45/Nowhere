@@ -53,20 +53,15 @@ object KillSwitchManager {
         val isMockLocationActive = prefs.isSessionActive
         val isVpnActive = NowhereVpnService.isRunning
 
-        if (isMockLocationActive && isVpnActive) {
+        if (isMockLocationActive || isVpnActive) {
             _status.value = KillSwitchStatus.Armed
             cancelNotification(context)
             stopSinkhole(context)
         } else {
-            val reason = when {
-                !isMockLocationActive && !isVpnActive -> "GPS Mocking and VPN Shield are both OFF"
-                !isMockLocationActive -> "GPS Mocking session stopped"
-                else -> "VPN Privacy Shield disconnected"
-            }
-            Log.w(TAG, "⚡ Emergency Kill Switch Triggered! Network Sinkhole Activated: $reason")
-            _status.value = KillSwitchStatus.Triggered(reason)
-            showKillSwitchNotification(context, reason)
-            startSinkhole(context, reason)
+            // Both are inactive in normal standby; do not block internet
+            _status.value = KillSwitchStatus.Disabled
+            cancelNotification(context)
+            stopSinkhole(context)
         }
     }
 

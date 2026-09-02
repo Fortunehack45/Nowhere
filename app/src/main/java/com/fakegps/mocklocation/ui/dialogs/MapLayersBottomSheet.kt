@@ -42,6 +42,10 @@ class MapLayersBottomSheet(
         binding.btnLayerTopo.setOnClickListener {
             selectLayer("TOPO")
         }
+
+        binding.btnLayer3dVector.setOnClickListener {
+            selectLayer("3D_VECTOR")
+        }
     }
 
     private fun selectLayer(sourceKey: String) {
@@ -67,6 +71,12 @@ class MapLayersBottomSheet(
         binding.ivCheckTopo.visibility = if (isTopo) View.VISIBLE else View.GONE
         binding.btnLayerTopo.setBackgroundResource(
             if (isTopo) R.drawable.bg_plan_card_selected else R.drawable.bg_plan_card_unselected
+        )
+
+        val is3D = currentSource == "3D_VECTOR" || currentSource == "MAPLIBRE_3D" || currentSource == "CARTO_3D"
+        binding.ivCheck3dVector.visibility = if (is3D) View.VISIBLE else View.GONE
+        binding.btnLayer3dVector.setBackgroundResource(
+            if (is3D) R.drawable.bg_plan_card_selected else R.drawable.bg_plan_card_unselected
         )
     }
 

@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import org.osmdroid.tileprovider.tilesource.ITileSource
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.tileprovider.tilesource.XYTileSource
 import org.osmdroid.util.MapTileIndex
 
 /**
@@ -35,6 +36,20 @@ class GoogleHybridSatelliteTileSource : OnlineTileSourceBase(
 
 val SATELLITE_TILE_SOURCE: ITileSource = GoogleHybridSatelliteTileSource()
 val ESRI_SATELLITE: ITileSource = SATELLITE_TILE_SOURCE
+
+val CARTO_VOYAGER_3D: ITileSource = XYTileSource(
+    "CartoVoyager3D",
+    1,
+    20,
+    256,
+    ".png",
+    arrayOf(
+        "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+        "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+        "https://c.basemaps.cartocdn.com/rastertiles/voyager/"
+    ),
+    "© CARTO, © OpenStreetMap contributors"
+)
 
 class AppSettingsPreferences(context: Context) {
 
@@ -255,6 +270,7 @@ class AppSettingsPreferences(context: Context) {
         return when (mapTileSource) {
             "TOPO" -> TileSourceFactory.OpenTopo
             "USGS_SAT", "SATELLITE", "ESRI_SAT" -> ESRI_SATELLITE
+            "3D_VECTOR", "MAPLIBRE_3D", "CARTO_3D" -> CARTO_VOYAGER_3D
             else -> TileSourceFactory.MAPNIK
         }
     }

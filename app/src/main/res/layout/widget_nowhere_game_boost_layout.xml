@@ -14,11 +14,11 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="⚡"
-            android:textSize="16sp" />
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_bolt"
+            android:tint="@color/primary" />
 
         <TextView
             android:layout_width="0dp"
@@ -59,7 +59,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="🎯 Call of Duty: Mobile / Warzone"
+            android:text="Low-Latency Optimization Profile"
             android:textColor="@color/text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -72,7 +72,7 @@
             android:ellipsize="end"
             android:fontFamily="monospace"
             android:maxLines="1"
-            android:text="⚡ 14ms • DSCP 46 EF • Google BBR"
+            android:text="FastPath DSCP 46 EF • Google BBR"
             android:textColor="@color/text_secondary"
             android:textSize="10sp" />
 

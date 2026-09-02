@@ -101,17 +101,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:gravity="end"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/pbSpotlightProgress"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:layout_weight="1"
+                    app:indicatorColor="@color/primary"
+                    app:trackColor="@color/stroke_subtle"
+                    app:trackCornerRadius="3dp"
+                    app:trackThickness="4dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSpotlightNext"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="42dp"
                     android:backgroundTint="@color/primary"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    android:minWidth="120dp"
+                    android:minWidth="110dp"
                     android:paddingHorizontal="20dp"
                     android:text="Next"
                     android:textColor="@color/white"

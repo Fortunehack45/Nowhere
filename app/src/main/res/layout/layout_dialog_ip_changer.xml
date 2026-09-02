@@ -64,51 +64,55 @@
             android:textSize="12sp" />
 
         <!-- Apple-Style Segmented Navigation Tabs -->
-        <LinearLayout
+        <RadioGroup
+            android:id="@+id/rgIpChangerTabs"
             android:layout_width="match_parent"
             android:layout_height="44dp"
             android:layout_marginTop="16dp"
             android:background="@drawable/bg_segmented_tab"
+            android:checkedButton="@id/tabBtnNodes"
             android:orientation="horizontal"
             android:padding="3dp">
 
-            <TextView
+            <RadioButton
                 android:id="@+id/tabBtnNodes"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/bg_status_pill"
-                android:backgroundTint="@color/surface_elevated"
+                android:background="@drawable/bg_segmented_pill_item"
+                android:button="@null"
                 android:gravity="center"
                 android:text="VPN Gateways"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/color_segmented_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <RadioButton
                 android:id="@+id/tabBtnGameBoost"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@android:color/transparent"
+                android:background="@drawable/bg_segmented_pill_item"
+                android:button="@null"
                 android:gravity="center"
                 android:text="Game Booster"
-                android:textColor="@color/text_muted"
+                android:textColor="@color/color_segmented_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <RadioButton
                 android:id="@+id/tabBtnKillSwitch"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@android:color/transparent"
+                android:background="@drawable/bg_segmented_pill_item"
+                android:button="@null"
                 android:gravity="center"
                 android:text="Kill Switch"
-                android:textColor="@color/text_muted"
+                android:textColor="@color/color_segmented_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />
-        </LinearLayout>
+        </RadioGroup>
 
         <!-- Live IP Telemetry Card -->
         <com.google.android.material.card.MaterialCardView

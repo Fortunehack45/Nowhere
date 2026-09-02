@@ -192,7 +192,7 @@
             <ImageView
                 android:layout_width="26dp"
                 android:layout_height="26dp"
-                android:src="@drawable/ic_3d"
+                android:src="@drawable/ic_layers"
                 app:tint="@color/primary"
                 tools:ignore="ContentDescription" />
 
@@ -221,6 +221,58 @@
 
             <ImageView
                 android:id="@+id/ivCheckTopo"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_check_circle"
+                android:visibility="gone"
+                app:tint="@color/primary" />
+        </LinearLayout>
+
+        <!-- Option 4: 3D Modern Vector Map -->
+        <LinearLayout
+            android:id="@+id/btnLayer3dVector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_plan_card_unselected"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="14dp">
+
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/ic_3d"
+                app:tint="@color/primary"
+                tools:ignore="ContentDescription" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3D Vector Map &amp; Perspective"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3D building extrusion &amp; tilted perspective navigation"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/ivCheck3dVector"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/ic_check_circle"

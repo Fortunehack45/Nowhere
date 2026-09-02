@@ -89,57 +89,43 @@
         </RelativeLayout>
 
         <!-- Segmented Tab Pill: Broadcast vs Receiver -->
-        <LinearLayout
+        <RadioGroup
+            android:id="@+id/rgHotspotModeTabs"
             android:layout_width="match_parent"
             android:layout_height="44dp"
             android:layout_marginBottom="16dp"
             android:background="@drawable/bg_segmented_tab"
+            android:checkedButton="@id/tabHostMode"
             android:orientation="horizontal"
             android:padding="3dp">
 
-            <com.google.android.material.button.MaterialButton
+            <RadioButton
                 android:id="@+id/tabHostMode"
-                style="@style/Widget.Material3.Button.UnelevatedButton"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:backgroundTint="@color/primary"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:minHeight="0dp"
-                android:paddingHorizontal="6dp"
-                android:paddingTop="0dp"
-                android:paddingBottom="0dp"
-                android:singleLine="true"
-                android:stateListAnimator="@null"
-                android:text="📡 Broadcast (Host)"
-                android:textColor="@android:color/white"
+                android:background="@drawable/bg_segmented_pill_item"
+                android:button="@null"
+                android:gravity="center"
+                android:text="Broadcast (Host)"
+                android:textColor="@color/color_segmented_text"
                 android:textSize="12sp"
-                android:textStyle="bold"
-                app:cornerRadius="10dp" />
+                android:textStyle="bold" />
 
-            <com.google.android.material.button.MaterialButton
+            <RadioButton
                 android:id="@+id/tabClientMode"
-                style="@style/Widget.Material3.Button.UnelevatedButton"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                android:backgroundTint="@android:color/transparent"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:minHeight="0dp"
-                android:paddingHorizontal="6dp"
-                android:paddingTop="0dp"
-                android:paddingBottom="0dp"
-                android:singleLine="true"
-                android:stateListAnimator="@null"
-                android:text="📥 Receive (Client)"
-                android:textColor="@color/text_secondary"
+                android:background="@drawable/bg_segmented_pill_item"
+                android:button="@null"
+                android:gravity="center"
+                android:text="Receive (Client)"
+                android:textColor="@color/color_segmented_text"
                 android:textSize="12sp"
-                android:textStyle="bold"
-                app:cornerRadius="10dp" />
-        </LinearLayout>
+                android:textStyle="bold" />
+        </RadioGroup>
 
         <!-- ================= CONTAINER 1: HOST MODE ================= -->
         <LinearLayout

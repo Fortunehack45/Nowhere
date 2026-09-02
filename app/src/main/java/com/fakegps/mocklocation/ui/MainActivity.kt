@@ -439,47 +439,56 @@ class MainActivity : AppCompatActivity() {
         val steps = listOf(
             SpotlightStep(
                 targetViewProvider = { binding.cardSearchBar },
-                title = "Global Address & Coordinates",
-                description = "Search any city, street address, or exact GPS coordinates. Or tap preset destination chips to warp instantly.",
+                title = "Address & Coordinates Search",
+                description = "Type any global city, address, or exact GPS coordinates (e.g. 37.7749, -122.4194) to immediately center the target pin.",
                 iconRes = R.drawable.ic_search,
                 stepNumber = 1,
-                totalSteps = 5,
+                totalSteps = 6,
+                paddingDp = 6f
+            ),
+            SpotlightStep(
+                targetViewProvider = { binding.scrollQuickChips },
+                title = "Quick City Presets",
+                description = "1-tap teleport shortcuts to famous world cities (Paris, New York, Tokyo, Dubai, London, Honolulu) without typing.",
+                iconRes = R.drawable.ic_location_pin,
+                stepNumber = 2,
+                totalSteps = 6,
                 paddingDp = 6f
             ),
             SpotlightStep(
                 targetViewProvider = { binding.cardTopBrandBar },
-                title = "Status HUD & Privacy Engine",
-                description = "Live Weather Radar, WireGuard IP Privacy Shield, Ghost Cloaking, and Game Booster live in your top status bar.",
+                title = "Security HUD & Live Telemetry",
+                description = "Monitor your WireGuard IP Shield, Ghost Cloak anti-detection suite, local weather radar, and active session countdown timer.",
                 iconRes = R.drawable.ic_shield_check,
-                stepNumber = 2,
-                totalSteps = 5,
+                stepNumber = 3,
+                totalSteps = 6,
                 paddingDp = 6f
             ),
             SpotlightStep(
                 targetViewProvider = { binding.cardSideButtons },
-                title = "Quick Map Controls",
-                description = "Instant access to Zoom In/Out, Center Target, Save Bookmarks, History, Map Layers (Satellite/Vector), and Altitude settings.",
+                title = "Floating Quick Tools",
+                description = "Instant access to zoom controls, Center On Target, Bookmark Favorites, Simulation History, and Map Layer selection.",
                 iconRes = R.drawable.ic_layers,
-                stepNumber = 3,
-                totalSteps = 5,
+                stepNumber = 4,
+                totalSteps = 6,
                 paddingDp = 6f
             ),
             SpotlightStep(
                 targetViewProvider = { binding.rgModeTabs },
                 title = "Simulation Modes",
-                description = "Switch between 3 simulation engines: Fixed Pin Teleport, Multi-Point Route Simulation, and 360° Real-time Joystick.",
-                iconRes = R.drawable.ic_teleport,
-                stepNumber = 4,
-                totalSteps = 5,
+                description = "Switch between Fixed Pin teleport, Multi-Point Route Simulation with custom realistic speed, or 360° Floating Joystick.",
+                iconRes = R.drawable.ic_route,
+                stepNumber = 5,
+                totalSteps = 6,
                 paddingDp = 6f
             ),
             SpotlightStep(
                 targetViewProvider = { binding.btnFixedToggle },
-                title = "Master Teleport Control",
-                description = "Tap Start to engage mock location system-wide across all apps and games. Tap Stop anytime to restore real GPS.",
+                title = "Master Mock GPS Injection",
+                description = "Tap to start injecting your simulated GPS coordinates across all Android apps, games, and browsers. Tap Stop anytime to restore real GPS.",
                 iconRes = R.drawable.ic_play,
-                stepNumber = 5,
-                totalSteps = 5,
+                stepNumber = 6,
+                totalSteps = 6,
                 paddingDp = 8f
             )
         )
@@ -524,6 +533,48 @@ class MainActivity : AppCompatActivity() {
             }
         })
         binding.mapView.overlays.add(0, mapEventsOverlay)
+
+        var lastDoubleTapDownTime = 0L
+        var isDoubleTapDragZooming = false
+        var doubleTapStartY = 0f
+
+        val gestureDetector = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
+            override fun onDoubleTap(e: android.view.MotionEvent): Boolean {
+                lastDoubleTapDownTime = System.currentTimeMillis()
+                doubleTapStartY = e.y
+                return false
+            }
+        })
+
+        binding.mapView.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            when (event.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    val now = System.currentTimeMillis()
+                    if (now - lastDoubleTapDownTime < 350L) {
+                        isDoubleTapDragZooming = true
+                        doubleTapStartY = event.y
+                    }
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    if (isDoubleTapDragZooming) {
+                        val deltaY = doubleTapStartY - event.y
+                        if (Math.abs(deltaY) > 6f) {
+                            val zoomChange = (deltaY / 200.0)
+                            val currentZoom = binding.mapView.zoomLevelDouble
+                            val targetZoom = (currentZoom + zoomChange).coerceIn(3.0, 21.0)
+                            binding.mapView.controller.setZoom(targetZoom)
+                            doubleTapStartY = event.y
+                        }
+                        return@setOnTouchListener true
+                    }
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    isDoubleTapDragZooming = false
+                }
+            }
+            false
+        }
 
         updateFixedPinMarker(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
     }
@@ -974,27 +1025,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
-        // Floating Tools Hide/Unhide Toggle
-        val isExpanded = settingsPrefs.isSideMenuExpanded
-        binding.layoutSideButtons.visibility = if (isExpanded) View.VISIBLE else View.GONE
-        binding.dividerSideMenuToggle.visibility = if (isExpanded) View.VISIBLE else View.GONE
-        binding.btnToggleSideMenu.setImageResource(if (isExpanded) R.drawable.ic_chevron_right else R.drawable.ic_chevron_left)
-        binding.btnToggleSideMenu.contentDescription = if (isExpanded) "Collapse Floating Tools" else "Expand Floating Tools"
-
-        binding.btnToggleSideMenu.setOnClickListener {
-            val currentlyExpanded = binding.layoutSideButtons.visibility == View.VISIBLE
-            val willBeExpanded = !currentlyExpanded
-            settingsPrefs.isSideMenuExpanded = willBeExpanded
-
-            binding.layoutSideButtons.visibility = if (willBeExpanded) View.VISIBLE else View.GONE
-            binding.dividerSideMenuToggle.visibility = if (willBeExpanded) View.VISIBLE else View.GONE
-            binding.btnToggleSideMenu.setImageResource(if (willBeExpanded) R.drawable.ic_chevron_right else R.drawable.ic_chevron_left)
-            binding.btnToggleSideMenu.contentDescription = if (willBeExpanded) "Collapse Floating Tools" else "Expand Floating Tools"
-            
-            val msg = if (willBeExpanded) "Floating tools expanded" else "Floating tools collapsed"
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-        }
-
+        // Floating Quick Tools Setup
         binding.fabZoomIn.setOnClickListener {
             binding.mapView.controller.zoomIn()
         }
@@ -1096,14 +1127,25 @@ class MainActivity : AppCompatActivity() {
                     "MAPNIK" -> "Standard Street Map"
                     "SATELLITE" -> "Satellite Hybrid"
                     "TOPO" -> "OpenTopo Terrain"
+                    "3D_VECTOR" -> "3D Vector & Perspective"
                     else -> "Standard Map"
                 }
                 Toast.makeText(this, "Map layer: $label", Toast.LENGTH_SHORT).show()
             }.show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.MapLayersBottomSheet.TAG)
         }
 
-        binding.fabAppTutorial.setOnClickListener {
-            startInteractiveHomeSpotlightTour()
+        binding.btnToggleSideMenu.setOnClickListener {
+            performHapticFeedbackIfEnabled()
+            val isExpanded = binding.layoutExtraSideTools.visibility == View.VISIBLE
+            if (isExpanded) {
+                binding.layoutExtraSideTools.visibility = View.GONE
+                binding.btnToggleSideMenu.setImageResource(R.drawable.ic_chevron_down)
+                binding.btnToggleSideMenu.contentDescription = "Expand Extra Tools"
+            } else {
+                binding.layoutExtraSideTools.visibility = View.VISIBLE
+                binding.btnToggleSideMenu.setImageResource(R.drawable.ic_chevron_up)
+                binding.btnToggleSideMenu.contentDescription = "Collapse Extra Tools"
+            }
         }
     }
 

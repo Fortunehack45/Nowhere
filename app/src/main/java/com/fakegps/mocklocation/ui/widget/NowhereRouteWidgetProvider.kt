@@ -106,6 +106,23 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
                 views.setProgressBar(R.id.pbWidgetRoute, 100, 0, false)
             }
 
+            if (waypoints.isNotEmpty()) {
+                val origin = waypoints.first()
+                val dest = waypoints.last()
+                val originCoords = String.format(java.util.Locale.US, "%.4f, %.4f", origin.latitude, origin.longitude)
+                val destCoords = String.format(java.util.Locale.US, "%.4f, %.4f", dest.latitude, dest.longitude)
+                val originName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+                    sessionPrefs.lastLocationName
+                } else {
+                    originCoords
+                }
+                views.setTextViewText(R.id.tvRouteOrigin, originName)
+                views.setTextViewText(R.id.tvRouteDestination, destCoords)
+            } else {
+                views.setTextViewText(R.id.tvRouteOrigin, "No Route Planned")
+                views.setTextViewText(R.id.tvRouteDestination, "Tap to plan route")
+            }
+
             views.setTextViewText(R.id.tvWidgetRouteSpeed, settingsPrefs.formatSpeed(speedKmh))
 
             // Open App Intent

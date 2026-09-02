@@ -59,7 +59,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="🇺🇸 New York, United States"
+            android:text="Global Privacy Gateway"
             android:textColor="@color/text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -72,7 +72,7 @@
             android:ellipsize="end"
             android:fontFamily="monospace"
             android:maxLines="1"
-            android:text="IP: 198.51.100.45 • 28ms"
+            android:text="Direct Connection • Masked"
             android:textColor="@color/text_secondary"
             android:textSize="10sp" />
 
