@@ -7,8 +7,9 @@ services:
       dockerfile: deploy/Dockerfile
     container_name: nowhere-vpn-backend
     restart: unless-stopped
-    ports:
-      - "8080:8080"
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
     environment:
       - PORT=8080
       - CONFIG_DIR=/app/config
@@ -17,6 +18,7 @@ services:
     volumes:
       - ../config:/app/config:ro
       - ./secrets:/secrets:ro
+      - /var/run/wireguard:/var/run/wireguard
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
       interval: 30s

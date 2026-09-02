@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -119,13 +120,19 @@ func (p *ClientPool) GetClient(node config.Node) (*ssh.Client, error) {
 func (p *ClientPool) Run(ctx context.Context, node config.Node, command string) (string, error) {
 	// If the node is on the local machine or localhost, execute directly via shell
 	if node.SSHHost == "127.0.0.1" || node.SSHHost == "localhost" || node.SSHHost == "" {
-		cmd := exec.CommandContext(ctx, "sh", "-c", command)
+		execCmd := command
+		if strings.HasPrefix(execCmd, "sudo ") {
+			if _, err := exec.LookPath("sudo"); err != nil {
+				execCmd = strings.TrimPrefix(execCmd, "sudo ")
+			}
+		}
+		cmd := exec.CommandContext(ctx, "sh", "-c", execCmd)
 		var stdoutBuf, stderrBuf bytes.Buffer
 		cmd.Stdout = &stdoutBuf
 		cmd.Stderr = &stderrBuf
 		if err := cmd.Run(); err != nil {
 			// Non-fatal if command warned
-			return stdoutBuf.String(), fmt.Errorf("local command [%s] failed: %w (stderr: %s)", command, err, stderrBuf.String())
+			return stdoutBuf.String(), fmt.Errorf("local command [%s] failed: %w (stderr: %s)", execCmd, err, stderrBuf.String())
 		}
 		return stdoutBuf.String(), nil
 	}

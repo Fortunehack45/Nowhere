@@ -25,7 +25,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # ==============================================================================
 FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates tzdata openssh-client
+RUN apk add --no-cache ca-certificates tzdata openssh-client wireguard-tools sudo iproute2 iptables
 
 WORKDIR /app
 
