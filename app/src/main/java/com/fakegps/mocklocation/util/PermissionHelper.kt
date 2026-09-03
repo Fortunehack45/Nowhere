@@ -260,4 +260,57 @@ object PermissionHelper {
             } catch (ignored: Exception) {}
         }
     }
+
+    fun isWifiScanningEnabled(context: Context): Boolean {
+        return try {
+            Settings.Global.getInt(context.contentResolver, "wifi_scan_always_enabled", 0) == 1
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun isBleScanningEnabled(context: Context): Boolean {
+        return try {
+            Settings.Global.getInt(context.contentResolver, "ble_scan_always_enabled", 0) == 1
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun openLocationScanningSettings(context: Context) {
+        val intents = arrayOf(
+            Intent("android.settings.LOCATION_SCANNING_SETTINGS"),
+            Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+            Intent(Settings.ACTION_SETTINGS)
+        )
+        for (intent in intents) {
+            try {
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                context.startActivity(intent)
+                return
+            } catch (ignored: Exception) {}
+        }
+    }
+
+    fun disableScanningIfRooted(context: Context): Boolean {
+        if (!isDeviceRooted()) return false
+        val commands = arrayOf(
+            "settings put global wifi_scan_always_enabled 0",
+            "settings put global ble_scan_always_enabled 0"
+        )
+        val suBinaries = arrayOf("su", "/system/bin/su", "/system/xbin/su", "/sbin/su", "/data/adb/magisk/su", "/data/adb/ksu/bin/su", "/data/adb/ap/bin/su")
+        for (su in suBinaries) {
+            try {
+                val process = Runtime.getRuntime().exec(su)
+                val outputStream = DataOutputStream(process.outputStream)
+                for (cmd in commands) {
+                    outputStream.writeBytes("$cmd\n")
+                }
+                outputStream.writeBytes("exit\n")
+                outputStream.flush()
+                if (process.waitFor() == 0) return true
+            } catch (ignored: Exception) {}
+        }
+        return false
+    }
 }

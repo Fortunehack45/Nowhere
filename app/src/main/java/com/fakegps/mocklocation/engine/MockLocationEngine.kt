@@ -11,11 +11,15 @@ import android.os.SystemClock
 import android.util.Log
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.util.PermissionHelper
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 /**
- * Low-level mock location provider engine interfacing directly with Android's LocationManager.
- * Injects mock coordinates directly into GPS_PROVIDER, NETWORK_PROVIDER, PASSIVE_PROVIDER, and Google Play FUSED_PROVIDER.
- * Ensures Google Maps, Google Play Services, WhatsApp, and games receive consistent, rock-solid, uninterrupted spoofed coordinates.
+ * Low-level mock location provider engine interfacing directly with Android's LocationManager
+ * and Google Play Services FusedLocationProviderClient.
+ * Injects mock coordinates directly into GPS_PROVIDER, NETWORK_PROVIDER, and Google Play FUSED_PROVIDER.
+ * Ensures Google Maps, Google Play Services, WhatsApp, and games receive consistent, rock-solid, uninterrupted spoofed coordinates
+ * with zero rubberbanding or glitching back to real location.
  */
 class MockLocationEngine(
     private val context: Context,
@@ -31,6 +35,11 @@ class MockLocationEngine(
     private val locationManager: LocationManager =
         context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
+    // Google Play Services Fused Location Provider Client (direct GMS mock injection)
+    private val fusedLocationClient: FusedLocationProviderClient by lazy {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
+
     @Volatile
     private var isInitialized = false
 
@@ -39,23 +48,43 @@ class MockLocationEngine(
     private fun getTargetProviders(): List<String> {
         val list = mutableListOf(
             LocationManager.GPS_PROVIDER,
-            LocationManager.NETWORK_PROVIDER,
-            LocationManager.PASSIVE_PROVIDER
+            LocationManager.NETWORK_PROVIDER
         )
-        if (settingsPrefs.useFusedProvider) {
-            list.add(FUSED_PROVIDER_NAME)
+        // Add "fused" for Android 12+ (API 31+) or if registered in system LocationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || locationManager.allProviders.contains(FUSED_PROVIDER_NAME)) {
+            if (settingsPrefs.useFusedProvider) {
+                list.add(FUSED_PROVIDER_NAME)
+            }
         }
         return list
     }
 
     /**
-     * Initializes all test providers with fail-safe recovery and root auto-grant attempt.
+     * Initializes all test providers with fail-safe recovery, GMS Fused mock mode, and root auto-grant attempt.
      */
     @Synchronized
     fun initialize(): Result<Unit> {
         if (!PermissionHelper.isMockLocationEnabled(context) && PermissionHelper.isDeviceRooted()) {
             Log.d(TAG, "Device rooted: attempting automated root mock permission grant...")
             PermissionHelper.tryAutoGrantRootMockPermission(context)
+        }
+
+        // Suppress background Wi-Fi and Bluetooth scanning if rooted to prevent rubberbanding
+        if (PermissionHelper.isDeviceRooted()) {
+            PermissionHelper.disableScanningIfRooted(context)
+        }
+
+        // Engage Google Play Services Fused Location Provider Mock Mode
+        try {
+            fusedLocationClient.setMockMode(true)
+                .addOnSuccessListener {
+                    Log.d(TAG, "GMS FusedLocationProviderClient mock mode successfully engaged.")
+                }
+                .addOnFailureListener { e ->
+                    Log.w(TAG, "GMS FusedLocationProviderClient setMockMode warning: ${e.message}")
+                }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not setMockMode on GMS FusedLocationProviderClient: ${e.message}")
         }
 
         val providers = getTargetProviders()
@@ -76,7 +105,7 @@ class MockLocationEngine(
                 Log.e(TAG, "SecurityException registering $provider: App not selected as Mock App in Developer Options", e)
                 lastSecurityException = e
             } catch (e: Exception) {
-                Log.w(TAG, "Non-fatal error registering test provider $provider: ${e.message}")
+                Log.w(TAG, "Error registering test provider $provider: ${e.message}")
                 try {
                     locationManager.setTestProviderEnabled(provider, true)
                     registeredProviders.add(provider)
@@ -232,20 +261,28 @@ class MockLocationEngine(
             }
         }
 
-        return if (lastSuccessfulLocation != null) {
-            Result.success(lastSuccessfulLocation)
+        if (lastSuccessfulLocation != null) {
+            // Also inject directly into Google Play Services Fused Location Provider Client for 100% rubberband immunity
+            try {
+                fusedLocationClient.setMockLocation(lastSuccessfulLocation)
+            } catch (ignored: Exception) {}
+            return Result.success(lastSuccessfulLocation)
         } else {
             isInitialized = false
-            Result.failure(MockLocationError.ProviderUnavailable("all", "No test provider accepted mock coordinate"))
+            return Result.failure(MockLocationError.ProviderUnavailable("all", "No test provider accepted mock coordinate"))
         }
     }
 
     /**
-     * Tears down test providers cleanly.
+     * Tears down test providers cleanly and disengages GMS mock mode.
      */
     @Synchronized
     fun stop() {
-        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER, FUSED_PROVIDER_NAME)
+        try {
+            fusedLocationClient.setMockMode(false)
+        } catch (ignored: Exception) {}
+
+        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, FUSED_PROVIDER_NAME)
         for (provider in providers) {
             try {
                 locationManager.setTestProviderEnabled(provider, false)

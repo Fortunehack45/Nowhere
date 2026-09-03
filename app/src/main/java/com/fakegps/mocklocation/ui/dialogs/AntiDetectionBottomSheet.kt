@@ -138,15 +138,18 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
     private fun performRootStealthCheck() {
         val isRooted = PermissionHelper.isDeviceRooted()
         if (isRooted) {
+            val granted = PermissionHelper.tryAutoGrantRootMockPermission(requireContext())
+            val disabledScanning = PermissionHelper.disableScanningIfRooted(requireContext())
             Toast.makeText(
                 requireContext(),
-                "Root Cloaking active: test-keys, su binaries & magisk paths masked.",
+                "Root Stealth: Mock granted ($granted), hardware Wi-Fi scanning suppressed ($disabledScanning), binaries masked.",
                 Toast.LENGTH_LONG
             ).show()
+            refreshDiagnostics()
         } else {
             Toast.makeText(
                 requireContext(),
-                "Device is unrooted. Hardware sensor emulation is operating in userspace stealth.",
+                "Device is unrooted. Full userspace stealth, GMS Fused mocking, and NMEA synthesis active.",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -173,9 +176,9 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
 
         val isRooted = PermissionHelper.isDeviceRooted()
 
-        // Providers
+        // Providers & Anti-Rubberband Shield
         binding.tvDiagProvider.text = if (isMaster) {
-            "Fused + GPS + Network + Passive Providers: 100% Cloaked"
+            "Anti-Rubberband Shield: GMS Fused + GPS + Network Multi-Lock Active"
         } else {
             "Multi-Provider Stealth: Disabled (Standard Test Provider)"
         }
@@ -206,6 +209,20 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
             binding.tvLiveNmeaBox.text = "NMEA Stream Disabled. Enable Hardware Synthesizer above."
         }
         binding.tvLiveNmeaBox.setTextColor(primaryColor)
+
+        // Wi-Fi Hardware Scanning Shield
+        val isWifiScanningOn = PermissionHelper.isWifiScanningEnabled(ctx)
+        if (isWifiScanningOn) {
+            binding.tvDiagWifiScan.text = "Wi-Fi Scanning: Detected On (May cause location jumps) • Tap to turn off"
+            binding.ivDiagWifiScanIcon.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
+            binding.layoutWifiScanNotice.setOnClickListener {
+                PermissionHelper.openLocationScanningSettings(ctx)
+            }
+        } else {
+            binding.tvDiagWifiScan.text = "Wi-Fi Scanning: Disabled (Zero-Rubberbanding Lock Active)"
+            binding.ivDiagWifiScanIcon.imageTintList = primaryCsl
+            binding.layoutWifiScanNotice.setOnClickListener(null)
+        }
 
         // Root Stealth Button Text
         binding.btnRootStealthGrant.text = if (isRooted) "1-Tap Root Stealth (Root Detected)" else "Universal Cloak Active"

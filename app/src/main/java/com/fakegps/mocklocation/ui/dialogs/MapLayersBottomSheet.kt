@@ -29,8 +29,8 @@ class MapLayersBottomSheet(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         settingsPrefs = AppSettingsPreferences(requireContext())
-        updateSelectionUi(settingsPrefs.mapTileSource)
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+        updateSelectionUi(settingsPrefs.mapTileSource)
 
         binding.btnLayerStandard.setOnClickListener {
             selectLayer("MAPNIK")
@@ -53,22 +53,36 @@ class MapLayersBottomSheet(
     }
 
     private fun updateSelectionUi(currentSource: String) {
-        binding.ivCheckStandard.visibility = if (currentSource == "MAPNIK") View.VISIBLE else View.GONE
-        binding.btnLayerStandard.setBackgroundResource(
-            if (currentSource == "MAPNIK") R.drawable.bg_plan_card_selected else R.drawable.bg_plan_card_unselected
-        )
+        val ctx = context ?: return
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+        val primaryCsl = android.content.res.ColorStateList.valueOf(primaryColor)
+
+        val isMapnik = currentSource == "MAPNIK"
+        binding.ivCheckStandard.visibility = if (isMapnik) View.VISIBLE else View.GONE
+        binding.ivCheckStandard.imageTintList = primaryCsl
+        binding.btnLayerStandard.background = if (isMapnik) {
+            com.fakegps.mocklocation.util.ThemeColorManager.createSelectedPlanCardDrawable(primaryColor, ctx)
+        } else {
+            androidx.core.content.ContextCompat.getDrawable(ctx, R.drawable.bg_plan_card_unselected)
+        }
 
         val isSat = currentSource == "SATELLITE" || currentSource == "ESRI_SAT" || currentSource == "USGS_SAT"
         binding.ivCheckSatellite.visibility = if (isSat) View.VISIBLE else View.GONE
-        binding.btnLayerSatellite.setBackgroundResource(
-            if (isSat) R.drawable.bg_plan_card_selected else R.drawable.bg_plan_card_unselected
-        )
+        binding.ivCheckSatellite.imageTintList = primaryCsl
+        binding.btnLayerSatellite.background = if (isSat) {
+            com.fakegps.mocklocation.util.ThemeColorManager.createSelectedPlanCardDrawable(primaryColor, ctx)
+        } else {
+            androidx.core.content.ContextCompat.getDrawable(ctx, R.drawable.bg_plan_card_unselected)
+        }
 
         val isTopo = currentSource == "TOPO"
         binding.ivCheckTopo.visibility = if (isTopo) View.VISIBLE else View.GONE
-        binding.btnLayerTopo.setBackgroundResource(
-            if (isTopo) R.drawable.bg_plan_card_selected else R.drawable.bg_plan_card_unselected
-        )
+        binding.ivCheckTopo.imageTintList = primaryCsl
+        binding.btnLayerTopo.background = if (isTopo) {
+            com.fakegps.mocklocation.util.ThemeColorManager.createSelectedPlanCardDrawable(primaryColor, ctx)
+        } else {
+            androidx.core.content.ContextCompat.getDrawable(ctx, R.drawable.bg_plan_card_unselected)
+        }
     }
 
     override fun onDestroyView() {

@@ -606,7 +606,7 @@ class MockLocationService : Service() {
                             )
                         }
                     }
-                    delay(500L) // High-frequency 500ms zero-dropout provider lock
+                    delay(200L) // Continuous high-frequency 200ms anti-dropout anchor pulse (5Hz)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -754,7 +754,7 @@ class MockLocationService : Service() {
                             break
                         }
                     }
-                    delay(realismLayer.getAdaptiveIntervalMs(isMoving = true))
+                    delay(200L) // Ultra-smooth 200ms route physics & continuous anti-dropout anchor pulse (5Hz)
                 }
             } catch (e: CancellationException) {
                 throw e

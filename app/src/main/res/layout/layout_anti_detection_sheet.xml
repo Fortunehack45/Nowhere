@@ -397,6 +397,35 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
+            <!-- Check 4: Wi-Fi Hardware Scanning Shield -->
+            <LinearLayout
+                android:id="@+id/layoutWifiScanNotice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:background="?attr/selectableItemBackground"
+                android:paddingVertical="2dp">
+
+                <ImageView
+                    android:id="@+id/ivDiagWifiScanIcon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/badge_active_text" />
+
+                <TextView
+                    android:id="@+id/tvDiagWifiScan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="Wi-Fi Scanning: Disabled (Zero-Fluctuation Shield Active)"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
             <!-- Live NMEA Sentence Terminal Box -->
             <TextView
                 android:id="@+id/tvLiveNmeaBox"

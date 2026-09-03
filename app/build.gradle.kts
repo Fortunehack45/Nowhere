@@ -150,6 +150,9 @@ dependencies {
     // Google Mobile Ads (AdMob)
     implementation("com.google.android.gms:play-services-ads:23.0.0")
 
+    // Google Play Services Fused Location (Hardware & GMS Fused Provider Mock Shield)
+    implementation("com.google.android.gms:play-services-location:21.2.0")
+
     // Google Play Billing (Subscriptions & In-App Purchases) - Version 8.0.0
     implementation("com.android.billingclient:billing:8.0.0")
 

@@ -4,87 +4,105 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="4dp"
-    android:layout_marginVertical="5dp"
-    app:cardBackgroundColor="@color/surface_card_elevated"
-    app:cardCornerRadius="14dp"
+    android:layout_marginHorizontal="2dp"
+    android:layout_marginVertical="4dp"
+    app:cardBackgroundColor="@color/surface_card"
+    app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
     app:strokeColor="@color/stroke_subtle"
     app:strokeWidth="1dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="14dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
 
         <ImageView
             android:id="@+id/ivFavIcon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_status_pill"
+            android:padding="7dp"
             android:src="@drawable/ic_favorite"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/badge_warning_text"
             tools:ignore="ContentDescription" />
 
-        <TextView
-            android:id="@+id/tvFavoriteName"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="8dp"
-            android:textColor="@color/text_primary"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/chipTag"
-            app:layout_constraintStart_toEndOf="@id/ivFavIcon"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Golden Gate Bridge" />
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvCoordinates"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="3dp"
-            android:fontFamily="monospace"
-            android:textColor="@color/primary_bright"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnDelete"
-            app:layout_constraintStart_toEndOf="@id/ivFavIcon"
-            app:layout_constraintTop_toBottomOf="@id/tvFavoriteName"
-            tools:text="37.81990, -122.47830" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipTag"
+                <TextView
+                    android:id="@+id/tvFavoriteName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    tools:text="Golden Gate Bridge" />
+
+                <TextView
+                    android:id="@+id/chipTag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_status_pill"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    tools:text="WORK" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvCoordinates"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="monospace"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp"
+                tools:text="37.81990, -122.47830" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTeleport"
+            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="wrap_content"
-            android:layout_height="28dp"
-            android:layout_marginEnd="8dp"
-            android:textColor="@color/primary_bright"
+            android:layout_height="34dp"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@color/primary"
+            android:text="Teleport"
+            android:textColor="@color/white"
             android:textSize="11sp"
-            app:chipBackgroundColor="@color/surface_dark"
-            app:chipCornerRadius="6dp"
-            app:chipMinHeight="26dp"
-            app:chipStrokeColor="@color/stroke_subtle"
-            app:chipStrokeWidth="1dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnDelete"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Testing" />
+            android:textStyle="bold"
+            app:cornerRadius="8dp" />
 
         <ImageButton
             android:id="@+id/btnDelete"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_delete"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/accent_rose"
+            app:tint="@color/text_muted"
             tools:ignore="ContentDescription" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

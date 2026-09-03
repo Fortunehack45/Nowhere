@@ -62,6 +62,7 @@ class HistoryBottomSheet @JvmOverloads constructor(
         setupListeners()
         observeHistory()
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+        switchTab(isLocationTabActive)
     }
 
     private fun setupAdapters() {
@@ -137,12 +138,16 @@ class HistoryBottomSheet @JvmOverloads constructor(
 
     private fun switchTab(isLocation: Boolean) {
         isLocationTabActive = isLocation
-        val white = ContextCompat.getColor(requireContext(), R.color.white)
-        val muted = ContextCompat.getColor(requireContext(), R.color.text_muted)
-        val whiteSoft = ContextCompat.getColor(requireContext(), R.color.white_soft)
+        val ctx = context ?: return
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+        val white = ContextCompat.getColor(ctx, R.color.white)
+        val muted = ContextCompat.getColor(ctx, R.color.text_muted)
+        val whiteSoft = ContextCompat.getColor(ctx, R.color.white_soft)
+
+        val activeTabBackground = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor, 8f)
 
         if (isLocation) {
-            binding.tabLocationHistory.setBackgroundResource(R.drawable.bg_pill_active)
+            binding.tabLocationHistory.background = activeTabBackground
             binding.tvLocationTabText.setTextColor(white)
             binding.ivLocationIcon.imageTintList = android.content.res.ColorStateList.valueOf(white)
             binding.tvLocationHistoryCount.setTextColor(whiteSoft)
@@ -155,7 +160,7 @@ class HistoryBottomSheet @JvmOverloads constructor(
             binding.containerLocationHistory.visibility = View.VISIBLE
             binding.containerRouteHistory.visibility = View.GONE
         } else {
-            binding.tabRouteHistory.setBackgroundResource(R.drawable.bg_pill_active)
+            binding.tabRouteHistory.background = activeTabBackground
             binding.tvRouteTabText.setTextColor(white)
             binding.ivRouteIcon.imageTintList = android.content.res.ColorStateList.valueOf(white)
             binding.tvRouteHistoryCount.setTextColor(whiteSoft)
@@ -226,11 +231,21 @@ class HistoryBottomSheet @JvmOverloads constructor(
             RecyclerView.ViewHolder(binding.root) {
 
             fun bind(item: MockLocationHistory) {
+                val ctx = binding.root.context
+                val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+                val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(ctx)
+                val primaryCsl = android.content.res.ColorStateList.valueOf(primaryColor)
+                val lightTintCsl = android.content.res.ColorStateList.valueOf(lightTintColor)
+
                 binding.tvHistoryName.text = item.locationName
                 binding.tvHistoryModeBadge.text = item.mode
+                binding.tvHistoryModeBadge.setTextColor(primaryColor)
+                binding.tvHistoryModeBadge.backgroundTintList = lightTintCsl
                 binding.tvHistoryCoords.text = String.format(Locale.US, "%.5f, %.5f", item.latitude, item.longitude)
                 binding.tvHistoryTime.text = timeFormat.format(Date(item.timestamp))
 
+                binding.ivHistoryIcon.imageTintList = primaryCsl
+                binding.btnHistoryReuse.backgroundTintList = primaryCsl
                 binding.btnHistoryReuse.setOnClickListener { onReuse(item) }
                 binding.btnHistoryDelete.setOnClickListener { onDelete(item) }
             }
@@ -270,12 +285,31 @@ class HistoryBottomSheet @JvmOverloads constructor(
             RecyclerView.ViewHolder(binding.root) {
 
             fun bind(item: MockRouteHistory) {
+                val ctx = binding.root.context
+                val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+                val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(ctx)
+                val primaryCsl = android.content.res.ColorStateList.valueOf(primaryColor)
+                val lightTintCsl = android.content.res.ColorStateList.valueOf(lightTintColor)
+
                 binding.tvRouteHistoryName.text = item.routeName
-                binding.tvRouteHistoryWaypoints.text = item.waypointsCount.toString() + " pts"
+                binding.tvRouteHistoryWaypoints.text = String.format(Locale.US, "%,d pts", item.waypointsCount)
                 binding.tvRouteHistoryDistance.text = formatDistance(item.totalDistanceMeters)
-                binding.tvRouteHistoryTransport.text = item.transportMode + " - " + formatSpeed(item.speedKmh)
+
+                val modeIcon = when (item.transportMode.uppercase(Locale.US)) {
+                    "VEHICLE" -> "🚗"
+                    "WALK" -> "🚶"
+                    "CYCLE" -> "🚲"
+                    "FLIGHT" -> "✈️"
+                    else -> "📍"
+                }
+                binding.tvRouteHistoryTransport.text = "$modeIcon ${formatSpeed(item.speedKmh)}"
+                binding.tvRouteHistoryTransport.setTextColor(primaryColor)
+                binding.tvRouteHistoryTransport.backgroundTintList = lightTintCsl
+
                 binding.tvRouteHistoryTime.text = timeFormat.format(Date(item.timestamp))
 
+                binding.ivRouteHistoryIcon.imageTintList = primaryCsl
+                binding.btnRouteHistoryReuse.backgroundTintList = primaryCsl
                 binding.btnRouteHistoryReuse.setOnClickListener { onReuse(item) }
                 binding.btnRouteHistoryDelete.setOnClickListener { onDelete(item) }
             }

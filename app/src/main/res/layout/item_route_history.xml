@@ -35,16 +35,39 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvRouteHistoryName"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Route Simulation"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvRouteHistoryName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Route Simulation"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvRouteHistoryTransport"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_status_pill"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:text="🚗 50.0 km/h"
+                    android:textColor="@color/primary"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -60,6 +83,7 @@
                     android:background="@drawable/bg_status_pill"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="1dp"
+                    android:singleLine="true"
                     android:text="14 pts"
                     android:textColor="@color/text_secondary"
                     android:textSize="9sp" />
@@ -72,32 +96,22 @@
                     android:background="@drawable/bg_status_pill"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="1dp"
+                    android:singleLine="true"
                     android:text="4.2 km"
                     android:textColor="@color/text_secondary"
                     android:textSize="9sp" />
 
                 <TextView
-                    android:id="@+id/tvRouteHistoryTransport"
+                    android:id="@+id/tvRouteHistoryTime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_status_pill"
-                    android:paddingHorizontal="6dp"
-                    android:paddingVertical="1dp"
-                    android:text="CAR - 30 km/h"
-                    android:textColor="@color/primary"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:text="Today at 15:10"
+                    android:textColor="@color/text_muted"
+                    android:textSize="10sp" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvRouteHistoryTime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Today at 15:10"
-                android:textColor="@color/text_muted"
-                android:textSize="10sp" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton

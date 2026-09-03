@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.db.FavoriteLocation
 import com.fakegps.mocklocation.databinding.BottomSheetFavoritesBinding
 import com.fakegps.mocklocation.ui.MainViewModel
@@ -82,7 +83,12 @@ class FavoritesBottomSheet @JvmOverloads constructor(
         setupSearchAndFilter()
         setupExportImport()
         observeData()
-        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+
+        val ctx = requireContext()
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, ctx)
+        binding.btnImportJson.setTextColor(primaryColor)
+        binding.btnExportJson.setTextColor(primaryColor)
     }
 
     private fun setupRecyclerView() {
@@ -120,13 +126,7 @@ class FavoritesBottomSheet @JvmOverloads constructor(
             val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("Favorites JSON Backup", json)
             clipboard.setPrimaryClip(clip)
-
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_SUBJECT, "MockLocation Favorites Backup")
-                putExtra(Intent.EXTRA_TEXT, json)
-            }
-            startActivity(Intent.createChooser(shareIntent, "Export Favorites JSON"))
+            Toast.makeText(requireContext(), "Favorites JSON copied to clipboard", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnImportJson.setOnClickListener {
@@ -155,25 +155,44 @@ class FavoritesBottomSheet @JvmOverloads constructor(
 
     private fun populateTagChips(tags: List<String>) {
         binding.chipGroupTags.removeAllViews()
+        val ctx = context ?: return
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+        val surfaceDark = androidx.core.content.ContextCompat.getColor(ctx, R.color.surface_dark)
+        val strokeSubtle = androidx.core.content.ContextCompat.getColor(ctx, R.color.stroke_subtle)
+        val textSecondary = androidx.core.content.ContextCompat.getColor(ctx, R.color.text_secondary)
 
-        val allChip = Chip(requireContext()).apply {
+        fun styleChip(chip: Chip, isChecked: Boolean) {
+            chip.isCheckable = true
+            chip.isChecked = isChecked
+            if (isChecked) {
+                chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(primaryColor)
+                chip.chipStrokeColor = android.content.res.ColorStateList.valueOf(primaryColor)
+                chip.setTextColor(android.graphics.Color.WHITE)
+            } else {
+                chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(surfaceDark)
+                chip.chipStrokeColor = android.content.res.ColorStateList.valueOf(strokeSubtle)
+                chip.setTextColor(textSecondary)
+            }
+        }
+
+        val allChip = Chip(ctx).apply {
             text = "All"
-            isCheckable = true
-            isChecked = selectedTag == "All"
+            styleChip(this, selectedTag == "All")
             setOnClickListener {
                 selectedTag = "All"
+                populateTagChips(tags)
                 filterList()
             }
         }
         binding.chipGroupTags.addView(allChip)
 
         for (tag in tags) {
-            val chip = Chip(requireContext()).apply {
+            val chip = Chip(ctx).apply {
                 text = tag
-                isCheckable = true
-                isChecked = selectedTag == tag
+                styleChip(this, selectedTag.equals(tag, ignoreCase = true))
                 setOnClickListener {
                     selectedTag = tag
+                    populateTagChips(tags)
                     filterList()
                 }
             }
