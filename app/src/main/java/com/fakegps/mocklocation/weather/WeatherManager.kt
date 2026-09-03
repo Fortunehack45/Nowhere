@@ -283,7 +283,7 @@ object WeatherManager {
                 .setContentTitle("🌦️ Weather Update: $place")
                 .setContentText(text)
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
-                .setColor(ContextCompat.getColor(context, R.color.primary))
+                .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context))
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)

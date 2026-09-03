@@ -32,6 +32,7 @@ class SaveFavoriteDialog(
             dialog.dismiss()
         }
 
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, context)
         dialog.show()
     }
 }

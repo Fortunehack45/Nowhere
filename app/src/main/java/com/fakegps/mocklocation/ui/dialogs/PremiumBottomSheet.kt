@@ -75,10 +75,13 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         val discountPercent = PromotionManager.getYearlyDiscountPercent(context)
         val entitlement = BillingManager.getInstance(context).entitlementState.value
 
+        val primaryCsl = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(context)
+        binding.btnUpgradePremium.backgroundTintList = primaryCsl
+
         if (isYearly) {
             binding.cardPlanYearly.setBackgroundResource(R.drawable.bg_plan_card_selected)
             binding.ivRadioYearly.setImageResource(R.drawable.ic_check_circle)
-            binding.ivRadioYearly.imageTintList = ContextCompat.getColorStateList(context, R.color.primary_bright)
+            binding.ivRadioYearly.imageTintList = primaryCsl
 
             binding.cardPlanMonthly.setBackgroundResource(R.drawable.bg_plan_card_unselected)
             binding.ivRadioMonthly.setImageResource(R.drawable.bg_status_pill)
@@ -93,7 +96,7 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         } else {
             binding.cardPlanMonthly.setBackgroundResource(R.drawable.bg_plan_card_selected)
             binding.ivRadioMonthly.setImageResource(R.drawable.ic_check_circle)
-            binding.ivRadioMonthly.imageTintList = ContextCompat.getColorStateList(context, R.color.primary)
+            binding.ivRadioMonthly.imageTintList = primaryCsl
 
             binding.cardPlanYearly.setBackgroundResource(R.drawable.bg_plan_card_unselected)
             binding.ivRadioYearly.setImageResource(R.drawable.bg_status_pill)
@@ -108,6 +111,7 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
                 binding.btnUpgradePremium.text = "Subscribe Monthly"
             }
         }
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, context)
     }
 
     private fun setupListeners(billingManager: BillingManager) {

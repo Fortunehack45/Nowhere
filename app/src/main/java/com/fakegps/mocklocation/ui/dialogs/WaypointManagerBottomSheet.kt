@@ -111,6 +111,7 @@ class WaypointManagerBottomSheet : BottomSheetDialogFragment() {
         binding.btnSheetRedo.setOnClickListener { viewModel.redoRouteWaypoint() }
         binding.btnSheetReverse.setOnClickListener { viewModel.reverseRouteWaypoints() }
         binding.btnSheetClear.setOnClickListener { viewModel.clearRouteWaypoints() }
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
 
         // Observe UI State
         viewLifecycleOwner.lifecycleScope.launch {

@@ -610,6 +610,7 @@ class NowhereVpnService : VpnService() {
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(if (isGameBoost) R.drawable.ic_launcher_monochrome else R.drawable.ic_shield_check)
+            .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setContentIntent(pendingIntent)

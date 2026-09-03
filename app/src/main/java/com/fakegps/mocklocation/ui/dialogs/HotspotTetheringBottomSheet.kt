@@ -63,6 +63,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         setupTabs()
         setupListeners()
         observeServerState()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
         observeClientState()
         startPeriodicIpRefresh()
     }

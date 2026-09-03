@@ -588,10 +588,10 @@ class SettingsActivity : AppCompatActivity() {
             val chosenTheme = themes[position]
             settingsPrefs.appThemeColor = chosenTheme.id
             com.fakegps.mocklocation.util.ThemeColorManager.setAppThemeColor(this, chosenTheme.id)
-            com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
-            refreshThemeColorUI()
+            com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
             Toast.makeText(this, "App Theme Updated to ${chosenTheme.displayName}!", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
+            recreate()
         }
 
         dialog.show()

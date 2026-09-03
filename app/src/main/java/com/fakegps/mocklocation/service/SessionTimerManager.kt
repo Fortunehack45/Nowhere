@@ -287,6 +287,7 @@ object SessionTimerManager {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context))
             .setContentTitle(title)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
@@ -318,6 +319,7 @@ object SessionTimerManager {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context))
             .setContentTitle("Simulation Session Expired")
             .setContentText("Your session has ended. Tap to extend +2 hours or reconnect.")
             .setStyle(NotificationCompat.BigTextStyle().bigText("Your simulation session has ended. Tap below to extend by +2 Hours with an ad or reconnect for +20 mins free."))

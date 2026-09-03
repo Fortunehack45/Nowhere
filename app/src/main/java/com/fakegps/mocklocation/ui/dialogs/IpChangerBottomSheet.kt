@@ -111,6 +111,12 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         super.onViewCreated(view, savedInstanceState)
         sessionPrefs = SessionPreferences(requireContext())
 
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(requireContext())
+        binding.tabBtnNodes.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.tabBtnGameBoost.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.tabBtnKillSwitch.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+
         setupTabs()
         setupNodesList()
         setupGameBoostList()

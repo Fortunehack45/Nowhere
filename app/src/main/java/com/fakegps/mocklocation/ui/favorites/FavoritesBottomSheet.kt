@@ -82,6 +82,7 @@ class FavoritesBottomSheet @JvmOverloads constructor(
         setupSearchAndFilter()
         setupExportImport()
         observeData()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
     }
 
     private fun setupRecyclerView() {

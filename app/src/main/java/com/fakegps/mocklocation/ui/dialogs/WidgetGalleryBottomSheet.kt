@@ -124,6 +124,7 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
         binding.rvWidgetPreviews.adapter = WidgetPreviewAdapter(requireContext(), widgetList) { item ->
             requestPinWidget(item)
         }
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
     }
 
     private fun requestPinWidget(item: WidgetPreviewItem) {

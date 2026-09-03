@@ -79,6 +79,7 @@ class WeatherBottomSheet @JvmOverloads constructor(
 
         // Initial fetch
         loadWeatherReport()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
     }
 
     private fun loadWeatherReport() {

@@ -2,15 +2,25 @@ package com.fakegps.mocklocation.util
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
+import android.graphics.*
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CompoundButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.graphics.PathParser
+import androidx.core.widget.ImageViewCompat
+import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.slider.Slider
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,6 +39,8 @@ data class ColorTheme(
 
 object ThemeColorManager {
 
+    var isThemeStale: Boolean = false
+
     val THEMES = listOf(
         ColorTheme("RED", "Crimson Red (Default)", "🔴", "#E41B1B", "#B91C1C", "#FEE2E2", "#20E41B1B"),
         ColorTheme("BLUE", "Electric Blue", "🔵", "#2563EB", "#1D4ED8", "#DBEAFE", "#202563EB"),
@@ -42,26 +54,20 @@ object ThemeColorManager {
     private val _themeChangeFlow = MutableSharedFlow<ColorTheme>(replay = 1)
     val themeChangeFlow: SharedFlow<ColorTheme> = _themeChangeFlow.asSharedFlow()
 
-    // All known primary palette colors across themes
-    private val ALL_PRIMARY_COLORS by lazy {
-        THEMES.map { Color.parseColor(it.primaryColorHex) }.toSet() +
-        setOf(
-            Color.parseColor("#E41B1B"),
-            Color.parseColor("#E53935"),
-            Color.parseColor("#B91C1C"),
-            Color.parseColor("#EF4444"),
-            Color.parseColor("#DC2626")
-        )
-    }
+    private val ALL_PRIMARY_HEXES = setOf(
+        "#E41B1B", "#E53935", "#B91C1C", "#EF4444", "#DC2626", "#F87171",
+        "#2563EB", "#1D4ED8",
+        "#00B4D8", "#0077B6",
+        "#10B981", "#059669",
+        "#8B5CF6", "#6D28D9",
+        "#F59E0B", "#B45309",
+        "#EC4899", "#BE185D"
+    )
 
-    // All known light tint palette colors across themes
-    private val ALL_LIGHT_TINTS by lazy {
-        THEMES.map { Color.parseColor(it.lightTintHex) }.toSet() +
-        setOf(
-            Color.parseColor("#FEE2E2"),
-            Color.parseColor("#FFEBEE")
-        )
-    }
+    private val ALL_LIGHT_TINT_HEXES = setOf(
+        "#FEE2E2", "#FFEBEE", "#3D1010",
+        "#DBEAFE", "#CFFAFE", "#D1FAE5", "#EDE9FE", "#FEF3C7", "#FCE7F3"
+    )
 
     fun getCurrentTheme(context: Context): ColorTheme {
         val prefs = AppSettingsPreferences(context)
@@ -72,6 +78,7 @@ object ThemeColorManager {
     fun setAppThemeColor(context: Context, themeId: String) {
         val prefs = AppSettingsPreferences(context)
         prefs.appThemeColor = themeId
+        isThemeStale = true
         val theme = getCurrentTheme(context)
         _themeChangeFlow.tryEmit(theme)
     }
@@ -100,87 +107,244 @@ object ThemeColorManager {
         return Color.parseColor(getCurrentTheme(context).glowColorHex)
     }
 
-    fun createCircleDrawable(color: Int): android.graphics.drawable.GradientDrawable {
-        return android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.OVAL
+    fun isColorMatchingPrimary(color: Int): Boolean {
+        if (ALL_PRIMARY_HEXES.any { Color.parseColor(it) == color }) return true
+        val r = Color.red(color)
+        val g = Color.green(color)
+        val b = Color.blue(color)
+        return (r > 160 && g < 95 && b < 95)
+    }
+
+    fun isColorMatchingLightTint(color: Int): Boolean {
+        if (ALL_LIGHT_TINT_HEXES.any { Color.parseColor(it) == color }) return true
+        val r = Color.red(color)
+        val g = Color.green(color)
+        val b = Color.blue(color)
+        return (r > 220 && g > 195 && b > 195 && r > g && r > b) || (r in 35..85 && g < 35 && b < 35)
+    }
+
+    fun createCircleDrawable(color: Int): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
             setColor(color)
         }
     }
 
-    fun createSegmentedPillDrawable(primaryColor: Int, cornerRadiusDp: Float = 10f): android.graphics.drawable.StateListDrawable {
+    fun createSegmentedPillDrawable(primaryColor: Int, cornerRadiusDp: Float = 10f): StateListDrawable {
         val density = android.content.res.Resources.getSystem().displayMetrics.density
         val radiusPx = cornerRadiusDp * density
-        val checkedDrawable = android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+        val checkedDrawable = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
             cornerRadius = radiusPx
             setColor(primaryColor)
             setStroke((1f * density).toInt(), primaryColor)
         }
-        val uncheckedDrawable = android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+        val uncheckedDrawable = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
             cornerRadius = radiusPx
             setColor(Color.TRANSPARENT)
         }
-        val stateList = android.graphics.drawable.StateListDrawable()
+        val stateList = StateListDrawable()
         stateList.addState(intArrayOf(android.R.attr.state_checked), checkedDrawable)
         stateList.addState(intArrayOf(), uncheckedDrawable)
         return stateList
     }
 
     /**
+     * Dynamically generates the Nowhere Brand Pin Logo with the chosen primary
+     * color body, darker quadrant radar shade, and center cutout.
+     */
+    fun getThemedLogoDrawable(context: Context, primaryColor: Int, darkColor: Int): Drawable {
+        val size = (120 * context.resources.displayMetrics.density).toInt().coerceAtLeast(120)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val scale = size / 200f
+        val matrix = Matrix().apply { setScale(scale, scale) }
+
+        val path1 = PathParser.createPathFromPathData(
+            "M100,20 C133.14,20 160,46.86 160,80 C160,118 100,185 100,185 C100,185 40,118 40,80 C40,46.86 66.86,20 100,20 Z"
+        ).apply { transform(matrix) }
+
+        val path2 = PathParser.createPathFromPathData(
+            "M100,20 C66.86,20 40,46.86 40,80 L75,80 C75,66.2 86.2,55 100,55 Z"
+        ).apply { transform(matrix) }
+
+        val path3 = PathParser.createPathFromPathData(
+            "M100,55 C113.8,55 125,66.2 125,80 C125,93.8 113.8,105 100,105 C86.2,105 75,93.8 75,80 C75,66.2 86.2,55 100,55 Z"
+        ).apply { transform(matrix) }
+
+        val p1 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = primaryColor
+        }
+        val p2 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = darkColor
+        }
+        val p3 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = Color.parseColor("#0E1117")
+        }
+
+        canvas.drawPath(path1, p1)
+        canvas.drawPath(path2, p2)
+        canvas.drawPath(path3, p3)
+
+        return BitmapDrawable(context.resources, bitmap)
+    }
+
+    /**
+     * Dynamically generates the map target pin marker tinted in the active theme primary color.
+     */
+    fun getThemedTargetPinDrawable(context: Context, primaryColor: Int): Drawable {
+        val size = (48 * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val scale = size / 24f
+        val matrix = Matrix().apply { setScale(scale, scale) }
+
+        val pinPath = PathParser.createPathFromPathData(
+            "M12,2C8.13,2 5,5.13 5,9c0,5.25 7,13 7,13s7,-7.75 7,-13c0,-3.87 -3.13,-7 -7,-7zM12,11.5c-1.38,0 -2.5,-1.12 -2.5,-2.5s1.12,-2.5 2.5,-2.5 2.5,1.12 2.5,2.5 -1.12,2.5 -2.5,2.5z"
+        ).apply { transform(matrix) }
+
+        val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = primaryColor
+        }
+        val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 2f * scale
+            color = Color.WHITE
+        }
+
+        canvas.drawPath(pinPath, shadowPaint)
+        canvas.drawPath(pinPath, pinPaint)
+
+        return BitmapDrawable(context.resources, bitmap)
+    }
+
+    /**
      * Recursively walks the view hierarchy and transforms ALL red / primary theme
-     * elements and light-tint surfaces into the user's chosen theme color palette.
+     * elements, switches, icons, text, and surfaces into the chosen theme color palette.
      */
     fun applyThemeRecursively(rootView: View, context: Context) {
         val primaryColor = getPrimaryColor(context)
         val lightTintColor = getLightTintColor(context)
+        val darkColor = getDarkColor(context)
         val primaryCsl = ColorStateList.valueOf(primaryColor)
         val lightTintCsl = ColorStateList.valueOf(lightTintColor)
 
-        applyThemeToViewInternal(rootView, primaryColor, lightTintColor, primaryCsl, lightTintCsl)
+        applyThemeToViewInternal(rootView, context, primaryColor, lightTintColor, darkColor, primaryCsl, lightTintCsl)
     }
 
     private fun applyThemeToViewInternal(
         view: View,
+        context: Context,
         primaryColor: Int,
         lightTintColor: Int,
+        darkColor: Int,
         primaryCsl: ColorStateList,
         lightTintCsl: ColorStateList
     ) {
         when (view) {
+            is MaterialSwitch -> {
+                val thumbStateList = ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_checked),
+                        intArrayOf(-android.R.attr.state_checked)
+                    ),
+                    intArrayOf(
+                        Color.WHITE,
+                        Color.parseColor("#94A3B8")
+                    )
+                )
+                val trackStateList = ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_checked),
+                        intArrayOf(-android.R.attr.state_checked)
+                    ),
+                    intArrayOf(
+                        primaryColor,
+                        Color.parseColor("#334155")
+                    )
+                )
+                view.thumbTintList = thumbStateList
+                view.trackTintList = trackStateList
+            }
+            is SwitchCompat -> {
+                view.thumbTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                    intArrayOf(Color.WHITE, Color.parseColor("#94A3B8"))
+                )
+                view.trackTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                    intArrayOf(primaryColor, Color.parseColor("#334155"))
+                )
+            }
+            is CompoundButton -> {
+                view.buttonTintList = primaryCsl
+            }
             is MaterialButton -> {
-                if (view.currentTextColor in ALL_PRIMARY_COLORS) {
+                val textColor = view.currentTextColor
+                if (isColorMatchingPrimary(textColor)) {
                     view.setTextColor(primaryColor)
+                } else if (isColorMatchingLightTint(textColor)) {
+                    view.setTextColor(darkColor)
                 }
-                if (view.iconTint?.defaultColor in ALL_PRIMARY_COLORS) {
-                    view.iconTint = primaryCsl
+
+                view.iconTint?.defaultColor?.let { iconColor ->
+                    if (isColorMatchingPrimary(iconColor)) {
+                        view.iconTint = primaryCsl
+                    } else if (isColorMatchingLightTint(iconColor)) {
+                        view.iconTint = ColorStateList.valueOf(darkColor)
+                    }
                 }
-                if (view.strokeColor?.defaultColor in ALL_PRIMARY_COLORS) {
-                    view.strokeColor = primaryCsl
+
+                view.strokeColor?.defaultColor?.let { stroke ->
+                    if (isColorMatchingPrimary(stroke)) {
+                        view.strokeColor = primaryCsl
+                    }
                 }
-                if (view.backgroundTintList?.defaultColor in ALL_PRIMARY_COLORS) {
-                    view.backgroundTintList = primaryCsl
-                } else if (view.backgroundTintList?.defaultColor in ALL_LIGHT_TINTS) {
-                    view.backgroundTintList = lightTintCsl
+
+                view.backgroundTintList?.defaultColor?.let { bg ->
+                    if (isColorMatchingPrimary(bg)) {
+                        view.backgroundTintList = primaryCsl
+                    } else if (isColorMatchingLightTint(bg)) {
+                        view.backgroundTintList = lightTintCsl
+                    }
                 }
             }
             is TextView -> {
-                if (view.currentTextColor in ALL_PRIMARY_COLORS) {
+                val textColor = view.currentTextColor
+                if (isColorMatchingPrimary(textColor)) {
                     view.setTextColor(primaryColor)
-                } else if (view.currentTextColor in ALL_LIGHT_TINTS) {
+                } else if (isColorMatchingLightTint(textColor)) {
                     view.setTextColor(lightTintColor)
                 }
             }
             is ImageView -> {
-                if (view.imageTintList?.defaultColor in ALL_PRIMARY_COLORS) {
-                    view.imageTintList = primaryCsl
-                } else if (view.imageTintList?.defaultColor in ALL_LIGHT_TINTS) {
-                    view.imageTintList = lightTintCsl
+                if (view.id == R.id.ivTopBrandLogo || view.id == R.id.ivSettingsFooterLogo) {
+                    view.setImageDrawable(getThemedLogoDrawable(context, primaryColor, darkColor))
+                } else {
+                    val tint = ImageViewCompat.getImageTintList(view)?.defaultColor
+                    if (tint != null) {
+                        if (isColorMatchingPrimary(tint)) {
+                            ImageViewCompat.setImageTintList(view, primaryCsl)
+                        } else if (isColorMatchingLightTint(tint)) {
+                            ImageViewCompat.setImageTintList(view, lightTintCsl)
+                        }
+                    } else if (view.colorFilter != null) {
+                        view.setColorFilter(primaryColor, PorterDuff.Mode.SRC_IN)
+                    }
                 }
             }
             is MaterialCardView -> {
-                if (view.strokeColor in ALL_PRIMARY_COLORS) {
-                    view.strokeColor = primaryColor
+                view.strokeColorStateList?.defaultColor?.let { stroke ->
+                    if (isColorMatchingPrimary(stroke)) {
+                        view.strokeColor = primaryColor
+                    }
                 }
             }
             is LinearProgressIndicator -> {
@@ -199,16 +363,24 @@ object ThemeColorManager {
         // Generic background tint check
         val bgTint = view.backgroundTintList?.defaultColor
         if (bgTint != null) {
-            if (bgTint in ALL_PRIMARY_COLORS) {
+            if (isColorMatchingPrimary(bgTint)) {
                 view.backgroundTintList = primaryCsl
-            } else if (bgTint in ALL_LIGHT_TINTS) {
+            } else if (isColorMatchingLightTint(bgTint)) {
                 view.backgroundTintList = lightTintCsl
             }
         }
 
         if (view is ViewGroup) {
             for (i in 0 until view.childCount) {
-                applyThemeToViewInternal(view.getChildAt(i), primaryColor, lightTintColor, primaryCsl, lightTintCsl)
+                applyThemeToViewInternal(
+                    view.getChildAt(i),
+                    context,
+                    primaryColor,
+                    lightTintColor,
+                    darkColor,
+                    primaryCsl,
+                    lightTintCsl
+                )
             }
         }
     }

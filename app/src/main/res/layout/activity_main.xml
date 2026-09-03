@@ -52,6 +52,7 @@
                 android:paddingHorizontal="10dp">
 
                 <ImageView
+                    android:id="@+id/ivTopBrandLogo"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:src="@drawable/ic_nowhere_logo"
@@ -726,7 +727,7 @@
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Save Location Bookmark"
-                    android:src="@drawable/ic_favorite"
+                    android:src="@drawable/ic_bookmark_add"
                     app:tint="@color/badge_warning_text" />
 
                 <View
@@ -743,7 +744,7 @@
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Saved Destinations"
-                    android:src="@drawable/ic_favorite"
+                    android:src="@drawable/ic_bookmarks"
                     app:tint="@color/primary" />
 
                 <View

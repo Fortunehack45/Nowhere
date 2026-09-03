@@ -47,6 +47,7 @@ class SessionExtendDialog(
         setupUI()
         setupListeners()
         observeTimer()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, context)
     }
 
     private fun setupUI() {

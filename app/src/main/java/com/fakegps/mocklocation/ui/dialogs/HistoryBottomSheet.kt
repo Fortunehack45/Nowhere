@@ -61,6 +61,7 @@ class HistoryBottomSheet @JvmOverloads constructor(
         setupAdapters()
         setupListeners()
         observeHistory()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
     }
 
     private fun setupAdapters() {

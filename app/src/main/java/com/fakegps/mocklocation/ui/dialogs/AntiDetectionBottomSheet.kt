@@ -63,6 +63,7 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         loadInitialValues()
         setupListeners()
         startLiveDiagnostics()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
     }
 
     private fun loadInitialValues() {

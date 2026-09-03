@@ -2048,6 +2048,7 @@
                 android:orientation="vertical">
 
                 <ImageView
+                    android:id="@+id/ivSettingsFooterLogo"
                     android:layout_width="38dp"
                     android:layout_height="38dp"
                     android:alpha="0.85"

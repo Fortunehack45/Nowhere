@@ -365,6 +365,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale) {
+            com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale = false
+            recreate()
+            return
+        }
         binding.mapView.onResume()
         binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
         applyMapPerspectiveMode(settingsPrefs.mapTileSource)
@@ -1480,6 +1485,18 @@ class MainActivity : AppCompatActivity() {
         // Dynamic Joystick Colors
         binding.joystickOverlay.setJoystickColor(primaryColor)
 
+        // Dynamic Brand Logo
+        binding.ivTopBrandLogo.setImageDrawable(com.fakegps.mocklocation.util.ThemeColorManager.getThemedLogoDrawable(this, primaryColor, com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this)))
+
+        // Dynamic Map Target Pin
+        fixedPinMarker?.icon = com.fakegps.mocklocation.util.ThemeColorManager.getThemedTargetPinDrawable(this, primaryColor)
+
+        // Dynamic Session Timer and Premium badges
+        binding.tvSessionTimerBadge.setTextColor(primaryColor)
+        binding.ivSessionTimerIcon.imageTintList = primaryCsl
+        binding.tvPremiumBadge.setTextColor(primaryColor)
+        binding.ivPremiumBadgeIcon.imageTintList = primaryCsl
+
         // Update Ghost Cloak badge if active
         if (settingsPrefs.isGhostCloakEnabled) {
             binding.layoutGhostCloakBadge.backgroundTintList = lightTintCsl
@@ -1490,7 +1507,7 @@ class MainActivity : AppCompatActivity() {
         // Update Spotlight Tour overlay colors
         binding.spotlightTourOverlay.setTourColors(primaryColor, com.fakegps.mocklocation.util.ThemeColorManager.getGlowColor(this))
 
-        // Recursively theme all other views across the screen
+        // Recursively theme all other views across the screen (including switches and cards)
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
     }
 
@@ -1819,16 +1836,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateFixedPinMarker(latitude: Double, longitude: Double) {
         val geoPoint = GeoPoint(latitude, longitude)
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
+        val themedPin = com.fakegps.mocklocation.util.ThemeColorManager.getThemedTargetPinDrawable(this, primaryColor)
         if (fixedPinMarker == null) {
             fixedPinMarker = Marker(binding.mapView).apply {
                 position = geoPoint
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = "Target Location"
-                icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_location_pin)
+                icon = themedPin
             }
             binding.mapView.overlays.add(fixedPinMarker)
         } else {
             fixedPinMarker?.position = geoPoint
+            fixedPinMarker?.icon = themedPin
         }
         binding.mapView.invalidate()
     }

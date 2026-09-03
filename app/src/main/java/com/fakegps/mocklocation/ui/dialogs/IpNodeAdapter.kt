@@ -66,12 +66,14 @@ class IpNodeAdapter(
                 binding.tvNodeIp.text = "${node.virtualIp} • 10 Gbps (Active)"
                 binding.tvNodePing.text = "${node.pingMs}ms"
 
+                val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
                 if (isSelected) {
-                    binding.cardIpNode.strokeColor = ContextCompat.getColor(context, R.color.primary)
+                    binding.cardIpNode.strokeColor = primaryColor
                     binding.cardIpNode.strokeWidth = (2 * context.resources.displayMetrics.density).toInt()
                     binding.cardIpNode.setCardBackgroundColor(ContextCompat.getColor(context, R.color.surface_elevated))
                     binding.ivSelectedCheck.visibility = View.VISIBLE
-                    binding.tvNodeName.setTextColor(ContextCompat.getColor(context, R.color.primary))
+                    binding.ivSelectedCheck.setColorFilter(primaryColor)
+                    binding.tvNodeName.setTextColor(primaryColor)
                 } else {
                     binding.cardIpNode.strokeColor = ContextCompat.getColor(context, R.color.border_subtle)
                     binding.cardIpNode.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()

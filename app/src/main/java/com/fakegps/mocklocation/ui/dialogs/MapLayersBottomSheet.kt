@@ -30,6 +30,7 @@ class MapLayersBottomSheet(
         super.onViewCreated(view, savedInstanceState)
         settingsPrefs = AppSettingsPreferences(requireContext())
         updateSelectionUi(settingsPrefs.mapTileSource)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
 
         binding.btnLayerStandard.setOnClickListener {
             selectLayer("MAPNIK")
