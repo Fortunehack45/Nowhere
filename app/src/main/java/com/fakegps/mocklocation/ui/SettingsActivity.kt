@@ -793,14 +793,16 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun resetToDefaults() {
+        settingsPrefs.appThemeColor = "RED"
         settingsPrefs.useFusedProvider = true
-        settingsPrefs.randomizeJitter = true
+        settingsPrefs.randomizeJitter = false
         settingsPrefs.jitterRadiusMeters = 2.0f
         settingsPrefs.truncateDecimals = -1
-        settingsPrefs.baseAccuracy = 2.5f
+        settingsPrefs.baseAccuracy = 1.5f
         settingsPrefs.defaultAltitude = 15.0f
-        settingsPrefs.randomizeAltitude = true
+        settingsPrefs.randomizeAltitude = false
         settingsPrefs.updateIntervalMovingMs = 1000L
+        settingsPrefs.updateIntervalStationaryMs = 1000L
         settingsPrefs.mapTileSource = "MAPNIK"
         settingsPrefs.enableMapAnimations = true
         settingsPrefs.appTheme = "DARK"
@@ -812,6 +814,12 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.isClockDriftEmulationEnabled = true
         settingsPrefs.isSensorKinematicsEnabled = true
         settingsPrefs.isAutoVpnSyncEnabled = true
+
+        sessionPrefs.isPersistentBootInjectionEnabled = true
+        sessionPrefs.autoMatchIpWithGps = true
+        sessionPrefs.isKillSwitchEnabled = false
+        sessionPrefs.isIpMaskingEnabled = false
+        sessionPrefs.activeIpNodeId = "us_nyc"
 
         settingsPrefs.widgetSlot1Name = "Paris"
         settingsPrefs.widgetSlot1Lat = 48.8566
@@ -825,14 +833,21 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.widgetSlot3Lat = 40.7128
         settingsPrefs.widgetSlot3Lon = -74.0060
 
-        sessionPrefs.isPersistentBootInjectionEnabled = false
-        sessionPrefs.autoMatchIpWithGps = true
-        sessionPrefs.isKillSwitchEnabled = false
-        sessionPrefs.isIpMaskingEnabled = false
-
         com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
-        recreate()
+        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider.updateAllSearchWidgets(this)
+
+        loadInitialValues()
+
+        // Restart activity cleanly without savedInstanceState so all views reset
+        val restartIntent = Intent(this, SettingsActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        }
+        finish()
+        overridePendingTransition(0, 0)
+        startActivity(restartIntent)
+        overridePendingTransition(0, 0)
     }
 
     private fun pinNowhereShortcut() {

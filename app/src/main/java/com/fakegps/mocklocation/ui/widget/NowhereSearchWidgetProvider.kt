@@ -92,9 +92,10 @@ class NowhereSearchWidgetProvider : AppWidgetProvider() {
         val sessionPrefs = SessionPreferences(context)
 
         val isActive = sessionPrefs.isSessionActive
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
         if (isActive) {
             views.setTextViewText(R.id.tvSearchWidgetStatus, "ACTIVE")
-            views.setTextColor(R.id.tvSearchWidgetStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+            views.setTextColor(R.id.tvSearchWidgetStatus, primaryColor)
             views.setTextViewText(R.id.btnSearchWidgetTeleport, "Engaged")
         } else {
             views.setTextViewText(R.id.tvSearchWidgetStatus, "STANDBY")

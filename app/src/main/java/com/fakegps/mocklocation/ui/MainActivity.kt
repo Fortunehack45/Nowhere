@@ -1583,11 +1583,13 @@ class MainActivity : AppCompatActivity() {
                         binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
                         binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
                     } else if (timerState.isRunning) {
+                        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity)
+                        val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this@MainActivity)
                         binding.layoutSessionTimerBadge.visibility = View.VISIBLE
-                        binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
+                        binding.layoutSessionTimerBadge.backgroundTintList = android.content.res.ColorStateList.valueOf(lightTintColor)
                         binding.tvSessionTimerBadge.text = timerState.formattedRemaining
-                        binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.primary_bright))
-                        binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.primary_bright)
+                        binding.tvSessionTimerBadge.setTextColor(primaryColor)
+                        binding.ivSessionTimerIcon.imageTintList = android.content.res.ColorStateList.valueOf(primaryColor)
                     } else if (timerState.isExpired) {
                         binding.layoutSessionTimerBadge.visibility = View.VISIBLE
                         binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)
@@ -1725,8 +1727,8 @@ class MainActivity : AppCompatActivity() {
 
             val isPaused = runningState?.isPaused == true
             binding.btnRoutePause.text = if (isPaused) getString(R.string.btn_resume_route) else getString(R.string.btn_pause_route)
-            binding.btnRoutePause.setIconResource(if (isPaused) R.drawable.ic_play else R.drawable.ic_pause)
-            binding.btnRoutePause.iconTint = ContextCompat.getColorStateList(this, if (isPaused) R.color.badge_success_text else R.color.primary_bright)
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
+            binding.btnRoutePause.iconTint = android.content.res.ColorStateList.valueOf(primaryColor)
             binding.btnRoutePause.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
 
             binding.layoutRouteTelemetry.visibility = View.VISIBLE

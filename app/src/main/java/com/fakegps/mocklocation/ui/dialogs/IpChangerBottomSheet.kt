@@ -425,10 +425,11 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
                 binding.btnToggleShield.text = "Disconnect Privacy Shield"
                 binding.btnToggleShield.setIconResource(R.drawable.ic_close)
-                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.btn_stop_bg)
+                val darkColor = com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(context)
+                binding.btnToggleShield.backgroundTintList = lightTintCsl
                 binding.btnToggleShield.strokeWidth = 0
-                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.btn_stop_text))
-                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.btn_stop_text)
+                binding.btnToggleShield.setTextColor(darkColor)
+                binding.btnToggleShield.iconTint = ColorStateList.valueOf(darkColor)
             }
             is NowhereVpnService.VpnState.Connecting -> {
                 binding.cardVpnTraffic.visibility = View.VISIBLE

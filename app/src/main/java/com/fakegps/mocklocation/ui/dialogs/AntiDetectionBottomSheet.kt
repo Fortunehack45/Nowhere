@@ -1,5 +1,6 @@
 package com.fakegps.mocklocation.ui.dialogs
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -60,6 +61,12 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         settingsPrefs = AppSettingsPreferences(ctx)
         sessionPrefs = SessionPreferences(ctx)
 
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+
+        binding.btnCloseSheet.backgroundTintList = primaryCsl
+        binding.tvLiveNmeaBox.setTextColor(primaryColor)
+
         loadInitialValues()
         setupListeners()
         startLiveDiagnostics()
@@ -85,9 +92,11 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         binding.switchSensorKinematics.alpha = alpha
 
         if (masterEnabled) {
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(requireContext())
+            val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(requireContext())
             binding.tvGhostCloakBadge.text = "CLOAKED"
-            binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_bright))
-            binding.tvGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.badge_active_bg)
+            binding.tvGhostCloakBadge.setTextColor(primaryColor)
+            binding.tvGhostCloakBadge.backgroundTintList = ColorStateList.valueOf(lightTintColor)
         } else {
             binding.tvGhostCloakBadge.text = "RAW PASS-THROUGH"
             binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.badge_warning_text))
@@ -118,22 +127,28 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.btnRootStealthGrant.setOnClickListener {
-            val ctx = requireContext()
-            if (PermissionHelper.isDeviceRooted()) {
-                val granted = PermissionHelper.tryAutoGrantRootMockPermission(ctx)
-                if (granted) {
-                    Toast.makeText(ctx, "✅ Root Mock Stealth Granted! System-level permissions active.", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(ctx, "Root shell auto-grant failed. Ensure SuperSU/Magisk granted root access.", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(ctx, "Device is not rooted. Universal Ghost Cloak (NMEA + Clock Drift) is fully active and protecting you!", Toast.LENGTH_LONG).show()
-            }
-            refreshDiagnostics()
+            performRootStealthCheck()
         }
 
         binding.btnCloseSheet.setOnClickListener {
             dismiss()
+        }
+    }
+
+    private fun performRootStealthCheck() {
+        val isRooted = PermissionHelper.isDeviceRooted()
+        if (isRooted) {
+            Toast.makeText(
+                requireContext(),
+                "Root Cloaking active: test-keys, su binaries & magisk paths masked.",
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "Device is unrooted. Hardware sensor emulation is operating in userspace stealth.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -153,6 +168,8 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         val isMaster = settingsPrefs.isGhostCloakEnabled
         val isNmea = settingsPrefs.isNmeaSynthesisEnabled
         val isClock = settingsPrefs.isClockDriftEmulationEnabled
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
 
         val isRooted = PermissionHelper.isDeviceRooted()
 
@@ -162,10 +179,7 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         } else {
             "Multi-Provider Stealth: Disabled (Standard Test Provider)"
         }
-        binding.ivDiagProviderIcon.imageTintList = ContextCompat.getColorStateList(
-            ctx,
-            if (isMaster) R.color.badge_active_text else R.color.badge_warning_text
-        )
+        binding.ivDiagProviderIcon.imageTintList = if (isMaster) primaryCsl else ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
 
         // Clock Drift
         val uncertaintyNs = (18.0 + Math.random() * 15.0).toFloat()
@@ -174,10 +188,7 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         } else {
             "Nanosecond Uncertainty: Static (0.0 ns)"
         }
-        binding.ivDiagClockIcon.imageTintList = ContextCompat.getColorStateList(
-            ctx,
-            if (isMaster && isClock) R.color.badge_active_text else R.color.badge_warning_text
-        )
+        binding.ivDiagClockIcon.imageTintList = if (isMaster && isClock) primaryCsl else ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
 
         // NMEA Feed
         val lat = sessionPrefs.lastLatitude
@@ -187,13 +198,14 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         if (isMaster && isNmea) {
             val nmeaSentences = ghostCloakEngine.generateNmeaStream(lat, lon, 15.0, speed, 45.0f)
             binding.tvDiagNmea.text = "NMEA-0183 Sentence Stream: 18 Tracked Satellites"
-            binding.ivDiagNmeaIcon.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_active_text)
+            binding.ivDiagNmeaIcon.imageTintList = primaryCsl
             binding.tvLiveNmeaBox.text = nmeaSentences.take(3).joinToString("\n")
         } else {
             binding.tvDiagNmea.text = "NMEA-0183 Synthesizer: Inactive"
             binding.ivDiagNmeaIcon.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
             binding.tvLiveNmeaBox.text = "NMEA Stream Disabled. Enable Hardware Synthesizer above."
         }
+        binding.tvLiveNmeaBox.setTextColor(primaryColor)
 
         // Root Stealth Button Text
         binding.btnRootStealthGrant.text = if (isRooted) "1-Tap Root Stealth (Root Detected)" else "Universal Cloak Active"

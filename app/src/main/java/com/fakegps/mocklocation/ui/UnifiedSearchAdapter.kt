@@ -44,7 +44,8 @@ class UnifiedSearchAdapter(
                     binding.tvItemTitle.text = entry.title
                     binding.tvItemSnippet.text = entry.snippet
                     binding.ivItemTypeIcon.setImageResource(R.drawable.ic_search)
-                    binding.ivItemTypeIcon.setColorFilter(ContextCompat.getColor(itemView.context, R.color.primary))
+                    val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(itemView.context)
+                    binding.ivItemTypeIcon.setColorFilter(primaryColor)
                     binding.btnItemDelete.visibility = View.GONE
                     binding.root.setOnClickListener {
                         onEntryClicked(entry.title, entry.snippet, entry.latitude, entry.longitude)

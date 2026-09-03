@@ -92,6 +92,11 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tvRouteWidgetTitle, primaryColor)
             views.setInt(R.id.ivRouteWidgetIcon, "setColorFilter", primaryColor)
             views.setTextColor(R.id.tvWidgetRouteSpeed, primaryColor)
+            views.setTextColor(R.id.tvLabelFrom, primaryColor)
+            views.setTextColor(R.id.tvLabelTo, primaryColor)
+            views.setTextColor(R.id.tvWidgetRouteRemaining, primaryColor)
+            views.setTextColor(R.id.btnWidgetRouteStop, primaryColor)
+            views.setInt(R.id.ivWidgetRoutePlayPauseBg, "setColorFilter", primaryColor)
 
             if (isActive) {
                 views.setTextViewText(R.id.tvWidgetRouteStatus, "RUNNING")

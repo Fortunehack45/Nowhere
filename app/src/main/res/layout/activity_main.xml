@@ -210,7 +210,6 @@
                             android:layout_height="28dp"
                             android:layout_marginEnd="6dp"
                             android:background="@drawable/bg_status_pill"
-                            android:backgroundTint="@color/badge_active_bg"
                             android:clickable="true"
                             android:focusable="true"
                             android:gravity="center"
@@ -221,7 +220,7 @@
                                 android:layout_width="13dp"
                                 android:layout_height="13dp"
                                 android:src="@drawable/ic_bolt"
-                                app:tint="@color/primary_bright"
+                                app:tint="@color/text_primary"
                                 tools:ignore="ContentDescription" />
 
                             <TextView
@@ -232,7 +231,7 @@
                                 android:fontFamily="monospace"
                                 android:letterSpacing="0.04"
                                 android:text="02:00:00"
-                                android:textColor="@color/primary_bright"
+                                android:textColor="@color/text_primary"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
@@ -1427,7 +1426,7 @@
                     android:visibility="gone"
                     app:cornerRadius="12dp"
                     app:icon="@drawable/ic_pause"
-                    app:iconTint="@color/primary_bright" />
+                    app:iconTint="@color/text_primary" />
             </LinearLayout>
         </LinearLayout>
 
