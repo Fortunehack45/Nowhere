@@ -1485,15 +1485,24 @@ class MainActivity : AppCompatActivity() {
         // Dynamic Joystick Colors
         binding.joystickOverlay.setJoystickColor(primaryColor)
 
+        binding.rbTransportFoot.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.rbTransportVehicle.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.rbTransportAircraft.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.rbTransportShip.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.btnRoutePause.iconTint = primaryCsl
+
         // Dynamic Brand Logo
-        binding.ivTopBrandLogo.setImageDrawable(com.fakegps.mocklocation.util.ThemeColorManager.getThemedLogoDrawable(this, primaryColor, com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this)))
+        val darkColor = com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this)
+        binding.ivTopBrandLogo.setImageDrawable(com.fakegps.mocklocation.util.ThemeColorManager.getThemedLogoDrawable(this, primaryColor, darkColor))
 
         // Dynamic Map Target Pin
-        fixedPinMarker?.icon = com.fakegps.mocklocation.util.ThemeColorManager.getThemedTargetPinDrawable(this, primaryColor)
+        fixedPinMarker?.icon = com.fakegps.mocklocation.util.ThemeColorManager.getThemedTargetPinDrawable(this, primaryColor, darkColor)
 
         // Dynamic Session Timer and Premium badges
+        binding.layoutSessionTimerBadge.backgroundTintList = lightTintCsl
         binding.tvSessionTimerBadge.setTextColor(primaryColor)
         binding.ivSessionTimerIcon.imageTintList = primaryCsl
+        binding.layoutPremiumBadge.backgroundTintList = lightTintCsl
         binding.tvPremiumBadge.setTextColor(primaryColor)
         binding.ivPremiumBadgeIcon.imageTintList = primaryCsl
 
@@ -1837,7 +1846,8 @@ class MainActivity : AppCompatActivity() {
     private fun updateFixedPinMarker(latitude: Double, longitude: Double) {
         val geoPoint = GeoPoint(latitude, longitude)
         val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
-        val themedPin = com.fakegps.mocklocation.util.ThemeColorManager.getThemedTargetPinDrawable(this, primaryColor)
+        val darkColor = com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this)
+        val themedPin = com.fakegps.mocklocation.util.ThemeColorManager.getThemedTargetPinDrawable(this, primaryColor, darkColor)
         if (fixedPinMarker == null) {
             fixedPinMarker = Marker(binding.mapView).apply {
                 position = geoPoint

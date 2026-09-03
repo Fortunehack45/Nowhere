@@ -75,11 +75,16 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         val discountPercent = PromotionManager.getYearlyDiscountPercent(context)
         val entitlement = BillingManager.getInstance(context).entitlementState.value
 
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(context)
         val primaryCsl = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(context)
         binding.btnUpgradePremium.backgroundTintList = primaryCsl
 
+        binding.tvYearlyDiscountBadge.background = com.fakegps.mocklocation.util.ThemeColorManager.createDiscountBadgeDrawable(lightTintColor, context)
+        binding.tvYearlyDiscountBadge.setTextColor(primaryColor)
+
         if (isYearly) {
-            binding.cardPlanYearly.setBackgroundResource(R.drawable.bg_plan_card_selected)
+            binding.cardPlanYearly.background = com.fakegps.mocklocation.util.ThemeColorManager.createSelectedPlanCardDrawable(primaryColor, context)
             binding.ivRadioYearly.setImageResource(R.drawable.ic_check_circle)
             binding.ivRadioYearly.imageTintList = primaryCsl
 
@@ -94,7 +99,7 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
                 binding.btnUpgradePremium.text = "Unlock Annual Plan"
             }
         } else {
-            binding.cardPlanMonthly.setBackgroundResource(R.drawable.bg_plan_card_selected)
+            binding.cardPlanMonthly.background = com.fakegps.mocklocation.util.ThemeColorManager.createSelectedPlanCardDrawable(primaryColor, context)
             binding.ivRadioMonthly.setImageResource(R.drawable.ic_check_circle)
             binding.ivRadioMonthly.imageTintList = primaryCsl
 
@@ -111,6 +116,7 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
                 binding.btnUpgradePremium.text = "Subscribe Monthly"
             }
         }
+        binding.btnUpgradePremium.backgroundTintList = primaryCsl
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, context)
     }
 

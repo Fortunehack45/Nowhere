@@ -14,6 +14,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.PathParser
 import androidx.core.widget.ImageViewCompat
 import com.fakegps.mocklocation.R
@@ -195,34 +196,72 @@ object ThemeColorManager {
     }
 
     /**
-     * Dynamically generates the map target pin marker tinted in the active theme primary color.
+     * Dynamically generates the map target pin marker as the Nowhere App Logo,
+     * scaled ~30% smaller (32dp) with primary theme body, dark quadrant, and high-contrast outline.
      */
-    fun getThemedTargetPinDrawable(context: Context, primaryColor: Int): Drawable {
-        val size = (48 * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
+    fun getThemedTargetPinDrawable(context: Context, primaryColor: Int, darkColor: Int = primaryColor): Drawable {
+        val size = (32 * context.resources.displayMetrics.density).toInt().coerceAtLeast(32)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
         val scale = size / 24f
         val matrix = Matrix().apply { setScale(scale, scale) }
 
-        val pinPath = PathParser.createPathFromPathData(
-            "M12,2C8.13,2 5,5.13 5,9c0,5.25 7,13 7,13s7,-7.75 7,-13c0,-3.87 -3.13,-7 -7,-7zM12,11.5c-1.38,0 -2.5,-1.12 -2.5,-2.5s1.12,-2.5 2.5,-2.5 2.5,1.12 2.5,2.5 -1.12,2.5 -2.5,2.5z"
+        val path1 = PathParser.createPathFromPathData(
+            "M12,2C8.13,2 5,5.13 5,9c0,5.25 7,13 7,13s7,-7.75 7,-13c0,-3.87 -3.13,-7 -7,-7z"
         ).apply { transform(matrix) }
 
-        val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        val path2 = PathParser.createPathFromPathData(
+            "M12,2A7,7 0 0,0 5,9C5,10.6 5.6,12.3 6.7,14L12,9Z"
+        ).apply { transform(matrix) }
+
+        val path3 = PathParser.createPathFromPathData(
+            "M12,6.5A2.5,2.5 0 1,0 14.5,9A2.5,2.5 0 0,0 12,6.5Z"
+        ).apply { transform(matrix) }
+
+        val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 1.8f * scale
+            color = Color.WHITE
+        }
+        val p1 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
             color = primaryColor
         }
-        val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = 2f * scale
-            color = Color.WHITE
+        val p2 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = darkColor
+        }
+        val p3 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = Color.parseColor("#0E1117")
         }
 
-        canvas.drawPath(pinPath, shadowPaint)
-        canvas.drawPath(pinPath, pinPaint)
+        canvas.drawPath(path1, shadowPaint)
+        canvas.drawPath(path1, p1)
+        canvas.drawPath(path2, p2)
+        canvas.drawPath(path3, p3)
 
         return BitmapDrawable(context.resources, bitmap)
+    }
+
+    fun createSelectedPlanCardDrawable(primaryColor: Int, context: Context): Drawable {
+        val density = context.resources.displayMetrics.density
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 14f * density
+            setColor(ContextCompat.getColor(context, R.color.surface_card_elevated))
+            setStroke((1.5f * density).toInt(), primaryColor)
+        }
+    }
+
+    fun createDiscountBadgeDrawable(lightTintColor: Int, context: Context): Drawable {
+        val density = context.resources.displayMetrics.density
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 8f * density
+            setColor(lightTintColor)
+        }
     }
 
     /**
@@ -283,6 +322,17 @@ object ThemeColorManager {
                     intArrayOf(primaryColor, Color.parseColor("#334155"))
                 )
             }
+            is android.widget.RadioGroup -> {
+                for (i in 0 until view.childCount) {
+                    val child = view.getChildAt(i)
+                    if (child is android.widget.RadioButton) {
+                        child.background = createSegmentedPillDrawable(primaryColor)
+                    }
+                }
+            }
+            is android.widget.RadioButton -> {
+                view.background = createSegmentedPillDrawable(primaryColor)
+            }
             is CompoundButton -> {
                 view.buttonTintList = primaryCsl
             }
@@ -325,7 +375,7 @@ object ThemeColorManager {
                 }
             }
             is ImageView -> {
-                if (view.id == R.id.ivTopBrandLogo || view.id == R.id.ivSettingsFooterLogo) {
+                if (view.id == R.id.ivTopBrandLogo || view.id == R.id.ivSettingsFooterLogo || view.id == R.id.ivWidgetGalleryLogo) {
                     view.setImageDrawable(getThemedLogoDrawable(context, primaryColor, darkColor))
                 } else {
                     val tint = ImageViewCompat.getImageTintList(view)?.defaultColor
@@ -367,6 +417,18 @@ object ThemeColorManager {
                 view.backgroundTintList = primaryCsl
             } else if (isColorMatchingLightTint(bgTint)) {
                 view.backgroundTintList = lightTintCsl
+            }
+        }
+
+        // Generic background drawable check
+        val bgDrawable = view.background
+        if (bgDrawable is GradientDrawable) {
+            bgDrawable.color?.defaultColor?.let { color ->
+                if (isColorMatchingPrimary(color)) {
+                    bgDrawable.setColor(primaryColor)
+                } else if (isColorMatchingLightTint(color)) {
+                    bgDrawable.setColor(lightTintColor)
+                }
             }
         }
 

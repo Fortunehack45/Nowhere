@@ -15,12 +15,14 @@
         android:orientation="horizontal">
 
         <ImageView
+            android:id="@+id/ivRouteWidgetIcon"
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_route"
             android:tint="@color/primary" />
 
         <TextView
+            android:id="@+id/tvRouteWidgetTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"

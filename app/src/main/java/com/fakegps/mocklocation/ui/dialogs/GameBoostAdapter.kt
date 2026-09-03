@@ -39,14 +39,15 @@ class GameBoostAdapter(
         holder.binding.tvGameHub.text = item.hubInfo
         holder.binding.tvGamePing.text = "${item.pingMs} ms"
 
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(holder.itemView.context)
         if (isSelected) {
             holder.binding.btnBoostGame.text = "ACTIVE"
-            holder.binding.btnBoostGame.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.primary))
+            holder.binding.btnBoostGame.setBackgroundColor(primaryColor)
             holder.binding.btnBoostGame.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.white))
         } else {
             holder.binding.btnBoostGame.text = "BOOST"
             holder.binding.btnBoostGame.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.surface_elevated))
-            holder.binding.btnBoostGame.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.primary))
+            holder.binding.btnBoostGame.setTextColor(primaryColor)
         }
 
         holder.binding.btnBoostGame.setOnClickListener {

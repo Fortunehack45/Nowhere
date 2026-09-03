@@ -69,9 +69,13 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             }
             views.setTextViewText(R.id.tvWidgetLocationName, locName)
 
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+            views.setTextColor(R.id.tvWidgetBrandTitle, primaryColor)
+            views.setInt(R.id.ivWidgetLogo, "setColorFilter", primaryColor)
+
             if (isActive) {
                 views.setTextViewText(R.id.tvWidgetStatus, "ACTIVE")
-                views.setTextColor(R.id.tvWidgetStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+                views.setTextColor(R.id.tvWidgetStatus, primaryColor)
                 views.setTextViewText(R.id.btnWidgetTeleport, "Stop")
             } else {
                 views.setTextViewText(R.id.tvWidgetStatus, "READY")

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -47,6 +48,23 @@ class SessionExtendDialog(
         setupUI()
         setupListeners()
         observeTimer()
+
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(context)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+        val lightTintCsl = ColorStateList.valueOf(lightTintColor)
+
+        binding.ivExtendHeaderIcon.imageTintList = primaryCsl
+        binding.btnExtendOneHour.backgroundTintList = primaryCsl
+        binding.btnExtendPremiumUpgrade.setTextColor(primaryColor)
+        binding.progressDialogSession.setIndicatorColor(primaryColor)
+
+        if (!isExpiredPrompt && !SessionPreferences(context).isSessionExpired) {
+            binding.layoutExtendStatusBadge.backgroundTintList = lightTintCsl
+            binding.viewExtendDot.backgroundTintList = primaryCsl
+            binding.tvExtendBadgeText.setTextColor(primaryColor)
+        }
+
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, context)
     }
 

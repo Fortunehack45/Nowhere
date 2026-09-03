@@ -1,6 +1,7 @@
 package com.fakegps.mocklocation.ui
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -179,16 +180,24 @@ class SettingsActivity : AppCompatActivity() {
 
         val remaining = sessionPrefs.getTimeRemainingMillis()
         val formattedRemaining = sessionPrefs.formatRemainingTime()
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
+        val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+        val lightTintCsl = ColorStateList.valueOf(lightTintColor)
+
+        binding.btnSettingsExtendOneHour.setTextColor(primaryColor)
+        binding.btnSettingsExtendOneHour.iconTint = primaryCsl
 
         if (timerState.isRunning || (sessionPrefs.isSessionActive && remaining > 0)) {
             binding.tvSettingsSessionBadge.text = formattedRemaining
-            binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.primary_bright))
-            binding.tvSettingsSessionBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_active_bg)
-            binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
+            binding.tvSettingsSessionBadge.setTextColor(primaryColor)
+            binding.tvSettingsSessionBadge.backgroundTintList = lightTintCsl
+            binding.ivSettingsSessionIcon.imageTintList = primaryCsl
 
             binding.tvSettingsSessionTime.text = formattedRemaining
             binding.tvSettingsSessionTotal.text = "Total Allocated: ${sessionPrefs.formatAllocatedDuration()}"
             binding.pbSettingsSessionProgress.progress = timerState.progressPercent
+            binding.pbSettingsSessionProgress.progressTintList = primaryCsl
         } else if (timerState.isExpired || sessionPrefs.isSessionExpired) {
             binding.tvSettingsSessionBadge.text = "EXPIRED"
             binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_error_text))
@@ -293,6 +302,8 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchSettingsGhostCloak.isChecked = settingsPrefs.isGhostCloakEnabled
         binding.switchSettingsAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled
+        binding.btnResetDefaults.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
+        binding.btnResetDefaults.rippleColor = ColorStateList.valueOf(com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this))
         refreshThemeColorUI()
         refreshWidgetSlotsUI()
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
@@ -814,9 +825,14 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.widgetSlot3Lat = 40.7128
         settingsPrefs.widgetSlot3Lon = -74.0060
 
-        loadInitialValues()
-        refreshWidgetSlotsUI()
+        sessionPrefs.isPersistentBootInjectionEnabled = false
+        sessionPrefs.autoMatchIpWithGps = true
+        sessionPrefs.isKillSwitchEnabled = false
+        sessionPrefs.isIpMaskingEnabled = false
+
         com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+        recreate()
     }
 
     private fun pinNowhereShortcut() {

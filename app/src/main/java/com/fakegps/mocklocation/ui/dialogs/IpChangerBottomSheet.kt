@@ -2,6 +2,8 @@ package com.fakegps.mocklocation.ui.dialogs
 
 import android.app.Activity
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.VpnService
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -405,13 +407,18 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         val context = context ?: return
         if (_binding == null) return
 
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(context)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+        val lightTintCsl = ColorStateList.valueOf(lightTintColor)
+
         when (state) {
             is NowhereVpnService.VpnState.Connected -> {
                 binding.cardVpnTraffic.visibility = View.VISIBLE
-                binding.layoutShieldStatus.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_active_bg)
-                binding.viewShieldDot.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_active_text)
+                binding.layoutShieldStatus.backgroundTintList = lightTintCsl
+                binding.viewShieldDot.backgroundTintList = primaryCsl
                 binding.tvShieldStatus.text = "SHIELD ACTIVE"
-                binding.tvShieldStatus.setTextColor(ContextCompat.getColor(context, R.color.badge_active_text))
+                binding.tvShieldStatus.setTextColor(primaryColor)
 
                 binding.tvCurrentIp.text = state.node.virtualIp
                 binding.tvIpDetails.text = "${state.node.flagEmoji} ${state.node.city}, ${state.node.country} • Nowhere Privacy Tunnel"
@@ -428,9 +435,9 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 binding.tvShieldStatus.text = "CONNECTING..."
                 binding.btnToggleShield.text = "Connecting..."
                 binding.btnToggleShield.setIconResource(R.drawable.ic_shield_check)
-                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.primary)
-                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.white))
-                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.white)
+                binding.btnToggleShield.backgroundTintList = primaryCsl
+                binding.btnToggleShield.setTextColor(Color.WHITE)
+                binding.btnToggleShield.iconTint = ColorStateList.valueOf(Color.WHITE)
             }
             else -> {
                 binding.cardVpnTraffic.visibility = View.GONE
@@ -441,10 +448,10 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
                 binding.btnToggleShield.text = "🔒 Start Privacy Tunnel"
                 binding.btnToggleShield.setIconResource(R.drawable.ic_shield_check)
-                binding.btnToggleShield.backgroundTintList = ContextCompat.getColorStateList(context, R.color.primary)
+                binding.btnToggleShield.backgroundTintList = primaryCsl
                 binding.btnToggleShield.strokeWidth = 0
-                binding.btnToggleShield.setTextColor(ContextCompat.getColor(context, R.color.white))
-                binding.btnToggleShield.iconTint = ContextCompat.getColorStateList(context, R.color.white)
+                binding.btnToggleShield.setTextColor(Color.WHITE)
+                binding.btnToggleShield.iconTint = ColorStateList.valueOf(Color.WHITE)
 
                 refreshIpTelemetry()
             }

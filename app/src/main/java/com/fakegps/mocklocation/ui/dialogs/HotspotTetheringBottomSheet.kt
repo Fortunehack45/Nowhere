@@ -63,6 +63,13 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
         setupTabs()
         setupListeners()
         observeServerState()
+
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(requireContext())
+        val primaryCsl = android.content.res.ColorStateList.valueOf(primaryColor)
+        binding.tabHostMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.tabClientMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        binding.btnOpenWebDashboard.backgroundTintList = primaryCsl
+
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
         observeClientState()
         startPeriodicIpRefresh()

@@ -61,30 +61,30 @@ object QrCodeGenerator {
             val cornerRadius = logoSize * 0.28f
             canvas.drawRoundRect(logoRect, cornerRadius, cornerRadius, bgPaint)
 
+            val primaryColor = if (context != null) ThemeColorManager.getPrimaryColor(context) else Color.parseColor("#FF3B30")
+            val darkColor = if (context != null) ThemeColorManager.getDarkColor(context) else primaryColor
+
             val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#FF3B30")
+                color = primaryColor
                 style = Paint.Style.STROKE
                 strokeWidth = (logoSize * 0.06f).coerceAtLeast(2f)
             }
             canvas.drawRoundRect(logoRect, cornerRadius, cornerRadius, strokePaint)
 
-            // 2. Draw App Icon or custom Nowhere pin
+            // 2. Draw Nowhere Themed Logo in center
             var logoDrawn = false
             if (context != null) {
                 try {
-                    val drawable = ContextCompat.getDrawable(context, R.mipmap.ic_launcher)
-                        ?: ContextCompat.getDrawable(context, R.drawable.ic_launcher_monochrome)
-                    if (drawable != null) {
-                        val iconPadding = (logoSize * 0.16f).toInt()
-                        drawable.setBounds(
-                            (logoLeft + iconPadding).toInt(),
-                            (logoTop + iconPadding).toInt(),
-                            (logoLeft + logoSize - iconPadding).toInt(),
-                            (logoTop + logoSize - iconPadding).toInt()
-                        )
-                        drawable.draw(canvas)
-                        logoDrawn = true
-                    }
+                    val drawable = ThemeColorManager.getThemedLogoDrawable(context, primaryColor, darkColor)
+                    val iconPadding = (logoSize * 0.16f).toInt()
+                    drawable.setBounds(
+                        (logoLeft + iconPadding).toInt(),
+                        (logoTop + iconPadding).toInt(),
+                        (logoLeft + logoSize - iconPadding).toInt(),
+                        (logoTop + logoSize - iconPadding).toInt()
+                    )
+                    drawable.draw(canvas)
+                    logoDrawn = true
                 } catch (ignored: Exception) {}
             }
 

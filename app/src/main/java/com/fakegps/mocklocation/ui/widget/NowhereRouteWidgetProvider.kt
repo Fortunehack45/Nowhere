@@ -88,9 +88,14 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
 
             val progressPercent = if (totalDistMeters > 0) ((coveredDistMeters / totalDistMeters) * 100).toInt().coerceIn(0, 100) else 0
 
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+            views.setTextColor(R.id.tvRouteWidgetTitle, primaryColor)
+            views.setInt(R.id.ivRouteWidgetIcon, "setColorFilter", primaryColor)
+            views.setTextColor(R.id.tvWidgetRouteSpeed, primaryColor)
+
             if (isActive) {
                 views.setTextViewText(R.id.tvWidgetRouteStatus, "RUNNING")
-                views.setTextColor(R.id.tvWidgetRouteStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+                views.setTextColor(R.id.tvWidgetRouteStatus, primaryColor)
                 views.setTextViewText(R.id.btnWidgetRoutePlayPause, "Pause")
                 views.setTextViewText(R.id.tvWidgetRouteWaypoints, "${waypoints.size} Waypoints • $progressPercent%")
                 views.setTextViewText(R.id.tvWidgetRouteDistance, "Covered: $coveredFormatted / $totalFormatted")

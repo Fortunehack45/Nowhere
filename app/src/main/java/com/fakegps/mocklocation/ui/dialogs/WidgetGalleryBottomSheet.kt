@@ -124,6 +124,9 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
         binding.rvWidgetPreviews.adapter = WidgetPreviewAdapter(requireContext(), widgetList) { item ->
             requestPinWidget(item)
         }
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(requireContext())
+        val darkColor = com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(requireContext())
+        binding.ivWidgetGalleryLogo.setImageDrawable(com.fakegps.mocklocation.util.ThemeColorManager.getThemedLogoDrawable(requireContext(), primaryColor, darkColor))
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
     }
 
@@ -185,8 +188,13 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
                 binding.previewContainer.removeAllViews()
                 try {
                     val previewView = LayoutInflater.from(context).inflate(item.layoutResId, binding.previewContainer, false)
+                    com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(previewView, context)
                     binding.previewContainer.addView(previewView)
                 } catch (ignored: Exception) {}
+
+                com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, context)
+                binding.btnAddToHomeScreen.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(context)
+                binding.tvWidgetSize.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context))
 
                 binding.btnAddToHomeScreen.setOnClickListener {
                     onAddClick(item)
