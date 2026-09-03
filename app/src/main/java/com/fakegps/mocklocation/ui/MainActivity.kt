@@ -1464,10 +1464,8 @@ class MainActivity : AppCompatActivity() {
         binding.pbRouteLiveProgress.progressTintList = primaryCsl
         binding.tvWaypointsCount.setTextColor(primaryColor)
 
-        binding.sliderRouteSpeed.thumbTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
-        binding.sliderRouteSpeed.trackActiveTintList = primaryCsl
-        binding.sliderJoystickSpeed.thumbTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
-        binding.sliderJoystickSpeed.trackActiveTintList = primaryCsl
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToSlider(binding.sliderRouteSpeed, primaryColor, this)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToSlider(binding.sliderJoystickSpeed, primaryColor, this)
 
         // Dynamic Segmented Pill Backgrounds
         binding.rbFixedMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)

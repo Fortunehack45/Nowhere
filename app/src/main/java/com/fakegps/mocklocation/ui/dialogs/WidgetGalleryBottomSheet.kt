@@ -188,6 +188,13 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
                 binding.previewContainer.removeAllViews()
                 try {
                     val previewView = LayoutInflater.from(context).inflate(item.layoutResId, binding.previewContainer, false)
+                    val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+                    previewView.findViewById<android.widget.ImageView>(R.id.ivWidgetTeleportBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    previewView.findViewById<android.widget.ImageView>(R.id.ivWidgetRoutePlayPauseBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    previewView.findViewById<android.widget.ImageView>(R.id.ivWidgetGameBoostToggleBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    previewView.findViewById<android.widget.ImageView>(R.id.ivWidgetVpnToggleBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    previewView.findViewById<android.widget.ImageView>(R.id.ivWidgetWeatherDetailsBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    previewView.findViewById<android.widget.ImageView>(R.id.ivSearchWidgetTeleportBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
                     com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(previewView, context)
                     binding.previewContainer.addView(previewView)
                 } catch (ignored: Exception) {}

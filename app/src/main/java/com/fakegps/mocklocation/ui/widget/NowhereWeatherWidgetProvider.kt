@@ -59,6 +59,11 @@ class NowhereWeatherWidgetProvider : AppWidgetProvider() {
         val lat = sessionPrefs.lastLatitude
         val lon = sessionPrefs.lastLongitude
 
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        views.setTextColor(R.id.tvWidgetWeatherTitle, primaryColor)
+        views.setTextColor(R.id.tvWidgetWeatherTemp, primaryColor)
+        views.setInt(R.id.ivWidgetWeatherDetailsBg, "setColorFilter", primaryColor)
+
         // Open App Intent with Weather Sheet
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP

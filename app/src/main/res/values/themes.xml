@@ -30,8 +30,21 @@
         <item name="trackColorActive">@color/primary</item>
         <item name="trackColorInactive">@color/stroke_subtle</item>
         <item name="haloColor">@color/transparent</item>
+        <item name="tickColorActive">@color/white</item>
+        <item name="tickColorInactive">#64748B</item>
         <item name="thumbRadius">9dp</item>
         <item name="trackHeight">6dp</item>
+        <item name="labelStyle">@style/Widget.Nowhere.SliderTooltip</item>
+    </style>
+
+    <style name="Widget.Nowhere.SliderTooltip" parent="Widget.Material3.Tooltip">
+        <item name="android:textAppearance">@style/TextAppearance.Nowhere.SliderTooltip</item>
+    </style>
+
+    <style name="TextAppearance.Nowhere.SliderTooltip" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="Widget.Nowhere.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">

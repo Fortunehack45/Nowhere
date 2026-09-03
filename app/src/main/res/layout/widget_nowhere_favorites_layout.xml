@@ -15,12 +15,15 @@
         android:orientation="horizontal">
 
         <ImageView
+            android:id="@+id/ivFavWidgetLogo"
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_favorite"
-            android:tint="@color/primary" />
+            android:tint="@color/primary"
+            android:contentDescription="@null" />
 
         <TextView
+            android:id="@+id/tvFavWidgetTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"

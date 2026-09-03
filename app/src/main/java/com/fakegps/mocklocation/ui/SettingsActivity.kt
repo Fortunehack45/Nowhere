@@ -599,7 +599,7 @@ class SettingsActivity : AppCompatActivity() {
             val chosenTheme = themes[position]
             settingsPrefs.appThemeColor = chosenTheme.id
             com.fakegps.mocklocation.util.ThemeColorManager.setAppThemeColor(this, chosenTheme.id)
-            com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+            com.fakegps.mocklocation.util.ThemeColorManager.updateAllAppWidgets(this)
             Toast.makeText(this, "App Theme Updated to ${chosenTheme.displayName}!", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
             recreate()
@@ -833,10 +833,8 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.widgetSlot3Lat = 40.7128
         settingsPrefs.widgetSlot3Lon = -74.0060
 
-        com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(this)
-        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
-        com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(this)
-        com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider.updateAllSearchWidgets(this)
+        com.fakegps.mocklocation.util.ThemeColorManager.setAppThemeColor(this, "RED")
+        com.fakegps.mocklocation.util.ThemeColorManager.updateAllAppWidgets(this)
 
         loadInitialValues()
 

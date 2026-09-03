@@ -127,6 +127,12 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
         val matchSlot2 = isActive && GeoUtils.calculateDistanceMeters(curLat, curLon, s2Lat, s2Lon) < 150.0
         val matchSlot3 = isActive && GeoUtils.calculateDistanceMeters(curLat, curLon, s3Lat, s3Lon) < 150.0
 
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        views.setInt(R.id.ivFavWidgetLogo, "setColorFilter", primaryColor)
+        views.setTextColor(R.id.tvFavWidgetTitle, primaryColor)
+        views.setTextColor(R.id.btnFavWidgetEdit, primaryColor)
+        views.setTextColor(R.id.btnFavWidgetStop, primaryColor)
+
         // Configure Active Pill Indicator
         if (isActive) {
             val activeName = when {
@@ -136,7 +142,7 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
                 else -> "ACTIVE"
             }
             views.setTextViewText(R.id.tvFavWidgetStatus, activeName)
-            views.setTextColor(R.id.tvFavWidgetStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+            views.setTextColor(R.id.tvFavWidgetStatus, primaryColor)
         } else {
             views.setTextViewText(R.id.tvFavWidgetStatus, "STANDBY")
             views.setTextColor(R.id.tvFavWidgetStatus, ContextCompat.getColor(context, R.color.text_muted))
@@ -146,8 +152,8 @@ class NowhereFavoritesWidgetProvider : AppWidgetProvider() {
         fun bindSlot(viewId: Int, reqCode: Int, name: String, lat: Double, lon: Double, isMatched: Boolean) {
             views.setTextViewText(viewId, if (isMatched) "✓ $name" else name)
             if (isMatched) {
-                views.setInt(viewId, "setBackgroundResource", R.drawable.bg_widget_button_primary)
-                views.setTextColor(viewId, ContextCompat.getColor(context, R.color.white))
+                views.setInt(viewId, "setBackgroundResource", R.drawable.bg_widget_button)
+                views.setTextColor(viewId, primaryColor)
             } else {
                 views.setInt(viewId, "setBackgroundResource", R.drawable.bg_widget_button)
                 views.setTextColor(viewId, ContextCompat.getColor(context, R.color.text_primary))

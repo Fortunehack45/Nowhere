@@ -22,6 +22,7 @@
             android:textSize="14sp" />
 
         <TextView
+            android:id="@+id/tvWidgetWeatherTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
@@ -96,16 +97,30 @@
             android:textColor="@color/text_muted"
             android:textSize="10sp" />
 
-        <TextView
-            android:id="@+id/btnWidgetWeatherDetails"
+        <FrameLayout
+            android:id="@+id/layoutWidgetWeatherDetails"
             android:layout_width="wrap_content"
-            android:layout_height="28dp"
-            android:background="@drawable/bg_widget_button_primary"
-            android:gravity="center"
-            android:paddingHorizontal="10dp"
-            android:text="Forecast"
-            android:textColor="@color/white"
-            android:textSize="10sp"
-            android:textStyle="bold" />
+            android:layout_height="28dp">
+
+            <ImageView
+                android:id="@+id/ivWidgetWeatherDetailsBg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitXY"
+                android:src="@drawable/bg_widget_button_small_white"
+                android:tint="@color/primary"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/btnWidgetWeatherDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:paddingHorizontal="10dp"
+                android:text="Forecast"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </FrameLayout>
     </LinearLayout>
 </LinearLayout>

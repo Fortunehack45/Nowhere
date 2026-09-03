@@ -43,9 +43,16 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
             val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
 
             val stats = NowhereVpnService.trafficStats.value
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+            views.setInt(R.id.ivWidgetVpnLogo, "setColorFilter", primaryColor)
+            views.setTextColor(R.id.tvWidgetVpnTitle, primaryColor)
+            views.setTextColor(R.id.tvWidgetVpnData, primaryColor)
+            views.setInt(R.id.ivWidgetVpnToggleBg, "setColorFilter", primaryColor)
+            views.setTextColor(R.id.btnWidgetVpnNodes, primaryColor)
+
             if (isRunning) {
                 views.setTextViewText(R.id.tvWidgetVpnStatus, "ACTIVE")
-                views.setTextColor(R.id.tvWidgetVpnStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+                views.setTextColor(R.id.tvWidgetVpnStatus, primaryColor)
                 views.setTextViewText(R.id.btnWidgetVpnToggle, "Disconnect Shield")
                 views.setTextViewText(R.id.tvWidgetVpnNode, "${node.flagEmoji} ${node.city}, ${node.country}")
                 views.setTextViewText(R.id.tvWidgetVpnIp, "Virtual IP: ${node.virtualIp} • Protected")

@@ -82,6 +82,7 @@ object ThemeColorManager {
         isThemeStale = true
         val theme = getCurrentTheme(context)
         _themeChangeFlow.tryEmit(theme)
+        updateAllAppWidgets(context)
     }
 
     fun getPrimaryColor(context: Context): Int {
@@ -377,6 +378,8 @@ object ThemeColorManager {
             is ImageView -> {
                 if (view.id == R.id.ivTopBrandLogo || view.id == R.id.ivSettingsFooterLogo || view.id == R.id.ivWidgetGalleryLogo) {
                     view.setImageDrawable(getThemedLogoDrawable(context, primaryColor, darkColor))
+                } else if (view.id == R.id.ivWidgetTeleportBg || view.id == R.id.ivWidgetRoutePlayPauseBg || view.id == R.id.ivWidgetGameBoostToggleBg || view.id == R.id.ivWidgetVpnToggleBg || view.id == R.id.ivWidgetWeatherDetailsBg || view.id == R.id.ivSearchWidgetTeleportBg) {
+                    view.setColorFilter(primaryColor, PorterDuff.Mode.SRC_IN)
                 } else {
                     val tint = ImageViewCompat.getImageTintList(view)?.defaultColor
                     if (tint != null) {
@@ -405,8 +408,7 @@ object ThemeColorManager {
                 view.progressTintList = primaryCsl
             }
             is Slider -> {
-                view.trackActiveTintList = primaryCsl
-                view.thumbTintList = ColorStateList.valueOf(Color.WHITE)
+                applyThemeToSlider(view, primaryColor, context)
             }
         }
 
@@ -445,5 +447,63 @@ object ThemeColorManager {
                 )
             }
         }
+    }
+
+    fun applyThemeToSlider(slider: Slider, primaryColor: Int, context: Context) {
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+        slider.trackActiveTintList = primaryCsl
+        slider.trackInactiveTintList = ColorStateList.valueOf(Color.parseColor("#334155"))
+        slider.thumbTintList = ColorStateList.valueOf(Color.WHITE)
+        slider.haloTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+        slider.tickActiveTintList = ColorStateList.valueOf(Color.WHITE)
+        slider.tickInactiveTintList = ColorStateList.valueOf(Color.parseColor("#64748B"))
+
+        fun tintTooltipDrawables() {
+            try {
+                var currentClass: Class<*>? = slider.javaClass
+                var labelsField: java.lang.reflect.Field? = null
+                while (currentClass != null && labelsField == null) {
+                    try {
+                        labelsField = currentClass.getDeclaredField("labels")
+                    } catch (e: NoSuchFieldException) {
+                        currentClass = currentClass.superclass
+                    }
+                }
+                labelsField?.isAccessible = true
+                val labelsList = labelsField?.get(slider) as? List<*>
+                labelsList?.forEach { label ->
+                    if (label is com.google.android.material.shape.MaterialShapeDrawable) {
+                        label.fillColor = primaryCsl
+                    }
+                    try {
+                        val setAppearanceMethod = label?.javaClass?.getMethod("setTextAppearanceResource", Int::class.javaPrimitiveType)
+                        setAppearanceMethod?.invoke(label, R.style.TextAppearance_Nowhere_SliderTooltip)
+                    } catch (ignored: Exception) {}
+                }
+            } catch (ignored: Exception) {}
+        }
+
+        tintTooltipDrawables()
+        slider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) {
+                tintTooltipDrawables()
+            }
+            override fun onStopTrackingTouch(slider: Slider) {
+                tintTooltipDrawables()
+            }
+        })
+    }
+
+    fun updateAllAppWidgets(context: Context) {
+        try {
+            com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(context)
+            com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(context)
+            com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(context)
+            com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(context)
+            com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(context)
+            com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(context)
+            com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
+            com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider.updateAllSearchWidgets(context)
+        } catch (ignored: Exception) {}
     }
 }

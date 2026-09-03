@@ -15,12 +15,15 @@
         android:orientation="horizontal">
 
         <ImageView
+            android:id="@+id/ivWidgetTimerLogo"
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_launcher_monochrome"
-            android:tint="@color/primary" />
+            android:tint="@color/primary"
+            android:contentDescription="@null" />
 
         <TextView
+            android:id="@+id/tvWidgetTimerTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
@@ -108,10 +111,12 @@
             android:paddingHorizontal="6dp">
 
             <ImageView
+                android:id="@+id/ivWidgetExtendIcon"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:src="@drawable/ic_bolt"
-                android:tint="@color/primary" />
+                android:tint="@color/primary"
+                android:contentDescription="@null" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -137,10 +142,12 @@
             android:paddingHorizontal="6dp">
 
             <ImageView
+                android:id="@+id/ivWidgetOpenAppIcon"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:src="@drawable/ic_play"
-                android:tint="@color/primary" />
+                android:tint="@color/primary"
+                android:contentDescription="@null" />
 
             <TextView
                 android:layout_width="wrap_content"

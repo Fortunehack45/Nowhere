@@ -50,9 +50,15 @@ class NowhereGameBoostWidgetProvider : AppWidgetProvider() {
             val activeGameName = sessionPrefs.lastSelectedGameName.ifEmpty { "Call of Duty: Mobile / Warzone" }
             val activeGameIcon = sessionPrefs.lastSelectedGameIcon.ifEmpty { "🎯" }
 
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+            views.setInt(R.id.ivWidgetGameLogo, "setColorFilter", primaryColor)
+            views.setTextColor(R.id.tvWidgetGameTitle, primaryColor)
+            views.setTextColor(R.id.tvWidgetGameData, primaryColor)
+            views.setInt(R.id.ivWidgetGameBoostToggleBg, "setColorFilter", primaryColor)
+
             if (isRunning) {
                 views.setTextViewText(R.id.tvWidgetGameStatus, "BOOSTED")
-                views.setTextColor(R.id.tvWidgetGameStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+                views.setTextColor(R.id.tvWidgetGameStatus, primaryColor)
                 views.setTextViewText(R.id.btnWidgetGameBoostToggle, "Stop Boost")
                 views.setTextViewText(R.id.tvWidgetGameName, activeGameName)
                 views.setTextViewText(R.id.tvWidgetGameStats, "FastPath Active • 14ms • DSCP 46 EF")

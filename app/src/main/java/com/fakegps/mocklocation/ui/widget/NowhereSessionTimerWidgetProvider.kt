@@ -42,21 +42,30 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
             val isRunning = sessionPrefs.isSessionActive && !sessionPrefs.isSessionExpired
             val isExpired = sessionPrefs.isSessionExpired
 
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+            views.setInt(R.id.ivWidgetTimerLogo, "setColorFilter", primaryColor)
+            views.setTextColor(R.id.tvWidgetTimerTitle, primaryColor)
+            views.setInt(R.id.ivWidgetExtendIcon, "setColorFilter", primaryColor)
+            views.setInt(R.id.ivWidgetOpenAppIcon, "setColorFilter", primaryColor)
+
             if (isRunning) {
                 views.setTextViewText(R.id.tvWidgetSessionStatus, "ACTIVE")
-                views.setTextColor(R.id.tvWidgetSessionStatus, ContextCompat.getColor(context, R.color.badge_active_text))
+                views.setTextColor(R.id.tvWidgetSessionStatus, primaryColor)
                 views.setTextViewText(R.id.tvWidgetTimeRemaining, sessionPrefs.formatRemainingTime())
                 views.setTextViewText(R.id.tvWidgetTotalAllocated, "Total: ${sessionPrefs.formatAllocatedDuration()}")
+                views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             } else if (isExpired) {
                 views.setTextViewText(R.id.tvWidgetSessionStatus, "EXPIRED")
                 views.setTextColor(R.id.tvWidgetSessionStatus, ContextCompat.getColor(context, R.color.badge_error_text))
                 views.setTextViewText(R.id.tvWidgetTimeRemaining, "00:00:00")
                 views.setTextViewText(R.id.tvWidgetTotalAllocated, "Tap +1h to resume")
+                views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             } else {
                 views.setTextViewText(R.id.tvWidgetSessionStatus, "STANDBY")
                 views.setTextColor(R.id.tvWidgetSessionStatus, ContextCompat.getColor(context, R.color.text_muted))
                 views.setTextViewText(R.id.tvWidgetTimeRemaining, "02:00:00")
                 views.setTextViewText(R.id.tvWidgetTotalAllocated, "Ready to start (2h)")
+                views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             }
 
             // Open App with Extend Dialog Intent
