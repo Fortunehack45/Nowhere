@@ -494,6 +494,38 @@ object ThemeColorManager {
         })
     }
 
+    /**
+     * Determines whether widgets should render in Dark mode or Light mode based on the user's
+     * App Theme setting in Nowhere ("DARK", "LIGHT", or "SYSTEM").
+     */
+    fun isWidgetDarkMode(context: Context): Boolean {
+        val prefs = AppSettingsPreferences(context)
+        return when (prefs.appTheme) {
+            "DARK" -> true
+            "LIGHT" -> false
+            else -> {
+                val nightModeFlags = context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+                nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES
+            }
+        }
+    }
+
+    fun getWidgetGlassBackgroundRes(context: Context): Int {
+        return if (isWidgetDarkMode(context)) R.drawable.bg_widget_glass_dark else R.drawable.bg_widget_glass_light
+    }
+
+    fun getWidgetButtonBackgroundRes(context: Context): Int {
+        return if (isWidgetDarkMode(context)) R.drawable.bg_widget_button_dark else R.drawable.bg_widget_button_light
+    }
+
+    fun getWidgetPrimaryTextColor(context: Context): Int {
+        return if (isWidgetDarkMode(context)) Color.WHITE else Color.BLACK
+    }
+
+    fun getWidgetSecondaryTextColor(context: Context): Int {
+        return if (isWidgetDarkMode(context)) Color.parseColor("#AEAEB2") else Color.parseColor("#636366")
+    }
+
     fun updateAllAppWidgets(context: Context) {
         try {
             com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(context)
@@ -504,6 +536,7 @@ object ThemeColorManager {
             com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(context)
             com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
             com.fakegps.mocklocation.ui.widget.NowhereSearchWidgetProvider.updateAllSearchWidgets(context)
+            com.fakegps.mocklocation.automation.widget.NowhereAutomationWidgetProvider.updateAllAutomationWidgets(context)
         } catch (ignored: Exception) {}
     }
 }

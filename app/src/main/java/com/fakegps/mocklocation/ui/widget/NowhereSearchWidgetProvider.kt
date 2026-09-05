@@ -23,17 +23,114 @@ class NowhereSearchWidgetProvider : AppWidgetProvider() {
         const val ACTION_UPDATE_SEARCH_WIDGET = "com.fakegps.mocklocation.ACTION_UPDATE_SEARCH_WIDGET"
 
         fun updateAllSearchWidgets(context: Context) {
-            val intent = Intent(context, NowhereSearchWidgetProvider::class.java).apply {
-                action = ACTION_UPDATE_SEARCH_WIDGET
+            try {
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, NowhereSearchWidgetProvider::class.java))
+                if (ids != null && ids.isNotEmpty()) {
+                    for (id in ids) {
+                        updateSearchWidgetDirect(context, appWidgetManager, id)
+                    }
+                }
+            } catch (e: Exception) {}
+        }
+
+        private fun buildSearchRemoteViews(context: Context, isDark: Boolean): RemoteViews {
+            val views = RemoteViews(context.packageName, R.layout.widget_nowhere_search_layout)
+            val sessionPrefs = SessionPreferences(context)
+
+            val isActive = sessionPrefs.isSessionActive
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+            views.setInt(R.id.ivSearchWidgetLogo, "setColorFilter", primaryColor)
+            views.setTextColor(R.id.tvSearchWidgetTitle, primaryColor)
+            views.setInt(R.id.ivSearchWidgetTeleportBg, "setColorFilter", primaryColor)
+            views.setTextColor(R.id.btnSearchWidgetStop, primaryColor)
+
+            // Dynamic Dark / Light theme styling
+            val bgGlassRes = if (isDark) R.drawable.bg_widget_glass_dark else R.drawable.bg_widget_glass_light
+            val bgButtonRes = if (isDark) R.drawable.bg_widget_button_dark else R.drawable.bg_widget_button_light
+            val secondaryText = if (isDark) android.graphics.Color.parseColor("#AEAEB2") else android.graphics.Color.parseColor("#636366")
+
+            views.setInt(R.id.searchWidgetRoot, "setBackgroundResource", bgGlassRes)
+            views.setInt(R.id.btnSearchWidgetSearch, "setBackgroundResource", bgButtonRes)
+            views.setInt(R.id.btnSearchWidgetStop, "setBackgroundResource", bgButtonRes)
+
+            views.setTextColor(R.id.tvSearchWidgetCoords, secondaryText)
+            views.setTextColor(R.id.tvSearchWidgetHint, secondaryText)
+
+            if (isActive) {
+                views.setTextViewText(R.id.tvSearchWidgetStatus, "ACTIVE")
+                views.setTextColor(R.id.tvSearchWidgetStatus, primaryColor)
+                views.setTextViewText(R.id.btnSearchWidgetTeleport, "Engaged")
+            } else {
+                views.setTextViewText(R.id.tvSearchWidgetStatus, "STANDBY")
+                views.setTextColor(R.id.tvSearchWidgetStatus, secondaryText)
+                views.setTextViewText(R.id.btnSearchWidgetTeleport, "Teleport")
+            }
+
+            views.setTextViewText(
+                R.id.tvSearchWidgetCoords,
+                String.format(java.util.Locale.US, "%.5f°, %.5f°", sessionPrefs.lastLatitude, sessionPrefs.lastLongitude)
+            )
+
+            // Open App with Search Focused
+            val openSearchIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra("focus_search", true)
                 setPackage(context.packageName)
             }
-            context.sendBroadcast(intent)
+            val openSearchPendingIntent = PendingIntent.getActivity(
+                context,
+                401,
+                openSearchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.btnSearchWidgetSearch, openSearchPendingIntent)
+            views.setOnClickPendingIntent(R.id.searchWidgetRoot, openSearchPendingIntent)
+
+            // Teleport Action Intent
+            val teleportIntent = Intent(context, NowhereSearchWidgetProvider::class.java).apply {
+                action = ACTION_SEARCH_WIDGET_TELEPORT
+                setPackage(context.packageName)
+            }
+            views.setOnClickPendingIntent(
+                R.id.btnSearchWidgetTeleport,
+                PendingIntent.getBroadcast(context, 402, teleportIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            )
+
+            // Stop Action Intent
+            val stopIntent = Intent(context, NowhereSearchWidgetProvider::class.java).apply {
+                action = ACTION_SEARCH_WIDGET_STOP
+                setPackage(context.packageName)
+            }
+            views.setOnClickPendingIntent(
+                R.id.btnSearchWidgetStop,
+                PendingIntent.getBroadcast(context, 403, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            )
+
+            return views
+        }
+
+        fun updateSearchWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val prefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(context)
+            val finalViews = when (prefs.appTheme) {
+                "LIGHT" -> buildSearchRemoteViews(context, isDark = false)
+                "DARK" -> buildSearchRemoteViews(context, isDark = true)
+                else -> {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        RemoteViews(buildSearchRemoteViews(context, isDark = false), buildSearchRemoteViews(context, isDark = true))
+                    } else {
+                        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(context)
+                        buildSearchRemoteViews(context, isDark)
+                    }
+                }
+            }
+            appWidgetManager.updateAppWidget(appWidgetId, finalViews)
         }
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
-            updateSearchWidget(context, appWidgetManager, appWidgetId)
+            updateSearchWidgetDirect(context, appWidgetManager, appWidgetId)
         }
     }
 
@@ -60,7 +157,7 @@ class NowhereSearchWidgetProvider : AppWidgetProvider() {
                     context.startService(serviceIntent)
                 }
 
-                Toast.makeText(context, "Teleported to ${String.format("%.4f, %.4f", lat, lon)}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Teleported to ${String.format(java.util.Locale.US, "%.4f, %.4f", lat, lon)}", Toast.LENGTH_SHORT).show()
                 updateAllSearchWidgets(context)
                 NowhereAppWidgetProvider.updateAllWidgets(context)
                 NowhereRouteWidgetProvider.updateAllRouteWidgets(context)
@@ -78,76 +175,8 @@ class NowhereSearchWidgetProvider : AppWidgetProvider() {
                 NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(context)
             }
             ACTION_UPDATE_SEARCH_WIDGET, Intent.ACTION_LOCALE_CHANGED, Intent.ACTION_CONFIGURATION_CHANGED -> {
-                val appWidgetManager = AppWidgetManager.getInstance(context)
-                val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, NowhereSearchWidgetProvider::class.java))
-                for (id in ids) {
-                    updateSearchWidget(context, appWidgetManager, id)
-                }
+                updateAllSearchWidgets(context)
             }
         }
-    }
-
-    private fun updateSearchWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-        val views = RemoteViews(context.packageName, R.layout.widget_nowhere_search_layout)
-        val sessionPrefs = SessionPreferences(context)
-
-        val isActive = sessionPrefs.isSessionActive
-        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
-        views.setInt(R.id.ivSearchWidgetLogo, "setColorFilter", primaryColor)
-        views.setTextColor(R.id.tvSearchWidgetTitle, primaryColor)
-        views.setInt(R.id.ivSearchWidgetTeleportBg, "setColorFilter", primaryColor)
-        views.setTextColor(R.id.btnSearchWidgetStop, primaryColor)
-
-        if (isActive) {
-            views.setTextViewText(R.id.tvSearchWidgetStatus, "ACTIVE")
-            views.setTextColor(R.id.tvSearchWidgetStatus, primaryColor)
-            views.setTextViewText(R.id.btnSearchWidgetTeleport, "Engaged")
-        } else {
-            views.setTextViewText(R.id.tvSearchWidgetStatus, "STANDBY")
-            views.setTextColor(R.id.tvSearchWidgetStatus, ContextCompat.getColor(context, R.color.text_muted))
-            views.setTextViewText(R.id.btnSearchWidgetTeleport, "Teleport")
-        }
-
-        views.setTextViewText(
-            R.id.tvSearchWidgetCoords,
-            String.format("%.5f°, %.5f°", sessionPrefs.lastLatitude, sessionPrefs.lastLongitude)
-        )
-
-        // Open App with Search Focused
-        val openSearchIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("focus_search", true)
-            setPackage(context.packageName)
-        }
-        val openSearchPendingIntent = PendingIntent.getActivity(
-            context,
-            401,
-            openSearchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.btnSearchWidgetSearch, openSearchPendingIntent)
-        views.setOnClickPendingIntent(R.id.searchWidgetRoot, openSearchPendingIntent)
-
-        // Teleport Action Intent
-        val teleportIntent = Intent(context, NowhereSearchWidgetProvider::class.java).apply {
-            action = ACTION_SEARCH_WIDGET_TELEPORT
-            setPackage(context.packageName)
-        }
-        views.setOnClickPendingIntent(
-            R.id.btnSearchWidgetTeleport,
-            PendingIntent.getBroadcast(context, 402, teleportIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        )
-
-        // Stop Action Intent
-        val stopIntent = Intent(context, NowhereSearchWidgetProvider::class.java).apply {
-            action = ACTION_SEARCH_WIDGET_STOP
-            setPackage(context.packageName)
-        }
-        views.setOnClickPendingIntent(
-            R.id.btnSearchWidgetStop,
-            PendingIntent.getBroadcast(context, 403, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        )
-
-        appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 }

@@ -48,9 +48,10 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(context)
             NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
             NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(context)
+            com.fakegps.mocklocation.automation.widget.NowhereAutomationWidgetProvider.updateAllAutomationWidgets(context)
         }
 
-        fun updateAppWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+        private fun buildRemoteViews(context: Context, isDark: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_layout)
             val sessionPrefs = SessionPreferences(context)
 
@@ -74,13 +75,28 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             views.setInt(R.id.ivWidgetLogo, "setColorFilter", primaryColor)
             views.setInt(R.id.ivWidgetTeleportBg, "setColorFilter", primaryColor)
 
+            // Dynamic Dark / Light theme styling
+            val bgGlassRes = if (isDark) R.drawable.bg_widget_glass_dark else R.drawable.bg_widget_glass_light
+            val bgButtonRes = if (isDark) R.drawable.bg_widget_button_dark else R.drawable.bg_widget_button_light
+            val primaryText = if (isDark) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+            val secondaryText = if (isDark) android.graphics.Color.parseColor("#AEAEB2") else android.graphics.Color.parseColor("#636366")
+
+            views.setInt(R.id.widgetRoot, "setBackgroundResource", bgGlassRes)
+            views.setInt(R.id.btnWidgetJoystick, "setBackgroundResource", bgButtonRes)
+            views.setInt(R.id.btnWidgetOpenApp, "setBackgroundResource", bgButtonRes)
+
+            views.setTextColor(R.id.tvWidgetLocationName, primaryText)
+            views.setTextColor(R.id.tvWidgetCoords, secondaryText)
+            views.setTextColor(R.id.btnWidgetJoystick, primaryColor)
+            views.setInt(R.id.btnWidgetOpenApp, "setColorFilter", secondaryText)
+
             if (isActive) {
                 views.setTextViewText(R.id.tvWidgetStatus, "ACTIVE")
                 views.setTextColor(R.id.tvWidgetStatus, primaryColor)
                 views.setTextViewText(R.id.btnWidgetTeleport, "Stop")
             } else {
                 views.setTextViewText(R.id.tvWidgetStatus, "READY")
-                views.setTextColor(R.id.tvWidgetStatus, ContextCompat.getColor(context, R.color.text_muted))
+                views.setTextColor(R.id.tvWidgetStatus, secondaryText)
                 views.setTextViewText(R.id.btnWidgetTeleport, "Inject GPS")
             }
 
@@ -128,7 +144,24 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.btnWidgetJoystick, joystickPendingIntent)
 
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            return views
+        }
+
+        fun updateAppWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val prefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(context)
+            val finalViews = when (prefs.appTheme) {
+                "LIGHT" -> buildRemoteViews(context, isDark = false)
+                "DARK" -> buildRemoteViews(context, isDark = true)
+                else -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        RemoteViews(buildRemoteViews(context, isDark = false), buildRemoteViews(context, isDark = true))
+                    } else {
+                        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(context)
+                        buildRemoteViews(context, isDark)
+                    }
+                }
+            }
+            appWidgetManager.updateAppWidget(appWidgetId, finalViews)
         }
     }
 

@@ -59,6 +59,8 @@ class SavedRoutesBottomSheet @JvmOverloads constructor(
         binding.rvSavedRoutes.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSavedRoutes.adapter = adapter
 
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.allSavedRoutes.collectLatest { routes ->
                 adapter.submitList(routes)
@@ -123,15 +125,25 @@ class SavedRoutesAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(route: SavedRoute) {
+            val ctx = binding.root.context
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+            val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(ctx)
+            val primaryCsl = android.content.res.ColorStateList.valueOf(primaryColor)
+            val lightTintCsl = android.content.res.ColorStateList.valueOf(lightTintColor)
+
             binding.tvRouteName.text = route.name
-            binding.tvRouteMetrics.text = String.format(
-                "%d Waypoints • %.2f km • %.0f km/h",
-                route.waypointsCount,
-                route.totalDistanceMeters / 1000.0,
-                route.defaultSpeedKmh
-            )
+            binding.tvRouteSpeed.text = String.format(java.util.Locale.US, "🚗 %.0f km/h", route.defaultSpeedKmh)
+            binding.tvRouteSpeed.setTextColor(primaryColor)
+            binding.tvRouteSpeed.backgroundTintList = lightTintCsl
+
+            binding.tvRouteWaypoints.text = String.format(java.util.Locale.US, "%,d pts", route.waypointsCount)
+            binding.tvRouteDistance.text = String.format(java.util.Locale.US, "%.2f km", route.totalDistanceMeters / 1000.0)
+
+            binding.ivRouteIcon.imageTintList = primaryCsl
+            binding.btnSimulateRoute.backgroundTintList = primaryCsl
 
             binding.root.setOnClickListener { onItemClick(route) }
+            binding.btnSimulateRoute.setOnClickListener { onItemClick(route) }
             binding.btnDeleteRoute.setOnClickListener { onDeleteClick(route) }
             binding.btnExportRoute.setOnClickListener { onExportClick(route) }
         }

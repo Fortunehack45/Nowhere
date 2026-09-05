@@ -12,6 +12,9 @@ interface FavoriteDao {
     @Query("SELECT * FROM favorite_locations ORDER BY createdAt DESC")
     suspend fun getAllFavoritesList(): List<FavoriteLocation>
 
+    @Query("SELECT * FROM favorite_locations WHERE id = :id LIMIT 1")
+    suspend fun getFavoriteById(id: Long): FavoriteLocation?
+
     @Query("SELECT * FROM favorite_locations WHERE tag = :tag ORDER BY createdAt DESC")
     fun getFavoritesByTagFlow(tag: String): Flow<List<FavoriteLocation>>
 

@@ -19,6 +19,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
     <!-- Network for Map Tiles & Hotspot GPS Tethering Server -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -235,6 +236,22 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_nowhere_session_timer_info" />
+        </receiver>
+
+        <!-- Home Screen App Widget: Location Automation Engine Widget -->
+        <receiver
+            android:name=".automation.widget.NowhereAutomationWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_AUTOMATION_WIDGET" />
+                <action android:name="com.fakegps.mocklocation.ACTION_WIDGET_TOGGLE_SCHEDULES" />
+                <action android:name="com.fakegps.mocklocation.ACTION_WIDGET_TOGGLE_WIFI" />
+                <action android:name="com.fakegps.mocklocation.ACTION_WIDGET_TOGGLE_MOTION" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_nowhere_automation_info" />
         </receiver>
 
         <!-- Secure File Provider for In-App APK Updates & Install -->

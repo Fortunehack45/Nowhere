@@ -36,7 +36,7 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        fun updateSessionWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+        private fun buildSessionRemoteViews(context: Context, isDark: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_session_timer_layout)
             val sessionPrefs = SessionPreferences(context)
             val isRunning = sessionPrefs.isSessionActive && !sessionPrefs.isSessionExpired
@@ -47,6 +47,22 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tvWidgetTimerTitle, primaryColor)
             views.setInt(R.id.ivWidgetExtendIcon, "setColorFilter", primaryColor)
             views.setInt(R.id.ivWidgetOpenAppIcon, "setColorFilter", primaryColor)
+
+            // Dynamic Dark / Light styling
+            val bgGlassRes = if (isDark) R.drawable.bg_widget_glass_dark else R.drawable.bg_widget_glass_light
+            val bgButtonRes = if (isDark) R.drawable.bg_widget_button_dark else R.drawable.bg_widget_button_light
+            val primaryText = if (isDark) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+            val secondaryText = if (isDark) android.graphics.Color.parseColor("#AEAEB2") else android.graphics.Color.parseColor("#636366")
+
+            views.setInt(R.id.sessionTimerWidgetRoot, "setBackgroundResource", bgGlassRes)
+            views.setInt(R.id.cardWidgetTimerBody, "setBackgroundResource", bgButtonRes)
+            views.setInt(R.id.btnWidgetExtendOneHour, "setBackgroundResource", bgButtonRes)
+            views.setInt(R.id.btnWidgetOpenApp, "setBackgroundResource", bgButtonRes)
+
+            views.setTextColor(R.id.tvWidgetTimeRemainingTitle, secondaryText)
+            views.setTextColor(R.id.tvWidgetTimeRemaining, primaryText)
+            views.setTextColor(R.id.tvWidgetExtendText, primaryText)
+            views.setTextColor(R.id.tvWidgetOpenAppText, primaryText)
 
             if (isRunning) {
                 views.setTextViewText(R.id.tvWidgetSessionStatus, "ACTIVE")
@@ -62,7 +78,7 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
                 views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             } else {
                 views.setTextViewText(R.id.tvWidgetSessionStatus, "STANDBY")
-                views.setTextColor(R.id.tvWidgetSessionStatus, ContextCompat.getColor(context, R.color.text_muted))
+                views.setTextColor(R.id.tvWidgetSessionStatus, secondaryText)
                 views.setTextViewText(R.id.tvWidgetTimeRemaining, "02:00:00")
                 views.setTextViewText(R.id.tvWidgetTotalAllocated, "Ready to start (2h)")
                 views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
@@ -96,7 +112,24 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.sessionTimerWidgetRoot, openAppPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetOpenApp, openAppPendingIntent)
 
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            return views
+        }
+
+        fun updateSessionWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val prefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(context)
+            val finalViews = when (prefs.appTheme) {
+                "LIGHT" -> buildSessionRemoteViews(context, isDark = false)
+                "DARK" -> buildSessionRemoteViews(context, isDark = true)
+                else -> {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        RemoteViews(buildSessionRemoteViews(context, isDark = false), buildSessionRemoteViews(context, isDark = true))
+                    } else {
+                        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(context)
+                        buildSessionRemoteViews(context, isDark)
+                    }
+                }
+            }
+            appWidgetManager.updateAppWidget(appWidgetId, finalViews)
         }
     }
 

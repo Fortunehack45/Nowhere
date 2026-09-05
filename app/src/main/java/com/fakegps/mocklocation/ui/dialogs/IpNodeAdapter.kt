@@ -67,6 +67,9 @@ class IpNodeAdapter(
                 binding.tvNodePing.text = "${node.pingMs}ms"
 
                 val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+                binding.viewPingDot.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    if (isSelected) primaryColor else ContextCompat.getColor(context, R.color.badge_success_text)
+                )
                 if (isSelected) {
                     binding.cardIpNode.strokeColor = primaryColor
                     binding.cardIpNode.strokeWidth = (2 * context.resources.displayMetrics.density).toInt()
@@ -91,6 +94,9 @@ class IpNodeAdapter(
                 binding.cardIpNode.alpha = 0.50f
                 binding.tvNodeIp.text = "Dedicated VPS Deploying Soon"
                 binding.tvNodePing.text = "Soon"
+                binding.viewPingDot.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(context, R.color.text_muted)
+                )
                 binding.ivSelectedCheck.visibility = View.GONE
                 binding.cardIpNode.strokeColor = ContextCompat.getColor(context, R.color.border_subtle)
                 binding.cardIpNode.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()

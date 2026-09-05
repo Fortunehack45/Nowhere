@@ -144,6 +144,9 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
+    // WorkManager for Reliable Background Automation Scheduling
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // OpenStreetMap (osmdroid)
     implementation("org.osmdroid:osmdroid-android:6.1.18")
 

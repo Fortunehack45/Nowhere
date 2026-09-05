@@ -39,14 +39,21 @@ class GameBoostAdapter(
         holder.binding.tvGameHub.text = item.hubInfo
         holder.binding.tvGamePing.text = "${item.pingMs} ms"
 
-        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(holder.itemView.context)
+        val context = holder.itemView.context
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        val card = holder.itemView as? com.google.android.material.card.MaterialCardView
+
         if (isSelected) {
+            card?.strokeColor = primaryColor
+            card?.strokeWidth = (2 * context.resources.displayMetrics.density).toInt()
             holder.binding.btnBoostGame.text = "ACTIVE"
-            holder.binding.btnBoostGame.setBackgroundColor(primaryColor)
-            holder.binding.btnBoostGame.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.white))
+            holder.binding.btnBoostGame.backgroundTintList = android.content.res.ColorStateList.valueOf(primaryColor)
+            holder.binding.btnBoostGame.setTextColor(ContextCompat.getColor(context, R.color.white))
         } else {
+            card?.strokeColor = ContextCompat.getColor(context, R.color.border_subtle)
+            card?.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()
             holder.binding.btnBoostGame.text = "BOOST"
-            holder.binding.btnBoostGame.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.surface_elevated))
+            holder.binding.btnBoostGame.backgroundTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(context, R.color.surface_elevated))
             holder.binding.btnBoostGame.setTextColor(primaryColor)
         }
 

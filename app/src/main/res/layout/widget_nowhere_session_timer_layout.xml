@@ -59,6 +59,7 @@
         android:padding="8dp">
 
         <TextView
+            android:id="@+id/tvWidgetTimeRemainingTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:letterSpacing="0.06"
@@ -119,6 +120,7 @@
                 android:contentDescription="@null" />
 
             <TextView
+                android:id="@+id/tvWidgetExtendText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -150,6 +152,7 @@
                 android:contentDescription="@null" />
 
             <TextView
+                android:id="@+id/tvWidgetOpenAppText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"

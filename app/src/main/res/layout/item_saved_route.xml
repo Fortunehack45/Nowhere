@@ -4,83 +4,150 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="4dp"
+    android:layout_marginHorizontal="2dp"
     android:layout_marginVertical="5dp"
-    app:cardBackgroundColor="@color/surface_card_elevated"
+    app:cardBackgroundColor="@color/surface_card"
     app:cardCornerRadius="14dp"
     app:cardElevation="0dp"
     app:strokeColor="@color/stroke_subtle"
     app:strokeWidth="1dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="14dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
 
         <ImageView
             android:id="@+id/ivRouteIcon"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="@drawable/bg_status_pill"
+            android:padding="7dp"
             android:src="@drawable/ic_route"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/primary"
             tools:ignore="ContentDescription" />
 
-        <TextView
-            android:id="@+id/tvRouteName"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="8dp"
-            android:textColor="@color/text_primary"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
-            app:layout_constraintStart_toEndOf="@id/ivRouteIcon"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Downtown Test Circuit" />
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvRouteMetrics"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="3dp"
-            android:fontFamily="monospace"
-            android:textColor="@color/text_muted"
+            <!-- Row 1: Route Name + Speed Badge -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvRouteName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13.5sp"
+                    android:textStyle="bold"
+                    tools:text="Downtown Test Circuit" />
+
+                <TextView
+                    android:id="@+id/tvRouteSpeed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_status_pill"
+                    android:fontFamily="monospace"
+                    android:paddingHorizontal="7dp"
+                    android:paddingVertical="2dp"
+                    android:singleLine="true"
+                    android:textColor="@color/primary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    tools:text="🚗 50 km/h" />
+            </LinearLayout>
+
+            <!-- Row 2: Waypoints + Distance Badges -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvRouteWaypoints"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_status_pill"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1.5dp"
+                    android:singleLine="true"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="9.5sp"
+                    tools:text="5,001 pts" />
+
+                <TextView
+                    android:id="@+id/tvRouteDistance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_status_pill"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1.5dp"
+                    android:singleLine="true"
+                    android:textColor="@color/text_muted"
+                    android:textSize="9.5sp"
+                    tools:text="5,703.88 km" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Explicit Simulate Action Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSimulateRoute"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
+            android:backgroundTint="@color/primary"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="0dp"
+            android:text="Simulate"
+            android:textColor="@color/white"
             android:textSize="11sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
-            app:layout_constraintStart_toEndOf="@id/ivRouteIcon"
-            app:layout_constraintTop_toBottomOf="@id/tvRouteName"
-            tools:text="8 Waypoints • 3.4 km • 25 km/h" />
+            android:textStyle="bold"
+            app:cornerRadius="8dp" />
 
+        <!-- Export Share Button -->
         <ImageButton
             android:id="@+id/btnExportRoute"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_marginEnd="4dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Export GPX"
+            android:padding="6dp"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_share"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/primary"
-            tools:ignore="ContentDescription" />
+            app:tint="@color/text_muted" />
 
+        <!-- Delete Trash Button -->
         <ImageButton
             android:id="@+id/btnDeleteRoute"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="2dp"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Delete Route"
+            android:padding="6dp"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_delete"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/badge_error_text"
-            tools:ignore="ContentDescription" />
+            app:tint="@color/text_muted" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

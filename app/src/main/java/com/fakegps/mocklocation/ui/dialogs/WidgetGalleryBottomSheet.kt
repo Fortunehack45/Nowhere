@@ -195,6 +195,8 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
                     previewView.findViewById<android.widget.ImageView>(R.id.ivWidgetVpnToggleBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
                     previewView.findViewById<android.widget.ImageView>(R.id.ivWidgetWeatherDetailsBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
                     previewView.findViewById<android.widget.ImageView>(R.id.ivSearchWidgetTeleportBg)?.setColorFilter(primaryColor, android.graphics.PorterDuff.Mode.SRC_IN)
+                    previewView.findViewById<android.widget.TextView>(R.id.btnWidgetJoystick)?.setTextColor(primaryColor)
+                    previewView.findViewById<android.widget.TextView>(R.id.btnWidgetRouteStop)?.setTextColor(primaryColor)
                     com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(previewView, context)
                     binding.previewContainer.addView(previewView)
                 } catch (ignored: Exception) {}

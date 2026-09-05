@@ -515,11 +515,11 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvIpNodes"
                 android:layout_width="match_parent"
-                android:layout_height="280dp"
+                android:layout_height="wrap_content"
                 android:clipToPadding="false"
-                android:nestedScrollingEnabled="true"
-                android:overScrollMode="ifContentScrolls"
-                android:scrollbars="vertical"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never"
+                android:scrollbars="none"
                 tools:itemCount="5"
                 tools:listitem="@layout/item_ip_node" />
         </LinearLayout>
@@ -597,11 +597,11 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvGameBoostList"
                 android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:clipToPadding="false"
-                android:nestedScrollingEnabled="true"
-                android:overScrollMode="ifContentScrolls"
-                android:scrollbars="vertical"
+                android:layout_height="wrap_content"
+                android:clipToPadding="true"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never"
+                android:scrollbars="none"
                 tools:itemCount="4"
                 tools:listitem="@layout/item_game_boost" />
         </LinearLayout>

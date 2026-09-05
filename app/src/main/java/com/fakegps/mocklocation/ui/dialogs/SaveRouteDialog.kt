@@ -21,6 +21,10 @@ class SaveRouteDialog(
             .setCancelable(true)
             .create()
 
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        binding.tvRouteSummary.setTextColor(primaryColor)
+        binding.btnSaveRouteConfirm.backgroundTintList = android.content.res.ColorStateList.valueOf(primaryColor)
+
         binding.btnSaveRouteConfirm.setOnClickListener {
             val name = binding.etRouteName.text?.toString()?.trim() ?: ""
             onSave(name)

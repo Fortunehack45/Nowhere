@@ -75,7 +75,7 @@
                 android:layout_width="6dp"
                 android:layout_height="6dp"
                 android:background="@drawable/bg_status_pill"
-                android:backgroundTint="@color/badge_active_text" />
+                android:backgroundTint="@color/text_muted" />
 
             <TextView
                 android:id="@+id/tvNodePing"

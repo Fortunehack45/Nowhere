@@ -532,6 +532,7 @@ class SettingsActivity : AppCompatActivity() {
             if (settingsPrefs.appTheme != theme) {
                 settingsPrefs.appTheme = theme
                 settingsPrefs.applyTheme(theme)
+                com.fakegps.mocklocation.util.ThemeColorManager.updateAllAppWidgets(this)
                 Toast.makeText(this, "Theme set to $theme", Toast.LENGTH_SHORT).show()
             }
         }
@@ -606,6 +607,8 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         dialog.show()
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
+        dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE)?.setTextColor(primaryColor)
     }
 
     private fun refreshWidgetSlotsUI() {

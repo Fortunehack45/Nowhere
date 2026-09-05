@@ -46,6 +46,8 @@ import com.fakegps.mocklocation.ui.dialogs.SaveRouteDialog
 import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
 import com.fakegps.mocklocation.ui.dialogs.WeatherBottomSheet
 import com.fakegps.mocklocation.ui.dialogs.WidgetGalleryBottomSheet
+import com.fakegps.mocklocation.automation.ui.AutomationBottomSheet
+import com.fakegps.mocklocation.data.db.AppDatabase
 import com.fakegps.mocklocation.ui.favorites.FavoritesBottomSheet
 import com.fakegps.mocklocation.ui.routes.SavedRoutesBottomSheet
 import com.fakegps.mocklocation.util.PermissionHelper
@@ -135,6 +137,17 @@ class MainActivity : AppCompatActivity() {
         action?.invoke()
     }
 
+    private val activityRecognitionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            enableMotionSync()
+        } else {
+            binding.switchMotionSync.isChecked = false
+            Toast.makeText(this, "Activity Recognition permission is required for sensor-based Motion Sync.", Toast.LENGTH_LONG).show()
+        }
+    }
+
     fun checkNotificationPermissionBeforeSimulation(onProceed: () -> Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !PermissionHelper.hasNotificationPermission(this)) {
             pendingSimulationAction = onProceed
@@ -189,6 +202,7 @@ class MainActivity : AppCompatActivity() {
         setupSearch()
         setupModeTabs()
         setupControls()
+        setupMotionSyncAndAutomation()
         setupRouteActions()
         setupJoystick()
         setupBottomDeckToggle()
@@ -332,6 +346,12 @@ class MainActivity : AppCompatActivity() {
             binding.root.postDelayed({
                 startInteractiveHomeSpotlightTour()
             }, 400L)
+        }
+
+        if (intent.getBooleanExtra("extra_open_automation", false) ||
+            intent.getBooleanExtra("OPEN_AUTOMATION_DIALOG", false) ||
+            intent.action == "com.fakegps.mocklocation.automation.OPEN_AUTOMATION_DIALOG") {
+            AutomationBottomSheet.newInstance().show(supportFragmentManager, AutomationBottomSheet.TAG)
         }
     }
 
@@ -864,6 +884,150 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupMotionSyncAndAutomation() {
+        // Automation Badge in Top Brand Bar
+        binding.layoutAutomationBadge.setOnClickListener {
+            AutomationBottomSheet.newInstance().show(supportFragmentManager, AutomationBottomSheet.TAG)
+        }
+
+        // Motion Sync Switch
+        binding.switchMotionSync.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (!buttonView.isPressed) return@setOnCheckedChangeListener
+            if (isChecked) {
+                val state = viewModel.uiState.value
+                val isRouteActive = state.isServiceRunning && (state.serviceState as? ServiceState.Running)?.mode is SimulationMode.Route
+                if (isRouteActive) {
+                    buttonView.isChecked = false
+                    Toast.makeText(this, "Cannot enable Motion Sync while route simulation is running.", Toast.LENGTH_SHORT).show()
+                    return@setOnCheckedChangeListener
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    buttonView.isChecked = false
+                    activityRecognitionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+                    return@setOnCheckedChangeListener
+                }
+
+                enableMotionSync()
+            } else {
+                disableMotionSync()
+            }
+        }
+
+        // Terrain Lock Sub-Deck Controls
+        binding.switchTerrainLock.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (!buttonView.isPressed) return@setOnCheckedChangeListener
+            lifecycleScope.launch(Dispatchers.IO) {
+                AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setTerrainLockEnabled(isChecked)
+            }
+        }
+
+        binding.btnToggleTerrainAdvanced.setOnClickListener {
+            val isExpanded = binding.layoutTerrainAdvancedSettings.visibility == View.VISIBLE
+            binding.layoutTerrainAdvancedSettings.visibility = if (isExpanded) View.GONE else View.VISIBLE
+            binding.btnToggleTerrainAdvanced.text = if (isExpanded) "Advanced Settings ▸" else "Advanced Settings ▾"
+        }
+
+        binding.sliderTerrainRadius.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                binding.tvTerrainRadiusLabel.text = "${value.toInt()}m"
+                lifecycleScope.launch(Dispatchers.IO) {
+                    AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setTerrainSearchRadius(value)
+                }
+            }
+        }
+
+        binding.switchTerrainRestricted.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (!buttonView.isPressed) return@setOnCheckedChangeListener
+            lifecycleScope.launch(Dispatchers.IO) {
+                AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setTerrainRestrictedEnabled(isChecked)
+            }
+        }
+
+        binding.switchTerrainUnmapped.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (!buttonView.isPressed) return@setOnCheckedChangeListener
+            lifecycleScope.launch(Dispatchers.IO) {
+                AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setTerrainAllowUnmapped(isChecked)
+            }
+        }
+
+        // Observe automation settings to synchronize UI controls and status badge
+        lifecycleScope.launch {
+            AppDatabase.getInstance(this@MainActivity).automationSettingsDao().getSettingsFlow().collectLatest { settings ->
+                if (settings != null && !isFinishing && !isDestroyed) {
+                    binding.switchMotionSync.isChecked = settings.motionSyncEnabled
+                    binding.layoutTerrainLockSubDeck.visibility = if (settings.motionSyncEnabled) View.VISIBLE else View.GONE
+                    binding.switchTerrainLock.isChecked = settings.terrainLockEnabled
+                    binding.sliderTerrainRadius.value = settings.terrainSearchRadiusMeters.coerceIn(10f, 50f)
+                    binding.tvTerrainRadiusLabel.text = "${settings.terrainSearchRadiusMeters.toInt()}m"
+                    binding.switchTerrainRestricted.isChecked = settings.terrainRestrictedEnabled
+                    binding.switchTerrainUnmapped.isChecked = settings.terrainAllowUnmapped
+
+                    val isAnyAutoActive = settings.scheduledAutomationEnabled || settings.wifiTriggersEnabled || settings.motionSyncEnabled
+                    val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity)
+                    val lightTintCsl = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this@MainActivity)
+                    if (isAnyAutoActive) {
+                        binding.tvAutomationBadgeText.text = "AUTO ON"
+                        binding.tvAutomationBadgeText.setTextColor(primaryColor)
+                        binding.ivAutomationBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(primaryColor)
+                        binding.layoutAutomationBadge.backgroundTintList = lightTintCsl
+                    } else {
+                        binding.tvAutomationBadgeText.text = "AUTO"
+                        binding.tvAutomationBadgeText.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_primary))
+                        binding.ivAutomationBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_primary)
+                        binding.layoutAutomationBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun enableMotionSync() {
+        if (!verifyMockAppSelected()) {
+            binding.switchMotionSync.isChecked = false
+            return
+        }
+        checkNotificationPermissionBeforeSimulation {
+            val state = viewModel.uiState.value
+            val lat = if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
+                state.serviceState.latitude
+            } else {
+                state.fixedLatitude
+            }
+            val lon = if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
+                state.serviceState.longitude
+            } else {
+                state.fixedLongitude
+            }
+            val intent = Intent(this, MockLocationService::class.java).apply {
+                action = MockLocationService.ACTION_START_MOTION_SYNC
+                putExtra(MockLocationService.EXTRA_LATITUDE, lat)
+                putExtra(MockLocationService.EXTRA_LONGITUDE, lon)
+            }
+            startForegroundServiceCompat(intent)
+            mockService?.startMotionSync(lat, lon)
+            lifecycleScope.launch(Dispatchers.IO) {
+                AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setMotionSyncEnabled(true)
+            }
+            binding.layoutTerrainLockSubDeck.visibility = View.VISIBLE
+            Toast.makeText(this, "Motion Sync activated: Walk or move to drive mock location", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun disableMotionSync() {
+        val intent = Intent(this, MockLocationService::class.java).apply {
+            action = MockLocationService.ACTION_STOP_MOTION_SYNC
+        }
+        startService(intent)
+        mockService?.stopMotionSync()
+        lifecycleScope.launch(Dispatchers.IO) {
+            AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setMotionSyncEnabled(false)
+        }
+        binding.layoutTerrainLockSubDeck.visibility = View.GONE
+        Toast.makeText(this, "Motion Sync stopped", Toast.LENGTH_SHORT).show()
+    }
+
     private fun setupRouteActions() {
         binding.rgTransportMode.setOnCheckedChangeListener { _, checkedId ->
             val mode = when (checkedId) {
@@ -1331,6 +1495,14 @@ class MainActivity : AppCompatActivity() {
 
         autoEngageVpnForLocation(waypointsToRun.first().latitude, waypointsToRun.first().longitude)
 
+        // Mutual exclusion: Disable motion sync when route simulation starts
+        if (binding.switchMotionSync.isChecked) {
+            binding.switchMotionSync.isChecked = false
+            lifecycleScope.launch(Dispatchers.IO) {
+                AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setMotionSyncEnabled(false)
+            }
+        }
+
         mockService?.startRoute(
             waypoints = waypointsToRun,
             speedKmh = state.routeSpeedKmh,
@@ -1489,6 +1661,14 @@ class MainActivity : AppCompatActivity() {
         binding.rbTransportShip.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
         binding.btnRoutePause.iconTint = primaryCsl
 
+        // Dynamic Route Action Bar Buttons (Saved Routes, Save Route, Reverse, GPX, Clear)
+        binding.btnSavedRoutesDrawer.iconTint = primaryCsl
+        binding.btnSaveCurrentRoute.iconTint = primaryCsl
+        binding.btnReverseRoute.iconTint = primaryCsl
+        binding.btnImportGpx.iconTint = primaryCsl
+        binding.btnExportGpx.iconTint = primaryCsl
+        binding.btnClearRoute.iconTint = primaryCsl
+
         // Dynamic Brand Logo
         val darkColor = com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this)
         binding.ivTopBrandLogo.setImageDrawable(com.fakegps.mocklocation.util.ThemeColorManager.getThemedLogoDrawable(this, primaryColor, darkColor))
@@ -1510,6 +1690,13 @@ class MainActivity : AppCompatActivity() {
             binding.ivGhostCloakIcon.imageTintList = primaryCsl
             binding.tvGhostCloakBadge.setTextColor(primaryColor)
         }
+
+        // Dynamic Automation Badge & Motion Sync Deck
+        binding.ivAutomationBadgeIcon.imageTintList = primaryCsl
+        binding.ivMotionSyncIcon.imageTintList = primaryCsl
+        binding.btnToggleTerrainAdvanced.setTextColor(primaryColor)
+        binding.tvTerrainRadiusLabel.setTextColor(primaryColor)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToSlider(binding.sliderTerrainRadius, primaryColor, this)
 
         // Update Spotlight Tour overlay colors
         binding.spotlightTourOverlay.setTourColors(primaryColor, com.fakegps.mocklocation.util.ThemeColorManager.getGlowColor(this))

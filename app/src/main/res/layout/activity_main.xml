@@ -203,6 +203,38 @@
                                 android:textStyle="bold" />
                         </LinearLayout>
 
+                        <!-- Automation Engine HUD Pill -->
+                        <LinearLayout
+                            android:id="@+id/layoutAutomationBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_status_pill"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp">
+
+                            <ImageView
+                                android:id="@+id/ivAutomationBadgeIcon"
+                                android:layout_width="13dp"
+                                android:layout_height="13dp"
+                                android:src="@drawable/ic_history"
+                                app:tint="@color/text_primary"
+                                tools:ignore="ContentDescription" />
+
+                            <TextView
+                                android:id="@+id/tvAutomationBadgeText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:letterSpacing="0.04"
+                                android:text="AUTO"
+                                android:textColor="@color/text_primary"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
                         <!-- Session Timer Countdown HUD Pill -->
                         <LinearLayout
                             android:id="@+id/layoutSessionTimerBadge"
@@ -1019,6 +1051,211 @@
                     app:thumbTint="@color/primary"
                     app:trackTint="@color/stroke_subtle" />
             </LinearLayout>
+
+            <!-- Motion-Linked Mock Movement & Realistic Terrain Lock Deck -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardMotionSyncDeck"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="@color/surface_card"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/stroke_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <!-- Motion Sync Master Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/ivMotionSyncIcon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_bolt"
+                            app:tint="@color/primary"
+                            tools:ignore="ContentDescription" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvMotionSyncTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Motion Sync"
+                                android:textColor="@color/text_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvMotionSyncSubtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Moves in sync with physical motion sensors (No GPS)"
+                                android:textColor="@color/text_muted"
+                                android:textSize="10.5sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchMotionSync"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <!-- Sub-Feature 4: Realistic Terrain Lock Sub-Deck -->
+                    <LinearLayout
+                        android:id="@+id/layoutTerrainLockSubDeck"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_widget_button"
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Realistic Terrain Lock"
+                                android:textColor="@color/text_primary"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/switchTerrainLock"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Prevents mock location advancing through water and obstacles via deflection arcs and gradual steering."
+                            android:textColor="@color/text_muted"
+                            android:textSize="10sp" />
+
+                        <!-- Advanced Terrain Options Toggle -->
+                        <TextView
+                            android:id="@+id/btnToggleTerrainAdvanced"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Advanced Settings ▸"
+                            android:textColor="@color/primary"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutTerrainAdvancedSettings"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <!-- Snap Radius Slider -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Search Radius"
+                                    android:textColor="@color/text_muted"
+                                    android:textSize="10.5sp" />
+
+                                <TextView
+                                    android:id="@+id/tvTerrainRadiusLabel"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="25m"
+                                    android:textColor="@color/primary"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <com.google.android.material.slider.Slider
+                                android:id="@+id/sliderTerrainRadius"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:stepSize="5.0"
+                                android:value="25.0"
+                                android:valueFrom="10.0"
+                                android:valueTo="50.0" />
+
+                            <!-- Restricted Zone Toggle -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Restricted Zone Avoidance"
+                                    android:textColor="@color/text_muted"
+                                    android:textSize="10.5sp" />
+
+                                <com.google.android.material.materialswitch.MaterialSwitch
+                                    android:id="@+id/switchTerrainRestricted"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content" />
+                            </LinearLayout>
+
+                            <!-- Unmapped Area Behavior Toggle -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Allow Unmapped Areas"
+                                    android:textColor="@color/text_muted"
+                                    android:textSize="10.5sp" />
+
+                                <com.google.android.material.materialswitch.MaterialSwitch
+                                    android:id="@+id/switchTerrainUnmapped"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:checked="true" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <!-- Dynamic Controls: Route Mode -->

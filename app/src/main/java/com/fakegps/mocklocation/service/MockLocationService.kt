@@ -42,6 +42,8 @@ class MockLocationService : Service() {
         const val ACTION_STOP = "action_stop"
         const val ACTION_PAUSE_ROUTE = "action_pause_route"
         const val ACTION_RESUME_ROUTE = "action_resume_route"
+        const val ACTION_START_MOTION_SYNC = "action_start_motion_sync"
+        const val ACTION_STOP_MOTION_SYNC = "action_stop_motion_sync"
         const val ACTION_RESTORE_SESSION = "action_restore_session"
         const val ACTION_EXTEND_SESSION = "action_extend_session"
         const val ACTION_RECONNECT_FALLBACK = "action_reconnect_fallback"
@@ -90,6 +92,10 @@ class MockLocationService : Service() {
     private var joystickAngleDeg: Float = 0.0f
     private var joystickMagnitude: Float = 0.0f
 
+    // Automation Engines (Wifi triggers and Motion-linked mock movement)
+    private var wifiTriggerHandler: com.fakegps.mocklocation.automation.engine.WifiTriggerHandler? = null
+    private var motionSyncEngine: com.fakegps.mocklocation.automation.engine.MotionSyncEngine? = null
+
     internal fun isWakeLockHeld(): Boolean = wakeLock?.isHeld == true
 
     override fun onCreate() {
@@ -103,6 +109,28 @@ class MockLocationService : Service() {
         acquireWakeLock()
         com.fakegps.mocklocation.hotspot.HotspotLocationServer.startServer(this)
         startForegroundNotification("Nowhere Location Service", "Ready & Active")
+
+        // Initialize WifiTriggerHandler and MotionSyncEngine
+        wifiTriggerHandler = com.fakegps.mocklocation.automation.engine.WifiTriggerHandler(this).apply {
+            start()
+        }
+        motionSyncEngine = com.fakegps.mocklocation.automation.engine.MotionSyncEngine(this) { lat, lon, bearing, speed ->
+            sessionPrefs.lastLatitude = lat
+            sessionPrefs.lastLongitude = lon
+            sessionPrefs.lastSpeedKmh = speed
+            engine.setLocation(lat, lon, 10.0, speed / 3.6f, bearing, false)
+            _serviceState.value = ServiceState.Running(
+                mode = SimulationMode.Fixed(lat, lon, 10.0),
+                latitude = lat,
+                longitude = lon,
+                altitude = 10.0,
+                speedMps = speed / 3.6f,
+                bearingDegrees = bearing
+            )
+            updateLocationNotification(lat, lon, "Motion Sync Active")
+            updateAllWidgets()
+        }
+
         if (sessionPrefs.hasValidActiveSession()) {
             SessionTimerManager.resumeExistingTimer(this)
         }
@@ -117,6 +145,7 @@ class MockLocationService : Service() {
         com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(this)
+        com.fakegps.mocklocation.automation.widget.NowhereAutomationWidgetProvider.updateAllAutomationWidgets(this)
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -169,6 +198,14 @@ class MockLocationService : Service() {
                 val speed = intent.getFloatExtra(EXTRA_SPEED_KMH, sessionPrefs.lastSpeedKmh)
                 startJoystick(lat, lon, speed)
             }
+            ACTION_START_MOTION_SYNC -> {
+                val lat = intent.getDoubleExtra(EXTRA_LATITUDE, sessionPrefs.lastLatitude)
+                val lon = intent.getDoubleExtra(EXTRA_LONGITUDE, sessionPrefs.lastLongitude)
+                startMotionSync(lat, lon)
+            }
+            ACTION_STOP_MOTION_SYNC -> {
+                stopMotionSync()
+            }
             else -> {
                 if (sessionPrefs.isSessionActive) {
                     restoreActiveSession()
@@ -176,6 +213,36 @@ class MockLocationService : Service() {
             }
         }
         return START_STICKY
+    }
+
+    fun startMotionSync(initialLat: Double, initialLon: Double) {
+        if (activeMode is SimulationMode.Route) {
+            Log.w(TAG, "Cannot start Motion Sync: Route playback is actively running.")
+            return
+        }
+        stopCurrentLoop()
+        acquireWakeLock()
+        isStopping.set(false)
+        sessionPrefs.isSessionActive = true
+        sessionPrefs.activeMode = "MOTION_SYNC"
+        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+
+        startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
+        _serviceState.value = ServiceState.Running(
+            mode = SimulationMode.Fixed(initialLat, initialLon, 10.0),
+            latitude = initialLat,
+            longitude = initialLon,
+            altitude = 10.0,
+            speedMps = 0f,
+            bearingDegrees = 0f
+        )
+        motionSyncEngine?.start(initialLat, initialLon, 0f)
+        updateAllWidgets()
+    }
+
+    fun stopMotionSync() {
+        motionSyncEngine?.stop()
+        stopSpoofing()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -640,6 +707,7 @@ class MockLocationService : Service() {
         val simulator = RouteSimulator(waypoints, speedKmh, isLooping, transportMode)
         routeSimulator = simulator
         activeMode = SimulationMode.Route(waypoints, speedKmh, isLooping)
+        motionSyncEngine?.setRoutePlaybackActive(true)
 
         sessionPrefs.isSessionActive = true
         sessionPrefs.activeMode = "ROUTE"
@@ -1039,6 +1107,7 @@ class MockLocationService : Service() {
         simulationJob?.cancel()
         simulationJob = null
         routeSimulator = null
+        motionSyncEngine?.setRoutePlaybackActive(false)
     }
 
     private fun restoreActiveSession() {
@@ -1087,6 +1156,8 @@ class MockLocationService : Service() {
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()
+        try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
+        try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
         try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
         try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
         try { engine.stop() } catch (e: Exception) {}

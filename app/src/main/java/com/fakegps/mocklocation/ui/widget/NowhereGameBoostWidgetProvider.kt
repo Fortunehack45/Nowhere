@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.VpnService
+import android.os.Build
 import android.util.Log
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -41,7 +42,7 @@ class NowhereGameBoostWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        fun updateGameBoostWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+        private fun buildGameBoostRemoteViews(context: Context, isDark: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_game_boost_layout)
             val sessionPrefs = SessionPreferences(context)
             val isRunning = NowhereVpnService.isRunning
@@ -56,6 +57,18 @@ class NowhereGameBoostWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tvWidgetGameData, primaryColor)
             views.setInt(R.id.ivWidgetGameBoostToggleBg, "setColorFilter", primaryColor)
 
+            // Dynamic Dark / Light theme styling
+            val bgGlassRes = if (isDark) R.drawable.bg_widget_glass_dark else R.drawable.bg_widget_glass_light
+            val bgButtonRes = if (isDark) R.drawable.bg_widget_button_dark else R.drawable.bg_widget_button_light
+            val primaryText = if (isDark) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+            val secondaryText = if (isDark) android.graphics.Color.parseColor("#AEAEB2") else android.graphics.Color.parseColor("#636366")
+
+            views.setInt(R.id.gameBoostWidgetRoot, "setBackgroundResource", bgGlassRes)
+            views.setInt(R.id.btnWidgetGameSwitch, "setBackgroundResource", bgButtonRes)
+            views.setTextColor(R.id.tvWidgetGameName, primaryText)
+            views.setTextColor(R.id.tvWidgetGameStats, secondaryText)
+            views.setTextColor(R.id.btnWidgetGameSwitch, primaryColor)
+
             if (isRunning) {
                 views.setTextViewText(R.id.tvWidgetGameStatus, "BOOSTED")
                 views.setTextColor(R.id.tvWidgetGameStatus, primaryColor)
@@ -65,7 +78,7 @@ class NowhereGameBoostWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.tvWidgetGameData, "↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
             } else {
                 views.setTextViewText(R.id.tvWidgetGameStatus, "READY")
-                views.setTextColor(R.id.tvWidgetGameStatus, ContextCompat.getColor(context, R.color.text_muted))
+                views.setTextColor(R.id.tvWidgetGameStatus, secondaryText)
                 views.setTextViewText(R.id.btnWidgetGameBoostToggle, "Boost Now")
                 views.setTextViewText(R.id.tvWidgetGameName, activeGameName)
                 views.setTextViewText(R.id.tvWidgetGameStats, "Google BBR FastPath • 10 Gbps Pipeline")
@@ -98,7 +111,24 @@ class NowhereGameBoostWidgetProvider : AppWidgetProvider() {
                 PendingIntent.getBroadcast(context, 302, toggleIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             )
 
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            return views
+        }
+
+        fun updateGameBoostWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val prefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(context)
+            val finalViews = when (prefs.appTheme) {
+                "LIGHT" -> buildGameBoostRemoteViews(context, isDark = false)
+                "DARK" -> buildGameBoostRemoteViews(context, isDark = true)
+                else -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        RemoteViews(buildGameBoostRemoteViews(context, isDark = false), buildGameBoostRemoteViews(context, isDark = true))
+                    } else {
+                        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(context)
+                        buildGameBoostRemoteViews(context, isDark)
+                    }
+                }
+            }
+            appWidgetManager.updateAppWidget(appWidgetId, finalViews)
         }
     }
 

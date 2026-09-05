@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
@@ -36,7 +37,7 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        fun updateVpnWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+        private fun buildVpnRemoteViews(context: Context, isDark: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_vpn_layout)
             val sessionPrefs = SessionPreferences(context)
             val isRunning = NowhereVpnService.isRunning
@@ -50,6 +51,17 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
             views.setInt(R.id.ivWidgetVpnToggleBg, "setColorFilter", primaryColor)
             views.setTextColor(R.id.btnWidgetVpnNodes, primaryColor)
 
+            // Dynamic Dark / Light theme styling
+            val bgGlassRes = if (isDark) R.drawable.bg_widget_glass_dark else R.drawable.bg_widget_glass_light
+            val bgButtonRes = if (isDark) R.drawable.bg_widget_button_dark else R.drawable.bg_widget_button_light
+            val primaryText = if (isDark) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+            val secondaryText = if (isDark) android.graphics.Color.parseColor("#AEAEB2") else android.graphics.Color.parseColor("#636366")
+
+            views.setInt(R.id.vpnWidgetRoot, "setBackgroundResource", bgGlassRes)
+            views.setInt(R.id.btnWidgetVpnNodes, "setBackgroundResource", bgButtonRes)
+            views.setTextColor(R.id.tvWidgetVpnNode, primaryText)
+            views.setTextColor(R.id.tvWidgetVpnIp, secondaryText)
+
             if (isRunning) {
                 views.setTextViewText(R.id.tvWidgetVpnStatus, "ACTIVE")
                 views.setTextColor(R.id.tvWidgetVpnStatus, primaryColor)
@@ -59,7 +71,7 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.tvWidgetVpnData, "↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
             } else {
                 views.setTextViewText(R.id.tvWidgetVpnStatus, "DIRECT")
-                views.setTextColor(R.id.tvWidgetVpnStatus, ContextCompat.getColor(context, R.color.text_muted))
+                views.setTextColor(R.id.tvWidgetVpnStatus, secondaryText)
                 views.setTextViewText(R.id.btnWidgetVpnToggle, "Activate Shield")
                 views.setTextViewText(R.id.tvWidgetVpnNode, "${node.flagEmoji} ${node.name} (Ready)")
                 views.setTextViewText(R.id.tvWidgetVpnIp, "Direct Connection • Tap to Mask IP")
@@ -91,7 +103,24 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
                 PendingIntent.getBroadcast(context, 202, toggleIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             )
 
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            return views
+        }
+
+        fun updateVpnWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val prefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(context)
+            val finalViews = when (prefs.appTheme) {
+                "LIGHT" -> buildVpnRemoteViews(context, isDark = false)
+                "DARK" -> buildVpnRemoteViews(context, isDark = true)
+                else -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        RemoteViews(buildVpnRemoteViews(context, isDark = false), buildVpnRemoteViews(context, isDark = true))
+                    } else {
+                        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(context)
+                        buildVpnRemoteViews(context, isDark)
+                    }
+                }
+            }
+            appWidgetManager.updateAppWidget(appWidgetId, finalViews)
         }
     }
 

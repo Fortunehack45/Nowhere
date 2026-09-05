@@ -43,7 +43,7 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        fun updateRouteWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+        private fun buildRouteRemoteViews(context: Context, isDark: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_route_layout)
             val sessionPrefs = SessionPreferences(context)
             val settingsPrefs = AppSettingsPreferences(context)
@@ -98,6 +98,19 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.btnWidgetRouteStop, primaryColor)
             views.setInt(R.id.ivWidgetRoutePlayPauseBg, "setColorFilter", primaryColor)
 
+            // Dynamic Dark / Light theme styling
+            val bgGlassRes = if (isDark) R.drawable.bg_widget_glass_dark else R.drawable.bg_widget_glass_light
+            val bgButtonRes = if (isDark) R.drawable.bg_widget_button_dark else R.drawable.bg_widget_button_light
+            val primaryText = if (isDark) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+            val secondaryText = if (isDark) android.graphics.Color.parseColor("#AEAEB2") else android.graphics.Color.parseColor("#636366")
+
+            views.setInt(R.id.routeWidgetRoot, "setBackgroundResource", bgGlassRes)
+            views.setInt(R.id.btnWidgetRouteStop, "setBackgroundResource", bgButtonRes)
+            views.setTextColor(R.id.tvRouteOrigin, primaryText)
+            views.setTextColor(R.id.tvRouteDestination, primaryText)
+            views.setTextColor(R.id.tvWidgetRouteWaypoints, secondaryText)
+            views.setTextColor(R.id.tvWidgetRouteDistance, secondaryText)
+
             if (isActive) {
                 views.setTextViewText(R.id.tvWidgetRouteStatus, "RUNNING")
                 views.setTextColor(R.id.tvWidgetRouteStatus, primaryColor)
@@ -108,7 +121,7 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
                 views.setProgressBar(R.id.pbWidgetRoute, 100, progressPercent, false)
             } else {
                 views.setTextViewText(R.id.tvWidgetRouteStatus, "STANDBY")
-                views.setTextColor(R.id.tvWidgetRouteStatus, ContextCompat.getColor(context, R.color.text_muted))
+                views.setTextColor(R.id.tvWidgetRouteStatus, secondaryText)
                 views.setTextViewText(R.id.btnWidgetRoutePlayPause, "Start")
                 views.setTextViewText(R.id.tvWidgetRouteWaypoints, "${waypoints.size} Waypoints • Ready")
                 views.setTextViewText(R.id.tvWidgetRouteDistance, "Total: $totalFormatted")
@@ -169,7 +182,24 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
                 PendingIntent.getBroadcast(context, 103, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             )
 
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            return views
+        }
+
+        fun updateRouteWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val prefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(context)
+            val finalViews = when (prefs.appTheme) {
+                "LIGHT" -> buildRouteRemoteViews(context, isDark = false)
+                "DARK" -> buildRouteRemoteViews(context, isDark = true)
+                else -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        RemoteViews(buildRouteRemoteViews(context, isDark = false), buildRouteRemoteViews(context, isDark = true))
+                    } else {
+                        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(context)
+                        buildRouteRemoteViews(context, isDark)
+                    }
+                }
+            }
+            appWidgetManager.updateAppWidget(appWidgetId, finalViews)
         }
     }
 
