@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
@@ -36,6 +35,7 @@ object SessionTimerManager {
 
     data class SessionTimerState(
         val isRunning: Boolean = false,
+        val isPaused: Boolean = false,
         val isExpired: Boolean = false,
         val remainingMillis: Long = 0L,
         val totalAllocatedMillis: Long = 0L,
@@ -58,8 +58,10 @@ object SessionTimerManager {
 
     fun startOrResumeTimer(context: Context, durationMillis: Long = SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS) {
         val sessionPrefs = SessionPreferences(context)
-        sessionPrefs.isSessionActive = true
-        if (sessionPrefs.hasValidActiveSession()) {
+        if (sessionPrefs.hasRemainingQuota() && sessionPrefs.sessionRemainingMillis > 0L &&
+            sessionPrefs.sessionAllocatedDurationMillis > 0L &&
+            !sessionPrefs.isSessionExpired
+        ) {
             resumeExistingTimer(context)
         } else {
             startTimer(context, durationMillis, forceRestart = false)
@@ -91,30 +93,47 @@ object SessionTimerManager {
         cancelNotification(context, NOTIF_ID_EXPIRED)
 
         updateState(context)
+        if (sessionPrefs.isSessionActive && !sessionPrefs.isTimerPaused) {
+            startTickerLoop(context.applicationContext)
+        }
         NowhereAppWidgetProvider.updateAllWidgets(context)
     }
 
+    /**
+     * Resume ticking ONLY when a mock session is actually connected.
+     */
     fun resumeExistingTimer(context: Context) {
         val sessionPrefs = SessionPreferences(context)
-        sessionPrefs.isSessionActive = true
-        sessionPrefs.isSessionExpired = false
+        sessionPrefs.resumeTimerClock()
         updateState(context)
         ensureNotificationChannel(context)
         startTickerLoop(context.applicationContext)
     }
 
-    fun stopTimer(context: Context) {
+    /**
+     * Freeze leftover time when the user disconnects. Does not expire the quota.
+     */
+    fun pauseTimer(context: Context) {
         timerJob?.cancel()
         timerJob = null
         timerScope?.cancel()
         timerScope = null
 
         val sessionPrefs = SessionPreferences(context)
+        sessionPrefs.pauseTimerClock()
         sessionPrefs.isSessionActive = false
         resetThresholdFlags()
 
         updateState(context)
         NowhereAppWidgetProvider.updateAllWidgets(context)
+    }
+
+    fun stopTimer(context: Context) {
+        pauseTimer(context)
+    }
+
+    fun refreshFromPrefs(context: Context) {
+        updateState(context)
     }
 
     private fun resetThresholdFlags() {
@@ -132,15 +151,16 @@ object SessionTimerManager {
             while (isActive) {
                 val sessionPrefs = SessionPreferences(appContext)
 
-                if (!sessionPrefs.isSessionActive) {
-                    _timerState.value = SessionTimerState()
+                // Never drain time while disconnected / paused
+                if (!sessionPrefs.isSessionActive || sessionPrefs.isTimerPaused) {
+                    updateState(appContext)
                     break
                 }
 
                 if (sessionPrefs.isPremiumActive()) {
-                    // Genuine Unlimited Mode for Premium Users
                     _timerState.value = SessionTimerState(
                         isRunning = true,
+                        isPaused = false,
                         isExpired = false,
                         remainingMillis = Long.MAX_VALUE,
                         totalAllocatedMillis = Long.MAX_VALUE,
@@ -150,7 +170,6 @@ object SessionTimerManager {
                         isUnlimited = true
                     )
 
-                    // Home screen widgets refresh
                     NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
                     if (sessionPrefs.activeMode == "ROUTE") {
                         NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
@@ -164,8 +183,11 @@ object SessionTimerManager {
 
                     if (remainingMillis <= 0L) {
                         sessionPrefs.isSessionExpired = true
+                        sessionPrefs.sessionRemainingMillis = 0L
+                        sessionPrefs.isTimerPaused = true
                         val state = SessionTimerState(
                             isRunning = false,
+                            isPaused = false,
                             isExpired = true,
                             remainingMillis = 0L,
                             totalAllocatedMillis = totalAllocated,
@@ -179,7 +201,6 @@ object SessionTimerManager {
                         if (!hasFiredExpired) {
                             hasFiredExpired = true
                             notifySessionExpired(appContext)
-                            // Trigger service expiration pause/stop
                             withContext(Dispatchers.Main) {
                                 val stopIntent = Intent(appContext, MockLocationService::class.java).apply {
                                     action = MockLocationService.ACTION_STOP
@@ -199,6 +220,7 @@ object SessionTimerManager {
 
                         _timerState.value = SessionTimerState(
                             isRunning = true,
+                            isPaused = false,
                             isExpired = false,
                             remainingMillis = remainingMillis,
                             totalAllocatedMillis = totalAllocated,
@@ -208,7 +230,6 @@ object SessionTimerManager {
                             isUnlimited = false
                         )
 
-                        // Real-time 1-second direct home screen widget refresh
                         NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
                         if (sessionPrefs.activeMode == "ROUTE") {
                             NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
@@ -228,7 +249,8 @@ object SessionTimerManager {
         val sessionPrefs = SessionPreferences(context)
         if (sessionPrefs.isPremiumActive()) {
             _timerState.value = SessionTimerState(
-                isRunning = sessionPrefs.isSessionActive,
+                isRunning = sessionPrefs.isSessionActive && !sessionPrefs.isTimerPaused,
+                isPaused = sessionPrefs.isTimerPaused || !sessionPrefs.isSessionActive,
                 isExpired = false,
                 remainingMillis = Long.MAX_VALUE,
                 totalAllocatedMillis = Long.MAX_VALUE,
@@ -246,8 +268,10 @@ object SessionTimerManager {
             ((remainingMillis.toDouble() / totalAllocated.toDouble()) * 100).toInt().coerceIn(0, 100)
         } else 0
 
+        val connected = sessionPrefs.isSessionActive && !sessionPrefs.isTimerPaused
         _timerState.value = SessionTimerState(
-            isRunning = sessionPrefs.isSessionActive && remainingMillis > 0,
+            isRunning = connected && remainingMillis > 0,
+            isPaused = !connected && remainingMillis > 0 && !sessionPrefs.isSessionExpired,
             isExpired = sessionPrefs.isSessionExpired,
             remainingMillis = remainingMillis,
             totalAllocatedMillis = totalAllocated,
@@ -339,7 +363,8 @@ object SessionTimerManager {
         try {
             val manager = context.getSystemService(NotificationManager::class.java)
             manager?.cancel(notifId)
-        } catch (ignored: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     private fun ensureNotificationChannel(context: Context) {

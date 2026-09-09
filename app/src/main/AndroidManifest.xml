@@ -57,7 +57,7 @@
             android:name=".ui.MainActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:windowSoftInputMode="adjustPan" />
+            android:windowSoftInputMode="adjustResize" />
 
         <!-- Advanced Engine & Display Settings -->
         <activity

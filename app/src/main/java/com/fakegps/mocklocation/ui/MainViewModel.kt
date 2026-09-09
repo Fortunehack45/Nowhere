@@ -453,7 +453,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val mapped = addresses.mapNotNull { it.toSearchResult() }
                     deferred.complete(mapped)
                 }
-                val res = kotlinx.coroutines.withTimeoutOrNull(2500) { deferred.await() }
+                val res = kotlinx.coroutines.withTimeoutOrNull(4500) { deferred.await() }
                 if (!res.isNullOrEmpty()) {
                     list.addAll(res)
                 }
@@ -472,12 +472,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // 2. High-reliability OpenStreetMap Nominatim Search Fallback
         try {
             val encoded = java.net.URLEncoder.encode(query, "UTF-8")
-            val urlString = "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&q=$encoded"
+            val urlString = "https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=10&q=$encoded"
             val connection = (java.net.URL(urlString).openConnection() as java.net.HttpURLConnection).apply {
                 requestMethod = "GET"
-                connectTimeout = 3000
-                readTimeout = 4000
-                setRequestProperty("User-Agent", "NowhereLocationSimulator/1.0 (Android Search)")
+                connectTimeout = 5000
+                readTimeout = 6000
+                setRequestProperty("User-Agent", "NowhereLocationSimulator/1.1 (Android Search)")
+                setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag())
             }
 
             if (connection.responseCode == 200) {
@@ -521,6 +522,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun recordSearchHistory(query: String, title: String, snippet: String, latitude: Double, longitude: Double) {
         viewModelScope.launch(Dispatchers.IO) {
+            searchHistoryDao.deleteNearby(latitude, longitude)
             searchHistoryDao.insertSearch(
                 SearchHistoryItem(
                     query = query,

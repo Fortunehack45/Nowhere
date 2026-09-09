@@ -55,6 +55,8 @@ import com.fakegps.mocklocation.weather.WeatherManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.osmdroid.events.MapEventsReceiver
@@ -199,6 +201,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupTouchIsolation()
         setupMap()
+        attachFrostedGlassBackdrops()
         setupSearch()
         setupModeTabs()
         setupControls()
@@ -275,7 +278,7 @@ class MainActivity : AppCompatActivity() {
                         binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.badge_success_text))
                     } else if (com.fakegps.mocklocation.hotspot.HotspotLocationServer.isServerRunning.value) {
                         binding.tvHotspotBadge.text = "HOTSPOT BETA"
-                        binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bright))
+                        binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity))
                     } else {
                         binding.tvHotspotBadge.text = "HOTSPOT BETA"
                         binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.text_primary))
@@ -307,9 +310,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (intent.getBooleanExtra("focus_search", false)) {
-            binding.etAddressSearch.requestFocus()
-            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-            imm?.showSoftInput(binding.etAddressSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            binding.root.post { showSearchOverlay() }
         }
 
         if (intent.getBooleanExtra("OPEN_WEATHER_DIALOG", false)) {
@@ -399,8 +400,12 @@ class MainActivity : AppCompatActivity() {
         applyDynamicThemeAccent()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
-        if (com.fakegps.mocklocation.data.preferences.SessionPreferences(this).hasValidActiveSession()) {
+        attachFrostedGlassBackdrops()
+        val liveSession = SessionPreferences(this)
+        if (liveSession.hasValidActiveSession() && viewModel.uiState.value.isServiceRunning) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+        } else {
+            com.fakegps.mocklocation.service.SessionTimerManager.refreshFromPrefs(this)
         }
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             if (binding.adBannerContainer.childCount == 0) {
@@ -666,8 +671,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun attachFrostedGlassBackdrops() {
+        val map = binding.mapView
+        binding.cardTopBrandBar.blurSource = map
+        binding.cardSearchBar.blurSource = map
+        binding.cardSideButtons.blurSource = map
+        binding.cardBottomContainer.blurSource = map
+    }
+
+    private fun captureSearchOverlayFrost() {
+        val overlay = binding.includedSearchOverlay
+        val bmp = com.fakegps.mocklocation.util.FrostedGlassManager.captureBlurredView(binding.mapView)
+        if (bmp != null) {
+            overlay.ivSearchOverlayBlur.setImageBitmap(bmp)
+        } else {
+            overlay.ivSearchOverlayBlur.setImageDrawable(null)
+            overlay.viewSearchOverlayTint.setBackgroundColor(
+                com.fakegps.mocklocation.util.FrostedGlassManager.glassTintColor(this)
+            )
+        }
+    }
+
     private fun showSearchOverlay() {
         val overlay = binding.includedSearchOverlay
+        captureSearchOverlayFrost()
         overlay.layoutSearchOverlayRoot.visibility = View.VISIBLE
         overlay.layoutSearchOverlayRoot.alpha = 0f
         overlay.layoutSearchOverlayRoot.animate().alpha(1f).setDuration(200).start()
@@ -684,6 +711,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             viewModel.searchAddress(currentQuery)
         }
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(overlay.layoutSearchOverlayRoot, this)
     }
 
     private fun hideSearchOverlay() {
@@ -784,6 +812,27 @@ class MainActivity : AppCompatActivity() {
             showRecentHistory()
         }
 
+        val overlayChips = binding.includedSearchOverlay
+        overlayChips.chipOverlayNewYork.setOnClickListener { jumpSearchOverlayTo("New York, USA", 40.7128, -74.0060) }
+        overlayChips.chipOverlayParis.setOnClickListener { jumpSearchOverlayTo("Paris, France", 48.8566, 2.3522) }
+        overlayChips.chipOverlayTokyo.setOnClickListener { jumpSearchOverlayTo("Tokyo, Japan", 35.6762, 139.6503) }
+        overlayChips.chipOverlayDubai.setOnClickListener { jumpSearchOverlayTo("Dubai, UAE", 25.2048, 55.2708) }
+        overlayChips.chipOverlayLondon.setOnClickListener { jumpSearchOverlayTo("London, UK", 51.5074, -0.1278) }
+
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(overlayChips.layoutSearchOverlayRoot) { _, insets ->
+            val status = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            val ime = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime())
+            val nav = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+            overlayChips.layoutSearchOverlayHeader.setPadding(
+                overlayChips.layoutSearchOverlayHeader.paddingLeft,
+                16.dp() + status.top,
+                overlayChips.layoutSearchOverlayHeader.paddingRight,
+                overlayChips.layoutSearchOverlayHeader.paddingBottom
+            )
+            overlayChips.layoutSearchOverlayContent.setPadding(0, 0, 0, maxOf(ime.bottom, nav.bottom))
+            insets
+        }
+
         // Real-time search suggestions inside dedicated overlay
         binding.includedSearchOverlay.etSearchOverlayInput.addTextChangedListener { text ->
             val query = text?.toString()?.trim() ?: ""
@@ -846,28 +895,57 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Observe live geocoding results and loading state
+        // Observe live geocoding results and loading state (only those fields)
         lifecycleScope.launch {
-            viewModel.uiState.collectLatest { state ->
-                binding.includedSearchOverlay.pbSearchOverlayLoading.visibility =
-                    if (state.isSearching) View.VISIBLE else View.GONE
+            viewModel.uiState
+                .map { it.isSearching to it.searchResults }
+                .distinctUntilChanged()
+                .collectLatest { (isSearching, searchResults) ->
+                    val overlay = binding.includedSearchOverlay
+                    overlay.pbSearchOverlayLoading.visibility = if (isSearching) View.VISIBLE else View.GONE
 
-                val query = binding.includedSearchOverlay.etSearchOverlayInput.text?.toString()?.trim() ?: ""
-                if (query.isNotEmpty()) {
-                    if (state.searchResults.isNotEmpty()) {
-                        binding.includedSearchOverlay.layoutSearchOverlayEmptyState.visibility = View.GONE
-                        binding.includedSearchOverlay.rvSearchOverlayResults.visibility = View.VISIBLE
-                        val liveEntries = state.searchResults.map {
-                            SearchEntry.LiveResult(it.title, it.snippet, it.latitude, it.longitude)
+                    val query = overlay.etSearchOverlayInput.text?.toString()?.trim() ?: ""
+                    if (query.isEmpty()) return@collectLatest
+
+                    overlay.tvSearchSectionTitle.text = "SEARCH RESULTS"
+                    overlay.btnClearAllSearchHistory.visibility = View.GONE
+
+                    val matchingHistory = latestHistoryItems.filter { item ->
+                        item.title.contains(query, ignoreCase = true) ||
+                            item.snippet.contains(query, ignoreCase = true) ||
+                            item.query.contains(query, ignoreCase = true)
+                    }
+                    val historyEntries = matchingHistory.map { SearchEntry.History(it) }
+                    val liveEntries = searchResults.map { SearchEntry.LiveResult(it.title, it.snippet, it.latitude, it.longitude) }
+                    val combined = (historyEntries + liveEntries).distinctBy {
+                        when (it) {
+                            is SearchEntry.LiveResult -> "${"%.4f".format(it.latitude)},${"%.4f".format(it.longitude)}"
+                            is SearchEntry.History -> "${"%.4f".format(it.item.latitude)},${"%.4f".format(it.item.longitude)}"
                         }
-                        unifiedSearchAdapter.submitEntries(liveEntries)
-                    } else if (!state.isSearching) {
+                    }
+
+                    if (combined.isNotEmpty()) {
+                        overlay.layoutSearchOverlayEmptyState.visibility = View.GONE
+                        overlay.rvSearchOverlayResults.visibility = View.VISIBLE
+                        unifiedSearchAdapter.submitEntries(combined)
+                    } else if (!isSearching) {
                         unifiedSearchAdapter.submitEntries(emptyList())
-                        binding.includedSearchOverlay.layoutSearchOverlayEmptyState.visibility = View.VISIBLE
+                        overlay.rvSearchOverlayResults.visibility = View.GONE
+                        overlay.layoutSearchOverlayEmptyState.visibility = View.VISIBLE
+                        overlay.tvSearchEmptyTitle.text = "No places found"
+                        overlay.tvSearchEmptySubtitle.text = "Try a city, street address, landmark, or coordinates like 37.7749, -122.4194."
                     }
                 }
-            }
         }
+    }
+
+    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
+
+    private fun jumpSearchOverlayTo(name: String, lat: Double, lon: Double) {
+        binding.includedSearchOverlay.etSearchOverlayInput.setText(name)
+        viewModel.searchAddress(name)
+        selectPresetDestination(name, lat, lon)
+        hideSearchOverlay()
     }
 
     private fun showRecentHistory() {
@@ -882,7 +960,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             overlay.btnClearAllSearchHistory.visibility = View.GONE
             unifiedSearchAdapter.submitEntries(emptyList())
+            overlay.rvSearchOverlayResults.visibility = View.GONE
             overlay.layoutSearchOverlayEmptyState.visibility = View.VISIBLE
+            overlay.tvSearchEmptyTitle.text = "Search any destination"
+            overlay.tvSearchEmptySubtitle.text = "Type an address, landmark, city, or GPS coordinates (37.7749, -122.4194)."
         }
     }
 
@@ -1079,6 +1160,10 @@ class MainActivity : AppCompatActivity() {
             binding.switchMotionSync.isChecked = false
             return
         }
+        if (!ensureActiveSessionOrPrompt { enableMotionSync() }) {
+            binding.switchMotionSync.isChecked = false
+            return
+        }
         checkNotificationPermissionBeforeSimulation {
             val state = viewModel.uiState.value
             val lat = if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
@@ -1102,6 +1187,8 @@ class MainActivity : AppCompatActivity() {
                 AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setMotionSyncEnabled(true)
             }
             binding.layoutTerrainLockSubDeck.visibility = View.VISIBLE
+            binding.switchMotionSync.isChecked = true
+            binding.tvMotionSyncSubtitle.text = "Live: walk, turn, or ride — mock GPS follows your sensors"
             Toast.makeText(this, "Motion Sync activated: Walk or move to drive mock location", Toast.LENGTH_SHORT).show()
         }
     }
@@ -1489,17 +1576,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun ensureActiveSessionOrPrompt(onActive: () -> Unit): Boolean {
         val sessionPrefs = SessionPreferences(this)
-        if (sessionPrefs.sessionExpiresTimestamp == 0L) {
-            sessionPrefs.startNewSession(SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        if (sessionPrefs.isPremiumActive()) return true
+        if (sessionPrefs.hasRemainingQuota()) {
             return true
         }
-        if (!sessionPrefs.hasValidActiveSession()) {
-            com.fakegps.mocklocation.ui.dialogs.SessionExtendDialog(this, isExpiredPrompt = true) {
-                onActive()
-            }.show()
-            return false
+        if (sessionPrefs.sessionAllocatedDurationMillis <= 0L && !sessionPrefs.isSessionExpired) {
+            sessionPrefs.startNewSession(SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+            sessionPrefs.pauseTimerClock()
+            sessionPrefs.isSessionActive = false
+            return true
         }
-        return true
+        com.fakegps.mocklocation.ui.dialogs.SessionExtendDialog(this, isExpiredPrompt = true) {
+            onActive()
+        }.show()
+        return false
     }
 
     private fun startFixedSpoofing() {
@@ -1667,7 +1757,7 @@ class MainActivity : AppCompatActivity() {
         binding.layoutIpShieldBadge.setOnClickListener {
             val bottomSheet = com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet(
                 currentMockLat = viewModel.uiState.value.fixedLatitude,
-                currentMockLon = viewModel.uiState.value.fixedLongitude
+                currentMockLon = viewModeltMockLon = viewModel.uiState.value.fixedLongitude
             )
             bottomSheet.show(supportFragmentManager, "IpChangerBottomSheet")
         }
@@ -1706,9 +1796,9 @@ class MainActivity : AppCompatActivity() {
     private fun renderGhostCloakBadge() {
         val isCloaked = settingsPrefs.isGhostCloakEnabled
         if (isCloaked) {
-            binding.layoutGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_active_bg)
-            binding.ivGhostCloakIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
-            binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(this, R.color.primary_bright))
+            binding.layoutGhostCloakBadge.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
+            binding.ivGhostCloakIcon.imageTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
+            binding.tvGhostCloakBadge.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
             binding.tvGhostCloakBadge.text = "CLOAK BETA"
         } else {
             binding.layoutGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.surface_elevated)
@@ -1838,9 +1928,11 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this@MainActivity)
                         binding.tvPremiumBadge.text = if (isVip) "PRO (15% OFF)" else "GET PRO"
-                        binding.tvPremiumBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.primary_bright))
-                        binding.ivPremiumBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.primary_bright)
-                        binding.layoutPremiumBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
+                        val accent = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity)
+                        val tint = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this@MainActivity)
+                        binding.tvPremiumBadge.setTextColor(accent)
+                        binding.ivPremiumBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(accent)
+                        binding.layoutPremiumBadge.backgroundTintList = android.content.res.ColorStateList.valueOf(tint)
                         if (binding.adBannerContainer.childCount == 0) {
                             com.fakegps.mocklocation.ads.AdManager.loadBanner(this@MainActivity, binding.adBannerContainer, isHomeBanner = true)
                         }
@@ -1866,6 +1958,12 @@ class MainActivity : AppCompatActivity() {
                         binding.tvSessionTimerBadge.text = timerState.formattedRemaining
                         binding.tvSessionTimerBadge.setTextColor(primaryColor)
                         binding.ivSessionTimerIcon.imageTintList = android.content.res.ColorStateList.valueOf(primaryColor)
+                    } else if (timerState.isPaused && timerState.remainingMillis > 0L) {
+                        binding.layoutSessionTimerBadge.visibility = View.VISIBLE
+                        binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_standby_bg)
+                        binding.tvSessionTimerBadge.text = timerState.formattedRemaining
+                        binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_standby_text))
+                        binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_standby_text)
                     } else if (timerState.isExpired) {
                         binding.layoutSessionTimerBadge.visibility = View.VISIBLE
                         binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)

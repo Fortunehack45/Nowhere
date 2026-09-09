@@ -14,23 +14,23 @@
 
     <!-- Surfaces (Light Mode) -->
     <color name="surface_dark">#F2F2F7</color>
-    <color name="surface_obsidian">#D8FFFFFF</color>
-    <color name="surface_card">#D8FFFFFF</color>
-    <color name="surface_card_elevated">#E6F2F2F7</color>
-    <color name="surface_elevated">#D8FFFFFF</color>
-    <color name="surface_glass">#D8FFFFFF</color>
-    <color name="surface_search">#BFE5E5EA</color>
-    <color name="card_dark">#D8FFFFFF</color>
+    <color name="surface_obsidian">#8CFFFFFF</color>
+    <color name="surface_card">#8CFFFFFF</color>
+    <color name="surface_card_elevated">#99F4F4F7</color>
+    <color name="surface_elevated">#8CFFFFFF</color>
+    <color name="surface_glass">#73FFFFFF</color>
+    <color name="surface_search">#73FFFFFF</color>
+    <color name="card_dark">#8CFFFFFF</color>
 
     <!-- Frosted Glass Tokens (Light Mode - Apple Frosted Ice Glass) -->
-    <color name="surface_glass_sheet">#D4F6F6F9</color>
-    <color name="surface_glass_card">#E6FFFFFF</color>
-    <color name="surface_glass_inner">#18000000</color>
-    <color name="glass_frosted_start">#F2FFFFFF</color>
-    <color name="glass_frosted_end">#D4EBF0F6</color>
-    <color name="glass_chip_start">#F5FFFFFF</color>
-    <color name="glass_chip_end">#D8E8EEF5</color>
-    <color name="stroke_glass_specular">#80FFFFFF</color>
+    <color name="surface_glass_sheet">#99F6F6F9</color>
+    <color name="surface_glass_card">#66FFFFFF</color>
+    <color name="surface_glass_inner">#33FFFFFF</color>
+    <color name="glass_frosted_start">#A8FFFFFF</color>
+    <color name="glass_frosted_end">#73E8EEF5</color>
+    <color name="glass_chip_start">#B3FFFFFF</color>
+    <color name="glass_chip_end">#80E8EEF5</color>
+    <color name="stroke_glass_specular">#B3FFFFFF</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->
     <color name="edge_blur_top_start">#E6F2F2F7</color>

@@ -20,4 +20,7 @@ interface SearchHistoryDao {
 
     @Query("DELETE FROM search_history")
     suspend fun clearHistory()
+
+    @Query("DELETE FROM search_history WHERE ABS(latitude - :lat) < 0.00015 AND ABS(longitude - :lon) < 0.00015")
+    suspend fun deleteNearby(lat: Double, lon: Double)
 }

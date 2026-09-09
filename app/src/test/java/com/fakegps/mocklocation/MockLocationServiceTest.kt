@@ -29,6 +29,7 @@ class MockLocationServiceTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
+        SessionPreferences(context).resetSessionForTesting()
         controller = Robolectric.buildService(MockLocationService::class.java)
         service = controller.create().get()
     }

@@ -39,8 +39,9 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
         private fun buildSessionRemoteViews(context: Context, isDark: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_session_timer_layout)
             val sessionPrefs = SessionPreferences(context)
-            val isRunning = sessionPrefs.isSessionActive && !sessionPrefs.isSessionExpired
+            val isRunning = sessionPrefs.isSessionActive && !sessionPrefs.isTimerPaused && !sessionPrefs.isSessionExpired
             val isExpired = sessionPrefs.isSessionExpired
+            val remaining = sessionPrefs.getTimeRemainingMillis()
 
             val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
             views.setInt(R.id.ivWidgetTimerLogo, "setColorFilter", primaryColor)
@@ -76,11 +77,17 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.tvWidgetTimeRemaining, "00:00:00")
                 views.setTextViewText(R.id.tvWidgetTotalAllocated, "Tap +1h to resume")
                 views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
+            } else if (remaining > 0L && !isExpired) {
+                views.setTextViewText(R.id.tvWidgetSessionStatus, "PAUSED")
+                views.setTextColor(R.id.tvWidgetSessionStatus, secondaryText)
+                views.setTextViewText(R.id.tvWidgetTimeRemaining, sessionPrefs.formatRemainingTime())
+                views.setTextViewText(R.id.tvWidgetTotalAllocated, "Paused • connect to continue")
+                views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             } else {
                 views.setTextViewText(R.id.tvWidgetSessionStatus, "STANDBY")
                 views.setTextColor(R.id.tvWidgetSessionStatus, secondaryText)
-                views.setTextViewText(R.id.tvWidgetTimeRemaining, "02:00:00")
-                views.setTextViewText(R.id.tvWidgetTotalAllocated, "Ready to start (2h)")
+                views.setTextViewText(R.id.tvWidgetTimeRemaining, sessionPrefs.formatRemainingTime())
+                views.setTextViewText(R.id.tvWidgetTotalAllocated, "Ready to start")
                 views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             }
 

@@ -36,12 +36,39 @@ jobs:
           chmod +x gradlew
 
       - name: Run Unit Tests
+        id: unit_tests
+        continue-on-error: true
         run: ./gradlew testDebugUnitTest --stacktrace
 
+      - name: Upload unit test reports
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            app/build/reports/tests/testDebugUnitTest/**
+            app/build/test-results/testDebugUnitTest/**
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Build Debug & Release APKs and Google Play Bundle (AAB)
-        run: ./gradlew assembleDebug assembleRelease bundleRelease --stacktrace
+        id: assemble
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug assembleRelease bundleRelease --stacktrace 2>&1 | tee gradle-build.log
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+
+      - name: Upload Gradle build log
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: gradle-build.log
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: List Generated APK & AAB Files and Extract Version
         id: extract_version

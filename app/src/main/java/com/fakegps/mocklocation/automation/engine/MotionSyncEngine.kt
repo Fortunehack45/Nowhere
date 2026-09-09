@@ -15,12 +15,8 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
- * MotionSyncEngine: Standalone sensor-driven motion simulation.
- *
- * NOTE ON SCOPE & PRIVACY:
- * This component reads device physical motion sensors ONLY (accelerometer, step detector, rotation vector).
- * It NEVER queries Android LocationManager, GPS, or fused location fixes. The device's real geographical
- * position is never accessed or inspected.
+ * Sensor-driven mock movement. Reads accelerometer / step / rotation only — never real GPS.
+ * Holds position when the user is stationary and pulses the last fix so apps do not rubber-band.
  */
 class MotionSyncEngine(
     private val context: Context,
@@ -30,12 +26,16 @@ class MotionSyncEngine(
     companion object {
         private const val TAG = "MotionSyncEngine"
         const val DEFAULT_STRIDE_LENGTH_METERS = 0.75
-        const val STRIDE_JITTER_RATIO = 0.10 // ±10%
-        const val STEP_MOTION_TIMEOUT_MS = 2000L // 2s without steps means walking has stopped
-        const val VEHICLE_VIBRATION_TIMEOUT_MS = 1500L // 1.5s silence means vehicle transit has stopped
-        const val VEHICLE_MIN_VARIANCE = 8.5f // Continuous vehicle engine/road vibration
-        const val STATIONARY_MAX_VARIANCE = 2.0f // Stationary handheld or table threshold
+        const val STRIDE_JITTER_RATIO = 0.10
+        const val STEP_MOTION_TIMEOUT_MS = 1800L
+        const val VEHICLE_VIBRATION_TIMEOUT_MS = 1600L
+        const val VEHICLE_MIN_VARIANCE = 14.0f
+        const val STATIONARY_MAX_VARIANCE = 1.6f
         const val VEHICLE_MAX_SPEED_KMH = 30.0f
+        const val WALK_SPEED_KMH = 4.6f
+        const val STEP_PEAK_THRESHOLD = 11.6f
+        const val STEP_MIN_INTERVAL_MS = 280L
+        const val VEHICLE_CONFIRM_WINDOWS = 4
     }
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
@@ -44,33 +44,34 @@ class MotionSyncEngine(
     private val isRunning = AtomicBoolean(false)
     private var isRoutePlaybackActive = false
 
-    // Hardware sensors
     private var stepDetectorSensor: Sensor? = null
     private var stepCounterSensor: Sensor? = null
     private var accelSensor: Sensor? = null
+    private var linearAccelSensor: Sensor? = null
     private var rotationVectorSensor: Sensor? = null
 
-    // Simulation runtime state
-    private var currentLat: Double = 0.0
-    private var currentLon: Double = 0.0
-    private var currentHeading: Float = 0.0f
+    @Volatile private var currentLat: Double = 0.0
+    @Volatile private var currentLon: Double = 0.0
+    @Volatile private var currentHeading: Float = 0.0f
     private var lastMotionTimestamp: Long = 0L
     private var lastStepTimestamp: Long = 0L
     private var lastVehicleVibrationTimestamp: Long = 0L
-    private var lastReportedSpeed: Float = 0f
+    @Volatile private var lastReportedSpeed: Float = 0f
 
-    // Step counter fallback tracking
     private var initialStepCount = -1f
     private var lastStepCount = -1f
+    private var lastPeakTime = 0L
+    private var lastMagnitude = 9.8f
 
-    // Accelerometer rolling variance buffer
-    private val accelWindow = FloatArray(30)
+    private val accelWindow = FloatArray(40)
     private var accelIndex = 0
     private var accelCount = 0
+    private var vehicleConfirmCount = 0
 
-    // Vehicle mode vehicle ticker job
     private var vehicleTickJob: Job? = null
+    private var pulseJob: Job? = null
     private val isVehicleMode = AtomicBoolean(false)
+    private val advanceLock = Any()
 
     fun setRoutePlaybackActive(active: Boolean) {
         isRoutePlaybackActive = active
@@ -88,13 +89,22 @@ class MotionSyncEngine(
         currentHeading = headingDeg
     }
 
+    fun currentLatitude(): Double = currentLat
+    fun currentLongitude(): Double = currentLon
+    fun currentSpeedKmh(): Float = lastReportedSpeed
+    fun currentBearing(): Float = currentHeading
+
     fun start(initialLat: Double, initialLon: Double, initialHeading: Float = 0.0f) {
         if (isRoutePlaybackActive) {
             Log.w(TAG, "Cannot start MotionSync: Route playback is actively running.")
             return
         }
 
-        if (isRunning.getAndSet(true)) return
+        if (isRunning.getAndSet(true)) {
+            setInitialCoordinate(initialLat, initialLon, initialHeading)
+            emitNow()
+            return
+        }
 
         currentLat = initialLat
         currentLon = initialLon
@@ -105,11 +115,16 @@ class MotionSyncEngine(
         lastReportedSpeed = 0f
         initialStepCount = -1f
         lastStepCount = -1f
+        accelIndex = 0
+        accelCount = 0
+        vehicleConfirmCount = 0
+        isVehicleMode.set(false)
 
         if (sensorManager != null) {
             stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
             stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
             accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+            linearAccelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
             rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
             if (stepDetectorSensor != null) {
@@ -119,15 +134,20 @@ class MotionSyncEngine(
             }
 
             accelSensor?.let {
-                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
             }
-
+            linearAccelSensor?.let {
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
+            }
             rotationVectorSensor?.let {
                 sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
             }
         }
 
+        emitNow()
         startVehicleDetectionLoop()
+        startAnchorPulse()
+        Log.i(TAG, "MotionSync started at $initialLat, $initialLon")
     }
 
     fun stop() {
@@ -136,17 +156,37 @@ class MotionSyncEngine(
         sensorManager?.unregisterListener(this)
         vehicleTickJob?.cancel()
         vehicleTickJob = null
+        pulseJob?.cancel()
+        pulseJob = null
         isVehicleMode.set(false)
         lastReportedSpeed = 0f
+    }
+
+    private fun emitNow() {
+        val lat = currentLat
+        val lon = currentLon
+        val heading = currentHeading
+        val speed = lastReportedSpeed
+        scope.launch(Dispatchers.Main) {
+            onLocationUpdated(lat, lon, heading, speed)
+        }
+    }
+
+    private fun startAnchorPulse() {
+        pulseJob?.cancel()
+        pulseJob = scope.launch {
+            while (isActive && isRunning.get()) {
+                emitNow()
+                delay(200L)
+            }
+        }
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (!isRunning.get() || isRoutePlaybackActive || event == null) return
 
         when (event.sensor.type) {
-            Sensor.TYPE_STEP_DETECTOR -> {
-                onPhysicalStepDetected()
-            }
+            Sensor.TYPE_STEP_DETECTOR -> onPhysicalStepDetected()
             Sensor.TYPE_STEP_COUNTER -> {
                 val totalSteps = event.values[0]
                 if (initialStepCount < 0) {
@@ -160,17 +200,20 @@ class MotionSyncEngine(
                     }
                 }
             }
+            Sensor.TYPE_LINEAR_ACCELERATION -> {
+                val mag = sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2])
+                maybeDetectPeakStep(mag + 9.81f)
+            }
             Sensor.TYPE_ACCELEROMETER -> {
                 val x = event.values[0]
                 val y = event.values[1]
                 val z = event.values[2]
                 val magnitude = sqrt(x * x + y * y + z * z)
+                maybeDetectPeakStep(magnitude)
 
-                // Push to rolling variance window
                 accelWindow[accelIndex] = magnitude
                 accelIndex = (accelIndex + 1) % accelWindow.size
                 if (accelCount < accelWindow.size) accelCount++
-
                 checkAccelerometerMotionState()
             }
             Sensor.TYPE_ROTATION_VECTOR -> {
@@ -178,10 +221,7 @@ class MotionSyncEngine(
                 val orientationValues = FloatArray(3)
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                 SensorManager.getOrientation(rotationMatrix, orientationValues)
-
-                // Azimuth in degrees [0, 360)
-                val azimuthRad = orientationValues[0]
-                var azimuthDeg = Math.toDegrees(azimuthRad.toDouble()).toFloat()
+                var azimuthDeg = Math.toDegrees(orientationValues[0].toDouble()).toFloat()
                 if (azimuthDeg < 0f) azimuthDeg += 360f
                 currentHeading = azimuthDeg
             }
@@ -190,21 +230,31 @@ class MotionSyncEngine(
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
+    private fun maybeDetectPeakStep(magnitude: Float) {
+        val now = System.currentTimeMillis()
+        val rising = magnitude > STEP_PEAK_THRESHOLD && lastMagnitude <= STEP_PEAK_THRESHOLD
+        if (rising && now - lastPeakTime >= STEP_MIN_INTERVAL_MS && now - lastStepTimestamp >= STEP_MIN_INTERVAL_MS) {
+            lastPeakTime = now
+            onPhysicalStepDetected()
+        }
+        lastMagnitude = magnitude
+    }
+
     private fun onPhysicalStepDetected() {
         val now = System.currentTimeMillis()
+        if (now - lastStepTimestamp < 180L) return
         lastStepTimestamp = now
         lastMotionTimestamp = now
         isVehicleMode.set(false)
+        vehicleConfirmCount = 0
 
-        // Stride with ±10% jitter
         val jitter = (Random.nextDouble(-STRIDE_JITTER_RATIO, STRIDE_JITTER_RATIO)) * DEFAULT_STRIDE_LENGTH_METERS
         val stepDistance = DEFAULT_STRIDE_LENGTH_METERS + jitter
-
-        advanceLocation(stepDistance, 4.5f) // ~4.5 km/h walking speed
+        advanceLocation(stepDistance, WALK_SPEED_KMH)
     }
 
     private fun checkAccelerometerMotionState() {
-        if (accelCount < 10) return
+        if (accelCount < 16) return
 
         var sum = 0f
         for (i in 0 until accelCount) sum += accelWindow[i]
@@ -218,18 +268,20 @@ class MotionSyncEngine(
         val variance = varianceSum / accelCount
 
         val now = System.currentTimeMillis()
-        val timeSinceStep = now - lastStepTimestamp
+        val timeSinceStep = if (lastStepTimestamp == 0L) Long.MAX_VALUE else now - lastStepTimestamp
 
-        if (variance > VEHICLE_MIN_VARIANCE) {
+        if (variance > VEHICLE_MIN_VARIANCE && timeSinceStep > 2500L) {
+            vehicleConfirmCount++
             lastVehicleVibrationTimestamp = now
-            // Sustained road vibration without foot steps indicates vehicle transit
-            if (timeSinceStep > 2500L) {
+            if (vehicleConfirmCount >= VEHICLE_CONFIRM_WINDOWS) {
                 isVehicleMode.set(true)
                 lastMotionTimestamp = now
             }
         } else if (variance < STATIONARY_MAX_VARIANCE) {
-            // Calm accelerometer readings -> immediately disengage vehicle transit
+            vehicleConfirmCount = 0
             isVehicleMode.set(false)
+        } else {
+            vehicleConfirmCount = (vehicleConfirmCount - 1).coerceAtLeast(0)
         }
     }
 
@@ -239,29 +291,24 @@ class MotionSyncEngine(
             while (isActive && isRunning.get()) {
                 delay(500L)
                 val now = System.currentTimeMillis()
-                val timeSinceStep = now - lastStepTimestamp
-                val timeSinceVibration = now - lastVehicleVibrationTimestamp
+                val timeSinceStep = if (lastStepTimestamp == 0L) Long.MAX_VALUE else now - lastStepTimestamp
+                val timeSinceVibration = if (lastVehicleVibrationTimestamp == 0L) Long.MAX_VALUE else now - lastVehicleVibrationTimestamp
 
-                val isActivelyInVehicle = isVehicleMode.get() && (timeSinceVibration < VEHICLE_VIBRATION_TIMEOUT_MS)
+                val isActivelyInVehicle = isVehicleMode.get() && timeSinceVibration < VEHICLE_VIBRATION_TIMEOUT_MS
                 if (!isActivelyInVehicle) {
                     isVehicleMode.set(false)
                 }
 
                 val isActivelyWalking = timeSinceStep < STEP_MOTION_TIMEOUT_MS
-                val isMoving = isActivelyWalking || isActivelyInVehicle
 
                 if (isActivelyInVehicle) {
                     lastMotionTimestamp = now
-                    // In vehicle mode, advance ~4.16 meters per 500ms (~30 km/h)
                     val vehicleDistance = (VEHICLE_MAX_SPEED_KMH * 1000.0 / 3600.0) * 0.5
                     advanceLocation(vehicleDistance, VEHICLE_MAX_SPEED_KMH)
-                } else if (!isMoving) {
-                    // USER IS STATIONARY: Strictly hold position and notify speed = 0.0 km/h with 0 drift
+                } else if (!isActivelyWalking) {
                     if (lastReportedSpeed > 0f) {
                         lastReportedSpeed = 0f
-                        withContext(Dispatchers.Main) {
-                            onLocationUpdated(currentLat, currentLon, currentHeading, 0f)
-                        }
+                        emitNow()
                     }
                 }
             }
@@ -270,20 +317,27 @@ class MotionSyncEngine(
 
     private fun advanceLocation(distanceMeters: Double, speedKmh: Float) {
         scope.launch {
+            synchronized(advanceLock) {
+                // snapshot taken inside coroutine after lock via local copies below
+            }
+            val fromLat = currentLat
+            val fromLon = currentLon
+            val fromHeading = currentHeading
+
             val db = AppDatabase.getInstance(context)
             val settings = db.automationSettingsDao().getSettings()
 
             val terrainLockEnabled = settings?.terrainLockEnabled ?: true
-            var nextLat = currentLat
-            var nextLon = currentLon
-            var nextHeading = currentHeading
+            var nextLat = fromLat
+            var nextLon = fromLon
+            var nextHeading = fromHeading
 
             if (terrainLockEnabled) {
                 val stepResult = TerrainLockEngine.evaluateStep(
                     context = context,
-                    currentLat = currentLat,
-                    currentLon = currentLon,
-                    currentHeading = currentHeading,
+                    currentLat = fromLat,
+                    currentLon = fromLon,
+                    currentHeading = fromHeading,
                     stepDistanceMeters = distanceMeters,
                     checkRestricted = settings?.terrainRestrictedEnabled ?: false,
                     searchRadiusMeters = (settings?.terrainSearchRadiusMeters ?: 25f).toDouble(),
@@ -307,11 +361,11 @@ class MotionSyncEngine(
                         nextHeading = stepResult.bearing
                     }
                     is TerrainLockEngine.TerrainStepResult.HoldPosition -> {
-                        // Hold position exactly. Log TERRAIN_BLOCKED event
+                        lastReportedSpeed = 0f
                         db.automationLogDao().logEvent(
                             AutomationLogEntity(
                                 source = "TERRAIN",
-                                targetSummary = "Hold Position ($currentLat, $currentLon)",
+                                targetSummary = "Hold Position ($fromLat, $fromLon)",
                                 details = stepResult.reason
                             )
                         )
@@ -319,8 +373,7 @@ class MotionSyncEngine(
                     }
                 }
             } else {
-                // Raw motion sync without terrain check
-                val (destLat, destLon) = GeoUtils.computeDestinationPoint(currentLat, currentLon, currentHeading, distanceMeters)
+                val (destLat, destLon) = GeoUtils.computeDestinationPoint(fromLat, fromLon, fromHeading, distanceMeters)
                 nextLat = destLat
                 nextLon = destLon
             }
@@ -329,10 +382,7 @@ class MotionSyncEngine(
             currentLon = nextLon
             currentHeading = nextHeading
             lastReportedSpeed = speedKmh
-
-            withContext(Dispatchers.Main) {
-                onLocationUpdated(currentLat, currentLon, currentHeading, speedKmh)
-            }
+            emitNow()
         }
     }
 }
