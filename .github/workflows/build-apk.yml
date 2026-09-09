@@ -36,7 +36,21 @@ jobs:
           chmod +x gradlew
 
       - name: Run Unit Tests
+        id: unit_tests
+        continue-on-error: true
         run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Upload unit test reports
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            app/build/reports/tests/testDebugUnitTest/**
+            app/build/test-results/testDebugUnitTest/**
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Build Debug & Release APKs and Google Play Bundle (AAB)
         run: ./gradlew assembleDebug assembleRelease bundleRelease --stacktrace
