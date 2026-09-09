@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_card_glass"
+    android:background="@drawable/bg_bottom_sheet_surface"
     android:padding="22dp">
 
     <LinearLayout
@@ -14,12 +14,11 @@
 
         <!-- Bottom Sheet Drag Handle -->
         <View
-            android:layout_width="44dp"
+            android:layout_width="40dp"
             android:layout_height="4dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="18dp"
-            android:background="@drawable/bg_status_pill"
-            android:backgroundTint="@color/border_subtle" />
+            android:background="@drawable/bg_sheet_handle" />
 
         <!-- Header with Glowing App Logo & Badge -->
         <LinearLayout
@@ -35,8 +34,7 @@
                 <View
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:background="@drawable/bg_status_pill"
-                    android:backgroundTint="@color/surface_card_elevated" />
+                    android:background="@drawable/bg_glass_pill" />
 
                 <ImageView
                     android:layout_width="32dp"
@@ -75,15 +73,15 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Changelog & Highlights Card -->
+        <!-- Changelog Container Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/surface_card_elevated"
+            app:cardBackgroundColor="@color/surface_glass_inner"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_subtle"
+            app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1.2dp">
 
             <LinearLayout
@@ -121,7 +119,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginVertical="10dp"
-                    android:background="@color/stroke_subtle" />
+                    android:background="@color/stroke_glass_specular" />
 
                 <TextView
                     android:id="@+id/tvReleaseChangelog"
@@ -142,7 +140,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:visibility="gone"
-            app:cardBackgroundColor="@color/surface_card_elevated"
+            app:cardBackgroundColor="@color/surface_glass_inner"
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/primary"

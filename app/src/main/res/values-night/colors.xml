@@ -14,13 +14,19 @@
 
     <!-- Surfaces (Dark Mode - Apple System Colors) -->
     <color name="surface_dark">#000000</color>
-    <color name="surface_obsidian">#1C1C1E</color>
-    <color name="surface_card">#1C1C1E</color>
-    <color name="surface_card_elevated">#2C2C2E</color>
-    <color name="surface_elevated">#2C2C2E</color>
-    <color name="surface_glass">#1C1C1E</color>
-    <color name="surface_search">#2C2C2E</color>
-    <color name="card_dark">#1C1C1E</color>
+    <color name="surface_obsidian">#C81C1C1E</color>
+    <color name="surface_card">#C81C1C1E</color>
+    <color name="surface_card_elevated">#CC2C2C2E</color>
+    <color name="surface_elevated">#CC2C2C2E</color>
+    <color name="surface_glass">#C81C1C1E</color>
+    <color name="surface_search">#B32C2C2E</color>
+    <color name="card_dark">#C81C1C1E</color>
+
+    <!-- Frosted Glass Tokens (Dark Mode - Smoked Obsidian Glass) -->
+    <color name="surface_glass_sheet">#C8141416</color>
+    <color name="surface_glass_card">#C81C1C1E</color>
+    <color name="surface_glass_inner">#1FFFFFFF</color>
+    <color name="stroke_glass_specular">#26FFFFFF</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->
     <color name="edge_blur_top_start">#E6000000</color>

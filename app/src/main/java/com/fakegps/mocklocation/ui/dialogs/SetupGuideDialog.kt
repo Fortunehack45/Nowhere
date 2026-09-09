@@ -44,6 +44,8 @@ class SetupGuideDialog(
             dialog.dismiss()
         }
 
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dialog, 28)
         dialog.show()
     }
 }

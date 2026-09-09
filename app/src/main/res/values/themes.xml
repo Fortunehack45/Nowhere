@@ -19,10 +19,13 @@
 
     <style name="Theme.Nowhere.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/Widget.Nowhere.BottomSheet</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <style name="Widget.Nowhere.BottomSheet" parent="Widget.Material3.BottomSheet">
-        <item name="backgroundTint">@color/surface_dark</item>
+        <item name="backgroundTint">@android:color/transparent</item>
     </style>
 
     <style name="Widget.Nowhere.Slider" parent="Widget.Material3.Slider">

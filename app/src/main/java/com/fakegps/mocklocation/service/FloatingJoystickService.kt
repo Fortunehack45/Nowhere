@@ -64,6 +64,13 @@ class FloatingJoystickService : Service() {
                 gravity = Gravity.TOP or Gravity.START
                 x = 80
                 y = 350
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    try {
+                        val density = resources.displayMetrics.density
+                        flags = flags or WindowManager.LayoutParams.FLAG_BLUR_BEHIND
+                        blurBehindRadius = (25 * density).toInt()
+                    } catch (ignored: Exception) {}
+                }
             }
 
             // Wrap in Application Theme to safely resolve theme attributes and drawables

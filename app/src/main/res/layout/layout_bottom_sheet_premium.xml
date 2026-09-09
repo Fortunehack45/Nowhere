@@ -6,10 +6,10 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="12dp"
     android:layout_marginBottom="16dp"
-    app:cardBackgroundColor="@color/surface_card"
+    app:cardBackgroundColor="@color/surface_glass_sheet"
     app:cardCornerRadius="20dp"
     app:cardElevation="8dp"
-    app:strokeColor="@color/stroke_subtle"
+    app:strokeColor="@color/stroke_glass_specular"
     app:strokeWidth="1dp">
 
     <ScrollView
@@ -32,8 +32,7 @@
                 android:layout_height="5dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="12dp"
-                android:background="@drawable/bg_status_pill"
-                android:backgroundTint="@color/stroke_subtle" />
+                android:background="@drawable/bg_sheet_handle" />
 
             <!-- Header Row with Close Button -->
             <FrameLayout
@@ -65,8 +64,7 @@
                     <View
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:background="@drawable/bg_status_pill"
-                        android:backgroundTint="@color/surface_card_elevated" />
+                        android:background="@drawable/bg_glass_pill" />
 
                     <ImageView
                         android:layout_width="24dp"

@@ -4,15 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_card_glass"
+    android:background="@drawable/bg_bottom_sheet_surface"
     android:padding="20dp">
 
     <!-- Drag Handle -->
     <View
         android:id="@+id/dragHandle"
-        android:layout_width="48dp"
+        android:layout_width="40dp"
         android:layout_height="4dp"
-        android:background="@drawable/bg_segmented_tab"
+        android:background="@drawable/bg_sheet_handle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

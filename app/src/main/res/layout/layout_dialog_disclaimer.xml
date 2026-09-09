@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_card_glass"
+    android:background="@drawable/bg_bottom_sheet_surface"
     android:padding="20dp">
 
     <LinearLayout
@@ -18,8 +18,7 @@
             android:layout_height="4dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_status_pill"
-            android:backgroundTint="@color/border_subtle" />
+            android:background="@drawable/bg_sheet_handle" />
 
         <!-- Header -->
         <LinearLayout
@@ -62,17 +61,17 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="14dp"
-            android:background="@color/stroke_subtle" />
+            android:background="@color/stroke_glass_specular" />
 
         <!-- Section 1: Intended Purpose -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            app:cardBackgroundColor="@color/surface_card_elevated"
+            app:cardBackgroundColor="@color/surface_glass_inner"
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_subtle"
+            app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -105,10 +104,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            app:cardBackgroundColor="@color/surface_card_elevated"
+            app:cardBackgroundColor="@color/surface_glass_inner"
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_subtle"
+            app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -141,10 +140,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            app:cardBackgroundColor="@color/surface_card_elevated"
+            app:cardBackgroundColor="@color/surface_glass_inner"
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_subtle"
+            app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -177,10 +176,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="@color/surface_card_elevated"
+            app:cardBackgroundColor="@color/surface_glass_inner"
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_subtle"
+            app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1dp">
 
             <LinearLayout

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/surface_dark"
+    android:background="@drawable/bg_bottom_sheet_surface"
     android:fillViewport="true">
 
 <LinearLayout
@@ -19,8 +19,7 @@
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_status_pill"
-        android:backgroundTint="@color/stroke_subtle" />
+        android:background="@drawable/bg_sheet_handle" />
 
     <!-- Header -->
     <LinearLayout

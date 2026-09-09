@@ -39,6 +39,7 @@ class SessionExtendDialog(
         setContentView(binding.root)
 
         window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(this, 28)
         window?.setLayout(
             (context.resources.displayMetrics.widthPixels * 0.92).toInt(),
             android.view.ViewGroup.LayoutParams.WRAP_CONTENT

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_card_glass"
+    android:background="@drawable/bg_bottom_sheet_surface"
     android:maxHeight="560dp"
     android:orientation="vertical"
     android:padding="16dp">
@@ -14,8 +14,7 @@
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="12dp"
-        android:background="@drawable/bg_status_pill"
-        android:backgroundTint="@color/stroke_subtle" />
+        android:background="@drawable/bg_sheet_handle" />
 
     <LinearLayout
         android:layout_width="match_parent"

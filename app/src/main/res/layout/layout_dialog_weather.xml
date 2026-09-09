@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/surface_dark">
+    android:background="@drawable/bg_bottom_sheet_surface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -18,8 +18,7 @@
             android:layout_height="4dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_status_pill"
-            android:backgroundTint="@color/border_subtle" />
+            android:background="@drawable/bg_sheet_handle" />
 
         <!-- Header -->
         <LinearLayout
@@ -76,10 +75,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/surface_elevated"
+            app:cardBackgroundColor="@color/surface_glass_inner"
             app:cardCornerRadius="18dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/border_subtle"
+            app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1dp">
 
             <LinearLayout

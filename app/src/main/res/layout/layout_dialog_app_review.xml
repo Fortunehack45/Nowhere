@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_card_glass"
+    android:background="@drawable/bg_bottom_sheet_surface"
     android:padding="22dp">
 
     <LinearLayout
@@ -15,12 +15,11 @@
 
         <!-- Bottom Sheet Drag Handle -->
         <View
-            android:layout_width="44dp"
+            android:layout_width="40dp"
             android:layout_height="4dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="18dp"
-            android:background="@drawable/bg_status_pill"
-            android:backgroundTint="@color/border_subtle" />
+            android:background="@drawable/bg_sheet_handle" />
 
         <!-- Glowing Star Badge HUD Header -->
         <FrameLayout
@@ -31,8 +30,7 @@
             <View
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:background="@drawable/bg_status_pill"
-                android:backgroundTint="@color/surface_card_elevated" />
+                android:background="@drawable/bg_glass_pill" />
 
             <ImageView
                 android:layout_width="38dp"
@@ -68,10 +66,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/surface_card_elevated"
+            app:cardBackgroundColor="@color/surface_glass_inner"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_subtle"
+            app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1.2dp">
 
             <LinearLayout
