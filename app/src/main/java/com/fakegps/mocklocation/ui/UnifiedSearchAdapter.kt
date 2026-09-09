@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.db.SearchHistoryItem
 import com.fakegps.mocklocation.databinding.ItemSearchSuggestionBinding
+import java.util.Locale
 
 sealed class SearchEntry {
     data class LiveResult(
@@ -35,16 +36,19 @@ class UnifiedSearchAdapter(
         notifyDataSetChanged()
     }
 
+    fun firstEntry(): SearchEntry? = entries.firstOrNull()
+
     inner class ViewHolder(private val binding: ItemSearchSuggestionBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(entry: SearchEntry) {
+            val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(itemView.context)
             when (entry) {
                 is SearchEntry.LiveResult -> {
                     binding.tvItemTitle.text = entry.title
                     binding.tvItemSnippet.text = entry.snippet
+                    binding.tvItemCoords.text = formatCoords(entry.latitude, entry.longitude)
                     binding.ivItemTypeIcon.setImageResource(R.drawable.ic_search)
-                    val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(itemView.context)
                     binding.ivItemTypeIcon.setColorFilter(primaryColor)
                     binding.btnItemDelete.visibility = View.GONE
                     binding.root.setOnClickListener {
@@ -54,6 +58,7 @@ class UnifiedSearchAdapter(
                 is SearchEntry.History -> {
                     binding.tvItemTitle.text = entry.item.title
                     binding.tvItemSnippet.text = entry.item.snippet
+                    binding.tvItemCoords.text = formatCoords(entry.item.latitude, entry.item.longitude)
                     binding.ivItemTypeIcon.setImageResource(R.drawable.ic_teleport)
                     binding.ivItemTypeIcon.setColorFilter(ContextCompat.getColor(itemView.context, R.color.text_muted))
                     binding.btnItemDelete.visibility = View.VISIBLE
@@ -73,6 +78,12 @@ class UnifiedSearchAdapter(
                     }
                 }
             }
+        }
+
+        private fun formatCoords(lat: Double, lon: Double): String {
+            val latDir = if (lat >= 0) "N" else "S"
+            val lonDir = if (lon >= 0) "E" else "W"
+            return String.format(Locale.US, "%.5f° %s, %.5f° %s", kotlin.math.abs(lat), latDir, kotlin.math.abs(lon), lonDir)
         }
     }
 

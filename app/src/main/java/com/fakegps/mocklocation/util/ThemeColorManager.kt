@@ -55,20 +55,29 @@ object ThemeColorManager {
     private val _themeChangeFlow = MutableSharedFlow<ColorTheme>(replay = 1)
     val themeChangeFlow: SharedFlow<ColorTheme> = _themeChangeFlow.asSharedFlow()
 
-    private val ALL_PRIMARY_HEXES = setOf(
-        "#E41B1B", "#E53935", "#B91C1C", "#EF4444", "#DC2626", "#F87171",
-        "#2563EB", "#1D4ED8",
-        "#00B4D8", "#0077B6",
-        "#10B981", "#059669",
-        "#8B5CF6", "#6D28D9",
-        "#F59E0B", "#B45309",
-        "#EC4899", "#BE185D"
-    )
+    private val ALL_PRIMARY_HEXES: Set<String> = (
+        THEMES.flatMap { listOf(it.primaryColorHex, it.darkColorHex) } + listOf(
+            "#E41B1B", "#E53935", "#B91C1C", "#EF4444", "#DC2626", "#F87171",
+            "#FF453A", "#FF3B3B", "#FF6B6B", "#FF2D55",
+            "#2563EB", "#1D4ED8", "#3B82F6",
+            "#00B4D8", "#0077B6", "#0096C7",
+            "#10B981", "#059669", "#34D399",
+            "#8B5CF6", "#6D28D9", "#A78BFA",
+            "#F59E0B", "#B45309", "#FBBF24",
+            "#EC4899", "#BE185D", "#F472B6"
+        )
+    ).map { it.uppercase() }.toSet()
 
-    private val ALL_LIGHT_TINT_HEXES = setOf(
-        "#FEE2E2", "#FFEBEE", "#3D1010",
-        "#DBEAFE", "#CFFAFE", "#D1FAE5", "#EDE9FE", "#FEF3C7", "#FCE7F3"
-    )
+    private val ALL_LIGHT_TINT_HEXES: Set<String> = (
+        THEMES.map { it.lightTintHex } + listOf(
+            "#FEE2E2", "#FFEBEE", "#3D1010", "#3A1A1A",
+            "#DBEAFE", "#CFFAFE", "#D1FAE5", "#EDE9FE", "#FEF3C7", "#FCE7F3"
+        )
+    ).map { it.uppercase() }.toSet()
+
+    private fun hexOf(color: Int): String {
+        return String.format("#%06X", 0xFFFFFF and color)
+    }
 
     fun getCurrentTheme(context: Context): ColorTheme {
         val prefs = AppSettingsPreferences(context)
@@ -109,16 +118,36 @@ object ThemeColorManager {
         return Color.parseColor(getCurrentTheme(context).glowColorHex)
     }
 
+    private val PROTECTED_ACCENT_HEXES = setOf(
+        "#30D158", "#D1FAE5", "#143825",
+        "#FFD60A", "#D97706", "#FEF3C7", "#3D2E14",
+        "#AEAEB2", "#636366", "#8E8E93", "#FFFFFF", "#000000"
+    )
+
     fun isColorMatchingPrimary(color: Int): Boolean {
-        if (ALL_PRIMARY_HEXES.any { Color.parseColor(it) == color }) return true
+        val hex = hexOf(color)
+        if (PROTECTED_ACCENT_HEXES.contains(hex)) return false
+        if (ALL_PRIMARY_HEXES.contains(hex)) return true
+        for (theme in THEMES) {
+            if (colorsClose(color, Color.parseColor(theme.primaryColorHex), 24)) return true
+            if (colorsClose(color, Color.parseColor(theme.darkColorHex), 24)) return true
+        }
         val r = Color.red(color)
         val g = Color.green(color)
         val b = Color.blue(color)
-        return (r > 160 && g < 95 && b < 95)
+        return r > 160 && g < 95 && b < 95
+    }
+
+    private fun colorsClose(a: Int, b: Int, tol: Int): Boolean {
+        return kotlin.math.abs(Color.red(a) - Color.red(b)) <= tol &&
+                kotlin.math.abs(Color.green(a) - Color.green(b)) <= tol &&
+                kotlin.math.abs(Color.blue(a) - Color.blue(b)) <= tol
     }
 
     fun isColorMatchingLightTint(color: Int): Boolean {
-        if (ALL_LIGHT_TINT_HEXES.any { Color.parseColor(it) == color }) return true
+        val hex = hexOf(color)
+        if (ALL_LIGHT_TINT_HEXES.contains(hex)) return true
+        if (THEMES.any { Color.parseColor(it.lightTintHex) == color }) return true
         val r = Color.red(color)
         val g = Color.green(color)
         val b = Color.blue(color)

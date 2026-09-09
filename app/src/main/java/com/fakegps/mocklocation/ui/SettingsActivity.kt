@@ -83,9 +83,8 @@ class SettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
-        if (sessionPrefs.hasValidActiveSession()) {
-            com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
-        }
+        // Timer only counts while mock injection is connected — never resume on settings open.
+        com.fakegps.mocklocation.service.SessionTimerManager.refreshFromPrefs(this)
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             if (binding.adBannerContainer.childCount == 0) {
                 com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
@@ -151,7 +150,7 @@ class SettingsActivity : AppCompatActivity() {
             binding.btnSettingsPremiumAction.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)
             binding.btnSettingsPremiumAction.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnSettingsPremiumAction.iconTint = ContextCompat.getColorStateList(this, R.color.white)
-            binding.ivSettingsPremiumIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
+            binding.ivSettingsPremiumIcon.imageTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
         }
     }
 

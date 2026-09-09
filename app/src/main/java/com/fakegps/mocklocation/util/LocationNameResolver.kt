@@ -128,9 +128,8 @@ object LocationNameResolver {
                             return@withContext true
                         }
                     } else {
-                        // Open ocean often returns zero geocoding results
-                        waterCache[cacheKey] = true
-                        return@withContext true
+                        // Empty geocoder results are common on land without a street address.
+                        // Do NOT treat that as water — default walkable.
                     }
                 }
             } catch (ignored: Exception) {}
@@ -160,15 +159,15 @@ object LocationNameResolver {
                             addressObj.has("residential") || addressObj.has("suburb")
                     )
 
-                    val isWater = isWaterTag || (!isLandAddress && addressObj == null)
+                    val isWater = isWaterTag && !isLandAddress
                     waterCache[cacheKey] = isWater
                     return@withContext isWater
                 }
             } catch (ignored: Exception) {}
 
-            // Default fallback
-            waterCache[cacheKey] = true
-            return@withContext true
+            // Fail-open: unknown coordinates are treated as walkable land.
+            waterCache[cacheKey] = false
+            return@withContext false
         }
 
     private fun formatAddress(address: Address): String {

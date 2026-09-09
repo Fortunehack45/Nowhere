@@ -34,7 +34,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <!-- App Brand Header & Action Tools (Solid Card over Edge Blur) -->
-        <com.google.android.material.card.MaterialCardView
+        <com.fakegps.mocklocation.ui.custom.FrostedGlassCardView
             android:id="@+id/cardTopBrandBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -360,10 +360,10 @@
                         tools:ignore="ContentDescription" />
                 </LinearLayout>
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </com.fakegps.mocklocation.ui.custom.FrostedGlassCardView>
 
-        <!-- Search Bar (Solid Opaque Card over Edge Blur) -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- Search Bar (Frosted glass over the map) -->
+        <com.fakegps.mocklocation.ui.custom.FrostedGlassCardView
             android:id="@+id/cardSearchBar"
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -437,7 +437,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </com.fakegps.mocklocation.ui.custom.FrostedGlassCardView>
 
         <!-- Quick Destination Preset Chips -->
         <HorizontalScrollView
@@ -636,7 +636,7 @@
     </LinearLayout>
 
     <!-- Right Quick Floating Tools Stack (Solid Card over Map) -->
-    <com.google.android.material.card.MaterialCardView
+    <com.fakegps.mocklocation.ui.custom.FrostedGlassCardView
         android:id="@+id/cardSideButtons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -799,7 +799,7 @@
                 android:src="@drawable/ic_chevron_down"
                 app:tint="@color/text_muted" />
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </com.fakegps.mocklocation.ui.custom.FrostedGlassCardView>
 
     <!-- Floating Radar Joystick Overlay (Resized & anchored to lower-left to avoid right menu overlap) -->
     <com.fakegps.mocklocation.ui.custom.JoystickView
@@ -822,8 +822,8 @@
         android:focusable="false"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Bottom HUD Controls Container (Solid Card over Edge Blur) -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- Bottom HUD Controls Container (Frosted glass over the map) -->
+    <com.fakegps.mocklocation.ui.custom.FrostedGlassCardView
         android:id="@+id/cardBottomContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -1737,7 +1737,7 @@
             android:visibility="visible" />
 
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </com.fakegps.mocklocation.ui.custom.FrostedGlassCardView>
 
     <!-- Dedicated Full-Screen Frosted Glass Search Overlay -->
     <include

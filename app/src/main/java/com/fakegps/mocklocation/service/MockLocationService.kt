@@ -131,9 +131,8 @@ class MockLocationService : Service() {
             updateAllWidgets()
         }
 
-        if (sessionPrefs.hasValidActiveSession()) {
-            SessionTimerManager.resumeExistingTimer(this)
-        }
+        // Timer only ticks while mock injection is actually running.
+        // Binding the service on app open must not drain remaining time.
     }
 
     private fun updateAllWidgets() {
@@ -225,9 +224,11 @@ class MockLocationService : Service() {
         isStopping.set(false)
         sessionPrefs.isSessionActive = true
         sessionPrefs.activeMode = "MOTION_SYNC"
+        activeMode = SimulationMode.Fixed(initialLat, initialLon, 10.0)
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
         startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
+        engine.setLocation(initialLat, initialLon, 10.0, 0f, 0f, false)
         _serviceState.value = ServiceState.Running(
             mode = SimulationMode.Fixed(initialLat, initialLon, 10.0),
             latitude = initialLat,
@@ -237,6 +238,7 @@ class MockLocationService : Service() {
             bearingDegrees = 0f
         )
         motionSyncEngine?.start(initialLat, initialLon, 0f)
+        updateLocationNotification(initialLat, initialLon, "Motion Sync Active")
         updateAllWidgets()
     }
 
@@ -1095,8 +1097,8 @@ class MockLocationService : Service() {
         stopCurrentLoop()
         releaseWakeLock()
         try { engine.stop() } catch (e: Exception) { Log.w(TAG, "engine.stop() error (non-fatal): ${e.message}") }
+        SessionTimerManager.pauseTimer(this)
         sessionPrefs.isSessionActive = false
-        SessionTimerManager.stopTimer(this)
         _serviceState.value = ServiceState.Idle
         try { updateAllWidgets() } catch (e: Exception) { Log.w(TAG, "widget update on stop (non-fatal): ${e.message}") }
         try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (e: Exception) {}
@@ -1107,6 +1109,7 @@ class MockLocationService : Service() {
         simulationJob?.cancel()
         simulationJob = null
         routeSimulator = null
+        try { motionSyncEngine?.stop() } catch (_: Exception) {}
         motionSyncEngine?.setRoutePlaybackActive(false)
     }
 
@@ -1143,6 +1146,12 @@ class MockLocationService : Service() {
                     sessionPrefs.lastLatitude,
                     sessionPrefs.lastLongitude,
                     sessionPrefs.lastSpeedKmh
+                )
+            }
+            "MOTION_SYNC" -> {
+                startMotionSync(
+                    sessionPrefs.lastLatitude,
+                    sessionPrefs.lastLongitude
                 )
             }
         }
