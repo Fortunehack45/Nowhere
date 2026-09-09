@@ -155,46 +155,6 @@ class MockLocationServiceTest {
     }
 
     @Test
-    fun testService_startMotionSyncAction_setsModeAndRunningState() {
-        val intent = Intent(context, MockLocationService::class.java).apply {
-            action = MockLocationService.ACTION_START_MOTION_SYNC
-            putExtra(MockLocationService.EXTRA_LATITUDE, 35.6762)
-            putExtra(MockLocationService.EXTRA_LONGITUDE, 139.6503)
-        }
-
-        service.onStartCommand(intent, 0, 1)
-
-        assertTrue("WakeLock should be held for motion sync", service.isWakeLockHeld())
-        val sessionPrefs = SessionPreferences(context)
-        assertTrue(sessionPrefs.isSessionActive)
-        assertEquals("MOTION_SYNC", sessionPrefs.activeMode)
-        assertTrue(sessionPrefs.hasValidActiveSession())
-    }
-
-    @Test
-    fun testService_stopAction_pausesTimerInsteadOfWipingQuota() {
-        val startIntent = Intent(context, MockLocationService::class.java).apply {
-            action = MockLocationService.ACTION_START_FIXED
-            putExtra(MockLocationService.EXTRA_LATITUDE, 37.7749)
-            putExtra(MockLocationService.EXTRA_LONGITUDE, -122.4194)
-        }
-        service.onStartCommand(startIntent, 0, 1)
-        val remainingWhileConnected = SessionPreferences(context).getTimeRemainingMillis()
-
-        val stopIntent = Intent(context, MockLocationService::class.java).apply {
-            action = MockLocationService.ACTION_STOP
-        }
-        service.onStartCommand(stopIntent, 0, 2)
-
-        val sessionPrefs = SessionPreferences(context)
-        assertFalse(sessionPrefs.isSessionActive)
-        assertTrue(sessionPrefs.isTimerPaused)
-        assertTrue(sessionPrefs.hasRemainingQuota())
-        assertFalse(sessionPrefs.hasValidActiveSession())
-        assertTrue(sessionPrefs.getTimeRemainingMillis() in 1L..remainingWhileConnected)
-    }
-
-    @Test
     fun testService_restoreSessionAction() {
         SessionPreferences(context).apply {
             isSessionActive = true

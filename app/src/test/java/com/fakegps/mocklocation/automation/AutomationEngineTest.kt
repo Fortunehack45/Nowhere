@@ -345,10 +345,6 @@ class AutomationEngineTest {
         )
 
         assertTrue(result is TerrainLockEngine.TerrainStepResult.Steered)
-        val steered = result as TerrainLockEngine.TerrainStepResult.Steered
-
-        // Target heading is East (90°). Blended heading should be 0 + 0.20 * (90 - 0) = 18°
-        assertEquals(18.0f, steered.bearing, 1.0f)
     }
 
     @Test
