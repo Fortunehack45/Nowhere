@@ -33,6 +33,7 @@ class SessionTimerManagerTest {
         val after = System.currentTimeMillis()
 
         assertTrue(sessionPrefs.isSessionActive)
+        assertFalse(sessionPrefs.isTimerPaused)
         assertFalse(sessionPrefs.isSessionExpired)
         assertEquals(duration, sessionPrefs.sessionAllocatedDurationMillis)
         assertTrue(sessionPrefs.sessionExpiresTimestamp >= before + duration)
@@ -41,66 +42,101 @@ class SessionTimerManagerTest {
     }
 
     @Test
-    fun testStartNewSession_doesNotRestartDurationAcrossAppUpdate() {
-        // Step 1: User starts 2-hour session
+    fun testStartNewSession_doesNotRestartAllocatedDurationAcrossReconnect() {
         val twoHours = 2 * 60 * 60 * 1000L
         sessionPrefs.startNewSession(twoHours, forceRestart = true)
-        val originalExpiry = sessionPrefs.sessionExpiresTimestamp
+        val remainingBefore = sessionPrefs.getTimeRemainingMillis()
 
-        // Step 2: Simulate app update or process recreation calling startOrResumeTimer or startNewSession
         sessionPrefs.startNewSession(twoHours, forceRestart = false)
 
-        // Step 3: Verify expiry timestamp was NOT reset/restarted
-        assertEquals("Expiry timestamp should remain untouched across app updates/restarts", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
         assertEquals(twoHours, sessionPrefs.sessionAllocatedDurationMillis)
         assertTrue(sessionPrefs.hasValidActiveSession())
+        val remainingAfter = sessionPrefs.getTimeRemainingMillis()
+        assertTrue(
+            "Remaining quota must stay near the leftover, not reset to a fresh 2h",
+            remainingAfter in (remainingBefore - 5_000L)..(remainingBefore + 2_000L)
+        )
     }
 
     @Test
-    fun testStartOrResumeTimer_resumesExistingSessionWithoutResetting() {
+    fun testStartOrResumeTimer_resumesExistingSessionWithoutResettingQuota() {
         val duration = 90 * 60 * 1000L // 90 min
         sessionPrefs.startNewSession(duration, forceRestart = true)
-        val originalExpiry = sessionPrefs.sessionExpiresTimestamp
+        val remainingBefore = sessionPrefs.getTimeRemainingMillis()
 
-        // Simulate app reopening after APK update
         SessionTimerManager.startOrResumeTimer(context, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        assertEquals("Expiry timestamp should remain the original unexpired timestamp", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
         assertEquals(duration, sessionPrefs.sessionAllocatedDurationMillis)
+        val remainingAfter = sessionPrefs.getTimeRemainingMillis()
+        assertTrue(remainingAfter in (remainingBefore - 5_000L)..(remainingBefore + 2_000L))
+        assertTrue(sessionPrefs.hasValidActiveSession())
     }
 
     @Test
-    fun testStopSimulation_preservesRemainingDurationAndValidSession() {
-        // User starts simulation with 1 hour duration
+    fun testStopSimulation_pausesClockAndKeepsLeftoverQuota() {
         val oneHour = 60 * 60 * 1000L
         sessionPrefs.startNewSession(oneHour, forceRestart = true)
-        val originalExpiry = sessionPrefs.sessionExpiresTimestamp
+        val remainingBeforeStop = sessionPrefs.getTimeRemainingMillis()
 
-        // User stops simulation while they still have time remaining
         SessionTimerManager.stopTimer(context)
 
-        // Verify remaining session is STILL valid and NOT expired
-        assertTrue("Session must remain valid when stopped if time remains", sessionPrefs.hasValidActiveSession())
-        assertFalse("Session must not be marked expired when stopped manually", sessionPrefs.isSessionExpired)
-        assertEquals("Expiry timestamp must be preserved", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
-        assertTrue("Remaining time must be positive", sessionPrefs.getTimeRemainingMillis() > 0L)
+        assertFalse(
+            "Disconnected sessions are not 'active' — time must not keep ticking",
+            sessionPrefs.hasValidActiveSession()
+        )
+        assertTrue(sessionPrefs.hasRemainingQuota())
+        assertTrue(sessionPrefs.isTimerPaused)
+        assertFalse(sessionPrefs.isSessionExpired)
+        assertFalse(sessionPrefs.isSessionActive)
+        val remainingWhilePaused = sessionPrefs.getTimeRemainingMillis()
+        assertTrue(remainingWhilePaused > 0L)
+        assertTrue(remainingWhilePaused <= remainingBeforeStop)
 
-        // User restarts simulation: timer resumes without prompting for ads or resetting
+        Thread.sleep(80L)
+        assertEquals(
+            "Paused leftover must not drain while disconnected",
+            remainingWhilePaused,
+            sessionPrefs.getTimeRemainingMillis()
+        )
+
         SessionTimerManager.startOrResumeTimer(context)
-        assertEquals("Expiry timestamp must still match original after restart", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
         assertTrue(sessionPrefs.hasValidActiveSession())
+        val remainingAfterResume = sessionPrefs.getTimeRemainingMillis()
+        assertTrue(
+            remainingAfterResume in (remainingWhilePaused - 5_000L)..(remainingWhilePaused + 2_000L)
+        )
+        assertTrue(
+            "Must resume leftover, not a fresh 2-hour grant",
+            remainingAfterResume < SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS - 30_000L
+        )
+    }
+
+    @Test
+    fun testPauseTimer_doesNotExpireQuota() {
+        sessionPrefs.startNewSession(45 * 60 * 1000L, forceRestart = true)
+        SessionTimerManager.pauseTimer(context)
+
+        assertTrue(sessionPrefs.isTimerPaused)
+        assertFalse(sessionPrefs.isSessionExpired)
+        assertTrue(sessionPrefs.hasRemainingQuota())
+        assertFalse(sessionPrefs.hasValidActiveSession())
+        assertEquals(
+            SessionTimerManager.timerState.value.isPaused,
+            true
+        )
     }
 
     @Test
     fun testExtendSession_addsDurationProperly() {
         val baseDuration = 30 * 60 * 1000L // 30 min
         sessionPrefs.startNewSession(baseDuration, forceRestart = true)
-        val initialExpiry = sessionPrefs.sessionExpiresTimestamp
+        val remainingBefore = sessionPrefs.getTimeRemainingMillis()
 
         val extraMillis = SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS // 2 hr extra
         sessionPrefs.extendSession(extraMillis)
 
-        assertEquals(initialExpiry + extraMillis, sessionPrefs.sessionExpiresTimestamp)
+        val remainingAfter = sessionPrefs.getTimeRemainingMillis()
+        assertTrue(remainingAfter >= remainingBefore + extraMillis - 3_000L)
         assertEquals(baseDuration + extraMillis, sessionPrefs.sessionAllocatedDurationMillis)
         assertTrue(sessionPrefs.hasValidActiveSession())
     }

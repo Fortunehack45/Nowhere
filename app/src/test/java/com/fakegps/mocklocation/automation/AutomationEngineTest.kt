@@ -316,8 +316,16 @@ class AutomationEngineTest {
 
     @Test
     fun testTerrainLock_gradualSteeringBlendingFormula() = runBlocking {
-        // All forward projections and deflection angles blocked by water
-        TerrainLockEngine.mockClassifier = { _, _ -> TerrainLockEngine.TerrainType.WATER }
+        // Straight-ahead + deflection samples are water; the blended steered step is walkable.
+        var classifyCalls = 0
+        TerrainLockEngine.mockClassifier = { _, _ ->
+            classifyCalls++
+            if (classifyCalls <= TerrainLockEngine.DEFLECTION_ANGLES.size + 1) {
+                TerrainLockEngine.TerrainType.WATER
+            } else {
+                TerrainLockEngine.TerrainType.WALKABLE
+            }
+        }
 
         // Nearest walkable way is due East (90 degrees)
         val nearestLat = 37.7749
