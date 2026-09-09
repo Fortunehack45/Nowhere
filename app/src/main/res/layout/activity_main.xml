@@ -368,6 +368,8 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
+            android:clickable="true"
+            android:focusable="true"
             app:cardBackgroundColor="@color/surface_search"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
@@ -398,9 +400,11 @@
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="8dp"
                     android:background="@null"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:focusable="false"
                     android:hint="@string/title_search_hint"
-                    android:imeOptions="actionSearch"
-                    android:inputType="text"
+                    android:inputType="none"
                     android:maxLines="1"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_muted"
@@ -539,18 +543,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
         </HorizontalScrollView>
-
-        <!-- Unified Search & History Dropdown -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvSearchResults"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_search_dropdown"
-            android:elevation="16dp"
-            android:maxHeight="260dp"
-            android:padding="4dp"
-            android:visibility="gone" />
 
         <!-- Mock App Setup Banner -->
         <com.google.android.material.card.MaterialCardView
@@ -1325,8 +1317,9 @@
                     android:layout_height="wrap_content"
                     android:checked="true"
                     android:text="Loop"
-                    android:textColor="@color/white"
+                    android:textColor="@color/text_primary"
                     android:textSize="12sp"
+                    android:textStyle="bold"
                     app:thumbTint="@color/primary"
                     app:trackTint="@color/stroke_subtle" />
             </LinearLayout>
@@ -1745,6 +1738,18 @@
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <!-- Dedicated Full-Screen Frosted Glass Search Overlay -->
+    <include
+        android:id="@+id/includedSearchOverlay"
+        layout="@layout/layout_search_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Apple-Minimal Interactive Spotlight Walkthrough Overlay -->
     <com.fakegps.mocklocation.ui.tour.SpotlightTourOverlayView

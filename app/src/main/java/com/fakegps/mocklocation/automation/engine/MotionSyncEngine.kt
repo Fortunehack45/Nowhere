@@ -31,8 +31,10 @@ class MotionSyncEngine(
         private const val TAG = "MotionSyncEngine"
         const val DEFAULT_STRIDE_LENGTH_METERS = 0.75
         const val STRIDE_JITTER_RATIO = 0.10 // ±10%
-        const val IDLE_THRESHOLD_MS = 5000L // 5s idle hold
-        const val VEHICLE_ACCEL_VARIANCE_THRESHOLD = 7.5f // m²/s⁴
+        const val STEP_MOTION_TIMEOUT_MS = 2000L // 2s without steps means walking has stopped
+        const val VEHICLE_VIBRATION_TIMEOUT_MS = 1500L // 1.5s silence means vehicle transit has stopped
+        const val VEHICLE_MIN_VARIANCE = 8.5f // Continuous vehicle engine/road vibration
+        const val STATIONARY_MAX_VARIANCE = 2.0f // Stationary handheld or table threshold
         const val VEHICLE_MAX_SPEED_KMH = 30.0f
     }
 
@@ -53,6 +55,9 @@ class MotionSyncEngine(
     private var currentLon: Double = 0.0
     private var currentHeading: Float = 0.0f
     private var lastMotionTimestamp: Long = 0L
+    private var lastStepTimestamp: Long = 0L
+    private var lastVehicleVibrationTimestamp: Long = 0L
+    private var lastReportedSpeed: Float = 0f
 
     // Step counter fallback tracking
     private var initialStepCount = -1f
@@ -95,6 +100,9 @@ class MotionSyncEngine(
         currentLon = initialLon
         currentHeading = initialHeading
         lastMotionTimestamp = System.currentTimeMillis()
+        lastStepTimestamp = 0L
+        lastVehicleVibrationTimestamp = 0L
+        lastReportedSpeed = 0f
         initialStepCount = -1f
         lastStepCount = -1f
 
@@ -129,6 +137,7 @@ class MotionSyncEngine(
         vehicleTickJob?.cancel()
         vehicleTickJob = null
         isVehicleMode.set(false)
+        lastReportedSpeed = 0f
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -182,7 +191,9 @@ class MotionSyncEngine(
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     private fun onPhysicalStepDetected() {
-        lastMotionTimestamp = System.currentTimeMillis()
+        val now = System.currentTimeMillis()
+        lastStepTimestamp = now
+        lastMotionTimestamp = now
         isVehicleMode.set(false)
 
         // Stride with ±10% jitter
@@ -206,14 +217,19 @@ class MotionSyncEngine(
         }
         val variance = varianceSum / accelCount
 
-        val timeSinceStep = System.currentTimeMillis() - lastMotionTimestamp
+        val now = System.currentTimeMillis()
+        val timeSinceStep = now - lastStepTimestamp
 
-        // High intensity variance without steps indicates vehicle transit
-        if (variance > VEHICLE_ACCEL_VARIANCE_THRESHOLD && timeSinceStep > 3000L) {
-            if (!isVehicleMode.get()) {
+        if (variance > VEHICLE_MIN_VARIANCE) {
+            lastVehicleVibrationTimestamp = now
+            // Sustained road vibration without foot steps indicates vehicle transit
+            if (timeSinceStep > 2500L) {
                 isVehicleMode.set(true)
-                lastMotionTimestamp = System.currentTimeMillis()
+                lastMotionTimestamp = now
             }
+        } else if (variance < STATIONARY_MAX_VARIANCE) {
+            // Calm accelerometer readings -> immediately disengage vehicle transit
+            isVehicleMode.set(false)
         }
     }
 
@@ -221,17 +237,31 @@ class MotionSyncEngine(
         vehicleTickJob?.cancel()
         vehicleTickJob = scope.launch {
             while (isActive && isRunning.get()) {
-                delay(1000L)
+                delay(500L)
                 val now = System.currentTimeMillis()
-                if (isVehicleMode.get()) {
+                val timeSinceStep = now - lastStepTimestamp
+                val timeSinceVibration = now - lastVehicleVibrationTimestamp
+
+                val isActivelyInVehicle = isVehicleMode.get() && (timeSinceVibration < VEHICLE_VIBRATION_TIMEOUT_MS)
+                if (!isActivelyInVehicle) {
+                    isVehicleMode.set(false)
+                }
+
+                val isActivelyWalking = timeSinceStep < STEP_MOTION_TIMEOUT_MS
+                val isMoving = isActivelyWalking || isActivelyInVehicle
+
+                if (isActivelyInVehicle) {
                     lastMotionTimestamp = now
-                    // In vehicle mode, advance ~8.3 meters per second (~30 km/h)
-                    val vehicleDistance = (VEHICLE_MAX_SPEED_KMH * 1000.0 / 3600.0)
+                    // In vehicle mode, advance ~4.16 meters per 500ms (~30 km/h)
+                    val vehicleDistance = (VEHICLE_MAX_SPEED_KMH * 1000.0 / 3600.0) * 0.5
                     advanceLocation(vehicleDistance, VEHICLE_MAX_SPEED_KMH)
-                } else {
-                    // Check idle hold (5s silence)
-                    if (now - lastMotionTimestamp > IDLE_THRESHOLD_MS) {
-                        // Hold position with 0 drift
+                } else if (!isMoving) {
+                    // USER IS STATIONARY: Strictly hold position and notify speed = 0.0 km/h with 0 drift
+                    if (lastReportedSpeed > 0f) {
+                        lastReportedSpeed = 0f
+                        withContext(Dispatchers.Main) {
+                            onLocationUpdated(currentLat, currentLon, currentHeading, 0f)
+                        }
                     }
                 }
             }
@@ -298,6 +328,7 @@ class MotionSyncEngine(
             currentLat = nextLat
             currentLon = nextLon
             currentHeading = nextHeading
+            lastReportedSpeed = speedKmh
 
             withContext(Dispatchers.Main) {
                 onLocationUpdated(currentLat, currentLon, currentHeading, speedKmh)

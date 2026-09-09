@@ -640,12 +640,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onMapTapped(latitude: Double, longitude: Double) {
-        // If search dropdown is visible, dismiss it cleanly on map tap
-        if (binding.rvSearchResults.visibility == View.VISIBLE || binding.etAddressSearch.hasFocus()) {
-            binding.rvSearchResults.visibility = View.GONE
-            binding.etAddressSearch.clearFocus()
-            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-            imm?.hideSoftInputFromWindow(binding.etAddressSearch.windowToken, 0)
+        // If search overlay is visible, dismiss it cleanly on map tap
+        if (binding.includedSearchOverlay.layoutSearchOverlayRoot.visibility == View.VISIBLE) {
+            hideSearchOverlay()
+            return
         }
 
         // Screen taps while mock simulation is running must NOT change or disrupt active mock location
@@ -668,7 +666,54 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showSearchOverlay() {
+        val overlay = binding.includedSearchOverlay
+        overlay.layoutSearchOverlayRoot.visibility = View.VISIBLE
+        overlay.layoutSearchOverlayRoot.alpha = 0f
+        overlay.layoutSearchOverlayRoot.animate().alpha(1f).setDuration(200).start()
+
+        val currentQuery = overlay.etSearchOverlayInput.text?.toString()?.trim() ?: ""
+        overlay.btnClearOverlaySearch.visibility = if (currentQuery.isNotEmpty()) View.VISIBLE else View.GONE
+
+        overlay.etSearchOverlayInput.requestFocus()
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+        imm?.showSoftInput(overlay.etSearchOverlayInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+
+        if (currentQuery.isBlank()) {
+            showRecentHistory()
+        } else {
+            viewModel.searchAddress(currentQuery)
+        }
+    }
+
+    private fun hideSearchOverlay() {
+        val overlay = binding.includedSearchOverlay
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+        imm?.hideSoftInputFromWindow(overlay.etSearchOverlayInput.windowToken, 0)
+
+        overlay.layoutSearchOverlayRoot.animate()
+            .alpha(0f)
+            .setDuration(150)
+            .withEndAction {
+                overlay.layoutSearchOverlayRoot.visibility = View.GONE
+            }
+            .start()
+    }
+
     private fun setupSearch() {
+        // Handle Android system back press when search overlay is active
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding.includedSearchOverlay.layoutSearchOverlayRoot.visibility == View.VISIBLE) {
+                    hideSearchOverlay()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        })
+
         unifiedSearchAdapter = UnifiedSearchAdapter(
             onEntryClicked = { title, snippet, lat, lon ->
                 val geoPoint = GeoPoint(lat, lon)
@@ -692,7 +737,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 viewModel.recordSearchHistory(
-                    query = binding.etAddressSearch.text.toString().trim().ifBlank { title },
+                    query = binding.includedSearchOverlay.etSearchOverlayInput.text.toString().trim().ifBlank { title },
                     title = title,
                     snippet = snippet,
                     latitude = lat,
@@ -703,65 +748,79 @@ class MainActivity : AppCompatActivity() {
                 sessionPrefs.lastLocationName = title
                 com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
 
-                binding.rvSearchResults.visibility = View.GONE
                 binding.etAddressSearch.setText(title)
-                binding.etAddressSearch.setSelection(title.length)
-                binding.etAddressSearch.clearFocus()
-                val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-                imm?.hideSoftInputFromWindow(binding.etAddressSearch.windowToken, 0)
+                binding.btnClearSearch.visibility = View.VISIBLE
+                hideSearchOverlay()
                 Toast.makeText(this@MainActivity, "Target: $title", Toast.LENGTH_SHORT).show()
             },
             onDeleteHistoryClicked = { item ->
                 viewModel.deleteSearchHistoryItem(item)
                 latestHistoryItems = latestHistoryItems.filter { it.id != item.id }
-                if (latestHistoryItems.isEmpty()) {
-                    binding.rvSearchResults.visibility = View.GONE
+                if (binding.includedSearchOverlay.etSearchOverlayInput.text.isNullOrBlank()) {
+                    showRecentHistory()
                 }
             }
         )
 
-        binding.rvSearchResults.apply {
+        binding.includedSearchOverlay.rvSearchOverlayResults.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = unifiedSearchAdapter
         }
 
-        // Real-time search suggestions with history fallback
-        binding.etAddressSearch.addTextChangedListener { text ->
+        // Search Bar Taps Activate the Dedicated Search Page
+        binding.cardSearchBar.setOnClickListener { showSearchOverlay() }
+        binding.etAddressSearch.setOnClickListener { showSearchOverlay() }
+        binding.includedSearchOverlay.btnSearchOverlayBack.setOnClickListener { hideSearchOverlay() }
+
+        binding.includedSearchOverlay.btnClearOverlaySearch.setOnClickListener {
+            binding.includedSearchOverlay.etSearchOverlayInput.setText("")
+            viewModel.clearSearchResults()
+            showRecentHistory()
+        }
+
+        binding.includedSearchOverlay.btnClearAllSearchHistory.setOnClickListener {
+            viewModel.clearAllSearchHistory()
+            latestHistoryItems = emptyList()
+            showRecentHistory()
+        }
+
+        // Real-time search suggestions inside dedicated overlay
+        binding.includedSearchOverlay.etSearchOverlayInput.addTextChangedListener { text ->
             val query = text?.toString()?.trim() ?: ""
-            binding.btnClearSearch.visibility = if (query.isNotEmpty()) View.VISIBLE else View.GONE
+            binding.includedSearchOverlay.btnClearOverlaySearch.visibility = if (query.isNotEmpty()) View.VISIBLE else View.GONE
 
             if (query.isNotEmpty()) {
+                binding.includedSearchOverlay.tvSearchSectionTitle.text = "SEARCH RESULTS"
+                binding.includedSearchOverlay.btnClearAllSearchHistory.visibility = View.GONE
                 viewModel.searchAddress(query)
             } else {
+                binding.includedSearchOverlay.tvSearchSectionTitle.text = "RECENT SEARCHES"
                 viewModel.clearSearchResults()
                 showRecentHistory()
             }
         }
 
-        binding.etAddressSearch.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus && binding.etAddressSearch.text.isNullOrBlank()) {
-                showRecentHistory()
-            }
-        }
-
-        binding.etAddressSearch.setOnEditorActionListener { _, actionId, _ ->
+        binding.includedSearchOverlay.etSearchOverlayInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                viewModel.searchAddress(binding.etAddressSearch.text.toString().trim())
-                val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-                imm?.hideSoftInputFromWindow(binding.etAddressSearch.windowToken, 0)
+                val query = binding.includedSearchOverlay.etSearchOverlayInput.text.toString().trim()
+                if (query.isNotEmpty()) {
+                    viewModel.searchAddress(query)
+                }
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(binding.includedSearchOverlay.etSearchOverlayInput.windowToken, 0)
                 true
             } else false
         }
 
         binding.btnClearSearch.setOnClickListener {
             binding.etAddressSearch.setText("")
+            binding.btnClearSearch.visibility = View.GONE
             viewModel.clearSearchResults()
-            showRecentHistory()
         }
 
         binding.btnCopyCoords.setOnClickListener {
             val coordsText = binding.tvFixedCoords.text.toString()
-            val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Mock Location Coordinates", coordsText)
             clipboard?.setPrimaryClip(clip)
             Toast.makeText(this, "Coordinates copied: $coordsText", Toast.LENGTH_SHORT).show()
@@ -775,13 +834,55 @@ class MainActivity : AppCompatActivity() {
         binding.chipPresetLondon.setOnClickListener { selectPresetDestination("London, UK", 51.5074, -0.1278) }
         binding.chipPresetHonolulu.setOnClickListener { selectPresetDestination("Honolulu, Hawaii", 21.3069, -157.8583) }
 
+        // Observe recent searches from database
         lifecycleScope.launch {
             viewModel.recentSearches.collectLatest { history ->
                 latestHistoryItems = history
-                if (binding.rvSearchResults.visibility == View.VISIBLE && binding.etAddressSearch.text.isNullOrBlank()) {
+                val isOverlayVisible = binding.includedSearchOverlay.layoutSearchOverlayRoot.visibility == View.VISIBLE
+                val isQueryBlank = binding.includedSearchOverlay.etSearchOverlayInput.text.isNullOrBlank()
+                if (isOverlayVisible && isQueryBlank) {
                     showRecentHistory()
                 }
             }
+        }
+
+        // Observe live geocoding results and loading state
+        lifecycleScope.launch {
+            viewModel.uiState.collectLatest { state ->
+                binding.includedSearchOverlay.pbSearchOverlayLoading.visibility =
+                    if (state.isSearching) View.VISIBLE else View.GONE
+
+                val query = binding.includedSearchOverlay.etSearchOverlayInput.text?.toString()?.trim() ?: ""
+                if (query.isNotEmpty()) {
+                    if (state.searchResults.isNotEmpty()) {
+                        binding.includedSearchOverlay.layoutSearchOverlayEmptyState.visibility = View.GONE
+                        binding.includedSearchOverlay.rvSearchOverlayResults.visibility = View.VISIBLE
+                        val liveEntries = state.searchResults.map {
+                            SearchEntry.LiveResult(it.title, it.snippet, it.latitude, it.longitude)
+                        }
+                        unifiedSearchAdapter.submitEntries(liveEntries)
+                    } else if (!state.isSearching) {
+                        unifiedSearchAdapter.submitEntries(emptyList())
+                        binding.includedSearchOverlay.layoutSearchOverlayEmptyState.visibility = View.VISIBLE
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showRecentHistory() {
+        val overlay = binding.includedSearchOverlay
+        overlay.tvSearchSectionTitle.text = "RECENT SEARCHES"
+        if (latestHistoryItems.isNotEmpty()) {
+            overlay.btnClearAllSearchHistory.visibility = View.VISIBLE
+            overlay.layoutSearchOverlayEmptyState.visibility = View.GONE
+            overlay.rvSearchOverlayResults.visibility = View.VISIBLE
+            val entries = latestHistoryItems.map { SearchEntry.History(it) }
+            unifiedSearchAdapter.submitEntries(entries)
+        } else {
+            overlay.btnClearAllSearchHistory.visibility = View.GONE
+            unifiedSearchAdapter.submitEntries(emptyList())
+            overlay.layoutSearchOverlayEmptyState.visibility = View.VISIBLE
         }
     }
 
@@ -801,16 +902,6 @@ class MainActivity : AppCompatActivity() {
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
 
         Toast.makeText(this, "Focused: $name", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun showRecentHistory() {
-        if (latestHistoryItems.isNotEmpty()) {
-            val entries = latestHistoryItems.map { SearchEntry.History(it) }
-            unifiedSearchAdapter.submitEntries(entries)
-            binding.rvSearchResults.visibility = View.VISIBLE
-        } else {
-            binding.rvSearchResults.visibility = View.GONE
-        }
     }
 
     private fun setupModeTabs() {
@@ -2010,16 +2101,6 @@ class MainActivity : AppCompatActivity() {
             binding.btnJoystickToggle.iconTint = ContextCompat.getColorStateList(this, R.color.white)
         }
 
-        // Live Search Results
-        if (state.searchResults.isNotEmpty()) {
-            val entries = state.searchResults.map {
-                SearchEntry.LiveResult(it.title, it.snippet, it.latitude, it.longitude)
-            }
-            unifiedSearchAdapter.submitEntries(entries)
-            binding.rvSearchResults.visibility = View.VISIBLE
-        } else if (!binding.etAddressSearch.text.isNullOrBlank()) {
-            binding.rvSearchResults.visibility = View.GONE
-        }
         binding.pbSearchLoading.visibility = if (state.isSearching) View.VISIBLE else View.GONE
 
         if (state.statusMessage != null) {

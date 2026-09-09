@@ -26,8 +26,13 @@ object FrostedGlassManager {
     /**
      * Configures a Window to blur the underlying activity/map background on Android 12+.
      */
-    fun applyWindowBlur(window: Window, radiusDp: Int = 28) {
+    fun applyWindowBlur(window: Window, radiusDp: Int = 30) {
         try {
+            // Set light dim amount (0.15f) instead of default heavy 0.60f dark blanket,
+            // allowing the underlying blurred map colors and content to shine through the frosted glass!
+            window.setDimAmount(0.15f)
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val density = window.context.resources.displayMetrics.density
                 val blurPx = (radiusDp * density).toInt()
