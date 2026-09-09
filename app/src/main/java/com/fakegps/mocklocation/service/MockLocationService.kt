@@ -228,7 +228,11 @@ class MockLocationService : Service() {
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
         startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
-        engine.setLocation(initialLat, initialLon, 10.0, 0f, 0f, false)
+        try {
+            engine.setLocation(initialLat, initialLon, 10.0, 0f, 0f, false)
+        } catch (e: Exception) {
+            Log.w(TAG, "Motion sync initial inject (non-fatal): ${e.message}")
+        }
         _serviceState.value = ServiceState.Running(
             mode = SimulationMode.Fixed(initialLat, initialLon, 10.0),
             latitude = initialLat,

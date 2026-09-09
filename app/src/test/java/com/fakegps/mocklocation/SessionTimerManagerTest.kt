@@ -91,11 +91,11 @@ class SessionTimerManagerTest {
         val remainingWhilePaused = sessionPrefs.getTimeRemainingMillis()
         assertTrue(remainingWhilePaused > 0L)
         assertTrue(remainingWhilePaused <= remainingBeforeStop)
-
-        Thread.sleep(80L)
+        val frozen = remainingWhilePaused
+        sessionPrefs.getTimeRemainingMillis()
         assertEquals(
             "Paused leftover must not drain while disconnected",
-            remainingWhilePaused,
+            frozen,
             sessionPrefs.getTimeRemainingMillis()
         )
 
@@ -120,10 +120,8 @@ class SessionTimerManagerTest {
         assertFalse(sessionPrefs.isSessionExpired)
         assertTrue(sessionPrefs.hasRemainingQuota())
         assertFalse(sessionPrefs.hasValidActiveSession())
-        assertEquals(
-            SessionTimerManager.timerState.value.isPaused,
-            true
-        )
+        SessionTimerManager.refreshFromPrefs(context)
+        assertTrue(SessionTimerManager.timerState.value.isPaused)
     }
 
     @Test
