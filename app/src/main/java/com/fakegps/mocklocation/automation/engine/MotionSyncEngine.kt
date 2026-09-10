@@ -10,6 +10,8 @@ import com.fakegps.mocklocation.automation.data.AutomationLogEntity
 import com.fakegps.mocklocation.data.db.AppDatabase
 import com.fakegps.mocklocation.engine.GeoUtils
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -73,6 +75,10 @@ class MotionSyncEngine(
     private val accelWindow = FloatArray(30)
     private var accelIndex = 0
     private var accelCount = 0
+    private var accelMean = 9.81f
+
+    // Step processing serialization mutex to prevent race conditions during rapid movement
+    private val stepMutex = Mutex()
 
     // Vehicle mode vehicle ticker job
     private var vehicleTickJob: Job? = null
@@ -193,7 +199,8 @@ class MotionSyncEngine(
                 // Pedometer peak detection fallback when hardware step sensor chip is unavailable
                 if (stepDetectorSensor == null && stepCounterSensor == null) {
                     val now = System.currentTimeMillis()
-                    if (magnitude > 12.0f && (now - lastStepTimestamp > 330L)) {
+                    val threshold = (accelMean + 1.8f).coerceIn(11.5f, 13.5f)
+                    if (magnitude > threshold && (now - lastStepTimestamp > 330L)) {
                         onPhysicalStepDetected()
                     }
                 }
@@ -215,7 +222,10 @@ class MotionSyncEngine(
                 val azimuthRad = orientationValues[0]
                 var azimuthDeg = Math.toDegrees(azimuthRad.toDouble()).toFloat()
                 if (azimuthDeg < 0f) azimuthDeg += 360f
-                currentHeading = azimuthDeg
+
+                // Smooth heading update using angular normalization to eliminate boundary jump jitter
+                val delta = TerrainLockEngine.normalizeDeltaDegrees(azimuthDeg - currentHeading)
+                currentHeading = (currentHeading + delta * 0.35f + 360f) % 360f
             }
         }
     }
@@ -228,7 +238,8 @@ class MotionSyncEngine(
             SensorManager.getOrientation(rMatrix, orientation)
             var azimuthDeg = Math.toDegrees(orientation[0].toDouble()).toFloat()
             if (azimuthDeg < 0f) azimuthDeg += 360f
-            currentHeading = azimuthDeg
+            val delta = TerrainLockEngine.normalizeDeltaDegrees(azimuthDeg - currentHeading)
+            currentHeading = (currentHeading + delta * 0.35f + 360f) % 360f
         }
     }
 
@@ -236,6 +247,7 @@ class MotionSyncEngine(
 
     private fun onPhysicalStepDetected() {
         val now = System.currentTimeMillis()
+        val deltaT = if (lastStepTimestamp > 0L) (now - lastStepTimestamp) / 1000.0 else 0.6
         lastStepTimestamp = now
         lastMotionTimestamp = now
         isVehicleMode.set(false)
@@ -244,7 +256,13 @@ class MotionSyncEngine(
         val jitter = (Random.nextDouble(-STRIDE_JITTER_RATIO, STRIDE_JITTER_RATIO)) * DEFAULT_STRIDE_LENGTH_METERS
         val stepDistance = DEFAULT_STRIDE_LENGTH_METERS + jitter
 
-        advanceLocation(stepDistance, 4.5f) // ~4.5 km/h walking speed
+        val calculatedSpeedKmh = if (deltaT in 0.3..2.0) {
+            ((stepDistance / deltaT) * 3.6).toFloat().coerceIn(2.8f, 7.5f)
+        } else {
+            4.5f
+        }
+
+        advanceLocation(stepDistance, calculatedSpeedKmh)
     }
 
     private fun checkAccelerometerMotionState() {
@@ -253,6 +271,7 @@ class MotionSyncEngine(
         var sum = 0f
         for (i in 0 until accelCount) sum += accelWindow[i]
         val mean = sum / accelCount
+        accelMean = mean
 
         var varianceSum = 0f
         for (i in 0 until accelCount) {
@@ -314,68 +333,70 @@ class MotionSyncEngine(
 
     private fun advanceLocation(distanceMeters: Double, speedKmh: Float) {
         scope.launch {
-            val db = AppDatabase.getInstance(context)
-            val settings = db.automationSettingsDao().getSettings()
+            stepMutex.withLock {
+                val db = AppDatabase.getInstance(context)
+                val settings = db.automationSettingsDao().getSettings()
 
-            val terrainLockEnabled = settings?.terrainLockEnabled ?: true
-            var nextLat = currentLat
-            var nextLon = currentLon
-            var nextHeading = currentHeading
+                val terrainLockEnabled = settings?.terrainLockEnabled ?: true
+                var nextLat = currentLat
+                var nextLon = currentLon
+                var nextHeading = currentHeading
 
-            if (terrainLockEnabled) {
-                val stepResult = TerrainLockEngine.evaluateStep(
-                    context = context,
-                    currentLat = currentLat,
-                    currentLon = currentLon,
-                    currentHeading = currentHeading,
-                    stepDistanceMeters = distanceMeters,
-                    checkRestricted = settings?.terrainRestrictedEnabled ?: false,
-                    searchRadiusMeters = (settings?.terrainSearchRadiusMeters ?: 25f).toDouble(),
-                    allowUnmapped = settings?.terrainAllowUnmapped ?: true
-                )
+                if (terrainLockEnabled) {
+                    val stepResult = TerrainLockEngine.evaluateStep(
+                        context = context,
+                        currentLat = currentLat,
+                        currentLon = currentLon,
+                        currentHeading = currentHeading,
+                        stepDistanceMeters = distanceMeters,
+                        checkRestricted = settings?.terrainRestrictedEnabled ?: false,
+                        searchRadiusMeters = (settings?.terrainSearchRadiusMeters ?: 25f).toDouble(),
+                        allowUnmapped = settings?.terrainAllowUnmapped ?: true
+                    )
 
-                when (stepResult) {
-                    is TerrainLockEngine.TerrainStepResult.Accepted -> {
-                        nextLat = stepResult.lat
-                        nextLon = stepResult.lon
-                        nextHeading = stepResult.bearing
-                    }
-                    is TerrainLockEngine.TerrainStepResult.Deflected -> {
-                        nextLat = stepResult.lat
-                        nextLon = stepResult.lon
-                        nextHeading = stepResult.bearing
-                    }
-                    is TerrainLockEngine.TerrainStepResult.Steered -> {
-                        nextLat = stepResult.lat
-                        nextLon = stepResult.lon
-                        nextHeading = stepResult.bearing
-                    }
-                    is TerrainLockEngine.TerrainStepResult.HoldPosition -> {
-                        // Hold position exactly. Log TERRAIN_BLOCKED event
-                        db.automationLogDao().logEvent(
-                            AutomationLogEntity(
-                                source = "TERRAIN",
-                                targetSummary = "Hold Position ($currentLat, $currentLon)",
-                                details = stepResult.reason
+                    when (stepResult) {
+                        is TerrainLockEngine.TerrainStepResult.Accepted -> {
+                            nextLat = stepResult.lat
+                            nextLon = stepResult.lon
+                            nextHeading = stepResult.bearing
+                        }
+                        is TerrainLockEngine.TerrainStepResult.Deflected -> {
+                            nextLat = stepResult.lat
+                            nextLon = stepResult.lon
+                            nextHeading = stepResult.bearing
+                        }
+                        is TerrainLockEngine.TerrainStepResult.Steered -> {
+                            nextLat = stepResult.lat
+                            nextLon = stepResult.lon
+                            nextHeading = stepResult.bearing
+                        }
+                        is TerrainLockEngine.TerrainStepResult.HoldPosition -> {
+                            // Hold position exactly. Log TERRAIN_BLOCKED event
+                            db.automationLogDao().logEvent(
+                                AutomationLogEntity(
+                                    source = "TERRAIN",
+                                    targetSummary = "Hold Position ($currentLat, $currentLon)",
+                                    details = stepResult.reason
+                                )
                             )
-                        )
-                        return@launch
+                            return@withLock
+                        }
                     }
+                } else {
+                    // Raw motion sync without terrain check
+                    val (destLat, destLon) = GeoUtils.computeDestinationPoint(currentLat, currentLon, currentHeading, distanceMeters)
+                    nextLat = destLat
+                    nextLon = destLon
                 }
-            } else {
-                // Raw motion sync without terrain check
-                val (destLat, destLon) = GeoUtils.computeDestinationPoint(currentLat, currentLon, currentHeading, distanceMeters)
-                nextLat = destLat
-                nextLon = destLon
-            }
 
-            currentLat = nextLat
-            currentLon = nextLon
-            currentHeading = nextHeading
-            lastReportedSpeed = speedKmh
+                currentLat = nextLat
+                currentLon = nextLon
+                currentHeading = nextHeading
+                lastReportedSpeed = speedKmh
 
-            withContext(Dispatchers.Main) {
-                onLocationUpdated(currentLat, currentLon, currentHeading, speedKmh)
+                withContext(Dispatchers.Main) {
+                    onLocationUpdated(currentLat, currentLon, currentHeading, speedKmh)
+                }
             }
         }
     }

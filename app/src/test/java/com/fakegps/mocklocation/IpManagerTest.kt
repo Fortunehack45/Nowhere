@@ -33,14 +33,18 @@ class IpManagerTest {
 
     @Test
     fun testFindClosestNodeForCoordinates() {
-        // Since only us_central_gcp is currently active (others upcoming), available routing matches us_central_gcp
+        // Dynamic geographic proximity finds the nearest regional active node
         val tokyoMatch = IpManager.findClosestNodeForCoordinates(35.6895, 139.6917)
-        assertEquals("us_central_gcp", tokyoMatch.id)
+        assertEquals("jp_tyo_1", tokyoMatch.id)
         assertTrue(tokyoMatch.isAvailable)
 
         val londonMatch = IpManager.findClosestNodeForCoordinates(51.5072, -0.1276)
-        assertEquals("us_central_gcp", londonMatch.id)
+        assertEquals("uk_lon_1", londonMatch.id)
         assertTrue(londonMatch.isAvailable)
+
+        val usMatch = IpManager.findClosestNodeForCoordinates(41.2619, -95.8608)
+        assertEquals("us_central_gcp", usMatch.id)
+        assertTrue(usMatch.isAvailable)
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.fakegps.mocklocation.automation.ui
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -51,7 +52,23 @@ class AddEditWifiTriggerDialog : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+        val context = requireContext()
+        val primaryColor = ThemeColorManager.getPrimaryColor(context)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+
+        ThemeColorManager.applyThemeRecursively(binding.root, context)
+
+        ThemeColorManager.applyThemeToRadioButton(binding.rbOnConnect, primaryColor, primaryCsl)
+        ThemeColorManager.applyThemeToRadioButton(binding.rbOnDisconnect, primaryColor, primaryCsl)
+        ThemeColorManager.applyThemeToRadioButton(binding.rbWifiTargetLocation, primaryColor, primaryCsl)
+        ThemeColorManager.applyThemeToRadioButton(binding.rbWifiTargetRoute, primaryColor, primaryCsl)
+        binding.rbOnConnect.background = null
+        binding.rbOnDisconnect.background = null
+        binding.rbWifiTargetLocation.background = null
+        binding.rbWifiTargetRoute.background = null
+
+        ThemeColorManager.applyThemeToEditText(binding.etWifiSsid, primaryColor, context)
+        binding.btnSaveWifiTrigger.backgroundTintList = primaryCsl
 
         setupTargetRadioGroup()
         loadDestinations()

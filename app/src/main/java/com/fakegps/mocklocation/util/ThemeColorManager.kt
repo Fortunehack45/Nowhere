@@ -326,6 +326,38 @@ object ThemeColorManager {
         lightTintCsl: ColorStateList
     ) {
         when (view) {
+            is com.google.android.material.textfield.TextInputLayout -> {
+                try {
+                    view.cursorColor = primaryCsl
+                } catch (_: Exception) {}
+                view.setBoxStrokeColorStateList(
+                    ColorStateList(
+                        arrayOf(
+                            intArrayOf(android.R.attr.state_focused),
+                            intArrayOf(-android.R.attr.state_focused)
+                        ),
+                        intArrayOf(
+                            primaryColor,
+                            Color.parseColor("#38383A")
+                        )
+                    )
+                )
+                view.boxStrokeColor = primaryColor
+                view.defaultHintTextColor = ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_focused),
+                        intArrayOf(-android.R.attr.state_focused)
+                    ),
+                    intArrayOf(
+                        primaryColor,
+                        Color.parseColor("#8E8E93")
+                    )
+                )
+                view.hintTextColor = primaryCsl
+                view.editText?.let { et ->
+                    applyThemeToEditText(et, primaryColor, context)
+                }
+            }
             is MaterialSwitch -> {
                 val thumbStateList = ColorStateList(
                     arrayOf(
@@ -364,12 +396,12 @@ object ThemeColorManager {
                 for (i in 0 until view.childCount) {
                     val child = view.getChildAt(i)
                     if (child is android.widget.RadioButton) {
-                        child.background = createSegmentedPillDrawable(primaryColor)
+                        applyThemeToRadioButton(child, primaryColor, primaryCsl)
                     }
                 }
             }
             is android.widget.RadioButton -> {
-                view.background = createSegmentedPillDrawable(primaryColor)
+                applyThemeToRadioButton(view, primaryColor, primaryCsl)
             }
             is CompoundButton -> {
                 view.buttonTintList = primaryCsl
@@ -535,6 +567,34 @@ object ThemeColorManager {
                 tintTooltipDrawables()
             }
         })
+    }
+
+    fun applyThemeToRadioButton(
+        radioButton: android.widget.RadioButton,
+        primaryColor: Int,
+        primaryCsl: ColorStateList
+    ) {
+        val buttonTintList = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_checked)
+            ),
+            intArrayOf(
+                primaryColor,
+                Color.parseColor("#94A3B8")
+            )
+        )
+        radioButton.buttonTintList = buttonTintList
+
+        // Only use segmented pill background if the button has no circle icon (android:button="@null")
+        // or its parent has a segmented background (e.g. Automation tab buttons)
+        val hasNoButtonDrawable = radioButton.buttonDrawable == null
+        val parentBg = (radioButton.parent as? View)?.background
+        val isSegmentedContainer = parentBg != null && (radioButton.id == R.id.tabBtnSchedules || radioButton.id == R.id.tabBtnWifi || radioButton.id == R.id.tabBtnGuardrails)
+
+        if (hasNoButtonDrawable || isSegmentedContainer) {
+            radioButton.background = createSegmentedPillDrawable(primaryColor)
+        }
     }
 
     /**

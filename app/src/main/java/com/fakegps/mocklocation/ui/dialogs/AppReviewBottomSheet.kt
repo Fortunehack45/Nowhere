@@ -39,6 +39,10 @@ class AppReviewBottomSheet : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val context = requireContext()
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, context)
+        binding.btnRateOnPlayStore.backgroundTintList = ColorStateList.valueOf(primaryColor)
 
         starViews = listOf(
             binding.ivStar1,

@@ -1,6 +1,8 @@
 package com.fakegps.mocklocation.automation.ui
 
 import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.PorterDuff
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,11 +39,28 @@ class ScheduleAdapter(
         fun bind(item: ScheduleEntity) {
             val context = binding.root.context
             val primaryColor = ThemeColorManager.getPrimaryColor(context)
-            val primaryCsl = ColorStateList.valueOf(primaryColor)
+            val lightTintCsl = ThemeColorManager.getLightTintStateList(context)
+
+            ThemeColorManager.applyThemeRecursively(binding.root, context)
 
             binding.tvScheduleName.text = item.name
             binding.tvScheduleTypeBadge.text = item.recurrenceType
             binding.tvScheduleTypeBadge.setTextColor(primaryColor)
+            binding.tvScheduleTypeBadge.backgroundTintList = lightTintCsl
+
+            binding.ivScheduleIcon.setColorFilter(primaryColor, PorterDuff.Mode.SRC_IN)
+            binding.ivScheduleIcon.backgroundTintList = lightTintCsl
+
+            val thumbStateList = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+                intArrayOf(Color.WHITE, Color.parseColor("#94A3B8"))
+            )
+            val trackStateList = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+                intArrayOf(primaryColor, Color.parseColor("#334155"))
+            )
+            binding.switchScheduleEnabled.thumbTintList = thumbStateList
+            binding.switchScheduleEnabled.trackTintList = trackStateList
 
             val now = System.currentTimeMillis()
             if (item.nextTriggerAt > now) {
@@ -52,6 +71,10 @@ class ScheduleAdapter(
             }
 
             binding.tvScheduleLoopBadge.visibility = if (item.loop) View.VISIBLE else View.GONE
+            if (item.loop) {
+                binding.tvScheduleLoopBadge.setTextColor(primaryColor)
+                binding.tvScheduleLoopBadge.backgroundTintList = lightTintCsl
+            }
 
             binding.switchScheduleEnabled.setOnCheckedChangeListener(null)
             binding.switchScheduleEnabled.isChecked = item.enabled
@@ -88,11 +111,26 @@ class WifiTriggerAdapter(
         fun bind(item: WifiTriggerEntity) {
             val context = binding.root.context
             val primaryColor = ThemeColorManager.getPrimaryColor(context)
+            val lightTintCsl = ThemeColorManager.getLightTintStateList(context)
+
+            ThemeColorManager.applyThemeRecursively(binding.root, context)
 
             binding.tvWifiSsid.text = item.ssid
             binding.tvWifiTriggerTypeBadge.text = item.triggerType.replace("_", " ")
             binding.tvWifiTriggerTypeBadge.setTextColor(primaryColor)
+            binding.tvWifiTriggerTypeBadge.backgroundTintList = lightTintCsl
             binding.tvWifiTargetSummary.text = "Target #${item.targetId} (${item.targetType})"
+
+            val thumbStateList = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+                intArrayOf(Color.WHITE, Color.parseColor("#94A3B8"))
+            )
+            val trackStateList = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+                intArrayOf(primaryColor, Color.parseColor("#334155"))
+            )
+            binding.switchWifiTriggerEnabled.thumbTintList = thumbStateList
+            binding.switchWifiTriggerEnabled.trackTintList = trackStateList
 
             binding.switchWifiTriggerEnabled.setOnCheckedChangeListener(null)
             binding.switchWifiTriggerEnabled.isChecked = item.enabled
@@ -125,9 +163,13 @@ class AutomationLogAdapter : ListAdapter<AutomationLogEntity, AutomationLogAdapt
         fun bind(item: AutomationLogEntity) {
             val context = binding.root.context
             val primaryColor = ThemeColorManager.getPrimaryColor(context)
+            val lightTintCsl = ThemeColorManager.getLightTintStateList(context)
+
+            ThemeColorManager.applyThemeRecursively(binding.root, context)
 
             binding.tvLogSourceBadge.text = item.source
             binding.tvLogSourceBadge.setTextColor(primaryColor)
+            binding.tvLogSourceBadge.backgroundTintList = lightTintCsl
             binding.tvLogTargetSummary.text = item.targetSummary
             binding.tvLogDetails.text = item.details
 

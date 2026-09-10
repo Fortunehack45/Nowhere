@@ -1,6 +1,8 @@
 package com.fakegps.mocklocation.automation.ui
 
 import android.app.TimePickerDialog
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -67,7 +69,44 @@ class AddEditScheduleDialog : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+        val context = requireContext()
+        val primaryColor = ThemeColorManager.getPrimaryColor(context)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+
+        ThemeColorManager.applyThemeRecursively(binding.root, context)
+
+        // Specifically guarantee the RadioButtons have themed button circles and transparent background
+        ThemeColorManager.applyThemeToRadioButton(binding.rbTargetLocation, primaryColor, primaryCsl)
+        ThemeColorManager.applyThemeToRadioButton(binding.rbTargetRoute, primaryColor, primaryCsl)
+        binding.rbTargetLocation.background = null
+        binding.rbTargetRoute.background = null
+
+        // Specifically guarantee TextInputLayout & TextInputEditText are themed
+        binding.tilScheduleName.boxStrokeColor = primaryColor
+        binding.tilScheduleName.setBoxStrokeColorStateList(
+            ColorStateList(
+                arrayOf(
+                    intArrayOf(android.R.attr.state_focused),
+                    intArrayOf(-android.R.attr.state_focused)
+                ),
+                intArrayOf(primaryColor, Color.parseColor("#38383A"))
+            )
+        )
+        binding.tilScheduleName.defaultHintTextColor = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_focused),
+                intArrayOf(-android.R.attr.state_focused)
+            ),
+            intArrayOf(primaryColor, Color.parseColor("#8E8E93"))
+        )
+        binding.tilScheduleName.hintTextColor = primaryCsl
+        try {
+            binding.tilScheduleName.cursorColor = primaryCsl
+        } catch (_: Exception) {}
+        ThemeColorManager.applyThemeToEditText(binding.etScheduleName, primaryColor, context)
+
+        binding.btnPickScheduleTime.setTextColor(primaryColor)
+        binding.btnSaveSchedule.backgroundTintList = primaryCsl
 
         setupRecurrenceSpinner()
         setupTimePicker()

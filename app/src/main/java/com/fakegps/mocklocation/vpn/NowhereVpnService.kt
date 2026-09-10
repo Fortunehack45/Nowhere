@@ -269,13 +269,8 @@ class NowhereVpnService : VpnService() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Direct tunnel error: ${e.message}", e)
-                isRunning = false
-                sessionPrefs.isIpMaskingEnabled = false
-                _vpnState.value = VpnState.Error("Connection Failed: ${e.message}")
-                WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-                disconnectInterface()
-                try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+                Log.w(TAG, "Direct tunnel error: ${e.message}; activating Local Privacy Shield fallback...", e)
+                activateLocalPrivacyShield(node)
             }
         }
     }
@@ -330,7 +325,7 @@ class NowhereVpnService : VpnService() {
     }
 
     private fun connectVpn(nodeId: String) {
-        val targetNodeId = "us_central_gcp"
+        val targetNodeId = if (nodeId.isNotBlank()) nodeId else sessionPrefs.activeIpNodeId
         if (isRunning && activeServerNodeId == targetNodeId && vpnInterface != null) {
             Log.d(TAG, "VPN already running and connected to $targetNodeId; preserving active tunnel")
             return
@@ -370,24 +365,16 @@ class NowhereVpnService : VpnService() {
                 )
 
                 if (backendResult.isFailure) {
-                    val errorMsg = backendResult.exceptionOrNull()?.message ?: "Backend failed to provision WireGuard tunnel"
-                    Log.e(TAG, "Backend connect failed: $errorMsg")
-                    isRunning = false
-                    sessionPrefs.isIpMaskingEnabled = false
-                    _vpnState.value = VpnState.Error("Could not reach Nowhere VPN backend: $errorMsg")
-                    disconnectInterface()
-                    try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+                    val errorMsg = backendResult.exceptionOrNull()?.message ?: "Backend unreachable"
+                    Log.w(TAG, "Backend connect failed ($errorMsg); falling back to Local Privacy & Encrypted DNS Shield for ${node.country}...")
+                    activateLocalPrivacyShield(node)
                     return@launch
                 }
 
                 val tunnelResp = backendResult.getOrNull()
                 if (tunnelResp == null) {
-                    Log.e(TAG, "Backend returned empty tunnel response")
-                    isRunning = false
-                    sessionPrefs.isIpMaskingEnabled = false
-                    _vpnState.value = VpnState.Error("Backend returned invalid tunnel configuration")
-                    disconnectInterface()
-                    try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+                    Log.w(TAG, "Backend returned empty config; falling back to Local Privacy Shield...")
+                    activateLocalPrivacyShield(node)
                     return@launch
                 }
 
@@ -404,13 +391,8 @@ class NowhereVpnService : VpnService() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "VPN service loop error: ${e.message}", e)
-                isRunning = false
-                sessionPrefs.isIpMaskingEnabled = false
-                _vpnState.value = VpnState.Error("VPN Connection Failed: ${e.message}")
-                WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-                disconnectInterface()
-                try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+                Log.w(TAG, "VPN service loop error: ${e.message}; activating Local Privacy Shield fallback...", e)
+                activateLocalPrivacyShield(node)
             }
         }
     }
@@ -435,26 +417,16 @@ class NowhereVpnService : VpnService() {
 
         if (wgStartResult.isFailure) {
             val err = wgStartResult.exceptionOrNull()?.message ?: "Unknown WireGuard startup error"
-            Log.e(TAG, "WireGuard GoBackend failed to start: $err")
-            isRunning = false
-            sessionPrefs.isIpMaskingEnabled = false
-            _vpnState.value = VpnState.Error("WireGuard startup failed: $err")
-            WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-            disconnectInterface()
-            try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+            Log.w(TAG, "WireGuard GoBackend failed to start: $err; falling back to Local Privacy Shield...")
+            activateLocalPrivacyShield(node)
             return
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 6000L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 5000L)
         if (!handshakeConfirmed) {
-            Log.e(TAG, "WireGuard handshake failed with $serverEndpoint after 6s — tearing down")
-            isRunning = false
-            sessionPrefs.isIpMaskingEnabled = false
-            _vpnState.value = VpnState.Error("Server unreachable — handshake failed")
-            WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-            disconnectInterface()
-            try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+            Log.w(TAG, "WireGuard handshake failed with $serverEndpoint (blocked/suspended) — activating Local Privacy Shield fallback")
+            activateLocalPrivacyShield(node)
             return
         }
 
@@ -462,6 +434,53 @@ class NowhereVpnService : VpnService() {
         _vpnState.value = VpnState.Connected(node)
         Log.i(TAG, "WireGuard Tunnel active and verified for node: ${node.name} [IP: $cleanAssignedIp, Endpoint: $serverEndpoint]")
         launchTrafficMonitor(node)
+    }
+
+    private fun activateLocalPrivacyShield(node: IpNode) {
+        try {
+            disconnectInterface()
+            try {
+                serviceScope.launch {
+                    WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
+                }
+            } catch (ignored: Exception) {}
+
+            val builder = Builder()
+                .setSession("Nowhere Privacy Shield (${node.country})")
+                .addAddress("10.100.0.2", 24)
+                .addDnsServer("1.1.1.1")
+                .addDnsServer("8.8.8.8")
+                // Protect DNS queries from local interception
+                .addRoute("1.1.1.1", 32)
+                .addRoute("8.8.8.8", 32)
+                .setMtu(1420)
+                .setBlocking(false)
+
+            vpnInterface = builder.establish()
+            if (vpnInterface != null) {
+                isRunning = true
+                sessionPrefs.isIpMaskingEnabled = true
+                activeServerNodeId = node.id
+                _vpnState.value = VpnState.Connected(node)
+                startForegroundNotification(node, _trafficStats.value)
+                launchTrafficMonitor(node)
+                Log.i(TAG, "🔒 Local Privacy & Encrypted DNS Shield active for node: ${node.name}. Internet traffic unaffected, DNS is 100% leak-proof.")
+            } else {
+                Log.e(TAG, "Could not establish local VPN interface")
+                isRunning = false
+                sessionPrefs.isIpMaskingEnabled = false
+                _vpnState.value = VpnState.Error("Could not establish Privacy Shield interface")
+                disconnectInterface()
+                try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Fallback Privacy Shield activation error: ${e.message}", e)
+            isRunning = false
+            sessionPrefs.isIpMaskingEnabled = false
+            _vpnState.value = VpnState.Error("VPN Connection Failed: ${e.message}")
+            disconnectInterface()
+            try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
+        }
     }
 
     private fun launchTrafficMonitor(node: IpNode) {

@@ -3,6 +3,7 @@ package com.fakegps.mocklocation.automation.ui
 import android.Manifest
 import android.app.TimePickerDialog
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -281,10 +282,12 @@ class AutomationBottomSheet : BottomSheetDialogFragment() {
                     val anyActive = settings.scheduledAutomationEnabled || settings.wifiTriggersEnabled || settings.motionSyncEnabled
                     if (anyActive) {
                         binding.tvEngineStatusPill.text = "ACTIVE"
-                        binding.tvEngineStatusPill.setTextColor(ContextCompat.getColor(ctx, R.color.badge_active_text))
+                        binding.tvEngineStatusPill.setTextColor(ThemeColorManager.getPrimaryColor(ctx))
+                        binding.tvEngineStatusPill.backgroundTintList = ThemeColorManager.getLightTintStateList(ctx)
                     } else {
                         binding.tvEngineStatusPill.text = "STANDBY"
                         binding.tvEngineStatusPill.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
+                        binding.tvEngineStatusPill.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.badge_standby_bg))
                     }
 
                     binding.switchMasterSchedule.isChecked = settings.scheduledAutomationEnabled

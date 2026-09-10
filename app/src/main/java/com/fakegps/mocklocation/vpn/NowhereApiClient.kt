@@ -48,6 +48,16 @@ object NowhereApiClient {
         val estimatedPingMs: Int
     )
 
+    fun getCustomBackendUrl(context: Context): String {
+        return getBaseUrl(context)
+    }
+
+    fun setCustomBackendUrl(context: Context, url: String) {
+        val cleanUrl = url.trim().removeSuffix("/")
+        val prefs = context.getSharedPreferences("nowhere_vpn_client_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("custom_backend_url", cleanUrl).apply()
+    }
+
     private fun getBaseUrl(context: Context): String {
         val prefs = context.getSharedPreferences("nowhere_vpn_client_prefs", Context.MODE_PRIVATE)
         return prefs.getString("custom_backend_url", DEFAULT_BASE_URL) ?: DEFAULT_BASE_URL
@@ -72,19 +82,15 @@ object NowhereApiClient {
             val url = URL(endpoint)
             val conn = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
-                connectTimeout = 8000
-                readTimeout = 8000
+                connectTimeout = 3500
+                readTimeout = 3500
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json")
                 setRequestProperty("X-API-Key", getApiKey(context))
             }
 
-            val effectiveNodeId = if (nodeId.isNullOrEmpty() || nodeId.startsWith("uk_") || nodeId.startsWith("de_") || nodeId.startsWith("jp_") || nodeId.startsWith("sg_") || nodeId.startsWith("ca_") || nodeId.startsWith("au_") || nodeId.startsWith("in_") || nodeId.startsWith("br_") || nodeId.startsWith("za_")) {
-                "us_central_gcp"
-            } else {
-                nodeId
-            }
-            val effectiveCountry = if (effectiveNodeId == "us_central_gcp") "US" else (country ?: "US")
+            val effectiveNodeId = if (nodeId.isNullOrEmpty()) "us_central_gcp" else nodeId
+            val effectiveCountry = country ?: "US"
 
             val jsonBody = JSONObject().apply {
                 put("node_id", effectiveNodeId)
