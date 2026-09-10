@@ -18,7 +18,7 @@ object FrostedGlassManager {
     /**
      * Applies hardware-accelerated GPU window blur behind dialogs, bottom sheets, and floating windows.
      */
-    fun applyWindowBlur(dialog: Dialog?, radiusDp: Int = 28) {
+    fun applyWindowBlur(dialog: Dialog?, radiusDp: Int = 25) {
         val window = dialog?.window ?: return
         applyWindowBlur(window, radiusDp)
     }
@@ -26,7 +26,7 @@ object FrostedGlassManager {
     /**
      * Configures a Window to blur the underlying activity/map background on Android 12+.
      */
-    fun applyWindowBlur(window: Window, radiusDp: Int = 30) {
+    fun applyWindowBlur(window: Window, radiusDp: Int = 25) {
         try {
             // Set light dim amount (0.15f) instead of default heavy 0.60f dark blanket,
             // allowing the underlying blurred map colors and content to shine through the frosted glass!

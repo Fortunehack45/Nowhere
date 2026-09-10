@@ -92,6 +92,13 @@ class MockLocationService : Service() {
     private var joystickAngleDeg: Float = 0.0f
     private var joystickMagnitude: Float = 0.0f
 
+    // Unified simulation coordinate state for continuous heartbeat pulsing
+    @Volatile private var currentSimLat: Double = 0.0
+    @Volatile private var currentSimLon: Double = 0.0
+    @Volatile private var currentSimAlt: Double = 15.0
+    @Volatile private var currentSimSpeedMps: Float = 0.0f
+    @Volatile private var currentSimBearing: Float = 0.0f
+
     // Automation Engines (Wifi triggers and Motion-linked mock movement)
     private var wifiTriggerHandler: com.fakegps.mocklocation.automation.engine.WifiTriggerHandler? = null
     private var motionSyncEngine: com.fakegps.mocklocation.automation.engine.MotionSyncEngine? = null
@@ -115,23 +122,28 @@ class MockLocationService : Service() {
             start()
         }
         motionSyncEngine = com.fakegps.mocklocation.automation.engine.MotionSyncEngine(this) { lat, lon, bearing, speed ->
+            currentSimLat = lat
+            currentSimLon = lon
+            currentSimBearing = bearing
+            val speedMps = speed / 3.6f
+            currentSimSpeedMps = speedMps
             sessionPrefs.lastLatitude = lat
             sessionPrefs.lastLongitude = lon
             sessionPrefs.lastSpeedKmh = speed
-            engine.setLocation(lat, lon, 10.0, speed / 3.6f, bearing, false)
+            engine.setLocation(lat, lon, 10.0, speedMps, bearing, false)
             _serviceState.value = ServiceState.Running(
                 mode = SimulationMode.Fixed(lat, lon, 10.0),
                 latitude = lat,
                 longitude = lon,
                 altitude = 10.0,
-                speedMps = speed / 3.6f,
+                speedMps = speedMps,
                 bearingDegrees = bearing
             )
             updateLocationNotification(lat, lon, "Motion Sync Active")
             updateAllWidgets()
         }
 
-        if (sessionPrefs.hasValidActiveSession()) {
+        if (sessionPrefs.isSessionActive && sessionPrefs.hasValidActiveSession()) {
             SessionTimerManager.resumeExistingTimer(this)
         }
     }
@@ -225,6 +237,14 @@ class MockLocationService : Service() {
         isStopping.set(false)
         sessionPrefs.isSessionActive = true
         sessionPrefs.activeMode = "MOTION_SYNC"
+        sessionPrefs.lastLatitude = initialLat
+        sessionPrefs.lastLongitude = initialLon
+        currentSimLat = initialLat
+        currentSimLon = initialLon
+        currentSimAlt = 10.0
+        currentSimSpeedMps = 0.0f
+        currentSimBearing = 0.0f
+        activeMode = SimulationMode.Fixed(initialLat, initialLon, 10.0)
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
         startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
@@ -237,6 +257,7 @@ class MockLocationService : Service() {
             bearingDegrees = 0f
         )
         motionSyncEngine?.start(initialLat, initialLon, 0f)
+        startContinuousHeartbeatLoop()
         updateAllWidgets()
     }
 
@@ -611,6 +632,11 @@ class MockLocationService : Service() {
         sessionPrefs.lastLatitude = latitude
         sessionPrefs.lastLongitude = longitude
         sessionPrefs.lastAltitude = altitude
+        currentSimLat = latitude
+        currentSimLon = longitude
+        currentSimAlt = altitude
+        currentSimSpeedMps = 0.0f
+        currentSimBearing = 0.0f
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
@@ -642,16 +668,27 @@ class MockLocationService : Service() {
         )
         updateLocationNotification(latitude, longitude, "Teleported / Fixed")
 
+        startContinuousHeartbeatLoop()
+    }
+
+    private fun startContinuousHeartbeatLoop() {
+        if (simulationJob?.isActive == true) return
         simulationJob = serviceScope.launch {
             try {
                 while (isActive) {
+                    val lat = currentSimLat
+                    val lon = currentSimLon
+                    val alt = currentSimAlt
+                    val spd = currentSimSpeedMps
+                    val brg = currentSimBearing
+
                     val result = engine.setLocation(
-                        latitude = latitude,
-                        longitude = longitude,
-                        altitude = altitude,
-                        speed = 0.0f,
-                        bearing = 0.0f,
-                        applyStationaryJitter = settingsPrefs.randomizeJitter
+                        latitude = lat,
+                        longitude = lon,
+                        altitude = alt,
+                        speed = spd,
+                        bearing = brg,
+                        applyStationaryJitter = settingsPrefs.randomizeJitter && spd == 0.0f
                     )
 
                     if (result.isFailure) {
@@ -662,23 +699,23 @@ class MockLocationService : Service() {
                     } else {
                         val loc = result.getOrNull()
                         if (loc != null) {
-                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(loc.latitude, loc.longitude, loc.altitude, 0.0f, 0.0f)
+                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(loc.latitude, loc.longitude, loc.altitude, spd, brg)
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = loc.latitude,
                                 longitude = loc.longitude,
                                 altitude = loc.altitude,
-                                speedMps = 0.0f,
-                                bearingDegrees = 0.0f
+                                speedMps = spd,
+                                bearingDegrees = brg
                             )
                         }
                     }
-                    delay(200L) // Continuous high-frequency 200ms anti-dropout anchor pulse (5Hz)
+                    delay(300L) // Continuous 300ms (3.3Hz) anti-dropout heartbeat: keeps Google Maps fix stable without gray dot
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
-                Log.e(TAG, "Uncaught fatal error in fixed simulation loop: ${t.message}", t)
+                Log.e(TAG, "Uncaught fatal error in fixed/motion simulation loop: ${t.message}", t)
                 stopSpoofing()
             }
         }
@@ -1091,6 +1128,7 @@ class MockLocationService : Service() {
             return
         }
         Log.i(TAG, "stopSpoofing called. Terminating simulation and releasing resources.")
+        MockLocationServiceReceiver.activeService = null
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()
@@ -1153,6 +1191,8 @@ class MockLocationService : Service() {
         // recursive destroy loop when Android system legitimately destroys the service.
         // Instead, only cancel coroutines and release resources directly.
         MockLocationServiceReceiver.activeService = null
+        sessionPrefs.isSessionActive = false
+        SessionTimerManager.stopTimer(this)
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()

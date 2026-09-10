@@ -235,6 +235,14 @@ class MainActivity : AppCompatActivity() {
                 baseBottomPadding + navBarInset.bottom
             )
 
+            val overlayTopPadding = (12 * resources.displayMetrics.density).toInt()
+            binding.includedSearchOverlay.layoutSearchOverlayHeader.setPadding(
+                binding.includedSearchOverlay.layoutSearchOverlayHeader.paddingLeft,
+                overlayTopPadding + statusBarInset.top,
+                binding.includedSearchOverlay.layoutSearchOverlayHeader.paddingRight,
+                binding.includedSearchOverlay.layoutSearchOverlayHeader.paddingBottom
+            )
+
             insets
         }
 
@@ -399,12 +407,11 @@ class MainActivity : AppCompatActivity() {
         applyDynamicThemeAccent()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
-        if (com.fakegps.mocklocation.data.preferences.SessionPreferences(this).hasValidActiveSession()) {
-            if (viewModel.uiState.value.isServiceRunning) {
-                com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
-            } else {
-                com.fakegps.mocklocation.service.SessionTimerManager.updateStaticState(this)
-            }
+        val isSimRunning = viewModel.uiState.value.isServiceRunning && com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService != null
+        if (isSimRunning) {
+            com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+        } else {
+            com.fakegps.mocklocation.service.SessionTimerManager.stopTimer(this)
         }
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             if (binding.adBannerContainer.childCount == 0) {
@@ -711,6 +718,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSearchOverlay() {
+        binding.layoutTopHeader.visibility = View.GONE
+        binding.cardSideButtons.visibility = View.GONE
+        binding.cardBottomContainer.visibility = View.GONE
+
         val overlay = binding.includedSearchOverlay
         overlay.layoutSearchOverlayRoot.visibility = View.VISIBLE
         overlay.layoutSearchOverlayRoot.alpha = 0f
@@ -763,6 +774,10 @@ class MainActivity : AppCompatActivity() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             binding.mapView.setRenderEffect(null)
         }
+
+        binding.layoutTopHeader.visibility = View.VISIBLE
+        binding.cardSideButtons.visibility = View.VISIBLE
+        binding.cardBottomContainer.visibility = View.VISIBLE
 
         overlay.layoutSearchOverlayRoot.animate()
             .alpha(0f)
@@ -1734,11 +1749,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopSpoofing() {
         performHapticFeedbackIfEnabled()
+        com.fakegps.mocklocation.service.SessionTimerManager.stopTimer(this)
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_STOP
         }
         startService(intent)
         mockService?.stopSpoofing()
+        viewModel.onServiceStateUpdated(ServiceState.Idle)
         com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this)
         com.fakegps.mocklocation.ads.AdManager.showInterstitialIfReady(this)
     }

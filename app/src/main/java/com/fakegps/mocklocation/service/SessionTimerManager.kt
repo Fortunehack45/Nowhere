@@ -113,6 +113,10 @@ object SessionTimerManager {
         sessionPrefs.isSessionActive = false
         resetThresholdFlags()
 
+        cancelNotification(context, NOTIF_ID_60S)
+        cancelNotification(context, NOTIF_ID_30S)
+        cancelNotification(context, NOTIF_ID_10S)
+
         updateState(context)
         NowhereAppWidgetProvider.updateAllWidgets(context)
     }
@@ -133,7 +137,7 @@ object SessionTimerManager {
                 val sessionPrefs = SessionPreferences(appContext)
 
                 if (!sessionPrefs.isSessionActive) {
-                    _timerState.value = SessionTimerState()
+                    updateState(appContext)
                     break
                 }
 
@@ -225,6 +229,10 @@ object SessionTimerManager {
     }
 
     fun updateStaticState(context: Context) {
+        timerJob?.cancel()
+        timerJob = null
+        timerScope?.cancel()
+        timerScope = null
         updateState(context)
     }
 

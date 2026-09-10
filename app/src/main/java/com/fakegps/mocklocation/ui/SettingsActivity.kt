@@ -83,8 +83,12 @@ class SettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
-        if (sessionPrefs.hasValidActiveSession()) {
+        val sessionPrefs = SessionPreferences(this)
+        val isSimRunning = sessionPrefs.isSessionActive && com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService != null
+        if (isSimRunning) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+        } else {
+            com.fakegps.mocklocation.service.SessionTimerManager.stopTimer(this)
         }
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             if (binding.adBannerContainer.childCount == 0) {
@@ -148,10 +152,11 @@ class SettingsActivity : AppCompatActivity() {
             }
             binding.btnSettingsPremiumAction.text = if (isVip) "SAVE $discount%" else "UPGRADE"
             binding.btnSettingsPremiumAction.setIconResource(R.drawable.ic_bolt)
-            binding.btnSettingsPremiumAction.backgroundTintList = ContextCompat.getColorStateList(this, R.color.primary)
+            val primaryCsl = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
+            binding.btnSettingsPremiumAction.backgroundTintList = primaryCsl
             binding.btnSettingsPremiumAction.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnSettingsPremiumAction.iconTint = ContextCompat.getColorStateList(this, R.color.white)
-            binding.ivSettingsPremiumIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
+            binding.ivSettingsPremiumIcon.imageTintList = primaryCsl
         }
     }
 
@@ -188,7 +193,8 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnSettingsExtendOneHour.setTextColor(primaryColor)
         binding.btnSettingsExtendOneHour.iconTint = primaryCsl
 
-        if (timerState.isRunning || (sessionPrefs.isSessionActive && remaining > 0)) {
+        val isSimRunning = sessionPrefs.isSessionActive && com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService != null
+        if (isSimRunning && (timerState.isRunning || remaining > 0)) {
             binding.tvSettingsSessionBadge.text = formattedRemaining
             binding.tvSettingsSessionBadge.setTextColor(primaryColor)
             binding.tvSettingsSessionBadge.backgroundTintList = lightTintCsl
@@ -214,8 +220,9 @@ class SettingsActivity : AppCompatActivity() {
             binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.badge_standby_text)
 
             binding.tvSettingsSessionTime.text = formattedRemaining
-            binding.tvSettingsSessionTotal.text = "Default Duration: 2h 00m (Ready)"
-            binding.pbSettingsSessionProgress.progress = 100
+            binding.tvSettingsSessionTotal.text = "Duration Remaining: $formattedRemaining (Ready)"
+            binding.pbSettingsSessionProgress.progress = timerState.progressPercent
+            binding.pbSettingsSessionProgress.progressTintList = primaryCsl
         }
     }
 
@@ -661,7 +668,7 @@ class SettingsActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             tvGeocodingStatus.text = "🔍 Searching coordinates for \"$query\"..."
-            tvGeocodingStatus.setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.primary))
+            tvGeocodingStatus.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@SettingsActivity))
             btnLookup.isEnabled = false
 
             resolvePlaceCoordinates(query) { lat, lon, resolvedName ->

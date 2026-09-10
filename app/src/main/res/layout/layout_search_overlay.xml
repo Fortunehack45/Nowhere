@@ -5,18 +5,20 @@
     android:id="@+id/layoutSearchOverlayRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_frosted_glass_overlay"
+    android:background="@color/surface_dark"
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical">
 
-    <!-- Top Safe Insets & Frosted Search Header Container -->
+    <!-- Top Safe Insets & Search Header Container -->
     <LinearLayout
+        android:id="@+id/layoutSearchOverlayHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clipToPadding="false"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
+        android:paddingTop="12dp"
         android:paddingBottom="6dp">
 
         <!-- Frosted Glass Search Bar Row -->
@@ -229,7 +231,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🏛️ Eiffel Tower"
+                    android:text="🗼 Eiffel Tower"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />

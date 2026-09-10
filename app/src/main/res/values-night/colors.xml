@@ -22,14 +22,14 @@
     <color name="surface_search">#B32C2C2E</color>
     <color name="card_dark">#C81C1C1E</color>
 
-    <!-- Frosted Glass Tokens (Dark Mode - Smoked Obsidian Glass) -->
-    <color name="surface_glass_sheet">#B8141416</color>
-    <color name="surface_glass_card">#B81C1C1E</color>
+    <!-- Frosted Glass Tokens (Dark Mode - Smoked Obsidian Glass - 60% to 65% Opacity) -->
+    <color name="surface_glass_sheet">#A6141416</color>
+    <color name="surface_glass_card">#A61C1C1E</color>
     <color name="surface_glass_inner">#26FFFFFF</color>
-    <color name="glass_frosted_start">#8C2E2E38</color>
-    <color name="glass_frosted_end">#C4181820</color>
-    <color name="glass_chip_start">#A6353542</color>
-    <color name="glass_chip_end">#D01E1E26</color>
+    <color name="glass_frosted_start">#992E2E38</color>
+    <color name="glass_frosted_end">#A6181820</color>
+    <color name="glass_chip_start">#9E353542</color>
+    <color name="glass_chip_end">#A61E1E26</color>
     <color name="stroke_glass_specular">#40FFFFFF</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->

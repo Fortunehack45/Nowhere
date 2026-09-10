@@ -70,17 +70,20 @@
             android:name=".service.MockLocationService"
             android:enabled="true"
             android:exported="false"
+            android:stopWithTask="false"
             android:foregroundServiceType="location" />
 
         <service
             android:name=".service.FloatingJoystickService"
             android:enabled="true"
+            android:stopWithTask="false"
             android:exported="false" />
 
         <service
             android:name=".vpn.NowhereVpnService"
             android:enabled="true"
             android:exported="false"
+            android:stopWithTask="false"
             android:foregroundServiceType="specialUse"
             android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>
@@ -95,6 +98,7 @@
             android:name=".vpn.KillSwitchSinkholeService"
             android:enabled="true"
             android:exported="false"
+            android:stopWithTask="false"
             android:foregroundServiceType="specialUse"
             android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>
