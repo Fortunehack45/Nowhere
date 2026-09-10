@@ -37,7 +37,6 @@ class SaveRouteDialog(
 
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, context)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dialog, 28)
         dialog.show()
     }
 }

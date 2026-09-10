@@ -26,11 +26,6 @@ class MapLayersBottomSheet(
         return binding.root
     }
 
-    override fun onStart() {
-        super.onStart()
-        com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dialog)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         settingsPrefs = AppSettingsPreferences(requireContext())

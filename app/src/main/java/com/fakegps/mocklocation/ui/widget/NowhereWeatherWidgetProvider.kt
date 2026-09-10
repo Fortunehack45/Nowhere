@@ -59,20 +59,31 @@ class NowhereWeatherWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.tvWidgetWeatherLocation, report.locationName)
 
                 if (useImperial) {
-                    views.setTextViewText(R.id.tvWidgetWeatherTemp, String.format("%.0f°F", cur.temperatureF))
-                    views.setTextViewText(R.id.tvWidgetWeatherCondition, "${cur.conditionName} • Feels ${String.format("%.0f°F", (cur.apparentTemperatureC * 9.0 / 5.0) + 32.0)}")
+                    views.setTextViewText(R.id.tvWidgetWeatherTemp, String.format(java.util.Locale.US, "%.0f°F", cur.temperatureF))
+                    views.setTextViewText(R.id.tvWidgetWeatherCondition, "${cur.conditionName} • Feels ${String.format(java.util.Locale.US, "%.0f°F", (cur.apparentTemperatureC * 9.0 / 5.0) + 32.0)}")
                     if (report.forecast.isNotEmpty()) {
                         val f = report.forecast.first()
-                        views.setTextViewText(R.id.tvWidgetWeatherForecastSnippet, "High: ${String.format("%.0f°F", f.maxTempF)} / Low: ${String.format("%.0f°F", f.minTempF)} • Humidity ${cur.humidityPercent}%")
+                        views.setTextViewText(R.id.tvWidgetWeatherForecastSnippet, "High: ${String.format(java.util.Locale.US, "%.0f°F", f.maxTempF)} / Low: ${String.format(java.util.Locale.US, "%.0f°F", f.minTempF)} • Humidity ${cur.humidityPercent}%")
                     }
                 } else {
-                    views.setTextViewText(R.id.tvWidgetWeatherTemp, String.format("%.0f°C", cur.temperatureC))
-                    views.setTextViewText(R.id.tvWidgetWeatherCondition, "${cur.conditionName} • Feels ${String.format("%.0f°C", cur.apparentTemperatureC)}")
+                    views.setTextViewText(R.id.tvWidgetWeatherTemp, String.format(java.util.Locale.US, "%.0f°C", cur.temperatureC))
+                    views.setTextViewText(R.id.tvWidgetWeatherCondition, "${cur.conditionName} • Feels ${String.format(java.util.Locale.US, "%.0f°C", cur.apparentTemperatureC)}")
                     if (report.forecast.isNotEmpty()) {
                         val f = report.forecast.first()
-                        views.setTextViewText(R.id.tvWidgetWeatherForecastSnippet, "High: ${String.format("%.0f°C", f.maxTempC)} / Low: ${String.format("%.0f°C", f.minTempC)} • Humidity ${cur.humidityPercent}%")
+                        views.setTextViewText(R.id.tvWidgetWeatherForecastSnippet, "High: ${String.format(java.util.Locale.US, "%.0f°C", f.maxTempC)} / Low: ${String.format(java.util.Locale.US, "%.0f°C", f.minTempC)} • Humidity ${cur.humidityPercent}%")
                     }
                 }
+            } else {
+                val sessionPrefs = SessionPreferences(context)
+                val lat = sessionPrefs.lastLatitude
+                val lon = sessionPrefs.lastLongitude
+                val cachedLoc = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
+                val locText = if (!cachedLoc.isNullOrBlank()) cachedLoc else String.format(java.util.Locale.US, "%.4f°, %.4f°", lat, lon)
+                views.setTextViewText(R.id.tvWidgetWeatherEmoji, "🌐")
+                views.setTextViewText(R.id.tvWidgetWeatherLocation, locText)
+                views.setTextViewText(R.id.tvWidgetWeatherTemp, "--°")
+                views.setTextViewText(R.id.tvWidgetWeatherCondition, "Live GPS Location • Tap to Sync")
+                views.setTextViewText(R.id.tvWidgetWeatherForecastSnippet, "Real-time weather telemetry ready")
             }
 
             // Open App Intent with Weather Sheet
@@ -139,7 +150,8 @@ class NowhereWeatherWidgetProvider : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(appWidgetId, finalViews)
         }
 
-        applyViews(null)
+        val cached = WeatherManager.getCachedReport()
+        applyViews(cached)
 
         CoroutineScope(Dispatchers.IO).launch {
             try {

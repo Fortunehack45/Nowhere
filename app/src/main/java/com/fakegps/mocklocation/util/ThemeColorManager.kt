@@ -271,6 +271,38 @@ object ThemeColorManager {
     }
 
     /**
+     * Applies the theme accent color to an EditText including blinking text cursor,
+     * text selection handles, selection highlight color, and text color.
+     */
+    fun applyThemeToEditText(editText: android.widget.EditText, primaryColor: Int, context: Context) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            try {
+                val density = context.resources.displayMetrics.density
+                val cursor = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    setColor(primaryColor)
+                    setSize((2.5f * density).toInt().coerceAtLeast(3), 0)
+                }
+                editText.textCursorDrawable = cursor
+                editText.textSelectHandle?.setTint(primaryColor)
+                editText.textSelectHandleLeft?.setTint(primaryColor)
+                editText.textSelectHandleRight?.setTint(primaryColor)
+            } catch (ignored: Exception) {
+                try {
+                    editText.textCursorDrawable?.setTint(primaryColor)
+                } catch (_: Exception) {}
+            }
+        }
+        // Set semi-transparent text highlight color matching primary
+        editText.highlightColor = (primaryColor and 0x00FFFFFF) or 0x40000000
+
+        val textColor = editText.currentTextColor
+        if (isColorMatchingPrimary(textColor)) {
+            editText.setTextColor(primaryColor)
+        }
+    }
+
+    /**
      * Recursively walks the view hierarchy and transforms ALL red / primary theme
      * elements, switches, icons, text, and surfaces into the chosen theme color palette.
      */
@@ -372,6 +404,9 @@ object ThemeColorManager {
                     }
                 }
             }
+            is android.widget.EditText -> {
+                applyThemeToEditText(view, primaryColor, context)
+            }
             is TextView -> {
                 val textColor = view.currentTextColor
                 if (isColorMatchingPrimary(textColor)) {
@@ -379,27 +414,6 @@ object ThemeColorManager {
                 } else if (isColorMatchingLightTint(textColor)) {
                     view.setTextColor(lightTintColor)
                 }
-            }
-            is android.widget.EditText -> {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    try {
-                        val density = context.resources.displayMetrics.density
-                        val cursor = GradientDrawable().apply {
-                            shape = GradientDrawable.RECTANGLE
-                            setColor(primaryColor)
-                            setSize((2f * density).toInt().coerceAtLeast(2), 0)
-                        }
-                        view.textCursorDrawable = cursor
-                        view.textSelectHandle?.setTint(primaryColor)
-                        view.textSelectHandleLeft?.setTint(primaryColor)
-                        view.textSelectHandleRight?.setTint(primaryColor)
-                    } catch (ignored: Exception) {
-                        try {
-                            view.textCursorDrawable?.setTint(primaryColor)
-                        } catch (_: Exception) {}
-                    }
-                }
-                view.highlightColor = (primaryColor and 0x00FFFFFF) or 0x33000000
             }
             is ImageView -> {
                 if (view.id == R.id.ivTopBrandLogo || view.id == R.id.ivSettingsFooterLogo || view.id == R.id.ivWidgetGalleryLogo) {
@@ -524,10 +538,10 @@ object ThemeColorManager {
     }
 
     /**
-     * Determines whether widgets should render in Dark mode or Light mode based on the user's
+     * Determines whether the app should render in Dark mode or Light mode based on the user's
      * App Theme setting in Nowhere ("DARK", "LIGHT", or "SYSTEM").
      */
-    fun isWidgetDarkMode(context: Context): Boolean {
+    fun isDarkMode(context: Context): Boolean {
         val prefs = AppSettingsPreferences(context)
         return when (prefs.appTheme) {
             "DARK" -> true
@@ -537,6 +551,14 @@ object ThemeColorManager {
                 nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES
             }
         }
+    }
+
+    /**
+     * Determines whether widgets should render in Dark mode or Light mode based on the user's
+     * App Theme setting in Nowhere ("DARK", "LIGHT", or "SYSTEM").
+     */
+    fun isWidgetDarkMode(context: Context): Boolean {
+        return isDarkMode(context)
     }
 
     fun getWidgetGlassBackgroundRes(context: Context): Int {

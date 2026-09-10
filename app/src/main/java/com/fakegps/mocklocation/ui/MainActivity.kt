@@ -721,11 +721,15 @@ class MainActivity : AppCompatActivity() {
         binding.layoutTopHeader.visibility = View.GONE
         binding.cardSideButtons.visibility = View.GONE
         binding.cardBottomContainer.visibility = View.GONE
+        binding.joystickOverlay.visibility = View.GONE
 
         val overlay = binding.includedSearchOverlay
         overlay.layoutSearchOverlayRoot.visibility = View.VISIBLE
         overlay.layoutSearchOverlayRoot.alpha = 0f
         overlay.layoutSearchOverlayRoot.animate().alpha(1f).setDuration(200).start()
+
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToEditText(overlay.etSearchOverlayInput, primaryColor, this)
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             binding.mapView.setRenderEffect(
@@ -778,6 +782,8 @@ class MainActivity : AppCompatActivity() {
         binding.layoutTopHeader.visibility = View.VISIBLE
         binding.cardSideButtons.visibility = View.VISIBLE
         binding.cardBottomContainer.visibility = View.VISIBLE
+        val state = viewModel.uiState.value
+        binding.joystickOverlay.visibility = if (state.selectedTab == SelectedModeTab.JOYSTICK) View.VISIBLE else View.GONE
 
         overlay.layoutSearchOverlayRoot.animate()
             .alpha(0f)
@@ -1917,6 +1923,11 @@ class MainActivity : AppCompatActivity() {
         searchOverlay.ivCoordinateJumpIcon.imageTintList = primaryCsl
         searchOverlay.btnJumpDirectCoords.setTextColor(primaryColor)
         searchOverlay.btnClearAllSearchHistory.setTextColor(primaryColor)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToEditText(searchOverlay.etSearchOverlayInput, primaryColor, this)
+
+        // Update Joystick Theme (Light vs Dark Mode and primary knob accent)
+        val isNight = com.fakegps.mocklocation.util.ThemeColorManager.isDarkMode(this)
+        binding.joystickOverlay.updateTheme(isNight, primaryColor)
 
         // Recursively theme all other views across the screen (including switches, cards, edit texts)
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)

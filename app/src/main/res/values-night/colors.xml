@@ -12,24 +12,24 @@
     <color name="white_translucent">#1AFFFFFF</color>
     <color name="white_border">#26FFFFFF</color>
 
-    <!-- Surfaces (Dark Mode - Apple System Colors) -->
+    <!-- Surfaces (Dark Mode - Rich Smoked Obsidian 88% to 95%) -->
     <color name="surface_dark">#000000</color>
-    <color name="surface_obsidian">#C81C1C1E</color>
-    <color name="surface_card">#C81C1C1E</color>
-    <color name="surface_card_elevated">#CC2C2C2E</color>
-    <color name="surface_elevated">#CC2C2C2E</color>
-    <color name="surface_glass">#C81C1C1E</color>
-    <color name="surface_search">#B32C2C2E</color>
-    <color name="card_dark">#C81C1C1E</color>
+    <color name="surface_obsidian">#E61C1C1E</color>
+    <color name="surface_card">#E61C1C1E</color>
+    <color name="surface_card_elevated">#F02C2C2E</color>
+    <color name="surface_elevated">#F02C2C2E</color>
+    <color name="surface_glass">#E61C1C1E</color>
+    <color name="surface_search">#E62C2C2E</color>
+    <color name="card_dark">#E61C1C1E</color>
 
-    <!-- Frosted Glass Tokens (Dark Mode - Smoked Obsidian Glass - 60% to 65% Opacity) -->
-    <color name="surface_glass_sheet">#A6141416</color>
-    <color name="surface_glass_card">#A61C1C1E</color>
+    <!-- Frosted Glass Tokens (Dark Mode - Smoked Obsidian Glass - 88% to 95% Opacity/Blur) -->
+    <color name="surface_glass_sheet">#F2141416</color>
+    <color name="surface_glass_card">#E61C1C1E</color>
     <color name="surface_glass_inner">#26FFFFFF</color>
-    <color name="glass_frosted_start">#992E2E38</color>
-    <color name="glass_frosted_end">#A6181820</color>
-    <color name="glass_chip_start">#9E353542</color>
-    <color name="glass_chip_end">#A61E1E26</color>
+    <color name="glass_frosted_start">#E624242A</color>
+    <color name="glass_frosted_end">#F016161C</color>
+    <color name="glass_chip_start">#E62E2E36</color>
+    <color name="glass_chip_end">#F01A1A22</color>
     <color name="stroke_glass_specular">#40FFFFFF</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->

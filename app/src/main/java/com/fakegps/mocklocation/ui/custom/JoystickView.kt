@@ -81,18 +81,44 @@ class JoystickView @JvmOverloads constructor(
     }
 
     init {
+        val isNight = com.fakegps.mocklocation.util.ThemeColorManager.isDarkMode(context)
         val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
-        setJoystickColor(primaryColor)
+        updateTheme(isNight, primaryColor)
     }
 
-    fun setJoystickColor(primaryColor: Int) {
+    fun updateTheme(isNight: Boolean, primaryColor: Int) {
+        if (isNight) {
+            // Dark mode: Deep frosted obsidian glass (90% opacity)
+            baseGlassPaint.color = Color.parseColor("#E61C1C1E")
+            outerRingPaint.color = Color.parseColor("#38383A")
+            innerRingsPaint.color = Color.parseColor("#1AFFFFFF")
+            crosshairPaint.color = Color.parseColor("#26FFFFFF")
+            cardinalTextPaint.color = Color.parseColor("#CBD5E1")
+            knobOuterPaint.color = Color.parseColor("#1E2738")
+            knobRingPaint.color = Color.parseColor("#FFFFFF")
+        } else {
+            // Light mode: Frosted ice glass (90-95% opacity) with crisp dark typography & accents
+            baseGlassPaint.color = Color.parseColor("#EEF8FAFC")
+            outerRingPaint.color = Color.parseColor("#33000000")
+            innerRingsPaint.color = Color.parseColor("#18000000")
+            crosshairPaint.color = Color.parseColor("#1C000000")
+            cardinalTextPaint.color = Color.parseColor("#1E293B")
+            knobOuterPaint.color = Color.parseColor("#E2E8F0")
+            knobRingPaint.color = Color.parseColor("#475569")
+        }
+
         knobCorePaint.color = primaryColor
-        val alpha = (0.8f * 255).toInt()
+        val alpha = (0.85f * 255).toInt()
         val r = Color.red(primaryColor)
         val g = Color.green(primaryColor)
         val b = Color.blue(primaryColor)
         vectorLinePaint.color = Color.argb(alpha, r, g, b)
         invalidate()
+    }
+
+    fun setJoystickColor(primaryColor: Int) {
+        val isNight = com.fakegps.mocklocation.util.ThemeColorManager.isDarkMode(context)
+        updateTheme(isNight, primaryColor)
     }
 
     private var centerX = 0f

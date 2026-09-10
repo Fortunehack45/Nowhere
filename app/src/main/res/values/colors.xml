@@ -12,24 +12,24 @@
     <color name="white_translucent">#1A0F172A</color>
     <color name="white_border">#20000000</color>
 
-    <!-- Surfaces (Light Mode) -->
+    <!-- Surfaces (Light Mode - Rich Frosted Glass 88% to 95%) -->
     <color name="surface_dark">#F2F2F7</color>
-    <color name="surface_obsidian">#D8FFFFFF</color>
-    <color name="surface_card">#D8FFFFFF</color>
-    <color name="surface_card_elevated">#E6F2F2F7</color>
-    <color name="surface_elevated">#D8FFFFFF</color>
-    <color name="surface_glass">#D8FFFFFF</color>
-    <color name="surface_search">#BFE5E5EA</color>
-    <color name="card_dark">#D8FFFFFF</color>
+    <color name="surface_obsidian">#F0FFFFFF</color>
+    <color name="surface_card">#F0FFFFFF</color>
+    <color name="surface_card_elevated">#F5F2F2F7</color>
+    <color name="surface_elevated">#F0FFFFFF</color>
+    <color name="surface_glass">#F0FFFFFF</color>
+    <color name="surface_search">#F0E5E5EA</color>
+    <color name="card_dark">#F0FFFFFF</color>
 
-    <!-- Frosted Glass Tokens (Light Mode - Apple Frosted Ice Glass - 60% to 65% Opacity) -->
-    <color name="surface_glass_sheet">#A6F6F6F9</color>
-    <color name="surface_glass_card">#A6FFFFFF</color>
-    <color name="surface_glass_inner">#18000000</color>
-    <color name="glass_frosted_start">#99FFFFFF</color>
-    <color name="glass_frosted_end">#A6EBF0F6</color>
-    <color name="glass_chip_start">#9EFFFFFF</color>
-    <color name="glass_chip_end">#A6E8EEF5</color>
+    <!-- Frosted Glass Tokens (Light Mode - Apple Frosted Ice Glass - 88% to 95% Opacity/Blur) -->
+    <color name="surface_glass_sheet">#F2F6F6F9</color>
+    <color name="surface_glass_card">#EDFFFFFF</color>
+    <color name="surface_glass_inner">#20000000</color>
+    <color name="glass_frosted_start">#E6FFFFFF</color>
+    <color name="glass_frosted_end">#F0EBF0F6</color>
+    <color name="glass_chip_start">#E6FFFFFF</color>
+    <color name="glass_chip_end">#EFE8EEF5</color>
     <color name="stroke_glass_specular">#80FFFFFF</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->

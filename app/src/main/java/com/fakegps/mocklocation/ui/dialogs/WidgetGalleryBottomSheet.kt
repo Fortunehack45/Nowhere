@@ -49,7 +49,6 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
 
     override fun onStart() {
         super.onStart()
-        com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dialog)
         val dialog = dialog as? com.google.android.material.bottomsheet.BottomSheetDialog
         val bottomSheet = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
         bottomSheet?.let {

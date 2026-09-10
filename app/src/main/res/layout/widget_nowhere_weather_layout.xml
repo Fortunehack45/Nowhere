@@ -40,7 +40,7 @@
             android:background="@drawable/bg_status_pill"
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
-            android:text="22°C"
+            android:text="--°"
             android:textColor="@color/primary_bright"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -61,7 +61,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="San Francisco, CA"
+            android:text="Locating GPS..."
             android:textColor="@color/text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -73,7 +73,7 @@
             android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Partly Cloudy • Humidity 55%"
+            android:text="Live GPS Telemetry"
             android:textColor="@color/text_secondary"
             android:textSize="10sp" />
     </LinearLayout>
@@ -93,7 +93,7 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Today: 24° / 16° • Wind 12 km/h"
+            android:text="Tap to sync weather radar"
             android:textColor="@color/text_muted"
             android:textSize="10sp" />
 

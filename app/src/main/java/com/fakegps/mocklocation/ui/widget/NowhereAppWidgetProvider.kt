@@ -59,16 +59,19 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             val lat = sessionPrefs.lastLatitude
             val lon = sessionPrefs.lastLongitude
             val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
+            val latDir = if (lat >= 0) "N" else "S"
+            val lonDir = if (lon >= 0) "E" else "W"
+            val coordsText = String.format(java.util.Locale.US, "%.5f° %s, %.5f° %s", Math.abs(lat), latDir, Math.abs(lon), lonDir)
+
             val locName = if (!cachedName.isNullOrBlank()) {
                 cachedName
             } else if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
                 sessionPrefs.lastLocationName
             } else {
-                val latDir = if (lat >= 0) "N" else "S"
-                val lonDir = if (lon >= 0) "E" else "W"
-                String.format(java.util.Locale.US, "%.4f° %s, %.4f° %s", Math.abs(lat), latDir, Math.abs(lon), lonDir)
+                coordsText
             }
             views.setTextViewText(R.id.tvWidgetLocationName, locName)
+            views.setTextViewText(R.id.tvWidgetCoords, coordsText)
 
             val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
             views.setTextColor(R.id.tvWidgetBrandTitle, primaryColor)
@@ -99,10 +102,6 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
                 views.setTextColor(R.id.tvWidgetStatus, secondaryText)
                 views.setTextViewText(R.id.btnWidgetTeleport, "Inject GPS")
             }
-
-            val latDir = if (lat >= 0) "N" else "S"
-            val lonDir = if (lon >= 0) "E" else "W"
-            views.setTextViewText(R.id.tvWidgetCoords, String.format("%.5f° %s, %.5f° %s", Math.abs(lat), latDir, Math.abs(lon), lonDir))
 
             // Open App Intent
             val openAppIntent = Intent(context, MainActivity::class.java).apply {
