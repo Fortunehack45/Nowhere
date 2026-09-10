@@ -159,7 +159,7 @@ object SessionTimerManager {
                         NowhereVpnWidgetProvider.updateAllVpnWidgets(appContext)
                     }
                 } else {
-                    val remainingMillis = sessionPrefs.getTimeRemainingMillis()
+                    val remainingMillis = sessionPrefs.decrementRemainingTime(1000L)
                     val totalAllocated = sessionPrefs.sessionAllocatedDurationMillis
 
                     if (remainingMillis <= 0L) {
@@ -224,11 +224,15 @@ object SessionTimerManager {
         }
     }
 
+    fun updateStaticState(context: Context) {
+        updateState(context)
+    }
+
     private fun updateState(context: Context) {
         val sessionPrefs = SessionPreferences(context)
         if (sessionPrefs.isPremiumActive()) {
             _timerState.value = SessionTimerState(
-                isRunning = sessionPrefs.isSessionActive,
+                isRunning = timerJob?.isActive == true,
                 isExpired = false,
                 remainingMillis = Long.MAX_VALUE,
                 totalAllocatedMillis = Long.MAX_VALUE,
@@ -247,7 +251,7 @@ object SessionTimerManager {
         } else 0
 
         _timerState.value = SessionTimerState(
-            isRunning = sessionPrefs.isSessionActive && remainingMillis > 0,
+            isRunning = timerJob?.isActive == true && remainingMillis > 0,
             isExpired = sessionPrefs.isSessionExpired,
             remainingMillis = remainingMillis,
             totalAllocatedMillis = totalAllocated,

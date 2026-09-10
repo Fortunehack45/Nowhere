@@ -400,7 +400,11 @@ class MainActivity : AppCompatActivity() {
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
         if (com.fakegps.mocklocation.data.preferences.SessionPreferences(this).hasValidActiveSession()) {
-            com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+            if (viewModel.uiState.value.isServiceRunning) {
+                com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+            } else {
+                com.fakegps.mocklocation.service.SessionTimerManager.updateStaticState(this)
+            }
         }
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             if (binding.adBannerContainer.childCount == 0) {
@@ -666,14 +670,79 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun selectDestinationAndCloseSearch(title: String, snippet: String, lat: Double, lon: Double) {
+        val geoPoint = GeoPoint(lat, lon)
+        if (settingsPrefs.enableMapAnimations) {
+            binding.mapView.controller.animateTo(geoPoint)
+        } else {
+            binding.mapView.controller.setCenter(geoPoint)
+        }
+        binding.mapView.controller.setZoom(16.5)
+        viewModel.setFixedCoordinates(lat, lon)
+        updateFixedPinMarker(lat, lon)
+
+        if (viewModel.uiState.value.isServiceRunning && viewModel.uiState.value.selectedTab == SelectedModeTab.FIXED) {
+            mockService?.startFixed(lat, lon)
+            val intent = Intent(this@MainActivity, MockLocationService::class.java).apply {
+                action = MockLocationService.ACTION_START_FIXED
+                putExtra(MockLocationService.EXTRA_LATITUDE, lat)
+                putExtra(MockLocationService.EXTRA_LONGITUDE, lon)
+            }
+            startForegroundServiceCompat(intent)
+        }
+
+        val currentQuery = binding.includedSearchOverlay.etSearchOverlayInput.text?.toString()?.trim() ?: ""
+        viewModel.recordSearchHistory(
+            query = currentQuery.ifBlank { title },
+            title = title,
+            snippet = snippet,
+            latitude = lat,
+            longitude = lon
+        )
+
+        val sessionPrefs = SessionPreferences(this@MainActivity)
+        sessionPrefs.lastLocationName = title
+        com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
+
+        binding.etAddressSearch.setText(title)
+        binding.btnClearSearch.visibility = View.VISIBLE
+        hideSearchOverlay()
+        Toast.makeText(this@MainActivity, "Target: $title", Toast.LENGTH_SHORT).show()
+    }
+
     private fun showSearchOverlay() {
         val overlay = binding.includedSearchOverlay
         overlay.layoutSearchOverlayRoot.visibility = View.VISIBLE
         overlay.layoutSearchOverlayRoot.alpha = 0f
         overlay.layoutSearchOverlayRoot.animate().alpha(1f).setDuration(200).start()
 
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            binding.mapView.setRenderEffect(
+                android.graphics.RenderEffect.createBlurEffect(25f, 25f, android.graphics.Shader.TileMode.CLAMP)
+            )
+        }
+
+        val state = viewModel.uiState.value
+        val refLat = if (state.isServiceRunning && state.serviceState is ServiceState.Running) state.serviceState.latitude else state.fixedLatitude
+        val refLon = if (state.isServiceRunning && state.serviceState is ServiceState.Running) state.serviceState.longitude else state.fixedLongitude
+        unifiedSearchAdapter.setReferenceLocation(refLat, refLon)
+
         val currentQuery = overlay.etSearchOverlayInput.text?.toString()?.trim() ?: ""
         overlay.btnClearOverlaySearch.visibility = if (currentQuery.isNotEmpty()) View.VISIBLE else View.GONE
+
+        val directCoords = com.fakegps.mocklocation.ui.MainViewModel.parseCoordinates(currentQuery)
+        if (directCoords != null) {
+            overlay.cardDirectCoordinateJump.visibility = View.VISIBLE
+            overlay.tvDetectedCoordinates.text = String.format(java.util.Locale.US, "%.5f, %.5f", directCoords.first, directCoords.second)
+            overlay.btnJumpDirectCoords.setOnClickListener {
+                selectDestinationAndCloseSearch("GPS (${directCoords.first}, ${directCoords.second})", "Direct Coordinates", directCoords.first, directCoords.second)
+            }
+            overlay.cardDirectCoordinateJump.setOnClickListener {
+                selectDestinationAndCloseSearch("GPS (${directCoords.first}, ${directCoords.second})", "Direct Coordinates", directCoords.first, directCoords.second)
+            }
+        } else {
+            overlay.cardDirectCoordinateJump.visibility = View.GONE
+        }
 
         overlay.etSearchOverlayInput.requestFocus()
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
@@ -690,6 +759,10 @@ class MainActivity : AppCompatActivity() {
         val overlay = binding.includedSearchOverlay
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
         imm?.hideSoftInputFromWindow(overlay.etSearchOverlayInput.windowToken, 0)
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            binding.mapView.setRenderEffect(null)
+        }
 
         overlay.layoutSearchOverlayRoot.animate()
             .alpha(0f)
@@ -716,42 +789,7 @@ class MainActivity : AppCompatActivity() {
 
         unifiedSearchAdapter = UnifiedSearchAdapter(
             onEntryClicked = { title, snippet, lat, lon ->
-                val geoPoint = GeoPoint(lat, lon)
-                if (settingsPrefs.enableMapAnimations) {
-                    binding.mapView.controller.animateTo(geoPoint)
-                } else {
-                    binding.mapView.controller.setCenter(geoPoint)
-                }
-                binding.mapView.controller.setZoom(16.5)
-                viewModel.setFixedCoordinates(lat, lon)
-                updateFixedPinMarker(lat, lon)
-
-                if (viewModel.uiState.value.isServiceRunning && viewModel.uiState.value.selectedTab == SelectedModeTab.FIXED) {
-                    mockService?.startFixed(lat, lon)
-                    val intent = Intent(this@MainActivity, MockLocationService::class.java).apply {
-                        action = MockLocationService.ACTION_START_FIXED
-                        putExtra(MockLocationService.EXTRA_LATITUDE, lat)
-                        putExtra(MockLocationService.EXTRA_LONGITUDE, lon)
-                    }
-                    startForegroundServiceCompat(intent)
-                }
-
-                viewModel.recordSearchHistory(
-                    query = binding.includedSearchOverlay.etSearchOverlayInput.text.toString().trim().ifBlank { title },
-                    title = title,
-                    snippet = snippet,
-                    latitude = lat,
-                    longitude = lon
-                )
-
-                val sessionPrefs = SessionPreferences(this@MainActivity)
-                sessionPrefs.lastLocationName = title
-                com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
-
-                binding.etAddressSearch.setText(title)
-                binding.btnClearSearch.visibility = View.VISIBLE
-                hideSearchOverlay()
-                Toast.makeText(this@MainActivity, "Target: $title", Toast.LENGTH_SHORT).show()
+                selectDestinationAndCloseSearch(title, snippet, lat, lon)
             },
             onDeleteHistoryClicked = { item ->
                 viewModel.deleteSearchHistoryItem(item)
@@ -772,8 +810,26 @@ class MainActivity : AppCompatActivity() {
         binding.etAddressSearch.setOnClickListener { showSearchOverlay() }
         binding.includedSearchOverlay.btnSearchOverlayBack.setOnClickListener { hideSearchOverlay() }
 
+        // Paste from clipboard button
+        binding.includedSearchOverlay.btnPasteOverlaySearch.setOnClickListener {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            val clipData = clipboard?.primaryClip
+            if (clipData != null && clipData.itemCount > 0) {
+                val pastedText = clipData.getItemAt(0).coerceToText(this).toString().trim()
+                if (pastedText.isNotEmpty()) {
+                    binding.includedSearchOverlay.etSearchOverlayInput.setText(pastedText)
+                    binding.includedSearchOverlay.etSearchOverlayInput.setSelection(pastedText.length)
+                    viewModel.searchAddress(pastedText)
+                    Toast.makeText(this, "Pasted from clipboard", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         binding.includedSearchOverlay.btnClearOverlaySearch.setOnClickListener {
             binding.includedSearchOverlay.etSearchOverlayInput.setText("")
+            binding.includedSearchOverlay.cardDirectCoordinateJump.visibility = View.GONE
             viewModel.clearSearchResults()
             showRecentHistory()
         }
@@ -784,10 +840,53 @@ class MainActivity : AppCompatActivity() {
             showRecentHistory()
         }
 
-        // Real-time search suggestions inside dedicated overlay
+        // Quick Trending Destinations Chips in Overlay
+        binding.includedSearchOverlay.chipTrendingTokyo.setOnClickListener {
+            selectDestinationAndCloseSearch("Tokyo, Japan", "Capital of Japan", 35.6762, 139.6503)
+        }
+        binding.includedSearchOverlay.chipTrendingNewYork.setOnClickListener {
+            selectDestinationAndCloseSearch("New York, USA", "New York City", 40.7128, -74.0060)
+        }
+        binding.includedSearchOverlay.chipTrendingParis.setOnClickListener {
+            selectDestinationAndCloseSearch("Paris, France", "City of Light", 48.8566, 2.3522)
+        }
+        binding.includedSearchOverlay.chipTrendingDubai.setOnClickListener {
+            selectDestinationAndCloseSearch("Dubai, UAE", "United Arab Emirates", 25.2048, 55.2708)
+        }
+        binding.includedSearchOverlay.chipTrendingLondon.setOnClickListener {
+            selectDestinationAndCloseSearch("London, UK", "United Kingdom", 51.5074, -0.1278)
+        }
+        binding.includedSearchOverlay.chipTrendingSydney.setOnClickListener {
+            selectDestinationAndCloseSearch("Sydney, Australia", "New South Wales", -33.8688, 151.2093)
+        }
+        binding.includedSearchOverlay.chipTrendingEiffel.setOnClickListener {
+            selectDestinationAndCloseSearch("Eiffel Tower, Paris", "Champ de Mars, Paris", 48.8584, 2.2945)
+        }
+        binding.includedSearchOverlay.chipTrendingJfk.setOnClickListener {
+            selectDestinationAndCloseSearch("JFK International Airport", "Queens, New York", 40.6413, -73.7781)
+        }
+        binding.includedSearchOverlay.chipTrendingEverest.setOnClickListener {
+            selectDestinationAndCloseSearch("Mount Everest", "Himalayas, Solukhumbu", 27.9881, 86.9250)
+        }
+
+        // Real-time search suggestions & coordinate detection inside dedicated overlay
         binding.includedSearchOverlay.etSearchOverlayInput.addTextChangedListener { text ->
             val query = text?.toString()?.trim() ?: ""
             binding.includedSearchOverlay.btnClearOverlaySearch.visibility = if (query.isNotEmpty()) View.VISIBLE else View.GONE
+
+            val directCoords = com.fakegps.mocklocation.ui.MainViewModel.parseCoordinates(query)
+            if (directCoords != null) {
+                binding.includedSearchOverlay.cardDirectCoordinateJump.visibility = View.VISIBLE
+                binding.includedSearchOverlay.tvDetectedCoordinates.text = String.format(java.util.Locale.US, "%.5f, %.5f", directCoords.first, directCoords.second)
+                binding.includedSearchOverlay.btnJumpDirectCoords.setOnClickListener {
+                    selectDestinationAndCloseSearch("GPS (${directCoords.first}, ${directCoords.second})", "Direct Coordinates", directCoords.first, directCoords.second)
+                }
+                binding.includedSearchOverlay.cardDirectCoordinateJump.setOnClickListener {
+                    selectDestinationAndCloseSearch("GPS (${directCoords.first}, ${directCoords.second})", "Direct Coordinates", directCoords.first, directCoords.second)
+                }
+            } else {
+                binding.includedSearchOverlay.cardDirectCoordinateJump.visibility = View.GONE
+            }
 
             if (query.isNotEmpty()) {
                 binding.includedSearchOverlay.tvSearchSectionTitle.text = "SEARCH RESULTS"
@@ -1792,8 +1891,19 @@ class MainActivity : AppCompatActivity() {
         // Update Spotlight Tour overlay colors
         binding.spotlightTourOverlay.setTourColors(primaryColor, com.fakegps.mocklocation.util.ThemeColorManager.getGlowColor(this))
 
-        // Recursively theme all other views across the screen (including switches and cards)
+        // Dynamic Search Overlay Tinting
+        val searchOverlay = binding.includedSearchOverlay
+        searchOverlay.btnSearchOverlayBack.imageTintList = primaryCsl
+        searchOverlay.btnPasteOverlaySearch.imageTintList = primaryCsl
+        searchOverlay.btnClearOverlaySearch.imageTintList = primaryCsl
+        searchOverlay.pbSearchOverlayLoading.indeterminateTintList = primaryCsl
+        searchOverlay.ivCoordinateJumpIcon.imageTintList = primaryCsl
+        searchOverlay.btnJumpDirectCoords.setTextColor(primaryColor)
+        searchOverlay.btnClearAllSearchHistory.setTextColor(primaryColor)
+
+        // Recursively theme all other views across the screen (including switches, cards, edit texts)
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(searchOverlay.layoutSearchOverlayRoot, this)
     }
 
     private fun observeUiState() {
@@ -1939,6 +2049,13 @@ class MainActivity : AppCompatActivity() {
             val speedKmh = state.serviceState.speedMps * 3.6f
             val formattedSpeed = settingsPrefs.formatSpeed(speedKmh)
             binding.tvTelemetryMeta.text = String.format("%s • ±%.1fm • 18 SAT", formattedSpeed, settingsPrefs.baseAccuracy)
+
+            if (state.selectedTab == SelectedModeTab.FIXED && (state.serviceState.latitude != 0.0 || state.serviceState.longitude != 0.0)) {
+                updateFixedPinMarker(state.serviceState.latitude, state.serviceState.longitude)
+                if (binding.switchMotionSync.isChecked && settingsPrefs.enableMapAnimations) {
+                    binding.mapView.controller.setCenter(GeoPoint(state.serviceState.latitude, state.serviceState.longitude))
+                }
+            }
         } else {
             binding.tvTelemetryMeta.text = String.format("READY • ±%.1fm • 18 SAT", settingsPrefs.baseAccuracy)
         }

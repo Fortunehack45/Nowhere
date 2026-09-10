@@ -111,4 +111,21 @@ class SessionTimerManagerTest {
         sessionPrefs.startNewSession(duration, forceRestart = true)
         assertEquals("2h 00m", sessionPrefs.formatAllocatedDuration())
     }
+
+    @Test
+    fun testTimerDoesNotCountDownWhenDisconnected() {
+        val duration = 45 * 60 * 1000L // 45 min
+        sessionPrefs.startNewSession(duration, forceRestart = true)
+        val initialRemaining = sessionPrefs.getTimeRemainingMillis()
+
+        // When disconnected (stopTimer called)
+        SessionTimerManager.stopTimer(context)
+
+        // Simulate passage of time while disconnected
+        Thread.sleep(100)
+
+        val preservedRemaining = sessionPrefs.getTimeRemainingMillis()
+        assertEquals("Timer must preserve exact remaining quota when disconnected", initialRemaining, preservedRemaining)
+        assertTrue("Session must remain valid", sessionPrefs.hasValidActiveSession())
+    }
 }

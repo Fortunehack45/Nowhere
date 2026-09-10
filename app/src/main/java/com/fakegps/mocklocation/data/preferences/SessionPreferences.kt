@@ -174,13 +174,17 @@ class SessionPreferences(private val context: Context) {
         get() = prefs.getBoolean("key_is_session_expired", false)
         set(value) = prefs.edit().putBoolean("key_is_session_expired", value).apply()
 
+    var sessionRemainingDurationMillis: Long
+        get() = prefs.getLong("key_session_remaining_duration_millis", -1L)
+        set(value) = prefs.edit().putLong("key_session_remaining_duration_millis", value).apply()
+
     fun isPremiumActive(): Boolean {
         return com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
     }
 
     fun hasValidActiveSession(): Boolean {
         if (isPremiumActive()) return isSessionActive
-        if (sessionExpiresTimestamp == 0L) {
+        if (sessionRemainingDurationMillis < 0L && sessionExpiresTimestamp == 0L) {
             return false
         }
         val remaining = getTimeRemainingMillis()
@@ -194,11 +198,12 @@ class SessionPreferences(private val context: Context) {
             isSessionExpired = false
             return
         }
-        if (!forceRestart && !isSessionExpired && sessionExpiresTimestamp > now) {
+        if (!forceRestart && !isSessionExpired && getTimeRemainingMillis() > 0L) {
             isSessionActive = true
             return
         }
         sessionAllocatedDurationMillis = durationMillis
+        sessionRemainingDurationMillis = durationMillis
         sessionExpiresTimestamp = now + durationMillis
         isSessionExpired = false
         isSessionActive = true
@@ -211,8 +216,10 @@ class SessionPreferences(private val context: Context) {
             return
         }
         val now = System.currentTimeMillis()
-        val currentExpiry = if (sessionExpiresTimestamp > now) sessionExpiresTimestamp else now
-        sessionExpiresTimestamp = currentExpiry + extraMillis
+        val currentRemaining = if (sessionRemainingDurationMillis > 0L) sessionRemainingDurationMillis else 0L
+        val updatedRemaining = currentRemaining + extraMillis
+        sessionRemainingDurationMillis = updatedRemaining
+        sessionExpiresTimestamp = if (sessionExpiresTimestamp > now) sessionExpiresTimestamp + extraMillis else now + updatedRemaining
         sessionAllocatedDurationMillis += extraMillis
         isSessionExpired = false
         isSessionActive = true
@@ -220,13 +227,31 @@ class SessionPreferences(private val context: Context) {
 
     fun getEffectiveExpiryTimestamp(): Long {
         if (isPremiumActive()) return Long.MAX_VALUE
+        if (sessionRemainingDurationMillis >= 0L) {
+            return System.currentTimeMillis() + sessionRemainingDurationMillis
+        }
         return sessionExpiresTimestamp
     }
 
     fun getTimeRemainingMillis(): Long {
         if (isPremiumActive()) return Long.MAX_VALUE
-        val remaining = getEffectiveExpiryTimestamp() - System.currentTimeMillis()
+        if (sessionRemainingDurationMillis >= 0L) {
+            return sessionRemainingDurationMillis
+        }
+        val remaining = sessionExpiresTimestamp - System.currentTimeMillis()
         return if (remaining > 0) remaining else 0L
+    }
+
+    fun decrementRemainingTime(elapsedMillis: Long): Long {
+        if (isPremiumActive()) return Long.MAX_VALUE
+        val current = getTimeRemainingMillis()
+        val updated = (current - elapsedMillis).coerceAtLeast(0L)
+        sessionRemainingDurationMillis = updated
+        sessionExpiresTimestamp = System.currentTimeMillis() + updated
+        if (updated <= 0L) {
+            isSessionExpired = true
+        }
+        return updated
     }
 
     fun formatRemainingTime(): String {
@@ -263,6 +288,7 @@ class SessionPreferences(private val context: Context) {
             .putBoolean(KEY_IS_SESSION_ACTIVE, false)
             .putBoolean("key_is_session_expired", false)
             .putLong("key_session_expires_timestamp", 0L)
+            .putLong("key_session_remaining_duration_millis", -1L)
             .putLong("key_session_allocated_duration", DEFAULT_SESSION_DURATION_MILLIS)
             .remove(KEY_WAYPOINTS_JSON)
             .apply()

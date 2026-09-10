@@ -37,9 +37,9 @@ object TerrainLockEngine {
     }
 
     private fun cacheKey(lat: Double, lon: Double): String {
-        // Quantize to ~5 decimal places (~1.1 meter resolution)
-        val qLat = (lat * 100000).toLong()
-        val qLon = (lon * 100000).toLong()
+        // Quantize to ~4 decimal places (~11 meter resolution for efficient stepping cache)
+        val qLat = (lat * 10000).toLong()
+        val qLon = (lon * 10000).toLong()
         return "$qLat,$qLon"
     }
 

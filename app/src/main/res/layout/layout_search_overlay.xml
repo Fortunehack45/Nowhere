@@ -5,19 +5,19 @@
     android:id="@+id/layoutSearchOverlayRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface_dark"
+    android:background="@drawable/bg_frosted_glass_overlay"
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical">
 
-    <!-- Top Safe Insets & Search Header Container -->
+    <!-- Top Safe Insets & Frosted Search Header Container -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
         android:paddingTop="16dp"
-        android:paddingBottom="10dp">
+        android:paddingBottom="6dp">
 
         <!-- Frosted Glass Search Bar Row -->
         <com.google.android.material.card.MaterialCardView
@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="52dp"
             app:cardBackgroundColor="@color/surface_glass_card"
-            app:cardCornerRadius="18dp"
+            app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1.2dp">
@@ -33,7 +33,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingHorizontal="8dp">
+                android:paddingHorizontal="6dp">
 
                 <!-- Back to Map Button -->
                 <ImageButton
@@ -54,8 +54,8 @@
                     android:id="@+id/etSearchOverlayInput"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="6dp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="4dp"
                     android:background="@null"
                     android:hint="@string/title_search_hint"
                     android:imeOptions="actionSearch"
@@ -65,9 +65,23 @@
                     android:textColorHint="@color/text_muted"
                     android:textSize="14sp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@id/btnClearOverlaySearch"
+                    app:layout_constraintEnd_toStartOf="@id/btnPasteOverlaySearch"
                     app:layout_constraintStart_toEndOf="@id/btnSearchOverlayBack"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- Paste from Clipboard Button -->
+                <ImageButton
+                    android:id="@+id/btnPasteOverlaySearch"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Paste coordinates or address"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_copy"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnClearOverlaySearch"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="@color/text_muted" />
 
                 <!-- Clear Search Button -->
                 <ImageButton
@@ -99,15 +113,238 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Recent Searches Header Row -->
+        <!-- Quick Trending Destinations & Category Chips (Horizontal Scroll) -->
+        <HorizontalScrollView
+            android:id="@+id/scrollQuickDestinations"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fadingEdge="horizontal"
+            android:requiresFadingEdge="horizontal"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/chipTrendingTokyo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="🗼 Tokyo"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipTrendingNewYork"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="🗽 New York"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipTrendingParis"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="🥐 Paris"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipTrendingDubai"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="🏙️ Dubai"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipTrendingLondon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="🎡 London"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipTrendingSydney"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="🦘 Sydney"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipTrendingEiffel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="🏛️ Eiffel Tower"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipTrendingJfk"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="✈️ JFK Airport"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipTrendingEverest"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="🏔️ Mt Everest"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Direct GPS Coordinate Detection Jump Card (Shown when coordinates are detected) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardDirectCoordinateJump"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/surface_glass_card"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stroke_glass_specular"
+            app:strokeWidth="1.2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="10dp">
+
+                <ImageView
+                    android:id="@+id/ivCoordinateJumpIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_teleport"
+                    app:tint="@color/primary"
+                    tools:ignore="ContentDescription" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Direct GPS Coordinates Detected"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvDetectedCoordinates"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="37.77490, -122.41940"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnJumpDirectCoords"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_chip_frosted"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Jump ➔"
+                    android:textColor="@color/primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Recent Searches / Search Results Header Row -->
         <LinearLayout
             android:id="@+id/layoutRecentSearchesHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="12dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="6dp">
+            android:paddingHorizontal="4dp">
 
             <TextView
                 android:id="@+id/tvSearchSectionTitle"
@@ -134,11 +371,11 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Hairline Divider -->
+    <!-- Hairline Frosted Divider -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/stroke_subtle" />
+        android:background="@color/stroke_glass_specular" />
 
     <!-- Unified Results & History List -->
     <FrameLayout
@@ -152,9 +389,10 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:overScrollMode="never"
-            android:paddingVertical="6dp" />
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp" />
 
-        <!-- Empty State Container -->
+        <!-- Frosted Empty State Container -->
         <LinearLayout
             android:id="@+id/layoutSearchOverlayEmptyState"
             android:layout_width="match_parent"
@@ -165,27 +403,30 @@
             android:visibility="gone">
 
             <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:id="@+id/ivEmptySearchIcon"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
                 android:src="@drawable/ic_search"
                 app:tint="@color/text_muted"
                 tools:ignore="ContentDescription" />
 
             <TextView
+                android:id="@+id/tvEmptySearchTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
                 android:text="Search Any Destination"
                 android:textColor="@color/text_primary"
-                android:textSize="15sp"
+                android:textSize="15.5sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvEmptySearchSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="Type an address, landmark, or GPS coordinates to jump instantly anywhere on Earth."
+                android:text="Type any city, street address, famous landmark, or GPS coordinates to jump anywhere on Earth."
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
         </LinearLayout>

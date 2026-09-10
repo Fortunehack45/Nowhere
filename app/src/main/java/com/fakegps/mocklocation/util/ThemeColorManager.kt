@@ -56,18 +56,23 @@ object ThemeColorManager {
     val themeChangeFlow: SharedFlow<ColorTheme> = _themeChangeFlow.asSharedFlow()
 
     private val ALL_PRIMARY_HEXES = setOf(
-        "#E41B1B", "#E53935", "#B91C1C", "#EF4444", "#DC2626", "#F87171",
-        "#2563EB", "#1D4ED8",
-        "#00B4D8", "#0077B6",
-        "#10B981", "#059669",
-        "#8B5CF6", "#6D28D9",
-        "#F59E0B", "#B45309",
-        "#EC4899", "#BE185D"
+        "#E41B1B", "#E53935", "#B91C1C", "#EF4444", "#DC2626", "#F87171", "#FF453A", "#D32F2F", "#C62828", "#B71C1C", "#FF5252", "#FF1744",
+        "#2563EB", "#1D4ED8", "#3B82F6", "#1E40AF",
+        "#00B4D8", "#0077B6", "#06B6D4", "#0891B2",
+        "#10B981", "#059669", "#34D399", "#047857",
+        "#8B5CF6", "#6D28D9", "#A78BFA", "#5B21B6",
+        "#F59E0B", "#B45309", "#FBBF24", "#D97706",
+        "#EC4899", "#BE185D", "#F472B6", "#9D174D"
     )
 
     private val ALL_LIGHT_TINT_HEXES = setOf(
-        "#FEE2E2", "#FFEBEE", "#3D1010",
-        "#DBEAFE", "#CFFAFE", "#D1FAE5", "#EDE9FE", "#FEF3C7", "#FCE7F3"
+        "#FEE2E2", "#FFEBEE", "#FFCDD2", "#EF9A9A", "#3D1010",
+        "#DBEAFE", "#EFF6FF", "#BFDBFE",
+        "#CFFAFE", "#ECFEFF", "#A5F3FC",
+        "#D1FAE5", "#ECFDF5", "#A7F3D0",
+        "#EDE9FE", "#F5F3FF", "#DDD6FE",
+        "#FEF3C7", "#FFFBEB", "#FDE68A",
+        "#FCE7F3", "#FDF2F8", "#FBCFE8"
     )
 
     fun getCurrentTheme(context: Context): ColorTheme {
@@ -375,10 +380,31 @@ object ThemeColorManager {
                     view.setTextColor(lightTintColor)
                 }
             }
+            is android.widget.EditText -> {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    try {
+                        val density = context.resources.displayMetrics.density
+                        val cursor = GradientDrawable().apply {
+                            shape = GradientDrawable.RECTANGLE
+                            setColor(primaryColor)
+                            setSize((2f * density).toInt().coerceAtLeast(2), 0)
+                        }
+                        view.textCursorDrawable = cursor
+                        view.textSelectHandle?.setTint(primaryColor)
+                        view.textSelectHandleLeft?.setTint(primaryColor)
+                        view.textSelectHandleRight?.setTint(primaryColor)
+                    } catch (ignored: Exception) {
+                        try {
+                            view.textCursorDrawable?.setTint(primaryColor)
+                        } catch (_: Exception) {}
+                    }
+                }
+                view.highlightColor = (primaryColor and 0x00FFFFFF) or 0x33000000
+            }
             is ImageView -> {
                 if (view.id == R.id.ivTopBrandLogo || view.id == R.id.ivSettingsFooterLogo || view.id == R.id.ivWidgetGalleryLogo) {
                     view.setImageDrawable(getThemedLogoDrawable(context, primaryColor, darkColor))
-                } else if (view.id == R.id.ivWidgetTeleportBg || view.id == R.id.ivWidgetRoutePlayPauseBg || view.id == R.id.ivWidgetGameBoostToggleBg || view.id == R.id.ivWidgetVpnToggleBg || view.id == R.id.ivWidgetWeatherDetailsBg || view.id == R.id.ivSearchWidgetTeleportBg) {
+                } else if (view.id == R.id.ivWidgetTeleportBg || view.id == R.id.ivWidgetRoutePlayPauseBg || view.id == R.id.ivWidgetGameBoostToggleBg || view.id == R.id.ivWidgetVpnToggleBg || view.id == R.id.ivWidgetWeatherDetailsBg || view.id == R.id.ivSearchWidgetTeleportBg || view.id == R.id.ivCoordinateJumpIcon) {
                     view.setColorFilter(primaryColor, PorterDuff.Mode.SRC_IN)
                 } else {
                     val tint = ImageViewCompat.getImageTintList(view)?.defaultColor
@@ -403,9 +429,12 @@ object ThemeColorManager {
             is LinearProgressIndicator -> {
                 view.setIndicatorColor(primaryColor)
                 view.progressTintList = primaryCsl
+                view.indeterminateTintList = primaryCsl
             }
             is ProgressBar -> {
                 view.progressTintList = primaryCsl
+                view.indeterminateTintList = primaryCsl
+                view.secondaryProgressTintList = lightTintCsl
             }
             is Slider -> {
                 applyThemeToSlider(view, primaryColor, context)

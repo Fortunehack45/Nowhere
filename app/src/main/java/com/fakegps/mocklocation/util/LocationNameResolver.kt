@@ -126,11 +126,10 @@ object LocationNameResolver {
                         if (isWaterNamed) {
                             waterCache[cacheKey] = true
                             return@withContext true
+                        } else {
+                            waterCache[cacheKey] = false
+                            return@withContext false
                         }
-                    } else {
-                        // Open ocean often returns zero geocoding results
-                        waterCache[cacheKey] = true
-                        return@withContext true
                     }
                 }
             } catch (ignored: Exception) {}
@@ -140,9 +139,9 @@ object LocationNameResolver {
                 val urlString = "https://nominatim.openstreetmap.org/reverse?format=json&lat=$latitude&lon=$longitude&zoom=14"
                 val conn = (URL(urlString).openConnection() as HttpURLConnection).apply {
                     requestMethod = "GET"
-                    connectTimeout = 3000
-                    readTimeout = 3000
-                    setRequestProperty("User-Agent", "NowhereMarineValidator/1.0")
+                    connectTimeout = 2500
+                    readTimeout = 2500
+                    setRequestProperty("User-Agent", "NowhereMarineValidator/1.0 (contact: support@nowhereapp.internal)")
                 }
                 if (conn.responseCode == 200) {
                     val body = conn.inputStream.bufferedReader().use { it.readText() }
@@ -154,21 +153,15 @@ object LocationNameResolver {
                     val isWaterTag = category == "natural" && (type == "water" || type == "bay" || type == "coastline" || type == "beach") ||
                             category == "waterway" || type == "sea" || type == "ocean" || type == "lake" || type == "harbour"
 
-                    val isLandAddress = addressObj != null && (
-                            addressObj.has("road") || addressObj.has("house_number") ||
-                            addressObj.has("building") || addressObj.has("amenity") ||
-                            addressObj.has("residential") || addressObj.has("suburb")
-                    )
-
-                    val isWater = isWaterTag || (!isLandAddress && addressObj == null)
+                    val isWater = isWaterTag
                     waterCache[cacheKey] = isWater
                     return@withContext isWater
                 }
             } catch (ignored: Exception) {}
 
-            // Default fallback
-            waterCache[cacheKey] = true
-            return@withContext true
+            // Default fallback: Unmapped or offline points must default to walkable land (false) so motion sync does not lock up
+            waterCache[cacheKey] = false
+            return@withContext false
         }
 
     private fun formatAddress(address: Address): String {

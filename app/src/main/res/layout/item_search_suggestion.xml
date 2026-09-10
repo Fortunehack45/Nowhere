@@ -1,64 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:paddingHorizontal="14dp"
-    android:paddingVertical="10dp">
+    android:layout_marginVertical="3dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="@color/surface_glass_card"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/stroke_glass_specular"
+    app:strokeWidth="1dp">
 
-    <ImageView
-        android:id="@+id/ivItemTypeIcon"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:src="@drawable/ic_search"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/text_muted"
-        tools:ignore="ContentDescription" />
-
-    <TextView
-        android:id="@+id/tvItemTitle"
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="8dp"
-        android:textColor="@color/text_primary"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/btnItemDelete"
-        app:layout_constraintStart_toEndOf="@id/ivItemTypeIcon"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Times Square" />
+        android:background="@drawable/bg_search_item_frosted"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="10dp">
 
-    <TextView
-        android:id="@+id/tvItemSnippet"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="8dp"
-        android:textColor="@color/text_muted"
-        android:textSize="11sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btnItemDelete"
-        app:layout_constraintStart_toEndOf="@id/ivItemTypeIcon"
-        app:layout_constraintTop_toBottomOf="@id/tvItemTitle"
-        tools:text="Manhattan, NY 10036, USA" />
+        <ImageView
+            android:id="@+id/ivItemTypeIcon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_location_pin"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/primary"
+            tools:ignore="ContentDescription" />
 
-    <ImageButton
-        android:id="@+id/btnItemDelete"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_clear"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/text_muted"
-        tools:ignore="ContentDescription" />
+        <TextView
+            android:id="@+id/tvItemTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="6dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"
+            android:textSize="13.5sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/tvItemDistance"
+            app:layout_constraintStart_toEndOf="@id/ivItemTypeIcon"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Tokyo, Japan" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/tvItemSnippet"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="6dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_muted"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnItemDelete"
+            app:layout_constraintStart_toEndOf="@id/ivItemTypeIcon"
+            app:layout_constraintTop_toBottomOf="@id/tvItemTitle"
+            tools:text="Kanto Region, Japan" />
+
+        <!-- Distance & Bearing Pill Badge -->
+        <TextView
+            android:id="@+id/tvItemDistance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_chip_frosted"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:textColor="@color/primary"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@id/btnItemDelete"
+            app:layout_constraintTop_toTopOf="@id/tvItemTitle"
+            tools:text="2,450 km"
+            tools:visibility="visible" />
+
+        <!-- History Item Delete Button -->
+        <ImageButton
+            android:id="@+id/btnItemDelete"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Remove from history"
+            android:padding="6dp"
+            android:src="@drawable/ic_clear"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/text_muted" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

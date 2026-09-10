@@ -49,6 +49,12 @@ class MotionSyncEngine(
     private var stepCounterSensor: Sensor? = null
     private var accelSensor: Sensor? = null
     private var rotationVectorSensor: Sensor? = null
+    private var magneticSensor: Sensor? = null
+
+    private val lastAccelValues = FloatArray(3)
+    private val lastMagValues = FloatArray(3)
+    private var hasAccel = false
+    private var hasMag = false
 
     // Simulation runtime state
     private var currentLat: Double = 0.0
@@ -105,12 +111,15 @@ class MotionSyncEngine(
         lastReportedSpeed = 0f
         initialStepCount = -1f
         lastStepCount = -1f
+        hasAccel = false
+        hasMag = false
 
         if (sensorManager != null) {
             stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
             stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
             accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
             rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+            magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
             if (stepDetectorSensor != null) {
                 sensorManager.registerListener(this, stepDetectorSensor, SensorManager.SENSOR_DELAY_GAME)
@@ -119,11 +128,13 @@ class MotionSyncEngine(
             }
 
             accelSensor?.let {
-                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
             }
 
-            rotationVectorSensor?.let {
-                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
+            if (rotationVectorSensor != null) {
+                sensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_GAME)
+            } else if (magneticSensor != null) {
+                sensorManager.registerListener(this, magneticSensor, SensorManager.SENSOR_DELAY_GAME)
             }
         }
 
@@ -166,12 +177,33 @@ class MotionSyncEngine(
                 val z = event.values[2]
                 val magnitude = sqrt(x * x + y * y + z * z)
 
+                System.arraycopy(event.values, 0, lastAccelValues, 0, 3)
+                hasAccel = true
+                if (rotationVectorSensor == null && hasMag) {
+                    updateOrientationFromAccelMag()
+                }
+
                 // Push to rolling variance window
                 accelWindow[accelIndex] = magnitude
                 accelIndex = (accelIndex + 1) % accelWindow.size
                 if (accelCount < accelWindow.size) accelCount++
 
                 checkAccelerometerMotionState()
+
+                // Pedometer peak detection fallback when hardware step sensor chip is unavailable
+                if (stepDetectorSensor == null && stepCounterSensor == null) {
+                    val now = System.currentTimeMillis()
+                    if (magnitude > 12.0f && (now - lastStepTimestamp > 330L)) {
+                        onPhysicalStepDetected()
+                    }
+                }
+            }
+            Sensor.TYPE_MAGNETIC_FIELD -> {
+                System.arraycopy(event.values, 0, lastMagValues, 0, 3)
+                hasMag = true
+                if (rotationVectorSensor == null && hasAccel) {
+                    updateOrientationFromAccelMag()
+                }
             }
             Sensor.TYPE_ROTATION_VECTOR -> {
                 val rotationMatrix = FloatArray(9)
@@ -185,6 +217,18 @@ class MotionSyncEngine(
                 if (azimuthDeg < 0f) azimuthDeg += 360f
                 currentHeading = azimuthDeg
             }
+        }
+    }
+
+    private fun updateOrientationFromAccelMag() {
+        val rMatrix = FloatArray(9)
+        val iMatrix = FloatArray(9)
+        if (SensorManager.getRotationMatrix(rMatrix, iMatrix, lastAccelValues, lastMagValues)) {
+            val orientation = FloatArray(3)
+            SensorManager.getOrientation(rMatrix, orientation)
+            var azimuthDeg = Math.toDegrees(orientation[0].toDouble()).toFloat()
+            if (azimuthDeg < 0f) azimuthDeg += 360f
+            currentHeading = azimuthDeg
         }
     }
 

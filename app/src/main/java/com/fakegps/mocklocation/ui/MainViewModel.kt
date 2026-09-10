@@ -469,15 +469,60 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         if (list.isNotEmpty()) return@withContext list
 
-        // 2. High-reliability OpenStreetMap Nominatim Search Fallback
+        val encoded = java.net.URLEncoder.encode(query, "UTF-8")
+
+        // 2. High-speed, rate-limit-free Photon Komoot OSM Autocomplete API
         try {
-            val encoded = java.net.URLEncoder.encode(query, "UTF-8")
+            val photonUrl = "https://photon.komoot.io/api/?q=$encoded&limit=8"
+            val conn = (java.net.URL(photonUrl).openConnection() as java.net.HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 3500
+                readTimeout = 4000
+                setRequestProperty("User-Agent", "NowhereLocation/1.0 (Android Native App)")
+            }
+            if (conn.responseCode == 200) {
+                val body = conn.inputStream.bufferedReader().use { it.readText() }
+                val rootObj = JSONObject(body)
+                val features = rootObj.optJSONArray("features")
+                if (features != null && features.length() > 0) {
+                    for (i in 0 until features.length()) {
+                        val feature = features.getJSONObject(i)
+                        val geometry = feature.optJSONObject("geometry") ?: continue
+                        val coords = geometry.optJSONArray("coordinates") ?: continue
+                        val lon = coords.getDouble(0)
+                        val lat = coords.getDouble(1)
+                        val props = feature.optJSONObject("properties") ?: JSONObject()
+
+                        val name = props.optString("name").ifBlank { query }
+                        val city = props.optString("city")
+                        val state = props.optString("state")
+                        val country = props.optString("country")
+                        val snippetParts = listOf(city, state, country).filter { it.isNotBlank() }
+                        val snippet = if (snippetParts.isNotEmpty()) snippetParts.joinToString(", ") else name
+
+                        list.add(
+                            AddressSearchResult(
+                                title = name,
+                                snippet = snippet,
+                                latitude = lat,
+                                longitude = lon
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (ignored: Exception) {}
+
+        if (list.isNotEmpty()) return@withContext list
+
+        // 3. OpenStreetMap Nominatim Search Fallback with compliant User-Agent
+        try {
             val urlString = "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&q=$encoded"
             val connection = (java.net.URL(urlString).openConnection() as java.net.HttpURLConnection).apply {
                 requestMethod = "GET"
                 connectTimeout = 3000
                 readTimeout = 4000
-                setRequestProperty("User-Agent", "NowhereLocationSimulator/1.0 (Android Search)")
+                setRequestProperty("User-Agent", "NowhereLocationApp/1.0 (contact: support@nowhereapp.internal)")
             }
 
             if (connection.responseCode == 200) {
@@ -503,20 +548,101 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         } catch (ignored: Exception) {}
 
+        if (list.isNotEmpty()) return@withContext list
+
+        // 4. Open-Meteo High-Availability Geocoding Fallback
+        try {
+            val openMeteoUrl = "https://geocoding-api.open-meteo.com/v1/search?name=$encoded&count=8&language=en&format=json"
+            val conn = (java.net.URL(openMeteoUrl).openConnection() as java.net.HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 3000
+                readTimeout = 3500
+                setRequestProperty("User-Agent", "NowhereLocationApp/1.0")
+            }
+            if (conn.responseCode == 200) {
+                val body = conn.inputStream.bufferedReader().use { it.readText() }
+                val json = JSONObject(body)
+                val results = json.optJSONArray("results")
+                if (results != null) {
+                    for (i in 0 until results.length()) {
+                        val item = results.getJSONObject(i)
+                        val name = item.getString("name")
+                        val lat = item.getDouble("latitude")
+                        val lon = item.getDouble("longitude")
+                        val admin1 = item.optString("admin1")
+                        val country = item.optString("country")
+                        val snippet = listOf(admin1, country).filter { it.isNotBlank() }.joinToString(", ").ifBlank { name }
+                        list.add(
+                            AddressSearchResult(
+                                title = name,
+                                snippet = snippet,
+                                latitude = lat,
+                                longitude = lon
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (ignored: Exception) {}
+
         return@withContext list
     }
 
-    private fun parseCoordinates(input: String): Pair<Double, Double>? {
-        val clean = input.replace(",", " ").replace(";", " ").trim()
-        val parts = clean.split("\\s+".toRegex())
-        if (parts.size == 2) {
-            val lat = parts[0].toDoubleOrNull()
-            val lon = parts[1].toDoubleOrNull()
-            if (lat != null && lon != null && lat in -90.0..90.0 && lon in -180.0..180.0) {
-                return Pair(lat, lon)
+    fun parseCoordinates(input: String): Pair<Double, Double>? = Companion.parseCoordinates(input)
+
+    companion object {
+        fun parseCoordinates(input: String): Pair<Double, Double>? {
+            val trimmed = input.trim()
+            if (trimmed.isEmpty()) return null
+
+            // 1. DMS notation: e.g. 37°46'29"N 122°25'10"W or 37°46'N 122°25'W
+            val dmsPattern = Regex("""(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?['\s]*)?(\d+(?:\.\d+)?"?\s*)?([NSns])[,;\s]+(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?['\s]*)?(\d+(?:\.\d+)?"?\s*)?([EWew])""")
+            val dmsMatch = dmsPattern.find(trimmed)
+            if (dmsMatch != null) {
+                val (latDeg, latMin, latSec, latHem, lonDeg, lonMin, lonSec, lonHem) = dmsMatch.destructured
+                var lat = latDeg.toDoubleOrNull() ?: return null
+                lat += (latMin.replace("'", "").trim().toDoubleOrNull() ?: 0.0) / 60.0
+                lat += (latSec.replace("\"", "").trim().toDoubleOrNull() ?: 0.0) / 3600.0
+                if (latHem.equals("S", ignoreCase = true)) lat = -lat
+
+                var lon = lonDeg.toDoubleOrNull() ?: return null
+                lon += (lonMin.replace("'", "").trim().toDoubleOrNull() ?: 0.0) / 60.0
+                lon += (lonSec.replace("\"", "").trim().toDoubleOrNull() ?: 0.0) / 3600.0
+                if (lonHem.equals("W", ignoreCase = true)) lon = -lon
+
+                if (lat in -90.0..90.0 && lon in -180.0..180.0) {
+                    return Pair(lat, lon)
+                }
             }
+
+            // 2. Decimal with directional letters: e.g. 37.7749N, 122.4194W
+            val letterPattern = Regex("""(-?\d+(?:\.\d+)?)\s*([NSns])?[,;\s]+(-?\d+(?:\.\d+)?)\s*([EWew])?""")
+            val letterMatch = letterPattern.find(trimmed)
+            if (letterMatch != null) {
+                val (latStr, latHem, lonStr, lonHem) = letterMatch.destructured
+                var lat = latStr.toDoubleOrNull()
+                var lon = lonStr.toDoubleOrNull()
+                if (lat != null && lon != null) {
+                    if (latHem.equals("S", ignoreCase = true) && lat > 0) lat = -lat
+                    if (lonHem.equals("W", ignoreCase = true) && lon > 0) lon = -lon
+                    if (lat in -90.0..90.0 && lon in -180.0..180.0) {
+                        return Pair(lat, lon)
+                    }
+                }
+            }
+
+            // 3. Simple space or comma delimited decimal: e.g. "37.7749, -122.4194"
+            val clean = trimmed.replace(",", " ").replace(";", " ").trim()
+            val parts = clean.split("\\s+".toRegex())
+            if (parts.size == 2) {
+                val lat = parts[0].toDoubleOrNull()
+                val lon = parts[1].toDoubleOrNull()
+                if (lat != null && lon != null && lat in -90.0..90.0 && lon in -180.0..180.0) {
+                    return Pair(lat, lon)
+                }
+            }
+            return null
         }
-        return null
     }
 
     fun recordSearchHistory(query: String, title: String, snippet: String, latitude: Double, longitude: Double) {
@@ -662,11 +788,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val updatedLat = when {
                         wasRouting && isNowFixed -> state.latitude
                         isJoystick -> state.latitude
+                        state.mode is com.fakegps.mocklocation.simulator.SimulationMode.Fixed -> state.latitude
                         else -> current.fixedLatitude
                     }
                     val updatedLon = when {
                         wasRouting && isNowFixed -> state.longitude
                         isJoystick -> state.longitude
+                        state.mode is com.fakegps.mocklocation.simulator.SimulationMode.Fixed -> state.longitude
                         else -> current.fixedLongitude
                     }
                     val statusMsg = if (wasRouting && isNowFixed) "Route completed! Location locked at destination." else current.statusMessage
