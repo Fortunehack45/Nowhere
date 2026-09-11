@@ -39,17 +39,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardBackgroundColor="@color/surface_glass_card"
-            app:cardCornerRadius="18dp"
+            app:cardCornerRadius="22dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1.2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="52dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="10dp">
+                android:paddingHorizontal="12dp">
 
                 <ImageView
                     android:id="@+id/ivTopBrandLogo"
@@ -366,12 +366,12 @@
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardSearchBar"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="50dp"
             android:layout_marginTop="8dp"
             android:clickable="true"
             android:focusable="true"
             app:cardBackgroundColor="@color/surface_search"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/stroke_glass_specular"
             app:strokeWidth="1.2dp">
@@ -1007,7 +1007,10 @@
                     android:textColor="@color/white"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    app:cornerRadius="14dp"
+                    app:cornerRadius="16dp"
+                    app:elevation="3dp"
+                    app:strokeColor="#40FFFFFF"
+                    app:strokeWidth="1dp"
                     app:icon="@drawable/ic_teleport"
                     app:iconTint="@color/white" />
             </LinearLayout>
@@ -1627,13 +1630,18 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRouteToggle"
                     android:layout_width="0dp"
-                    android:layout_height="50dp"
+                    android:layout_height="52dp"
                     android:layout_weight="1"
                     android:backgroundTint="@color/primary"
+                    android:letterSpacing="0.04"
                     android:text="Start Route"
                     android:textColor="@color/white"
+                    android:textSize="14sp"
                     android:textStyle="bold"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="16dp"
+                    app:elevation="3dp"
+                    app:strokeColor="#40FFFFFF"
+                    app:strokeWidth="1dp"
                     app:icon="@drawable/ic_play"
                     app:iconTint="@color/white" />
 
@@ -1641,14 +1649,17 @@
                     android:id="@+id/btnRoutePause"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="50dp"
+                    android:layout_height="52dp"
                     android:layout_marginStart="8dp"
                     android:backgroundTint="@color/surface_card_elevated"
                     android:text="Pause"
                     android:textColor="@color/text_primary"
                     android:textStyle="bold"
                     android:visibility="gone"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="16dp"
+                    app:elevation="2dp"
+                    app:strokeColor="@color/stroke_glass_specular"
+                    app:strokeWidth="1dp"
                     app:icon="@drawable/ic_pause"
                     app:iconTint="@color/text_primary" />
             </LinearLayout>
@@ -1701,10 +1712,15 @@
                     android:layout_height="52dp"
                     android:layout_weight="1"
                     android:backgroundTint="@color/primary"
+                    android:letterSpacing="0.04"
                     android:text="Engage Joystick"
                     android:textColor="@color/white"
+                    android:textSize="14sp"
                     android:textStyle="bold"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="16dp"
+                    app:elevation="3dp"
+                    app:strokeColor="#40FFFFFF"
+                    app:strokeWidth="1dp"
                     app:icon="@drawable/ic_play"
                     app:iconTint="@color/white" />
 
@@ -1718,7 +1734,10 @@
                     android:text="Floating"
                     android:textColor="@color/text_primary"
                     android:textStyle="bold"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="16dp"
+                    app:elevation="2dp"
+                    app:strokeColor="@color/stroke_glass_specular"
+                    app:strokeWidth="1dp"
                     app:icon="@drawable/ic_joystick"
                     app:iconTint="@color/primary" />
             </LinearLayout>

@@ -154,14 +154,10 @@ object SessionTimerManager {
                         isUnlimited = true
                     )
 
-                    // Home screen widgets refresh
+                    // Home screen widgets refresh once
                     NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
-                    if (sessionPrefs.activeMode == "ROUTE") {
-                        NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
-                    }
-                    if (sessionPrefs.isIpMaskingEnabled) {
-                        NowhereVpnWidgetProvider.updateAllVpnWidgets(appContext)
-                    }
+                    delay(30_000L) // Sleep for 30 seconds since unlimited state is static
+                    continue
                 } else {
                     val remainingMillis = sessionPrefs.decrementRemainingTime(1000L)
                     val totalAllocated = sessionPrefs.sessionAllocatedDurationMillis
@@ -212,13 +208,16 @@ object SessionTimerManager {
                             isUnlimited = false
                         )
 
-                        // Real-time 1-second direct home screen widget refresh
-                        NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
-                        if (sessionPrefs.activeMode == "ROUTE") {
-                            NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
-                        }
-                        if (sessionPrefs.isIpMaskingEnabled) {
-                            NowhereVpnWidgetProvider.updateAllVpnWidgets(appContext)
+                        // Debounced home screen widget refresh (once per minute or last 60s)
+                        // Eliminates 98% of system Binder IPC transactions and stops CPU thermal load
+                        if (remainingSecs % 60L == 0L || remainingSecs <= 60L) {
+                            NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                            if (sessionPrefs.activeMode == "ROUTE") {
+                                NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
+                            }
+                            if (sessionPrefs.isIpMaskingEnabled) {
+                                NowhereVpnWidgetProvider.updateAllVpnWidgets(appContext)
+                            }
                         }
                     }
                 }

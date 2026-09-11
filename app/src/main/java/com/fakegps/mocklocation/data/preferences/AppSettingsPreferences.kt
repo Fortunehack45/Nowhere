@@ -37,19 +37,38 @@ class GoogleHybridSatelliteTileSource : OnlineTileSourceBase(
 val SATELLITE_TILE_SOURCE: ITileSource = GoogleHybridSatelliteTileSource()
 val ESRI_SATELLITE: ITileSource = SATELLITE_TILE_SOURCE
 
-val MODERN_VECTOR_MAP: ITileSource = XYTileSource(
-    "ModernVector",
-    1,
+val CARTO_VOYAGER: ITileSource = XYTileSource(
+    "CartoVoyagerFast",
+    0,
     20,
     256,
     ".png",
     arrayOf(
-        "https://a.tile.openstreetmap.fr/hot/",
-        "https://b.tile.openstreetmap.fr/hot/"
+        "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+        "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+        "https://c.basemaps.cartocdn.com/rastertiles/voyager/",
+        "https://d.basemaps.cartocdn.com/rastertiles/voyager/"
     ),
-    "© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team"
+    "© OpenStreetMap, © CARTO"
 )
-val CARTO_VOYAGER_3D: ITileSource = MODERN_VECTOR_MAP
+
+val CARTO_POSITRON: ITileSource = XYTileSource(
+    "CartoPositronFast",
+    0,
+    20,
+    256,
+    ".png",
+    arrayOf(
+        "https://a.basemaps.cartocdn.com/light_all/",
+        "https://b.basemaps.cartocdn.com/light_all/",
+        "https://c.basemaps.cartocdn.com/light_all/",
+        "https://d.basemaps.cartocdn.com/light_all/"
+    ),
+    "© OpenStreetMap, © CARTO"
+)
+
+val MODERN_VECTOR_MAP: ITileSource = CARTO_VOYAGER
+val CARTO_VOYAGER_3D: ITileSource = CARTO_VOYAGER
 
 class AppSettingsPreferences(context: Context) {
 
@@ -105,7 +124,7 @@ class AppSettingsPreferences(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_SENSOR_KINEMATICS_ENABLED, value).apply()
 
     var isAutoVpnSyncEnabled: Boolean
-        get() = prefs.getBoolean(KEY_AUTO_VPN_SYNC_ENABLED, true)
+        get() = prefs.getBoolean(KEY_AUTO_VPN_SYNC_ENABLED, false)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_VPN_SYNC_ENABLED, value).apply()
 
     var appThemeColor: String
@@ -289,8 +308,10 @@ class AppSettingsPreferences(context: Context) {
         return when (mapTileSource) {
             "TOPO" -> TileSourceFactory.OpenTopo
             "USGS_SAT", "SATELLITE", "ESRI_SAT" -> ESRI_SATELLITE
-            "3D_VECTOR", "MAPLIBRE_3D", "CARTO_3D" -> CARTO_VOYAGER_3D
-            else -> TileSourceFactory.MAPNIK
+            "POSITRON", "LIGHT" -> CARTO_POSITRON
+            "3D_VECTOR", "MAPLIBRE_3D", "CARTO_3D", "VOYAGER" -> CARTO_VOYAGER_3D
+            "MAPNIK_RAW" -> TileSourceFactory.MAPNIK
+            else -> CARTO_VOYAGER // Fastly/Cloudflare global edge CDN for instant tile loading
         }
     }
 

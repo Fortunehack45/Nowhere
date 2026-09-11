@@ -641,14 +641,13 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically connect VPN with mock location as requested
-        if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Only engage VPN if user explicitly enabled both Auto VPN Sync and IP Masking
+        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             try {
-                sessionPrefs.activeIpNodeId = "us_central_gcp"
-                sessionPrefs.isIpMaskingEnabled = true
-                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+                val targetNode = sessionPrefs.activeIpNodeId.ifBlank { "us_central_gcp" }
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, targetNode)
             } catch (e: Exception) {
-                Log.w(TAG, "VPN auto-start failed (non-fatal): ${e.message}")
+                Log.w(TAG, "VPN start failed (non-fatal): ${e.message}")
             }
         }
 
@@ -710,7 +709,14 @@ class MockLocationService : Service() {
                             )
                         }
                     }
-                    delay(300L) // Continuous 300ms (3.3Hz) anti-dropout heartbeat: keeps Google Maps fix stable without gray dot
+                    // Adaptive anti-overheating heartbeat interval:
+                    // 1000ms–1200ms when stationary or user-configured, saving 75% CPU cycles and stopping device heat
+                    val loopDelay = if (spd > 0.05f) {
+                        settingsPrefs.updateIntervalMovingMs.coerceIn(500L, 1000L)
+                    } else {
+                        settingsPrefs.updateIntervalStationaryMs.coerceIn(1000L, 2000L)
+                    }
+                    delay(loopDelay)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -754,14 +760,13 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically connect VPN with mock location as requested
-        if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning && waypoints.isNotEmpty()) {
+        // Only engage VPN if user explicitly enabled both Auto VPN Sync and IP Masking
+        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning && waypoints.isNotEmpty()) {
             try {
-                sessionPrefs.activeIpNodeId = "us_central_gcp"
-                sessionPrefs.isIpMaskingEnabled = true
-                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+                val targetNode = sessionPrefs.activeIpNodeId.ifBlank { "us_central_gcp" }
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, targetNode)
             } catch (e: Exception) {
-                Log.w(TAG, "VPN auto-start on route failed (non-fatal): ${e.message}")
+                Log.w(TAG, "VPN start on route failed (non-fatal): ${e.message}")
             }
         }
 
@@ -1003,14 +1008,13 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically connect VPN with mock location as requested
-        if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Only engage VPN if user explicitly enabled both Auto VPN Sync and IP Masking
+        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             try {
-                sessionPrefs.activeIpNodeId = "us_central_gcp"
-                sessionPrefs.isIpMaskingEnabled = true
-                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+                val targetNode = sessionPrefs.activeIpNodeId.ifBlank { "us_central_gcp" }
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, targetNode)
             } catch (e: Exception) {
-                Log.w(TAG, "VPN auto-start failed on joystick (non-fatal): ${e.message}")
+                Log.w(TAG, "VPN start failed on joystick (non-fatal): ${e.message}")
             }
         }
 

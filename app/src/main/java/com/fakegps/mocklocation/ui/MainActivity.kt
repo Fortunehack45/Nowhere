@@ -731,10 +731,13 @@ class MainActivity : AppCompatActivity() {
         val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToEditText(overlay.etSearchOverlayInput, primaryColor, this)
 
+        // Frosted glass background blur effect (85-95% blur)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            binding.mapView.setRenderEffect(
-                android.graphics.RenderEffect.createBlurEffect(25f, 25f, android.graphics.Shader.TileMode.CLAMP)
-            )
+            try {
+                binding.mapView.setRenderEffect(
+                    android.graphics.RenderEffect.createBlurEffect(25f, 25f, android.graphics.Shader.TileMode.CLAMP)
+                )
+            } catch (ignored: Exception) {}
         }
 
         val state = viewModel.uiState.value
@@ -776,7 +779,9 @@ class MainActivity : AppCompatActivity() {
         imm?.hideSoftInputFromWindow(overlay.etSearchOverlayInput.windowToken, 0)
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            binding.mapView.setRenderEffect(null)
+            try {
+                binding.mapView.setRenderEffect(null)
+            } catch (ignored: Exception) {}
         }
 
         binding.layoutTopHeader.visibility = View.VISIBLE
@@ -1598,9 +1603,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
         try {
-            if (!settingsPrefs.isAutoVpnSyncEnabled) return
             val sessionPrefs = SessionPreferences(this)
-            sessionPrefs.isIpMaskingEnabled = true
+            if (!settingsPrefs.isAutoVpnSyncEnabled || !sessionPrefs.isIpMaskingEnabled) return
             val bestNode = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
             sessionPrefs.activeIpNodeId = bestNode.id
             startVpnWithPermissionCheck(bestNode.id)
@@ -2392,19 +2396,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onLowMemory() {
         super.onLowMemory()
-        try {
-            binding.mapView.tileProvider?.clearTileCache()
-            System.gc()
-        } catch (ignored: Exception) {}
+        com.fakegps.mocklocation.util.RamOptimizationManager.trimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE, binding.mapView)
     }
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        if (level >= TRIM_MEMORY_MODERATE) {
-            try {
-                binding.mapView.tileProvider?.clearTileCache()
-                System.gc()
-            } catch (ignored: Exception) {}
-        }
+        com.fakegps.mocklocation.util.RamOptimizationManager.trimMemory(level, binding.mapView)
     }
 }

@@ -59,18 +59,25 @@ jobs:
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
             echo "Extracted Version: $VERSION"
           else
-            echo "version=1.0.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            VERSION="1.0.${{ github.run_number }}"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          fi
+          # Ensure branded AAB exists for Google Play Store release
+          if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
+            cp "app/build/outputs/bundle/release/app-release.aab" "app/build/outputs/bundle/release/Nowhere-v${VERSION}-release.aab"
           fi
 
       - name: Publish GitHub Release (Progressive Updates)
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         uses: softprops/action-gh-release@v2
+        continue-on-error: true
         with:
           tag_name: v${{ steps.extract_version.outputs.version }}
           name: Nowhere v${{ steps.extract_version.outputs.version }}
           generate_release_notes: true
           draft: false
           prerelease: false
+          make_latest: true
           files: |
             app/build/outputs/apk/release/*.apk
             app/build/outputs/apk/debug/*.apk

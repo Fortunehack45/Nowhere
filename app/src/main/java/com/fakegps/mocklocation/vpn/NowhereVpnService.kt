@@ -269,8 +269,8 @@ class NowhereVpnService : VpnService() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.w(TAG, "Direct tunnel error: ${e.message}; activating Local Privacy Shield fallback...", e)
-                activateLocalPrivacyShield(node)
+                Log.w(TAG, "Direct tunnel error: ${e.message}; preserving mobile data...", e)
+                handleConnectionFailure(node, "Direct tunnel error: ${e.message}. Mobile data preserved.")
             }
         }
     }
@@ -366,15 +366,15 @@ class NowhereVpnService : VpnService() {
 
                 if (backendResult.isFailure) {
                     val errorMsg = backendResult.exceptionOrNull()?.message ?: "Backend unreachable"
-                    Log.w(TAG, "Backend connect failed ($errorMsg); falling back to Local Privacy & Encrypted DNS Shield for ${node.country}...")
-                    activateLocalPrivacyShield(node)
+                    Log.w(TAG, "Backend connect failed ($errorMsg); preserving mobile data...")
+                    handleConnectionFailure(node, "VPN server offline ($errorMsg). Mobile data preserved.")
                     return@launch
                 }
 
                 val tunnelResp = backendResult.getOrNull()
                 if (tunnelResp == null) {
-                    Log.w(TAG, "Backend returned empty config; falling back to Local Privacy Shield...")
-                    activateLocalPrivacyShield(node)
+                    Log.w(TAG, "Backend returned empty config; preserving mobile data...")
+                    handleConnectionFailure(node, "VPN configuration unavailable. Mobile data preserved.")
                     return@launch
                 }
 
@@ -391,8 +391,8 @@ class NowhereVpnService : VpnService() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.w(TAG, "VPN service loop error: ${e.message}; activating Local Privacy Shield fallback...", e)
-                activateLocalPrivacyShield(node)
+                Log.w(TAG, "VPN service loop error: ${e.message}; preserving mobile data...", e)
+                handleConnectionFailure(node, "Connection error: ${e.message}. Mobile data preserved.")
             }
         }
     }
@@ -417,16 +417,17 @@ class NowhereVpnService : VpnService() {
 
         if (wgStartResult.isFailure) {
             val err = wgStartResult.exceptionOrNull()?.message ?: "Unknown WireGuard startup error"
-            Log.w(TAG, "WireGuard GoBackend failed to start: $err; falling back to Local Privacy Shield...")
-            activateLocalPrivacyShield(node)
+            Log.w(TAG, "WireGuard GoBackend failed to start: $err; preserving mobile data...")
+            handleConnectionFailure(node, "Tunnel startup failed ($err). Mobile data preserved.")
             return
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
         val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 5000L)
         if (!handshakeConfirmed) {
-            Log.w(TAG, "WireGuard handshake failed with $serverEndpoint (blocked/suspended) — activating Local Privacy Shield fallback")
-            activateLocalPrivacyShield(node)
+            Log.w(TAG, "WireGuard handshake failed with $serverEndpoint (blocked/suspended) — preserving mobile data...")
+            WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
+            handleConnectionFailure(node, "Server handshake failed. Mobile data preserved.")
             return
         }
 
@@ -436,51 +437,28 @@ class NowhereVpnService : VpnService() {
         launchTrafficMonitor(node)
     }
 
-    private fun activateLocalPrivacyShield(node: IpNode) {
-        try {
-            disconnectInterface()
+    /**
+     * Fail-safe handler: when remote WireGuard backend or endpoint is unreachable,
+     * cleanly teardown any VPN interface so that the user's mobile data and Wi-Fi
+     * are NEVER cut off, blocked, or blackholed.
+     */
+    private fun handleConnectionFailure(node: IpNode, reason: String) {
+        disconnectInterface()
+        serviceScope.launch {
             try {
-                serviceScope.launch {
-                    WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-                }
+                WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
             } catch (ignored: Exception) {}
-
-            val builder = Builder()
-                .setSession("Nowhere Privacy Shield (${node.country})")
-                .addAddress("10.100.0.2", 24)
-                .addDnsServer("1.1.1.1")
-                .addDnsServer("8.8.8.8")
-                // Protect DNS queries from local interception
-                .addRoute("1.1.1.1", 32)
-                .addRoute("8.8.8.8", 32)
-                .setMtu(1420)
-                .setBlocking(false)
-
-            vpnInterface = builder.establish()
-            if (vpnInterface != null) {
-                isRunning = true
-                sessionPrefs.isIpMaskingEnabled = true
-                activeServerNodeId = node.id
-                _vpnState.value = VpnState.Connected(node)
-                startForegroundNotification(node, _trafficStats.value)
-                launchTrafficMonitor(node)
-                Log.i(TAG, "🔒 Local Privacy & Encrypted DNS Shield active for node: ${node.name}. Internet traffic unaffected, DNS is 100% leak-proof.")
-            } else {
-                Log.e(TAG, "Could not establish local VPN interface")
-                isRunning = false
-                sessionPrefs.isIpMaskingEnabled = false
-                _vpnState.value = VpnState.Error("Could not establish Privacy Shield interface")
-                disconnectInterface()
-                try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Fallback Privacy Shield activation error: ${e.message}", e)
-            isRunning = false
-            sessionPrefs.isIpMaskingEnabled = false
-            _vpnState.value = VpnState.Error("VPN Connection Failed: ${e.message}")
-            disconnectInterface()
-            try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (ignored: Exception) {}
         }
+        isRunning = false
+        sessionPrefs.isIpMaskingEnabled = false
+        activeServerNodeId = ""
+        releaseWakeLock()
+        _vpnState.value = VpnState.Error(reason)
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } catch (ignored: Exception) {}
+        stopSelf()
+        Log.i(TAG, "🔒 VPN fail-safe active: $reason. Mobile data and Wi-Fi remain 100% operational.")
     }
 
     private fun launchTrafficMonitor(node: IpNode) {
