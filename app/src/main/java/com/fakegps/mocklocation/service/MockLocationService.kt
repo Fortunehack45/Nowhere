@@ -56,6 +56,15 @@ class MockLocationService : Service() {
         const val EXTRA_TRANSPORT_MODE = "extra_transport_mode"
         private const val WAKE_LOCK_TIMEOUT_MS = 24 * 60 * 60 * 1000L // 24 hours max safeguard
         private const val WAKE_LOCK_RENEWAL_INTERVAL_MS = 20 * 60 * 60 * 1000L // Renew every 20 hours
+
+        @Volatile
+        var activeInstance: MockLocationService? = null
+
+        fun isSimulationRunning(): Boolean {
+            val service = activeInstance ?: MockLocationServiceReceiver.activeService ?: return false
+            val state = service.serviceState.value
+            return state is ServiceState.Running && !state.isPaused
+        }
     }
 
     inner class LocalBinder : Binder() {
@@ -107,6 +116,7 @@ class MockLocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        activeInstance = this
         MockLocationServiceReceiver.activeService = this
         settingsPrefs = AppSettingsPreferences(this)
         realismLayer = RealismLayer(settingsPrefs)
@@ -143,8 +153,10 @@ class MockLocationService : Service() {
             updateAllWidgets()
         }
 
-        if (sessionPrefs.isSessionActive && sessionPrefs.hasValidActiveSession()) {
+        if (isSimulationRunning()) {
             SessionTimerManager.resumeExistingTimer(this)
+        } else {
+            SessionTimerManager.updateStaticState(this)
         }
     }
 
@@ -954,6 +966,7 @@ class MockLocationService : Service() {
         if (current is ServiceState.Running) {
             _serviceState.value = current.copy(isPaused = true)
         }
+        SessionTimerManager.pauseTimer(this)
         updateAllWidgets()
     }
 
@@ -963,6 +976,7 @@ class MockLocationService : Service() {
         if (current is ServiceState.Running) {
             _serviceState.value = current.copy(isPaused = false)
         }
+        SessionTimerManager.startOrResumeTimer(this)
         updateAllWidgets()
     }
 
@@ -1132,6 +1146,7 @@ class MockLocationService : Service() {
             return
         }
         Log.i(TAG, "stopSpoofing called. Terminating simulation and releasing resources.")
+        if (activeInstance == this) activeInstance = null
         MockLocationServiceReceiver.activeService = null
         cancelWatchdog()
         stopCurrentLoop()
@@ -1194,6 +1209,7 @@ class MockLocationService : Service() {
         // IMPORTANT: Do NOT call stopSpoofing() here — it calls stopSelf() which creates a
         // recursive destroy loop when Android system legitimately destroys the service.
         // Instead, only cancel coroutines and release resources directly.
+        if (activeInstance == this) activeInstance = null
         MockLocationServiceReceiver.activeService = null
         sessionPrefs.isSessionActive = false
         SessionTimerManager.stopTimer(this)

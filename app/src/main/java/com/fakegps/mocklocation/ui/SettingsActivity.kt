@@ -83,12 +83,11 @@ class SettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
-        val sessionPrefs = SessionPreferences(this)
-        val isSimRunning = sessionPrefs.isSessionActive && com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService != null
+        val isSimRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
         if (isSimRunning) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
         } else {
-            com.fakegps.mocklocation.service.SessionTimerManager.stopTimer(this)
+            com.fakegps.mocklocation.service.SessionTimerManager.updateStaticState(this)
         }
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             if (binding.adBannerContainer.childCount == 0) {
@@ -183,8 +182,9 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
 
-        val remaining = sessionPrefs.getTimeRemainingMillis()
-        val formattedRemaining = sessionPrefs.formatRemainingTime()
+        val remaining = timerState.remainingMillis
+        val formattedRemaining = timerState.formattedRemaining
+        val formattedTotal = timerState.formattedTotal
         val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
         val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this)
         val primaryCsl = ColorStateList.valueOf(primaryColor)
@@ -193,7 +193,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnSettingsExtendOneHour.setTextColor(primaryColor)
         binding.btnSettingsExtendOneHour.iconTint = primaryCsl
 
-        val isSimRunning = sessionPrefs.isSessionActive && com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService != null
+        val isSimRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
         if (isSimRunning && (timerState.isRunning || remaining > 0)) {
             binding.tvSettingsSessionBadge.text = formattedRemaining
             binding.tvSettingsSessionBadge.setTextColor(primaryColor)
@@ -201,7 +201,7 @@ class SettingsActivity : AppCompatActivity() {
             binding.ivSettingsSessionIcon.imageTintList = primaryCsl
 
             binding.tvSettingsSessionTime.text = formattedRemaining
-            binding.tvSettingsSessionTotal.text = "Total Allocated: ${sessionPrefs.formatAllocatedDuration()}"
+            binding.tvSettingsSessionTotal.text = "Total Allocated: $formattedTotal"
             binding.pbSettingsSessionProgress.progress = timerState.progressPercent
             binding.pbSettingsSessionProgress.progressTintList = primaryCsl
         } else if (timerState.isExpired || sessionPrefs.isSessionExpired) {

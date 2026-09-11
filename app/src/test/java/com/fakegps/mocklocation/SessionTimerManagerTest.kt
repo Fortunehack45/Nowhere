@@ -128,4 +128,37 @@ class SessionTimerManagerTest {
         assertEquals("Timer must preserve exact remaining quota when disconnected", initialRemaining, preservedRemaining)
         assertTrue("Session must remain valid", sessionPrefs.hasValidActiveSession())
     }
+
+    @Test
+    fun testPauseTimer_preservesSessionActiveAndDuration() {
+        val duration = 60 * 60 * 1000L // 60 min
+        sessionPrefs.startNewSession(duration, forceRestart = true)
+        val initialRemaining = sessionPrefs.getTimeRemainingMillis()
+
+        // When paused (e.g. during route pause)
+        SessionTimerManager.pauseTimer(context)
+
+        // isSessionActive should still be true, session not expired
+        assertTrue(sessionPrefs.isSessionActive)
+        assertFalse(sessionPrefs.isSessionExpired)
+        assertEquals(initialRemaining, sessionPrefs.getTimeRemainingMillis())
+        assertFalse("timerState isRunning must be false when paused", SessionTimerManager.timerState.value.isRunning)
+    }
+
+    @Test
+    fun testUpdateStaticState_updatesTimerStateWithoutKillingSession() {
+        val duration = 60 * 60 * 1000L // 60 min
+        sessionPrefs.startNewSession(duration, forceRestart = true)
+        val initialRemaining = sessionPrefs.getTimeRemainingMillis()
+
+        // When navigating to settings or idling
+        SessionTimerManager.updateStaticState(context)
+
+        // Session must remain valid and not expired
+        assertTrue(sessionPrefs.hasValidActiveSession())
+        assertFalse(sessionPrefs.isSessionExpired)
+        assertEquals(initialRemaining, sessionPrefs.getTimeRemainingMillis())
+        assertFalse(SessionTimerManager.timerState.value.isRunning)
+        assertEquals(sessionPrefs.formatRemainingTime(), SessionTimerManager.timerState.value.formattedRemaining)
+    }
 }

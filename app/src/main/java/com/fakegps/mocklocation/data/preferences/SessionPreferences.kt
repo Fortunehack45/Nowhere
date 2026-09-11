@@ -183,7 +183,7 @@ class SessionPreferences(private val context: Context) {
     }
 
     fun hasValidActiveSession(): Boolean {
-        if (isPremiumActive()) return isSessionActive
+        if (isPremiumActive()) return true
         if (sessionRemainingDurationMillis < 0L && sessionExpiresTimestamp == 0L) {
             return false
         }

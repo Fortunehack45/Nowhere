@@ -407,11 +407,11 @@ class MainActivity : AppCompatActivity() {
         applyDynamicThemeAccent()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
-        val isSimRunning = viewModel.uiState.value.isServiceRunning && com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService != null
+        val isSimRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
         if (isSimRunning) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
         } else {
-            com.fakegps.mocklocation.service.SessionTimerManager.stopTimer(this)
+            com.fakegps.mocklocation.service.SessionTimerManager.updateStaticState(this)
         }
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             if (binding.adBannerContainer.childCount == 0) {
@@ -1994,13 +1994,14 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             com.fakegps.mocklocation.service.SessionTimerManager.timerState.collectLatest { timerState ->
                 if (!isFinishing && !isDestroyed) {
+                    val isSimRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
                     if (timerState.isUnlimited) {
-                        binding.layoutSessionTimerBadge.visibility = View.VISIBLE
+                        binding.layoutSessionTimerBadge.visibility = if (isSimRunning) View.VISIBLE else View.GONE
                         binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_bg)
                         binding.tvSessionTimerBadge.text = "UNLIMITED"
                         binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
                         binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
-                    } else if (timerState.isRunning) {
+                    } else if (isSimRunning && (timerState.isRunning || timerState.remainingMillis > 0) && !timerState.isExpired) {
                         val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity)
                         val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this@MainActivity)
                         binding.layoutSessionTimerBadge.visibility = View.VISIBLE
