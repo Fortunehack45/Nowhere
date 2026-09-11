@@ -84,6 +84,8 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as? MockLocationService.LocalBinder
             mockService = binder?.getService()
+            com.fakegps.mocklocation.service.MockLocationService.activeInstance = mockService
+            com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService = mockService
             isServiceBound = true
 
             mockService?.let { svc ->
@@ -407,7 +409,7 @@ class MainActivity : AppCompatActivity() {
         applyDynamicThemeAccent()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
-        val isSimRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
+        val isSimRunning = isSimulationRunningCompat()
         if (isSimRunning) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
         } else {
@@ -420,6 +422,18 @@ class MainActivity : AppCompatActivity() {
         } else {
             com.fakegps.mocklocation.ads.AdManager.clearBanner(binding.adBannerContainer)
         }
+    }
+
+    private fun isSimulationRunningCompat(): Boolean {
+        if (com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()) return true
+        val svc = mockService ?: com.fakegps.mocklocation.service.MockLocationService.activeInstance ?: com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService
+        if (svc != null) {
+            if (svc.isSimulationPaused) return false
+            val state = svc.serviceState.value
+            if (state is ServiceState.Running && state.isPaused) return false
+            return svc.activeMode !is com.fakegps.mocklocation.simulator.SimulationMode.Idle || state is ServiceState.Running
+        }
+        return viewModel.uiState.value.isServiceRunning
     }
 
     override fun onPause() {
@@ -1787,6 +1801,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             startService(intent)
         }
+        if (!isServiceBound || mockService == null) {
+            val bindIntent = Intent(this, MockLocationService::class.java)
+            bindService(bindIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
     }
 
     private fun setupIpShield() {
@@ -1994,7 +2012,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             com.fakegps.mocklocation.service.SessionTimerManager.timerState.collectLatest { timerState ->
                 if (!isFinishing && !isDestroyed) {
-                    val isSimRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
+                    val isSimRunning = isSimulationRunningCompat()
                     if (timerState.isUnlimited) {
                         binding.layoutSessionTimerBadge.visibility = if (isSimRunning) View.VISIBLE else View.GONE
                         binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_bg)

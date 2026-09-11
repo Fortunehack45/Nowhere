@@ -83,7 +83,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
-        val isSimRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
+        val isSimRunning = isSimulationRunningCompat()
         if (isSimRunning) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
         } else {
@@ -99,6 +99,18 @@ class SettingsActivity : AppCompatActivity() {
         refreshSystemStatus()
         refreshNotificationPermissionUI()
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
+    }
+
+    private fun isSimulationRunningCompat(): Boolean {
+        if (com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()) return true
+        val svc = com.fakegps.mocklocation.service.MockLocationService.activeInstance ?: com.fakegps.mocklocation.service.MockLocationServiceReceiver.activeService
+        if (svc != null) {
+            if (svc.isSimulationPaused) return false
+            val state = svc.serviceState.value
+            if (state is com.fakegps.mocklocation.service.ServiceState.Running && state.isPaused) return false
+            return svc.activeMode !is com.fakegps.mocklocation.simulator.SimulationMode.Idle || state is com.fakegps.mocklocation.service.ServiceState.Running
+        }
+        return sessionPrefs.isSessionActive
     }
 
     private fun refreshNotificationPermissionUI() {
@@ -193,7 +205,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnSettingsExtendOneHour.setTextColor(primaryColor)
         binding.btnSettingsExtendOneHour.iconTint = primaryCsl
 
-        val isSimRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
+        val isSimRunning = isSimulationRunningCompat()
         if (isSimRunning && (timerState.isRunning || remaining > 0)) {
             binding.tvSettingsSessionBadge.text = formattedRemaining
             binding.tvSettingsSessionBadge.setTextColor(primaryColor)

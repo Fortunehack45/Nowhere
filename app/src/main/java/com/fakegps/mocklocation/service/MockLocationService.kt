@@ -70,7 +70,11 @@ class MockLocationService : Service() {
     }
 
     inner class LocalBinder : Binder() {
-        fun getService(): MockLocationService = this@MockLocationService
+        fun getService(): MockLocationService {
+            activeInstance = this@MockLocationService
+            MockLocationServiceReceiver.activeService = this@MockLocationService
+            return this@MockLocationService
+        }
     }
 
     private val binder = LocalBinder()
@@ -185,6 +189,8 @@ class MockLocationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        activeInstance = this
+        MockLocationServiceReceiver.activeService = this
         acquireWakeLock()
         when (intent?.action) {
             ACTION_STOP -> stopSpoofing()
@@ -247,6 +253,8 @@ class MockLocationService : Service() {
             Log.w(TAG, "Cannot start Motion Sync: Route playback is actively running.")
             return
         }
+        activeInstance = this
+        MockLocationServiceReceiver.activeService = this
         stopCurrentLoop()
         acquireWakeLock()
         isStopping.set(false)
@@ -640,6 +648,8 @@ class MockLocationService : Service() {
     }
 
     fun startFixed(latitude: Double, longitude: Double, altitude: Double = 15.0) {
+        activeInstance = this
+        MockLocationServiceReceiver.activeService = this
         isStopping.set(false)
         isSimulationPaused = false
         stopCurrentLoop()
@@ -770,6 +780,8 @@ class MockLocationService : Service() {
             return
         }
 
+        activeInstance = this
+        MockLocationServiceReceiver.activeService = this
         isStopping.set(false)
         isSimulationPaused = false
         stopCurrentLoop()
@@ -1033,6 +1045,8 @@ class MockLocationService : Service() {
     }
 
     fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f) {
+        activeInstance = this
+        MockLocationServiceReceiver.activeService = this
         isStopping.set(false)
         isSimulationPaused = false
         stopCurrentLoop()
@@ -1187,8 +1201,6 @@ class MockLocationService : Service() {
             return
         }
         Log.i(TAG, "stopSpoofing called. Terminating simulation and releasing resources.")
-        if (activeInstance == this) activeInstance = null
-        MockLocationServiceReceiver.activeService = null
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()
@@ -1253,7 +1265,7 @@ class MockLocationService : Service() {
         // recursive destroy loop when Android system legitimately destroys the service.
         // Instead, only cancel coroutines and release resources directly.
         if (activeInstance == this) activeInstance = null
-        MockLocationServiceReceiver.activeService = null
+        if (MockLocationServiceReceiver.activeService == this) MockLocationServiceReceiver.activeService = null
         sessionPrefs.isSessionActive = false
         SessionTimerManager.stopTimer(this)
         isSimulationPaused = false

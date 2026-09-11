@@ -86,7 +86,7 @@ class FloatingJoystickService : Service() {
             joystick.setOnJoystickMoveListener(object : JoystickView.OnJoystickMoveListener {
                 override fun onJoystickMoved(angleDegrees: Float, magnitude: Float) {
                     if (angleDegrees.isNaN() || magnitude.isNaN()) return
-                    if (MockLocationServiceReceiver.activeService == null) {
+                    if (MockLocationServiceReceiver.activeService == null || !MockLocationService.isSimulationRunning()) {
                         // Automatically spin up joystick spoofing if not already running
                         val intent = Intent(this@FloatingJoystickService, MockLocationService::class.java).apply {
                             action = MockLocationService.ACTION_START_JOYSTICK
