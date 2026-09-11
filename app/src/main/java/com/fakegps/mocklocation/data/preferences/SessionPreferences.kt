@@ -220,7 +220,7 @@ class SessionPreferences(private val context: Context) {
         val updatedRemaining = currentRemaining + extraMillis
         sessionRemainingDurationMillis = updatedRemaining
         sessionExpiresTimestamp = if (sessionExpiresTimestamp > now) sessionExpiresTimestamp + extraMillis else now + updatedRemaining
-        sessionAllocatedDurationMillis += extraMillis
+        sessionAllocatedDurationMillis = if (sessionAllocatedDurationMillis > 0L) sessionAllocatedDurationMillis + extraMillis else updatedRemaining
         isSessionExpired = false
         isSessionActive = true
     }

@@ -62,7 +62,7 @@ object SessionTimerManager {
         if (sessionPrefs.hasValidActiveSession()) {
             resumeExistingTimer(context)
         } else {
-            startTimer(context, durationMillis, forceRestart = false)
+            startTimer(context, durationMillis, forceRestart = true)
         }
     }
 
@@ -76,12 +76,7 @@ object SessionTimerManager {
         resetThresholdFlags()
 
         ensureNotificationChannel(context)
-        val isServicePresent = MockLocationService.activeInstance != null || MockLocationServiceReceiver.activeService != null
-        if (!isServicePresent || MockLocationService.isSimulationRunning()) {
-            startTickerLoop(context.applicationContext)
-        } else {
-            updateState(context)
-        }
+        startTickerLoop(context.applicationContext)
     }
 
     fun extendSession(context: Context, extraMillis: Long = SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS) {
@@ -95,12 +90,7 @@ object SessionTimerManager {
         cancelNotification(context, NOTIF_ID_10S)
         cancelNotification(context, NOTIF_ID_EXPIRED)
 
-        val isServicePresent = MockLocationService.activeInstance != null || MockLocationServiceReceiver.activeService != null
-        if (!isServicePresent || MockLocationService.isSimulationRunning()) {
-            startTickerLoop(context.applicationContext)
-        } else {
-            updateState(context)
-        }
+        startTickerLoop(context.applicationContext)
         NowhereAppWidgetProvider.updateAllWidgets(context)
     }
 
@@ -110,10 +100,7 @@ object SessionTimerManager {
         sessionPrefs.isSessionExpired = false
         updateState(context)
         ensureNotificationChannel(context)
-        val isServicePresent = MockLocationService.activeInstance != null || MockLocationServiceReceiver.activeService != null
-        if (!isServicePresent || MockLocationService.isSimulationRunning()) {
-            startTickerLoop(context.applicationContext)
-        }
+        startTickerLoop(context.applicationContext)
     }
 
     fun pauseTimer(context: Context) {
@@ -253,6 +240,10 @@ object SessionTimerManager {
     }
 
     fun updateStaticState(context: Context) {
+        if (timerJob?.isActive == true && MockLocationService.isSimulationRunning()) {
+            updateState(context)
+            return
+        }
         timerJob?.cancel()
         timerJob = null
         timerScope?.cancel()
@@ -286,9 +277,10 @@ object SessionTimerManager {
             ((remainingMillis.toDouble() / totalAllocated.toDouble()) * 100).toInt().coerceIn(0, 100)
         } else 0
 
+        val isExpired = remainingMillis <= 0L || sessionPrefs.isSessionExpired
         _timerState.value = SessionTimerState(
             isRunning = isTickerActive && remainingMillis > 0 && isSimActive,
-            isExpired = sessionPrefs.isSessionExpired,
+            isExpired = isExpired,
             remainingMillis = remainingMillis,
             totalAllocatedMillis = totalAllocated,
             formattedRemaining = sessionPrefs.formatRemainingTime(),

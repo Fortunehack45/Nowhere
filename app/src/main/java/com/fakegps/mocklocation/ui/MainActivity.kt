@@ -1613,8 +1613,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun ensureActiveSessionOrPrompt(onActive: () -> Unit): Boolean {
         val sessionPrefs = SessionPreferences(this)
-        if (sessionPrefs.sessionExpiresTimestamp == 0L) {
-            sessionPrefs.startNewSession(SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        if (sessionPrefs.sessionExpiresTimestamp == 0L || sessionPrefs.sessionRemainingDurationMillis < 0L) {
+            sessionPrefs.startNewSession(SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS, forceRestart = true)
             return true
         }
         if (!sessionPrefs.hasValidActiveSession()) {

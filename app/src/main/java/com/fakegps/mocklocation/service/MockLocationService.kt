@@ -62,8 +62,10 @@ class MockLocationService : Service() {
 
         fun isSimulationRunning(): Boolean {
             val service = activeInstance ?: MockLocationServiceReceiver.activeService ?: return false
+            if (service.isSimulationPaused) return false
             val state = service.serviceState.value
-            return state is ServiceState.Running && !state.isPaused
+            if (state is ServiceState.Running && state.isPaused) return false
+            return service.activeMode !is SimulationMode.Idle || state is ServiceState.Running
         }
     }
 
@@ -88,7 +90,8 @@ class MockLocationService : Service() {
     val serviceState: StateFlow<ServiceState> = _serviceState.asStateFlow()
 
     private var simulationJob: Job? = null
-    private var activeMode: SimulationMode = SimulationMode.Idle
+    var activeMode: SimulationMode = SimulationMode.Idle
+    @Volatile var isSimulationPaused: Boolean = false
     private var routeSimulator: RouteSimulator? = null
 
     // Idempotent stop guard — prevents double-stop from onDestroy + timer expiry racing
@@ -247,6 +250,7 @@ class MockLocationService : Service() {
         stopCurrentLoop()
         acquireWakeLock()
         isStopping.set(false)
+        isSimulationPaused = false
         sessionPrefs.isSessionActive = true
         sessionPrefs.activeMode = "MOTION_SYNC"
         sessionPrefs.lastLatitude = initialLat
@@ -257,17 +261,18 @@ class MockLocationService : Service() {
         currentSimSpeedMps = 0.0f
         currentSimBearing = 0.0f
         activeMode = SimulationMode.Fixed(initialLat, initialLon, 10.0)
-        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
-
-        startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
         _serviceState.value = ServiceState.Running(
-            mode = SimulationMode.Fixed(initialLat, initialLon, 10.0),
+            mode = activeMode,
             latitude = initialLat,
             longitude = initialLon,
             altitude = 10.0,
             speedMps = 0f,
-            bearingDegrees = 0f
+            bearingDegrees = 0f,
+            isPaused = false
         )
+        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+
+        startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
         motionSyncEngine?.start(initialLat, initialLon, 0f)
         startContinuousHeartbeatLoop()
         updateAllWidgets()
@@ -636,6 +641,7 @@ class MockLocationService : Service() {
 
     fun startFixed(latitude: Double, longitude: Double, altitude: Double = 15.0) {
         isStopping.set(false)
+        isSimulationPaused = false
         stopCurrentLoop()
         acquireWakeLock()
         activeMode = SimulationMode.Fixed(latitude, longitude, altitude)
@@ -649,6 +655,15 @@ class MockLocationService : Service() {
         currentSimAlt = altitude
         currentSimSpeedMps = 0.0f
         currentSimBearing = 0.0f
+        _serviceState.value = ServiceState.Running(
+            mode = activeMode,
+            latitude = latitude,
+            longitude = longitude,
+            altitude = altitude,
+            speedMps = 0.0f,
+            bearingDegrees = 0.0f,
+            isPaused = false
+        )
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
@@ -756,6 +771,7 @@ class MockLocationService : Service() {
         }
 
         isStopping.set(false)
+        isSimulationPaused = false
         stopCurrentLoop()
         acquireWakeLock()
 
@@ -769,6 +785,18 @@ class MockLocationService : Service() {
         sessionPrefs.lastSpeedKmh = speedKmh
         sessionPrefs.isLooping = isLooping
         sessionPrefs.saveWaypoints(waypoints)
+
+        val firstPt = waypoints.first()
+        _serviceState.value = ServiceState.Running(
+            mode = activeMode,
+            latitude = firstPt.latitude,
+            longitude = firstPt.longitude,
+            altitude = firstPt.altitude,
+            speedMps = (speedKmh * 1000f / 3600f),
+            bearingDegrees = 0f,
+            isPaused = false
+        )
+        updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
@@ -961,6 +989,7 @@ class MockLocationService : Service() {
     }
 
     fun pauseRoute() {
+        isSimulationPaused = true
         routeSimulator?.pause()
         val current = _serviceState.value
         if (current is ServiceState.Running) {
@@ -971,6 +1000,7 @@ class MockLocationService : Service() {
     }
 
     fun resumeRoute() {
+        isSimulationPaused = false
         routeSimulator?.resume()
         val current = _serviceState.value
         if (current is ServiceState.Running) {
@@ -1004,6 +1034,7 @@ class MockLocationService : Service() {
 
     fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f) {
         isStopping.set(false)
+        isSimulationPaused = false
         stopCurrentLoop()
         acquireWakeLock()
         joystickLat = startLat
@@ -1018,6 +1049,16 @@ class MockLocationService : Service() {
         sessionPrefs.lastLatitude = startLat
         sessionPrefs.lastLongitude = startLon
         sessionPrefs.lastSpeedKmh = speedKmh
+
+        _serviceState.value = ServiceState.Running(
+            mode = activeMode,
+            latitude = startLat,
+            longitude = startLon,
+            altitude = 15.0,
+            speedMps = 0.0f,
+            bearingDegrees = 0.0f,
+            isPaused = false
+        )
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
@@ -1154,6 +1195,8 @@ class MockLocationService : Service() {
         try { engine.stop() } catch (e: Exception) { Log.w(TAG, "engine.stop() error (non-fatal): ${e.message}") }
         sessionPrefs.isSessionActive = false
         SessionTimerManager.stopTimer(this)
+        isSimulationPaused = false
+        activeMode = SimulationMode.Idle
         _serviceState.value = ServiceState.Idle
         try { updateAllWidgets() } catch (e: Exception) { Log.w(TAG, "widget update on stop (non-fatal): ${e.message}") }
         try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (e: Exception) {}
@@ -1213,6 +1256,9 @@ class MockLocationService : Service() {
         MockLocationServiceReceiver.activeService = null
         sessionPrefs.isSessionActive = false
         SessionTimerManager.stopTimer(this)
+        isSimulationPaused = false
+        activeMode = SimulationMode.Idle
+        _serviceState.value = ServiceState.Idle
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()

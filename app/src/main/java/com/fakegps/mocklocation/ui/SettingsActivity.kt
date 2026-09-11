@@ -204,7 +204,7 @@ class SettingsActivity : AppCompatActivity() {
             binding.tvSettingsSessionTotal.text = "Total Allocated: $formattedTotal"
             binding.pbSettingsSessionProgress.progress = timerState.progressPercent
             binding.pbSettingsSessionProgress.progressTintList = primaryCsl
-        } else if (timerState.isExpired || sessionPrefs.isSessionExpired) {
+        } else if (timerState.isExpired || remaining <= 0L) {
             binding.tvSettingsSessionBadge.text = "EXPIRED"
             binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_error_text))
             binding.tvSettingsSessionBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_error_bg)
