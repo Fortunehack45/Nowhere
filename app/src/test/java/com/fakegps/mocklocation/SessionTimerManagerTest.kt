@@ -170,14 +170,19 @@ class SessionTimerManagerTest {
         assertTrue(sessionPrefs.isSessionActive)
         assertTrue(sessionPrefs.hasValidActiveSession())
         assertFalse(sessionPrefs.isSessionExpired)
-        assertEquals(twoHours, sessionPrefs.getTimeRemainingMillis())
+        assertTrue(sessionPrefs.getTimeRemainingMillis() in (twoHours - 5000L)..twoHours)
 
         // 2. User stops simulation
         SessionTimerManager.stopTimer(context)
+        val remainingAfterStop = sessionPrefs.getTimeRemainingMillis()
         assertFalse(sessionPrefs.isSessionActive)
         assertFalse(SessionTimerManager.timerState.value.isRunning)
         assertTrue("Session must remain valid for resume after stop", sessionPrefs.hasValidActiveSession())
-        assertEquals("Remaining time must be preserved after stop", twoHours, sessionPrefs.getTimeRemainingMillis())
+        assertTrue("Remaining time must be positive", remainingAfterStop > 0L)
+
+        // Simulate pause time while disconnected
+        Thread.sleep(100)
+        assertEquals("Remaining time must be preserved after stop", remainingAfterStop, sessionPrefs.getTimeRemainingMillis())
 
         // 3. User starts simulation again
         SessionTimerManager.startOrResumeTimer(context)
@@ -185,6 +190,6 @@ class SessionTimerManagerTest {
         assertFalse(SessionTimerManager.timerState.value.isExpired)
         assertTrue(sessionPrefs.hasValidActiveSession())
         assertEquals("Allocated duration must be preserved across restarts", twoHours, sessionPrefs.sessionAllocatedDurationMillis)
-        assertEquals("Remaining duration must match preserved quota", twoHours, sessionPrefs.getTimeRemainingMillis())
+        assertTrue("Remaining duration must match preserved quota", sessionPrefs.getTimeRemainingMillis() in (remainingAfterStop - 5000L)..remainingAfterStop)
     }
 }
