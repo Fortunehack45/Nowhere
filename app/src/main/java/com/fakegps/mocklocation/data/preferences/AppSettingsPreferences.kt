@@ -310,8 +310,7 @@ class AppSettingsPreferences(context: Context) {
             "USGS_SAT", "SATELLITE", "ESRI_SAT" -> ESRI_SATELLITE
             "POSITRON", "LIGHT" -> CARTO_POSITRON
             "3D_VECTOR", "MAPLIBRE_3D", "CARTO_3D", "VOYAGER" -> CARTO_VOYAGER_3D
-            "MAPNIK_RAW" -> TileSourceFactory.MAPNIK
-            else -> CARTO_VOYAGER // Fastly/Cloudflare global edge CDN for instant tile loading
+            else -> TileSourceFactory.MAPNIK
         }
     }
 
