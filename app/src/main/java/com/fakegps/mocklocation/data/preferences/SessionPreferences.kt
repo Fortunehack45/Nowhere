@@ -199,6 +199,12 @@ class SessionPreferences(private val context: Context) {
             return
         }
         if (!forceRestart && !isSessionExpired && getTimeRemainingMillis() > 0L) {
+            val remaining = getTimeRemainingMillis()
+            // If session was paused or stopped, resume expiry from now
+            if (!isSessionActive || sessionExpiresTimestamp <= now) {
+                sessionExpiresTimestamp = now + remaining
+            }
+            sessionRemainingDurationMillis = remaining
             isSessionActive = true
             return
         }
@@ -216,10 +222,14 @@ class SessionPreferences(private val context: Context) {
             return
         }
         val now = System.currentTimeMillis()
-        val currentRemaining = if (sessionRemainingDurationMillis > 0L) sessionRemainingDurationMillis else 0L
+        val currentRemaining = getTimeRemainingMillis().coerceAtLeast(0L)
         val updatedRemaining = currentRemaining + extraMillis
         sessionRemainingDurationMillis = updatedRemaining
-        sessionExpiresTimestamp = if (sessionExpiresTimestamp > now) sessionExpiresTimestamp + extraMillis else now + updatedRemaining
+        sessionExpiresTimestamp = if (isSessionActive && sessionExpiresTimestamp > now) {
+            sessionExpiresTimestamp + extraMillis
+        } else {
+            now + updatedRemaining
+        }
         sessionAllocatedDurationMillis = if (sessionAllocatedDurationMillis > 0L) sessionAllocatedDurationMillis + extraMillis else updatedRemaining
         isSessionExpired = false
         isSessionActive = true
@@ -227,6 +237,9 @@ class SessionPreferences(private val context: Context) {
 
     fun getEffectiveExpiryTimestamp(): Long {
         if (isPremiumActive()) return Long.MAX_VALUE
+        if (isSessionActive && sessionExpiresTimestamp > 0L) {
+            return sessionExpiresTimestamp
+        }
         if (sessionRemainingDurationMillis >= 0L) {
             return System.currentTimeMillis() + sessionRemainingDurationMillis
         }
@@ -239,7 +252,7 @@ class SessionPreferences(private val context: Context) {
             return sessionRemainingDurationMillis
         }
         val remaining = sessionExpiresTimestamp - System.currentTimeMillis()
-        return if (remaining > 0) remaining else 0L
+        return if (remaining > 0L) remaining else 0L
     }
 
     fun decrementRemainingTime(elapsedMillis: Long): Long {

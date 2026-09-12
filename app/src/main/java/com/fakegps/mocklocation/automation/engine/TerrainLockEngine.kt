@@ -3,6 +3,9 @@ package com.fakegps.mocklocation.automation.engine
 import android.content.Context
 import com.fakegps.mocklocation.engine.GeoUtils
 import com.fakegps.mocklocation.util.LocationNameResolver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 object TerrainLockEngine {
@@ -52,20 +55,26 @@ object TerrainLockEngine {
         val key = cacheKey(lat, lon)
         classificationCache[key]?.let { return it }
 
-        // Water detection via LocationNameResolver OSM reverse geocoding
-        val isWater = if (context != null) {
-            LocationNameResolver.isWaterCoordinate(context, lat, lon)
-        } else false
-
-        val type = if (isWater) {
-            TerrainType.WATER
-        } else {
-            // Unclassified open land/road is treated as WALKABLE
-            TerrainType.WALKABLE
+        val cachedWater = LocationNameResolver.getCachedWaterStatus(lat, lon)
+        if (cachedWater != null) {
+            val type = if (cachedWater) TerrainType.WATER else TerrainType.WALKABLE
+            classificationCache[key] = type
+            return type
         }
 
-        classificationCache[key] = type
-        return type
+        // Asynchronously check water in background without blocking real-time physical stepping
+        if (context != null) {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                try {
+                    val isWater = LocationNameResolver.isWaterCoordinate(context, lat, lon)
+                    classificationCache[key] = if (isWater) TerrainType.WATER else TerrainType.WALKABLE
+                } catch (_: Exception) {}
+            }
+        }
+
+        // Fast path: Default to WALKABLE immediately to allow real-time coordinate injection
+        classificationCache[key] = TerrainType.WALKABLE
+        return TerrainType.WALKABLE
     }
 
     /**

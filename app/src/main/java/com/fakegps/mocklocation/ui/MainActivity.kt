@@ -2042,17 +2042,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderUiState(state: MainUiState) {
-        // Status Pill Badge
+        // Status Pill Badge & Dynamic Live Spoofing Indicator
         if (state.isServiceRunning) {
             binding.tvStatusBadge.text = getString(R.string.status_mock_active)
             binding.tvStatusBadge.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
             binding.viewStatusDot.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
             binding.layoutStatusBadge.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
+
+            binding.layoutLiveStatusBadge.visibility = View.VISIBLE
+            val modeText = when (val s = state.serviceState) {
+                is ServiceState.Running -> when (s.mode) {
+                    is SimulationMode.Fixed -> if (binding.switchMotionSync.isChecked) "MOTION SYNC" else "LIVE GPS"
+                    is SimulationMode.Route -> "LIVE ROUTE"
+                    is SimulationMode.Joystick -> "JOYSTICK"
+                    else -> "LIVE GPS"
+                }
+                else -> "LIVE GPS"
+            }
+            binding.tvLiveStatusText.text = modeText
+            startLivePulseAnimation()
         } else {
             binding.tvStatusBadge.text = getString(R.string.status_standby)
             binding.tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_standby_text))
             binding.viewStatusDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_standby_text)
             binding.layoutStatusBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_standby_bg)
+
+            binding.layoutLiveStatusBadge.visibility = View.GONE
+            stopLivePulseAnimation()
         }
 
         // Warning & Error banners
@@ -2406,20 +2422,45 @@ class MainActivity : AppCompatActivity() {
         binding.mapView.invalidate()
     }
 
+    private var livePulseAnimator: android.animation.AnimatorSet? = null
+
+    private fun startLivePulseAnimation() {
+        if (livePulseAnimator != null) return
+        val dot = binding.viewLivePulseDot
+        val scaleX = android.animation.ObjectAnimator.ofFloat(dot, "scaleX", 0.85f, 1.25f).apply {
+            repeatCount = android.animation.ValueAnimator.INFINITE
+            repeatMode = android.animation.ValueAnimator.REVERSE
+            duration = 800L
+        }
+        val scaleY = android.animation.ObjectAnimator.ofFloat(dot, "scaleY", 0.85f, 1.25f).apply {
+            repeatCount = android.animation.ValueAnimator.INFINITE
+            repeatMode = android.animation.ValueAnimator.REVERSE
+            duration = 800L
+        }
+        val alpha = android.animation.ObjectAnimator.ofFloat(dot, "alpha", 0.6f, 1.0f).apply {
+            repeatCount = android.animation.ValueAnimator.INFINITE
+            repeatMode = android.animation.ValueAnimator.REVERSE
+            duration = 800L
+        }
+        livePulseAnimator = android.animation.AnimatorSet().apply {
+            playTogether(scaleX, scaleY, alpha)
+            start()
+        }
+    }
+
+    private fun stopLivePulseAnimation() {
+        livePulseAnimator?.cancel()
+        livePulseAnimator = null
+        binding.viewLivePulseDot.scaleX = 1.0f
+        binding.viewLivePulseDot.scaleY = 1.0f
+        binding.viewLivePulseDot.alpha = 1.0f
+    }
+
     override fun onDestroy() {
+        stopLivePulseAnimation()
         try {
             binding.mapView.onDetach()
         } catch (ignored: Exception) {}
         super.onDestroy()
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        com.fakegps.mocklocation.util.RamOptimizationManager.trimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE, binding.mapView)
-    }
-
-    override fun onTrimMemory(level: Int) {
-        super.onTrimMemory(level)
-        com.fakegps.mocklocation.util.RamOptimizationManager.trimMemory(level, binding.mapView)
     }
 }

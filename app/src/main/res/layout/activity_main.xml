@@ -75,6 +75,39 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
+                        <!-- Live Simulation Pulse Badge (Dynamic Glowing Indicator) -->
+                        <LinearLayout
+                            android:id="@+id/layoutLiveStatusBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_status_pill"
+                            android:backgroundTint="@color/badge_active_bg"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp"
+                            android:visibility="gone"
+                            tools:visibility="visible">
+
+                            <View
+                                android:id="@+id/viewLivePulseDot"
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@drawable/bg_dot_emerald" />
+
+                            <TextView
+                                android:id="@+id/tvLiveStatusText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:letterSpacing="0.06"
+                                android:text="LIVE GPS"
+                                android:textColor="@color/badge_active_text"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
                         <!-- Weather HUD Pill (Solid Opaque) -->
                         <LinearLayout
                             android:id="@+id/layoutWeatherBadge"

@@ -80,6 +80,13 @@ class MotionSyncEngine(
     // Step processing serialization mutex to prevent race conditions during rapid movement
     private val stepMutex = Mutex()
 
+    // Cached automation settings for zero-latency step execution
+    @Volatile private var cachedTerrainLockEnabled = true
+    @Volatile private var cachedTerrainRestrictedEnabled = false
+    @Volatile private var cachedTerrainSearchRadiusMeters = 25f
+    @Volatile private var cachedTerrainAllowUnmapped = true
+    private var settingsObserverJob: Job? = null
+
     // Vehicle mode vehicle ticker job
     private var vehicleTickJob: Job? = null
     private val isVehicleMode = AtomicBoolean(false)
@@ -144,12 +151,28 @@ class MotionSyncEngine(
             }
         }
 
+        settingsObserverJob?.cancel()
+        settingsObserverJob = scope.launch(Dispatchers.IO) {
+            try {
+                AppDatabase.getInstance(context).automationSettingsDao().getSettingsFlow().collect { settings ->
+                    if (settings != null) {
+                        cachedTerrainLockEnabled = settings.terrainLockEnabled
+                        cachedTerrainRestrictedEnabled = settings.terrainRestrictedEnabled
+                        cachedTerrainSearchRadiusMeters = settings.terrainSearchRadiusMeters
+                        cachedTerrainAllowUnmapped = settings.terrainAllowUnmapped
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+
         startVehicleDetectionLoop()
     }
 
     fun stop() {
         if (!isRunning.getAndSet(false)) return
 
+        settingsObserverJob?.cancel()
+        settingsObserverJob = null
         sensorManager?.unregisterListener(this)
         vehicleTickJob?.cancel()
         vehicleTickJob = null
@@ -322,9 +345,7 @@ class MotionSyncEngine(
                     // USER IS STATIONARY: Strictly hold position and notify speed = 0.0 km/h with 0 drift
                     if (lastReportedSpeed > 0f) {
                         lastReportedSpeed = 0f
-                        withContext(Dispatchers.Main) {
-                            onLocationUpdated(currentLat, currentLon, currentHeading, 0f)
-                        }
+                        onLocationUpdated(currentLat, currentLon, currentHeading, 0f)
                     }
                 }
             }
@@ -334,10 +355,7 @@ class MotionSyncEngine(
     private fun advanceLocation(distanceMeters: Double, speedKmh: Float) {
         scope.launch {
             stepMutex.withLock {
-                val db = AppDatabase.getInstance(context)
-                val settings = db.automationSettingsDao().getSettings()
-
-                val terrainLockEnabled = settings?.terrainLockEnabled ?: true
+                val terrainLockEnabled = cachedTerrainLockEnabled
                 var nextLat = currentLat
                 var nextLon = currentLon
                 var nextHeading = currentHeading
@@ -349,9 +367,9 @@ class MotionSyncEngine(
                         currentLon = currentLon,
                         currentHeading = currentHeading,
                         stepDistanceMeters = distanceMeters,
-                        checkRestricted = settings?.terrainRestrictedEnabled ?: false,
-                        searchRadiusMeters = (settings?.terrainSearchRadiusMeters ?: 25f).toDouble(),
-                        allowUnmapped = settings?.terrainAllowUnmapped ?: true
+                        checkRestricted = cachedTerrainRestrictedEnabled,
+                        searchRadiusMeters = cachedTerrainSearchRadiusMeters.toDouble(),
+                        allowUnmapped = cachedTerrainAllowUnmapped
                     )
 
                     when (stepResult) {
@@ -371,19 +389,23 @@ class MotionSyncEngine(
                             nextHeading = stepResult.bearing
                         }
                         is TerrainLockEngine.TerrainStepResult.HoldPosition -> {
-                            // Hold position exactly. Log TERRAIN_BLOCKED event
-                            db.automationLogDao().logEvent(
-                                AutomationLogEntity(
-                                    source = "TERRAIN",
-                                    targetSummary = "Hold Position ($currentLat, $currentLon)",
-                                    details = stepResult.reason
-                                )
-                            )
+                            // Hold position exactly. Log TERRAIN_BLOCKED event asynchronously
+                            scope.launch(Dispatchers.IO) {
+                                try {
+                                    AppDatabase.getInstance(context).automationLogDao().logEvent(
+                                        AutomationLogEntity(
+                                            source = "TERRAIN",
+                                            targetSummary = "Hold Position ($currentLat, $currentLon)",
+                                            details = stepResult.reason
+                                        )
+                                    )
+                                } catch (_: Exception) {}
+                            }
                             return@withLock
                         }
                     }
                 } else {
-                    // Raw motion sync without terrain check
+                    // Raw motion sync without terrain check: direct instant dead-reckoning
                     val (destLat, destLon) = GeoUtils.computeDestinationPoint(currentLat, currentLon, currentHeading, distanceMeters)
                     nextLat = destLat
                     nextLon = destLon
@@ -394,9 +416,8 @@ class MotionSyncEngine(
                 currentHeading = nextHeading
                 lastReportedSpeed = speedKmh
 
-                withContext(Dispatchers.Main) {
-                    onLocationUpdated(currentLat, currentLon, currentHeading, speedKmh)
-                }
+                // Directly invoke onLocationUpdated to inject mock location into Android LocationManager with zero latency
+                onLocationUpdated(currentLat, currentLon, currentHeading, speedKmh)
             }
         }
     }

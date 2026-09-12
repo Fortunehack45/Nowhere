@@ -233,7 +233,6 @@ class MockLocationEngine(
                 // Apply Ghost Cloak Anti-Detection Transformation (NMEA, Micro-Clock Drift, Satellite Constellation)
                 val cloakedLocation = ghostCloakEngine.cloakLocation(rawLocation, nowMs, nowNanos)
 
-                locationManager.setTestProviderEnabled(provider, true)
                 locationManager.setTestProviderLocation(provider, cloakedLocation)
                 lastSuccessfulLocation = cloakedLocation
             } catch (e: SecurityException) {

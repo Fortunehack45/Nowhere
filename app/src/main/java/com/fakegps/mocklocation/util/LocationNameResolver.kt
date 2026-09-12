@@ -22,6 +22,11 @@ object LocationNameResolver {
         return cache[cacheKey]
     }
 
+    fun getCachedWaterStatus(latitude: Double, longitude: Double): Boolean? {
+        val cacheKey = String.format(Locale.US, "%.3f,%.3f", latitude, longitude)
+        return waterCache[cacheKey]
+    }
+
     suspend fun resolveLocationName(context: Context, latitude: Double, longitude: Double): String =
         withContext(Dispatchers.IO) {
             val cacheKey = String.format(Locale.US, "%.3f,%.3f", latitude, longitude)

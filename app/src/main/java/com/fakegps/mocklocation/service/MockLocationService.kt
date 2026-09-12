@@ -138,6 +138,8 @@ class MockLocationService : Service() {
         wifiTriggerHandler = com.fakegps.mocklocation.automation.engine.WifiTriggerHandler(this).apply {
             start()
         }
+        var lastMotionWidgetUpdateTime = 0L
+        var lastMotionNotifUpdateTime = 0L
         motionSyncEngine = com.fakegps.mocklocation.automation.engine.MotionSyncEngine(this) { lat, lon, bearing, speed ->
             currentSimLat = lat
             currentSimLon = lon
@@ -156,8 +158,15 @@ class MockLocationService : Service() {
                 speedMps = speedMps,
                 bearingDegrees = bearing
             )
-            updateLocationNotification(lat, lon, "Motion Sync Active")
-            updateAllWidgets()
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (now - lastMotionNotifUpdateTime >= 2000L) {
+                lastMotionNotifUpdateTime = now
+                updateLocationNotification(lat, lon, "Motion Sync Active")
+            }
+            if (now - lastMotionWidgetUpdateTime >= 4000L) {
+                lastMotionWidgetUpdateTime = now
+                updateAllWidgets()
+            }
         }
 
         if (isSimulationRunning()) {
@@ -338,18 +347,7 @@ class MockLocationService : Service() {
         }
     }
 
-    override fun onTrimMemory(level: Int) {
-        super.onTrimMemory(level)
-        if (level >= TRIM_MEMORY_RUNNING_LOW) {
-            Log.w(TAG, "System low memory signal ($level). Preserving core simulation loop and location engine.")
-            System.gc()
-        }
-    }
 
-    override fun onLowMemory() {
-        super.onLowMemory()
-        Log.w(TAG, "onLowMemory received. Ensuring location simulation remains active.")
-    }
 
     private fun acquireWakeLock() {
         try {

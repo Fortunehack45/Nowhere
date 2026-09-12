@@ -128,17 +128,11 @@ object RamOptimizationManager {
     }
 
     /**
-     * Proactively trims memory caches when the system notifies of memory pressure
-     * or when an activity enters background.
+     * Trim memory hook - neutralized to ensure background simulation threads,
+     * coroutines, and tile rendering are never interrupted by aggressive GC pauses.
      */
     fun trimMemory(level: Int, mapView: MapView?) {
-        try {
-            if (mapView != null) {
-                mapView.tileProvider?.clearTileCache()
-            }
-            if (level >= ComponentCallbacks2.TRIM_MEMORY_MODERATE) {
-                System.gc()
-            }
-        } catch (ignored: Exception) {}
+        // Deliberately no-op: System.gc() and tile-cache drops are suppressed
+        // to preserve uninterrupted background GPS simulation and UI fluidity.
     }
 }

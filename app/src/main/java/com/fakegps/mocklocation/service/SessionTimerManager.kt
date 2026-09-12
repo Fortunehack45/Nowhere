@@ -96,6 +96,10 @@ object SessionTimerManager {
 
     fun resumeExistingTimer(context: Context) {
         val sessionPrefs = SessionPreferences(context)
+        val now = System.currentTimeMillis()
+        if (sessionPrefs.sessionRemainingDurationMillis > 0L && (!sessionPrefs.isSessionActive || sessionPrefs.sessionExpiresTimestamp <= now)) {
+            sessionPrefs.sessionExpiresTimestamp = now + sessionPrefs.sessionRemainingDurationMillis
+        }
         sessionPrefs.isSessionActive = true
         sessionPrefs.isSessionExpired = false
         updateState(context)
@@ -104,6 +108,9 @@ object SessionTimerManager {
     }
 
     fun pauseTimer(context: Context) {
+        val sessionPrefs = SessionPreferences(context)
+        val remaining = sessionPrefs.getTimeRemainingMillis()
+        sessionPrefs.sessionRemainingDurationMillis = remaining
         timerJob?.cancel()
         timerJob = null
         timerScope?.cancel()
@@ -115,13 +122,16 @@ object SessionTimerManager {
     }
 
     fun stopTimer(context: Context) {
+        val sessionPrefs = SessionPreferences(context)
+        val remaining = sessionPrefs.getTimeRemainingMillis()
+        sessionPrefs.sessionRemainingDurationMillis = remaining
+        sessionPrefs.isSessionActive = false
+
         timerJob?.cancel()
         timerJob = null
         timerScope?.cancel()
         timerScope = null
 
-        val sessionPrefs = SessionPreferences(context)
-        sessionPrefs.isSessionActive = false
         resetThresholdFlags()
 
         cancelNotification(context, NOTIF_ID_60S)
@@ -144,13 +154,21 @@ object SessionTimerManager {
 
         timerScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         timerJob = timerScope?.launch {
+            var lastTickTime = System.currentTimeMillis()
             while (isActive) {
                 val sessionPrefs = SessionPreferences(appContext)
 
-                val isServicePresent = MockLocationService.activeInstance != null || MockLocationServiceReceiver.activeService != null
-                if (!sessionPrefs.isSessionActive || (isServicePresent && !MockLocationService.isSimulationRunning())) {
+                if (!sessionPrefs.isSessionActive) {
                     updateState(appContext)
                     break
+                }
+
+                // If simulation service is paused by user, preserve remaining time without advancing countdown
+                val svc = MockLocationService.activeInstance ?: MockLocationServiceReceiver.activeService
+                if (svc != null && svc.isSimulationPaused) {
+                    lastTickTime = System.currentTimeMillis()
+                    delay(1000L)
+                    continue
                 }
 
                 if (sessionPrefs.isPremiumActive()) {
@@ -169,9 +187,13 @@ object SessionTimerManager {
                     // Home screen widgets refresh once
                     NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
                     delay(30_000L) // Sleep for 30 seconds since unlimited state is static
+                    lastTickTime = System.currentTimeMillis()
                     continue
                 } else {
-                    val remainingMillis = sessionPrefs.decrementRemainingTime(1000L)
+                    val now = System.currentTimeMillis()
+                    val elapsed = (now - lastTickTime).coerceIn(500L, 60_000L)
+                    lastTickTime = now
+                    val remainingMillis = sessionPrefs.decrementRemainingTime(elapsed)
                     val totalAllocated = sessionPrefs.sessionAllocatedDurationMillis
 
                     if (remainingMillis <= 0L) {
@@ -240,7 +262,8 @@ object SessionTimerManager {
     }
 
     fun updateStaticState(context: Context) {
-        if (timerJob?.isActive == true && MockLocationService.isSimulationRunning()) {
+        val sessionPrefs = SessionPreferences(context)
+        if (timerJob?.isActive == true && (MockLocationService.isSimulationRunning() || sessionPrefs.isSessionActive)) {
             updateState(context)
             return
         }
