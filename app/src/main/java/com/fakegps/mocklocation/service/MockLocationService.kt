@@ -423,9 +423,12 @@ class MockLocationService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val remainingTimeStr = if (sessionPrefs.isPremiumActive()) "UNLIMITED" else sessionPrefs.formatRemainingTime()
+        val formattedSubtitle = "⏱️ $remainingTimeStr left • $contentSubtitle"
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(locationTitle)
-            .setContentText(contentSubtitle)
+            .setContentText(formattedSubtitle)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
             .setContentIntent(openAppPendingIntent)
@@ -510,16 +513,18 @@ class MockLocationService : Service() {
                 } else 0L
                 val etaStr = if (isRoute) formatEta(etaSec) else ""
 
+                val remainingTimeStr = if (sessionPrefs.isPremiumActive()) "UNLIMITED" else sessionPrefs.formatRemainingTime()
+
                 val notifTitle = if (isRoute) {
-                    "📍 Route: $coveredStr / $totalStr ($progress%)"
+                    "📍 Route: $coveredStr / $totalStr ($progress%) • ⏱️ $remainingTimeStr"
                 } else {
-                    placeName
+                    "📍 $placeName • ⏱️ $remainingTimeStr"
                 }
 
                 val notifText = if (isRoute) {
-                    "⏱️ ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
+                    "⏱️ $remainingTimeStr left • ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
                 } else {
-                    coordsText
+                    "⏱️ $remainingTimeStr left • $coordsText"
                 }
 
                 val routeDetails = if (isRoute) {
@@ -709,7 +714,20 @@ class MockLocationService : Service() {
         if (simulationJob?.isActive == true) return
         simulationJob = serviceScope.launch {
             try {
+                var lastNotificationUpdateTime = 0L
                 while (isActive) {
+                    if (!sessionPrefs.isPremiumActive()) {
+                        val remaining = sessionPrefs.getTimeRemainingMillis()
+                        if (remaining <= 0L) {
+                            Log.i(TAG, "Continuous session duration expired in background. Stopping mock location...")
+                            sessionPrefs.isSessionExpired = true
+                            sessionPrefs.isSessionRunning = false
+                            SessionTimerManager.notifySessionExpired(this@MockLocationService)
+                            stopSpoofing()
+                            break
+                        }
+                    }
+
                     val lat = currentSimLat
                     val lon = currentSimLon
                     val alt = currentSimAlt
@@ -744,6 +762,14 @@ class MockLocationService : Service() {
                             )
                         }
                     }
+
+                    val now = android.os.SystemClock.elapsedRealtime()
+                    if (now - lastNotificationUpdateTime >= 5000L) {
+                        lastNotificationUpdateTime = now
+                        val modeDesc = if (sessionPrefs.activeMode == "MOTION_SYNC") "Motion Sync Active" else "Teleported / Fixed"
+                        updateLocationNotification(lat, lon, modeDesc)
+                    }
+
                     // Adaptive anti-overheating heartbeat interval:
                     // 1000ms–1200ms when stationary or user-configured, saving 75% CPU cycles and stopping device heat
                     val loopDelay = if (spd > 0.05f) {
@@ -842,6 +868,18 @@ class MockLocationService : Service() {
                 var lastWeatherLon = 0.0
 
                 while (isActive) {
+                    if (!sessionPrefs.isPremiumActive()) {
+                        val remaining = sessionPrefs.getTimeRemainingMillis()
+                        if (remaining <= 0L) {
+                            Log.i(TAG, "Route session duration expired in background. Stopping mock location...")
+                            sessionPrefs.isSessionExpired = true
+                            sessionPrefs.isSessionRunning = false
+                            SessionTimerManager.notifySessionExpired(this@MockLocationService)
+                            stopSpoofing()
+                            break
+                        }
+                    }
+
                     val now = android.os.SystemClock.elapsedRealtime()
                     val dt = ((now - lastTickTime) / 1000.0).coerceIn(0.05, 3.0)
                     lastTickTime = now
@@ -1103,6 +1141,18 @@ class MockLocationService : Service() {
                 var lastNotificationUpdateTime = 0L
 
                 while (isActive) {
+                    if (!sessionPrefs.isPremiumActive()) {
+                        val remaining = sessionPrefs.getTimeRemainingMillis()
+                        if (remaining <= 0L) {
+                            Log.i(TAG, "Joystick session duration expired in background. Stopping mock location...")
+                            sessionPrefs.isSessionExpired = true
+                            sessionPrefs.isSessionRunning = false
+                            SessionTimerManager.notifySessionExpired(this@MockLocationService)
+                            stopSpoofing()
+                            break
+                        }
+                    }
+
                     val now = android.os.SystemClock.elapsedRealtime()
                     if (joystickMagnitude > 0.01f) {
                         val speedMps = (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude
@@ -1170,6 +1220,12 @@ class MockLocationService : Service() {
                                 speedMps = 0.0f,
                                 bearingDegrees = joystickAngleDeg
                             )
+
+                            // Periodic notification update when joystick is stationary
+                            if (now - lastNotificationUpdateTime >= 5000L) {
+                                lastNotificationUpdateTime = now
+                                updateLocationNotification(joystickLat, joystickLon, "Joystick Active (Stationary)")
+                            }
                         }
                     }
 

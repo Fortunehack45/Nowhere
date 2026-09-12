@@ -59,10 +59,18 @@ object SessionTimerManager {
     fun startOrResumeTimer(context: Context, durationMillis: Long = SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS) {
         val sessionPrefs = SessionPreferences(context)
         sessionPrefs.isSessionActive = true
+        if (sessionPrefs.isPremiumActive()) {
+            resumeExistingTimer(context)
+            return
+        }
         if (sessionPrefs.hasValidActiveSession()) {
             resumeExistingTimer(context)
         } else {
-            startTimer(context, durationMillis, forceRestart = true)
+            sessionPrefs.isSessionExpired = true
+            sessionPrefs.isSessionRunning = false
+            sessionPrefs.sessionRemainingDurationMillis = 0L
+            updateState(context)
+            notifySessionExpired(context)
         }
     }
 
@@ -73,6 +81,10 @@ object SessionTimerManager {
     ) {
         val sessionPrefs = SessionPreferences(context)
         sessionPrefs.startNewSession(durationMillis, forceRestart = forceRestart)
+        sessionPrefs.isSessionRunning = true
+        sessionPrefs.isSessionPaused = false
+        val now = System.currentTimeMillis()
+        sessionPrefs.sessionExpiresTimestamp = now + sessionPrefs.sessionRemainingDurationMillis
         resetThresholdFlags()
 
         ensureNotificationChannel(context)
@@ -82,6 +94,8 @@ object SessionTimerManager {
     fun extendSession(context: Context, extraMillis: Long = SessionPreferences.REWARD_EXTENSION_DURATION_MILLIS) {
         val sessionPrefs = SessionPreferences(context)
         sessionPrefs.extendSession(extraMillis)
+        sessionPrefs.isSessionRunning = true
+        sessionPrefs.isSessionPaused = false
         AppSettingsPreferences(context).incrementSessionExtensionCount()
         resetThresholdFlags()
 
@@ -97,11 +111,16 @@ object SessionTimerManager {
     fun resumeExistingTimer(context: Context) {
         val sessionPrefs = SessionPreferences(context)
         val now = System.currentTimeMillis()
-        if (sessionPrefs.sessionRemainingDurationMillis > 0L && (!sessionPrefs.isSessionActive || sessionPrefs.sessionExpiresTimestamp <= now)) {
-            sessionPrefs.sessionExpiresTimestamp = now + sessionPrefs.sessionRemainingDurationMillis
-        }
+        sessionPrefs.isSessionPaused = false
         sessionPrefs.isSessionActive = true
         sessionPrefs.isSessionExpired = false
+        sessionPrefs.isSessionRunning = true
+        val currentRemaining = sessionPrefs.sessionRemainingDurationMillis
+        if (sessionPrefs.sessionExpiresTimestamp <= now) {
+            if (currentRemaining > 0L) {
+                sessionPrefs.sessionExpiresTimestamp = now + currentRemaining
+            }
+        }
         updateState(context)
         ensureNotificationChannel(context)
         startTickerLoop(context.applicationContext)
@@ -111,6 +130,8 @@ object SessionTimerManager {
         val sessionPrefs = SessionPreferences(context)
         val remaining = sessionPrefs.getTimeRemainingMillis()
         sessionPrefs.sessionRemainingDurationMillis = remaining
+        sessionPrefs.isSessionRunning = false
+        sessionPrefs.isSessionPaused = true
         timerJob?.cancel()
         timerJob = null
         timerScope?.cancel()
@@ -125,6 +146,8 @@ object SessionTimerManager {
         val sessionPrefs = SessionPreferences(context)
         val remaining = sessionPrefs.getTimeRemainingMillis()
         sessionPrefs.sessionRemainingDurationMillis = remaining
+        sessionPrefs.isSessionRunning = false
+        sessionPrefs.isSessionPaused = false
         sessionPrefs.isSessionActive = false
 
         timerJob?.cancel()
@@ -154,19 +177,17 @@ object SessionTimerManager {
 
         timerScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         timerJob = timerScope?.launch {
-            var lastTickTime = System.currentTimeMillis()
             while (isActive) {
                 val sessionPrefs = SessionPreferences(appContext)
 
-                if (!sessionPrefs.isSessionActive) {
+                if (!sessionPrefs.isSessionActive || !sessionPrefs.isSessionRunning) {
                     updateState(appContext)
                     break
                 }
 
                 // If simulation service is paused by user, preserve remaining time without advancing countdown
                 val svc = MockLocationService.activeInstance ?: MockLocationServiceReceiver.activeService
-                if (svc != null && svc.isSimulationPaused) {
-                    lastTickTime = System.currentTimeMillis()
+                if (sessionPrefs.isSessionPaused || (svc != null && svc.isSimulationPaused)) {
                     delay(1000L)
                     continue
                 }
@@ -187,17 +208,14 @@ object SessionTimerManager {
                     // Home screen widgets refresh once
                     NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
                     delay(30_000L) // Sleep for 30 seconds since unlimited state is static
-                    lastTickTime = System.currentTimeMillis()
                     continue
                 } else {
-                    val now = System.currentTimeMillis()
-                    val elapsed = (now - lastTickTime).coerceIn(500L, 60_000L)
-                    lastTickTime = now
-                    val remainingMillis = sessionPrefs.decrementRemainingTime(elapsed)
+                    val remainingMillis = sessionPrefs.decrementRemainingTime()
                     val totalAllocated = sessionPrefs.sessionAllocatedDurationMillis
 
                     if (remainingMillis <= 0L) {
                         sessionPrefs.isSessionExpired = true
+                        sessionPrefs.isSessionRunning = false
                         val state = SessionTimerState(
                             isRunning = false,
                             isExpired = true,
@@ -263,7 +281,7 @@ object SessionTimerManager {
 
     fun updateStaticState(context: Context) {
         val sessionPrefs = SessionPreferences(context)
-        if (timerJob?.isActive == true && (MockLocationService.isSimulationRunning() || sessionPrefs.isSessionActive)) {
+        if (MockLocationService.isSimulationRunning() || sessionPrefs.isSessionRunning) {
             updateState(context)
             return
         }
@@ -277,12 +295,12 @@ object SessionTimerManager {
     private fun updateState(context: Context) {
         val sessionPrefs = SessionPreferences(context)
         val isServicePresent = MockLocationService.activeInstance != null || MockLocationServiceReceiver.activeService != null
-        val isSimActive = if (isServicePresent) MockLocationService.isSimulationRunning() else true
+        val isSimActive = if (isServicePresent) MockLocationService.isSimulationRunning() else sessionPrefs.isSessionRunning
         val isTickerActive = timerJob?.isActive == true
 
         if (sessionPrefs.isPremiumActive()) {
             _timerState.value = SessionTimerState(
-                isRunning = isTickerActive && isSimActive,
+                isRunning = (isTickerActive || sessionPrefs.isSessionRunning) && isSimActive,
                 isExpired = false,
                 remainingMillis = Long.MAX_VALUE,
                 totalAllocatedMillis = Long.MAX_VALUE,
@@ -302,7 +320,7 @@ object SessionTimerManager {
 
         val isExpired = remainingMillis <= 0L || sessionPrefs.isSessionExpired
         _timerState.value = SessionTimerState(
-            isRunning = isTickerActive && remainingMillis > 0 && isSimActive,
+            isRunning = (isTickerActive || sessionPrefs.isSessionRunning) && remainingMillis > 0 && isSimActive && !sessionPrefs.isSessionPaused,
             isExpired = isExpired,
             remainingMillis = remainingMillis,
             totalAllocatedMillis = totalAllocated,
@@ -357,7 +375,7 @@ object SessionTimerManager {
         manager?.notify(notifId, notification)
     }
 
-    private fun notifySessionExpired(context: Context) {
+    fun notifySessionExpired(context: Context) {
         AppSettingsPreferences(context).incrementSessionExpiryCount()
         if (!com.fakegps.mocklocation.util.PermissionHelper.hasNotificationPermission(context)) return
 

@@ -162,6 +162,22 @@ class SessionPreferences(private val context: Context) {
 
     // --- Session Connection Duration & Countdown Timer Management ---
 
+    init {
+        // Automatic first-run provisioning: Grant 2 hours free timer to every new user
+        if (!prefs.contains("key_session_has_initialized")) {
+            prefs.edit()
+                .putBoolean("key_session_has_initialized", true)
+                .putLong("key_session_allocated_duration", DEFAULT_SESSION_DURATION_MILLIS)
+                .putLong("key_session_remaining_duration_millis", DEFAULT_SESSION_DURATION_MILLIS)
+                .putLong("key_session_expires_timestamp", 0L)
+                .putBoolean(KEY_IS_SESSION_ACTIVE, true)
+                .putBoolean("key_is_session_running", false)
+                .putBoolean("key_is_session_paused", false)
+                .putBoolean("key_is_session_expired", false)
+                .apply()
+        }
+    }
+
     var sessionAllocatedDurationMillis: Long
         get() = prefs.getLong("key_session_allocated_duration", DEFAULT_SESSION_DURATION_MILLIS)
         set(value) = prefs.edit().putLong("key_session_allocated_duration", value).apply()
@@ -177,6 +193,14 @@ class SessionPreferences(private val context: Context) {
     var sessionRemainingDurationMillis: Long
         get() = prefs.getLong("key_session_remaining_duration_millis", -1L)
         set(value) = prefs.edit().putLong("key_session_remaining_duration_millis", value).apply()
+
+    var isSessionRunning: Boolean
+        get() = prefs.getBoolean("key_is_session_running", false)
+        set(value) = prefs.edit().putBoolean("key_is_session_running", value).apply()
+
+    var isSessionPaused: Boolean
+        get() = prefs.getBoolean("key_is_session_paused", false)
+        set(value) = prefs.edit().putBoolean("key_is_session_paused", value).apply()
 
     fun isPremiumActive(): Boolean {
         return com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
@@ -206,6 +230,8 @@ class SessionPreferences(private val context: Context) {
             }
             sessionRemainingDurationMillis = remaining
             isSessionActive = true
+            isSessionRunning = false
+            isSessionPaused = false
             return
         }
         sessionAllocatedDurationMillis = durationMillis
@@ -213,6 +239,8 @@ class SessionPreferences(private val context: Context) {
         sessionExpiresTimestamp = now + durationMillis
         isSessionExpired = false
         isSessionActive = true
+        isSessionRunning = false
+        isSessionPaused = false
     }
 
     fun extendSession(extraMillis: Long = REWARD_EXTENSION_DURATION_MILLIS) {
@@ -225,14 +253,15 @@ class SessionPreferences(private val context: Context) {
         val currentRemaining = getTimeRemainingMillis().coerceAtLeast(0L)
         val updatedRemaining = currentRemaining + extraMillis
         sessionRemainingDurationMillis = updatedRemaining
+        sessionAllocatedDurationMillis = if (sessionAllocatedDurationMillis > 0L) sessionAllocatedDurationMillis + extraMillis else updatedRemaining
         sessionExpiresTimestamp = if (isSessionActive && sessionExpiresTimestamp > now) {
             sessionExpiresTimestamp + extraMillis
         } else {
             now + updatedRemaining
         }
-        sessionAllocatedDurationMillis = if (sessionAllocatedDurationMillis > 0L) sessionAllocatedDurationMillis + extraMillis else updatedRemaining
         isSessionExpired = false
         isSessionActive = true
+        isSessionPaused = false
     }
 
     fun getEffectiveExpiryTimestamp(): Long {
@@ -248,6 +277,11 @@ class SessionPreferences(private val context: Context) {
 
     fun getTimeRemainingMillis(): Long {
         if (isPremiumActive()) return Long.MAX_VALUE
+        if (isSessionRunning && !isSessionPaused && sessionExpiresTimestamp > 0L) {
+            val now = System.currentTimeMillis()
+            val remaining = sessionExpiresTimestamp - now
+            return if (remaining > 0L) remaining else 0L
+        }
         if (sessionRemainingDurationMillis >= 0L) {
             return sessionRemainingDurationMillis
         }
@@ -255,16 +289,15 @@ class SessionPreferences(private val context: Context) {
         return if (remaining > 0L) remaining else 0L
     }
 
-    fun decrementRemainingTime(elapsedMillis: Long): Long {
+    fun decrementRemainingTime(elapsedMillis: Long = 1000L): Long {
         if (isPremiumActive()) return Long.MAX_VALUE
-        val current = getTimeRemainingMillis()
-        val updated = (current - elapsedMillis).coerceAtLeast(0L)
-        sessionRemainingDurationMillis = updated
-        sessionExpiresTimestamp = System.currentTimeMillis() + updated
-        if (updated <= 0L) {
+        val remaining = getTimeRemainingMillis()
+        sessionRemainingDurationMillis = remaining
+        if (remaining <= 0L) {
             isSessionExpired = true
+            isSessionRunning = false
         }
-        return updated
+        return remaining
     }
 
     fun formatRemainingTime(): String {
@@ -299,6 +332,8 @@ class SessionPreferences(private val context: Context) {
     fun resetSessionForTesting() {
         prefs.edit()
             .putBoolean(KEY_IS_SESSION_ACTIVE, false)
+            .putBoolean("key_is_session_running", false)
+            .putBoolean("key_is_session_paused", false)
             .putBoolean("key_is_session_expired", false)
             .putLong("key_session_expires_timestamp", 0L)
             .putLong("key_session_remaining_duration_millis", -1L)
