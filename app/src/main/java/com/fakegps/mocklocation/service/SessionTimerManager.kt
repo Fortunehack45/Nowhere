@@ -180,14 +180,17 @@ object SessionTimerManager {
             while (isActive) {
                 val sessionPrefs = SessionPreferences(appContext)
 
-                if (!sessionPrefs.isSessionActive || !sessionPrefs.isSessionRunning) {
+                if (!sessionPrefs.isSessionActive) {
                     updateState(appContext)
                     break
                 }
 
-                // If simulation service is paused by user, preserve remaining time without advancing countdown
-                val svc = MockLocationService.activeInstance ?: MockLocationServiceReceiver.activeService
-                if (sessionPrefs.isSessionPaused || (svc != null && svc.isSimulationPaused)) {
+                // === CRITICAL GATE ===
+                // Only consume freemium quota while mock location is actually injecting
+                val isActivelyInjecting = MockLocationService.isSimulationRunning()
+                if (!isActivelyInjecting || sessionPrefs.isSessionPaused) {
+                    // Freeze quota – do NOT call decrementRemainingTime()
+                    updateState(appContext)
                     delay(1000L)
                     continue
                 }

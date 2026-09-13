@@ -291,13 +291,19 @@ class SessionPreferences(private val context: Context) {
 
     fun decrementRemainingTime(elapsedMillis: Long = 1000L): Long {
         if (isPremiumActive()) return Long.MAX_VALUE
-        val remaining = getTimeRemainingMillis()
-        sessionRemainingDurationMillis = remaining
-        if (remaining <= 0L) {
+        val current = if (isSessionRunning && !isSessionPaused && sessionExpiresTimestamp > 0L) {
+            val wallRemaining = sessionExpiresTimestamp - System.currentTimeMillis()
+            if (wallRemaining > 0L) wallRemaining else 0L
+        } else {
+            val base = if (sessionRemainingDurationMillis >= 0L) sessionRemainingDurationMillis else getTimeRemainingMillis()
+            (base - elapsedMillis).coerceAtLeast(0L)
+        }
+        sessionRemainingDurationMillis = current
+        if (current <= 0L) {
             isSessionExpired = true
             isSessionRunning = false
         }
-        return remaining
+        return current
     }
 
     fun formatRemainingTime(): String {

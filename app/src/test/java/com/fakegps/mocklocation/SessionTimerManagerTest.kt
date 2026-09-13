@@ -192,4 +192,51 @@ class SessionTimerManagerTest {
         assertEquals("Allocated duration must be preserved across restarts", twoHours, sessionPrefs.sessionAllocatedDurationMillis)
         assertTrue("Remaining duration must match preserved quota", sessionPrefs.getTimeRemainingMillis() in (remainingAfterStop - 5000L)..remainingAfterStop)
     }
+
+    @Test
+    fun testProcessDeathSimulation_preservesExactQuotaAndRestoresActiveSession() {
+        val twoHours = 2 * 60 * 60 * 1000L
+        SessionTimerManager.startTimer(context, twoHours, forceRestart = true)
+        assertTrue(sessionPrefs.isSessionActive)
+
+        // Simulate Android OS memory kill / swipe from recents:
+        // onDestroy() pauses timer but preserves isSessionActive = true
+        SessionTimerManager.pauseTimer(context)
+        sessionPrefs.isSessionActive = true
+        val savedQuotaAtDeath = sessionPrefs.sessionRemainingDurationMillis
+
+        // Simulate passage of time while process is dead / offline
+        Thread.sleep(150)
+        assertEquals("Quota must NOT decrease while the process is dead", savedQuotaAtDeath, sessionPrefs.getTimeRemainingMillis())
+        assertTrue("Session must remain active for system auto-restore", sessionPrefs.isSessionActive)
+
+        // Simulate AlarmManager / START_STICKY restarting service & restoring session
+        SessionTimerManager.resumeExistingTimer(context)
+        assertTrue("Session must be active after restore", sessionPrefs.isSessionActive)
+        assertFalse("Session must not be expired", sessionPrefs.isSessionExpired)
+        assertEquals("Restored quota must match exact frozen quota", savedQuotaAtDeath, sessionPrefs.sessionRemainingDurationMillis)
+        assertTrue("Remaining millis must match frozen quota", sessionPrefs.getTimeRemainingMillis() in (savedQuotaAtDeath - 5000L)..savedQuotaAtDeath)
+    }
+
+    @Test
+    fun testPauseResumeWithLongDisconnectWait_preservesQuotaExactly() {
+        val duration = 30 * 60 * 1000L // 30 min
+        SessionTimerManager.startTimer(context, duration, forceRestart = true)
+        val quotaBeforePause = sessionPrefs.getTimeRemainingMillis()
+
+        // User pauses simulation
+        SessionTimerManager.pauseTimer(context)
+        assertTrue("isSessionPaused must be true", sessionPrefs.isSessionPaused)
+        assertFalse("Timer state isRunning must be false when paused", SessionTimerManager.timerState.value.isRunning)
+
+        // Wait while paused
+        Thread.sleep(150)
+        assertEquals("Remaining quota must freeze completely while paused", quotaBeforePause, sessionPrefs.getTimeRemainingMillis())
+
+        // User resumes simulation
+        SessionTimerManager.resumeExistingTimer(context)
+        assertFalse("isSessionPaused must be false after resume", sessionPrefs.isSessionPaused)
+        assertTrue("Timer state isRunning must be true after resume", SessionTimerManager.timerState.value.isRunning)
+        assertTrue("Remaining quota after resume must match frozen quota", sessionPrefs.getTimeRemainingMillis() in (quotaBeforePause - 5000L)..quotaBeforePause)
+    }
 }

@@ -308,39 +308,48 @@ class MockLocationService : Service() {
             val restartServiceIntent = Intent(applicationContext, MockLocationService::class.java).apply {
                 action = ACTION_RESTORE_SESSION
             }
-            val restartPendingIntent = PendingIntent.getService(
-                applicationContext,
-                99,
-                restartServiceIntent,
-                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-            )
+            val restartPendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PendingIntent.getForegroundService(
+                    applicationContext,
+                    99,
+                    restartServiceIntent,
+                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+                )
+            } else {
+                PendingIntent.getService(
+                    applicationContext,
+                    99,
+                    restartServiceIntent,
+                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+                )
+            }
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            val triggerAt = android.os.SystemClock.elapsedRealtime() + 1000L
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager?.canScheduleExactAlarms() == true) {
                     alarmManager.setExactAndAllowWhileIdle(
                         AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        android.os.SystemClock.elapsedRealtime() + 1000L,
+                        triggerAt,
                         restartPendingIntent
                     )
                 } else {
-                    Log.w(TAG, "Exact alarm permission not granted — restart-on-kill will not reliably work on this session.")
-                    // Fall back to inexact as better-than-nothing; do not pretend this will reliably fire.
+                    Log.w(TAG, "Exact alarm permission not granted — scheduling while idle fallback.")
                     alarmManager?.setAndAllowWhileIdle(
                         AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        android.os.SystemClock.elapsedRealtime() + 1000L,
+                        triggerAt,
                         restartPendingIntent
                     )
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager?.setExactAndAllowWhileIdle(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    android.os.SystemClock.elapsedRealtime() + 1000L,
+                    triggerAt,
                     restartPendingIntent
                 )
             } else {
                 alarmManager?.setExact(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    android.os.SystemClock.elapsedRealtime() + 1000L,
+                    triggerAt,
                     restartPendingIntent
                 )
             }
@@ -1283,6 +1292,7 @@ class MockLocationService : Service() {
             Log.d(TAG, "restoreActiveSession: simulation already active, skipping.")
             return
         }
+        acquireWakeLock()
         SessionTimerManager.resumeExistingTimer(this)
 
         when (sessionPrefs.activeMode) {
@@ -1302,6 +1312,12 @@ class MockLocationService : Service() {
                         sessionPrefs.isLooping,
                         TransportMode.VEHICLE
                     )
+                } else {
+                    startFixed(
+                        sessionPrefs.lastLatitude,
+                        sessionPrefs.lastLongitude,
+                        sessionPrefs.lastAltitude
+                    )
                 }
             }
             "JOYSTICK" -> {
@@ -1309,6 +1325,19 @@ class MockLocationService : Service() {
                     sessionPrefs.lastLatitude,
                     sessionPrefs.lastLongitude,
                     sessionPrefs.lastSpeedKmh
+                )
+            }
+            "MOTION_SYNC" -> {
+                startMotionSync(
+                    sessionPrefs.lastLatitude,
+                    sessionPrefs.lastLongitude
+                )
+            }
+            else -> {
+                startFixed(
+                    sessionPrefs.lastLatitude,
+                    sessionPrefs.lastLongitude,
+                    sessionPrefs.lastAltitude
                 )
             }
         }
@@ -1320,11 +1349,20 @@ class MockLocationService : Service() {
         // Instead, only cancel coroutines and release resources directly.
         if (activeInstance == this) activeInstance = null
         if (MockLocationServiceReceiver.activeService == this) MockLocationServiceReceiver.activeService = null
-        sessionPrefs.isSessionActive = false
-        SessionTimerManager.stopTimer(this)
+
+        val isUserInitiatedStop = isStopping.get()
+        if (isUserInitiatedStop) {
+            sessionPrefs.isSessionActive = false
+            SessionTimerManager.stopTimer(this)
+            activeMode = SimulationMode.Idle
+            _serviceState.value = ServiceState.Idle
+        } else {
+            // System killed or recreated service (e.g. swiped from recents or OEM memory trim):
+            // Freeze quota and keep isSessionActive = true so START_STICKY or AlarmManager restores simulation
+            SessionTimerManager.pauseTimer(this)
+        }
+
         isSimulationPaused = false
-        activeMode = SimulationMode.Idle
-        _serviceState.value = ServiceState.Idle
         cancelWatchdog()
         stopCurrentLoop()
         releaseWakeLock()

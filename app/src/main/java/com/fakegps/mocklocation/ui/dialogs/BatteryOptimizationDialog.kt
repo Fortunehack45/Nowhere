@@ -28,6 +28,7 @@ class BatteryOptimizationDialog(
         val sessionPrefs = SessionPreferences(activity)
         val isAggressiveOem = when (oem) {
             OEMDetector.OEM.XIAOMI,
+            OEMDetector.OEM.SAMSUNG,
             OEMDetector.OEM.HUAWEI,
             OEMDetector.OEM.OPPO_ONEPLUS,
             OEMDetector.OEM.VIVO -> true
@@ -37,6 +38,7 @@ class BatteryOptimizationDialog(
         if (isAggressiveOem && !sessionPrefs.hasPromptedOemWidgetNudge) {
             val oemDisplayName = when (oem) {
                 OEMDetector.OEM.XIAOMI -> "Xiaomi / MIUI"
+                OEMDetector.OEM.SAMSUNG -> "Samsung OneUI"
                 OEMDetector.OEM.HUAWEI -> "Huawei / EMUI"
                 OEMDetector.OEM.OPPO_ONEPLUS -> "OPPO / OnePlus"
                 OEMDetector.OEM.VIVO -> "Vivo"
