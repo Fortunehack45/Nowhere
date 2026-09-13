@@ -74,7 +74,6 @@ class SessionTimerManagerTest {
         // User starts simulation with 1 hour duration
         val oneHour = 60 * 60 * 1000L
         sessionPrefs.startNewSession(oneHour, forceRestart = true)
-        val originalExpiry = sessionPrefs.sessionExpiresTimestamp
 
         // User stops simulation while they still have time remaining
         SessionTimerManager.stopTimer(context)
@@ -82,13 +81,16 @@ class SessionTimerManagerTest {
         // Verify remaining session is STILL valid and NOT expired
         assertTrue("Session must remain valid when stopped if time remains", sessionPrefs.hasValidActiveSession())
         assertFalse("Session must not be marked expired when stopped manually", sessionPrefs.isSessionExpired)
-        assertEquals("Expiry timestamp must be preserved", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
-        assertTrue("Remaining time must be positive", sessionPrefs.getTimeRemainingMillis() > 0L)
+        assertEquals("Remaining duration must be preserved upon stop", oneHour, sessionPrefs.sessionRemainingDurationMillis)
+        assertEquals("Expiry timestamp should be reset on stop to prevent wall-clock leak", 0L, sessionPrefs.sessionExpiresTimestamp)
+        assertEquals("Remaining time must match preserved quota", oneHour, sessionPrefs.getTimeRemainingMillis())
 
         // User restarts simulation: timer resumes without prompting for ads or resetting
         SessionTimerManager.startOrResumeTimer(context)
-        assertEquals("Expiry timestamp must still match original after restart", originalExpiry, sessionPrefs.sessionExpiresTimestamp)
-        assertTrue(sessionPrefs.hasValidActiveSession())
+        assertTrue("Session must remain valid after restart", sessionPrefs.hasValidActiveSession())
+        assertFalse("Session must not be marked expired", sessionPrefs.isSessionExpired)
+        assertEquals("Remaining duration must be preserved across restart", oneHour, sessionPrefs.sessionRemainingDurationMillis)
+        assertTrue("Fresh expiry timestamp must be anchored after restart", sessionPrefs.sessionExpiresTimestamp >= System.currentTimeMillis() + 50 * 60 * 1000L)
     }
 
     @Test
@@ -222,21 +224,47 @@ class SessionTimerManagerTest {
     fun testPauseResumeWithLongDisconnectWait_preservesQuotaExactly() {
         val duration = 30 * 60 * 1000L // 30 min
         SessionTimerManager.startTimer(context, duration, forceRestart = true)
-        val quotaBeforePause = sessionPrefs.getTimeRemainingMillis()
 
         // User pauses simulation
         SessionTimerManager.pauseTimer(context)
+        val quotaAtPause = sessionPrefs.getTimeRemainingMillis()
         assertTrue("isSessionPaused must be true", sessionPrefs.isSessionPaused)
         assertFalse("Timer state isRunning must be false when paused", SessionTimerManager.timerState.value.isRunning)
 
         // Wait while paused
         Thread.sleep(150)
-        assertEquals("Remaining quota must freeze completely while paused", quotaBeforePause, sessionPrefs.getTimeRemainingMillis())
+        assertEquals("Remaining quota must freeze completely while paused", quotaAtPause, sessionPrefs.getTimeRemainingMillis())
 
         // User resumes simulation
         SessionTimerManager.resumeExistingTimer(context)
         assertFalse("isSessionPaused must be false after resume", sessionPrefs.isSessionPaused)
         assertTrue("Timer state isRunning must be true after resume", SessionTimerManager.timerState.value.isRunning)
-        assertTrue("Remaining quota after resume must match frozen quota", sessionPrefs.getTimeRemainingMillis() in (quotaBeforePause - 5000L)..quotaBeforePause)
+        assertTrue("Remaining quota after resume must match frozen quota", sessionPrefs.getTimeRemainingMillis() in (quotaAtPause - 5000L)..quotaAtPause)
+    }
+
+    @Test
+    fun testDisconnectAndReconnectLater_losesZeroMillisecondsOfQuota() {
+        val duration = 45 * 60 * 1000L // 45 min
+        SessionTimerManager.startTimer(context, duration, forceRestart = true)
+
+        // User stops simulation (disconnects)
+        SessionTimerManager.stopTimer(context)
+        val quotaAtStop = sessionPrefs.getTimeRemainingMillis()
+        assertEquals("Expiry timestamp should be 0L when disconnected", 0L, sessionPrefs.sessionExpiresTimestamp)
+        assertEquals("Quota remaining should be stored", quotaAtStop, sessionPrefs.sessionRemainingDurationMillis)
+
+        // User stays disconnected for some time
+        Thread.sleep(200)
+
+        // Timer must not have reduced at all while disconnected
+        assertEquals("Quota must not reduce while user is disconnected", quotaAtStop, sessionPrefs.getTimeRemainingMillis())
+
+        // User reconnects
+        SessionTimerManager.resumeExistingTimer(context)
+
+        // Timer quota when reconnected must match exactly what was left at disconnect
+        val quotaAfterReconnect = sessionPrefs.getTimeRemainingMillis()
+        assertTrue("Quota upon reconnect must not lose time elapsed while offline", quotaAfterReconnect in (quotaAtStop - 2000L)..quotaAtStop)
+        assertTrue(sessionPrefs.sessionExpiresTimestamp >= System.currentTimeMillis() + 40 * 60 * 1000L)
     }
 }

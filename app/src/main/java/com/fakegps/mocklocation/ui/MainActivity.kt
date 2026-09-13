@@ -433,9 +433,7 @@ class MainActivity : AppCompatActivity() {
             if (state is ServiceState.Running && state.isPaused) return false
             return svc.activeMode !is com.fakegps.mocklocation.simulator.SimulationMode.Idle || state is ServiceState.Running
         }
-        val sessionPrefs = SessionPreferences(this)
-        if (sessionPrefs.isSessionRunning && !sessionPrefs.isSessionPaused && !sessionPrefs.isSessionExpired) return true
-        return viewModel.uiState.value.isServiceRunning
+        return false
     }
 
     override fun onPause() {

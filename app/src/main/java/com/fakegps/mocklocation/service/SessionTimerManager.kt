@@ -116,7 +116,7 @@ object SessionTimerManager {
         sessionPrefs.isSessionExpired = false
         sessionPrefs.isSessionRunning = true
         val currentRemaining = sessionPrefs.sessionRemainingDurationMillis
-        if (sessionPrefs.sessionExpiresTimestamp <= now) {
+        if (sessionPrefs.sessionExpiresTimestamp <= 0L || sessionPrefs.sessionExpiresTimestamp <= now) {
             if (currentRemaining > 0L) {
                 sessionPrefs.sessionExpiresTimestamp = now + currentRemaining
             }
@@ -127,15 +127,17 @@ object SessionTimerManager {
     }
 
     fun pauseTimer(context: Context) {
-        val sessionPrefs = SessionPreferences(context)
-        val remaining = sessionPrefs.getTimeRemainingMillis()
-        sessionPrefs.sessionRemainingDurationMillis = remaining
-        sessionPrefs.isSessionRunning = false
-        sessionPrefs.isSessionPaused = true
         timerJob?.cancel()
         timerJob = null
         timerScope?.cancel()
         timerScope = null
+
+        val sessionPrefs = SessionPreferences(context)
+        val remaining = sessionPrefs.getTimeRemainingMillis()
+        sessionPrefs.isSessionRunning = false
+        sessionPrefs.isSessionPaused = true
+        sessionPrefs.sessionRemainingDurationMillis = remaining
+        sessionPrefs.sessionExpiresTimestamp = 0L
 
         resetThresholdFlags()
         updateState(context)
@@ -143,17 +145,18 @@ object SessionTimerManager {
     }
 
     fun stopTimer(context: Context) {
-        val sessionPrefs = SessionPreferences(context)
-        val remaining = sessionPrefs.getTimeRemainingMillis()
-        sessionPrefs.sessionRemainingDurationMillis = remaining
-        sessionPrefs.isSessionRunning = false
-        sessionPrefs.isSessionPaused = false
-        sessionPrefs.isSessionActive = false
-
         timerJob?.cancel()
         timerJob = null
         timerScope?.cancel()
         timerScope = null
+
+        val sessionPrefs = SessionPreferences(context)
+        val remaining = sessionPrefs.getTimeRemainingMillis()
+        sessionPrefs.isSessionRunning = false
+        sessionPrefs.isSessionPaused = false
+        sessionPrefs.isSessionActive = false
+        sessionPrefs.sessionRemainingDurationMillis = remaining
+        sessionPrefs.sessionExpiresTimestamp = 0L
 
         resetThresholdFlags()
 
@@ -180,19 +183,29 @@ object SessionTimerManager {
             while (isActive) {
                 val sessionPrefs = SessionPreferences(appContext)
 
-                if (!sessionPrefs.isSessionActive) {
+                if (!sessionPrefs.isSessionActive || !sessionPrefs.isSessionRunning) {
                     updateState(appContext)
                     break
                 }
 
                 // === CRITICAL GATE ===
                 // Only consume freemium quota while mock location is actually injecting
-                val isActivelyInjecting = MockLocationService.isSimulationRunning()
+                val isServicePresent = MockLocationService.activeInstance != null || MockLocationServiceReceiver.activeService != null
+                val isActivelyInjecting = if (isServicePresent) MockLocationService.isSimulationRunning() else sessionPrefs.isSessionRunning
                 if (!isActivelyInjecting || sessionPrefs.isSessionPaused) {
-                    // Freeze quota – do NOT call decrementRemainingTime()
+                    // Freeze quota – clear sessionExpiresTimestamp so wall-clock never advances quota
+                    if (sessionPrefs.sessionExpiresTimestamp != 0L) {
+                        sessionPrefs.sessionRemainingDurationMillis = sessionPrefs.getTimeRemainingMillis()
+                        sessionPrefs.sessionExpiresTimestamp = 0L
+                    }
                     updateState(appContext)
                     delay(1000L)
                     continue
+                } else {
+                    // If actively injecting and sessionExpiresTimestamp is not anchored, anchor fresh to now
+                    if (sessionPrefs.sessionExpiresTimestamp <= 0L && sessionPrefs.sessionRemainingDurationMillis > 0L) {
+                        sessionPrefs.sessionExpiresTimestamp = System.currentTimeMillis() + sessionPrefs.sessionRemainingDurationMillis
+                    }
                 }
 
                 if (sessionPrefs.isPremiumActive()) {
@@ -284,7 +297,9 @@ object SessionTimerManager {
 
     fun updateStaticState(context: Context) {
         val sessionPrefs = SessionPreferences(context)
-        if (MockLocationService.isSimulationRunning() || sessionPrefs.isSessionRunning) {
+        val isServicePresent = MockLocationService.activeInstance != null || MockLocationServiceReceiver.activeService != null
+        val isRunning = if (isServicePresent) MockLocationService.isSimulationRunning() else sessionPrefs.isSessionRunning
+        if (isRunning) {
             updateState(context)
             return
         }
