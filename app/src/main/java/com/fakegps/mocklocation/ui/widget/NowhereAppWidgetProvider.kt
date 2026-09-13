@@ -55,7 +55,7 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_layout)
             val sessionPrefs = SessionPreferences(context)
 
-            val isActive = sessionPrefs.isSessionActive
+            val isSimRunning = MockLocationService.isSimulationRunning()
             val lat = sessionPrefs.lastLatitude
             val lon = sessionPrefs.lastLongitude
             val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
@@ -65,9 +65,13 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
 
             val locName = if (!cachedName.isNullOrBlank()) {
                 cachedName
-            } else if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+            } else if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active" && !sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .°]+$"))) {
                 sessionPrefs.lastLocationName
             } else {
+                com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(context, lat, lon) { resolved ->
+                    sessionPrefs.lastLocationName = resolved
+                    updateAllWidgets(context)
+                }
                 coordsText
             }
             views.setTextViewText(R.id.tvWidgetLocationName, locName)
@@ -93,7 +97,7 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.btnWidgetJoystick, primaryColor)
             views.setInt(R.id.btnWidgetOpenApp, "setColorFilter", secondaryText)
 
-            if (isActive) {
+            if (isSimRunning) {
                 views.setTextViewText(R.id.tvWidgetStatus, "ACTIVE")
                 views.setTextColor(R.id.tvWidgetStatus, primaryColor)
                 views.setTextViewText(R.id.btnWidgetTeleport, "Stop")

@@ -644,6 +644,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateFixedPinMarker(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
+
+        val sessionPrefs = SessionPreferences(this)
+        if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active" && !sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .°]+$"))) {
+            binding.etAddressSearch.setText(sessionPrefs.lastLocationName)
+            binding.btnClearSearch.visibility = View.VISIBLE
+        } else {
+            val lat = viewModel.uiState.value.fixedLatitude
+            val lon = viewModel.uiState.value.fixedLongitude
+            if (lat != 0.0 || lon != 0.0) {
+                com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this, lat, lon) { resolvedName ->
+                    sessionPrefs.lastLocationName = resolvedName
+                    binding.etAddressSearch.setText(resolvedName)
+                    binding.btnClearSearch.visibility = View.VISIBLE
+                    com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
+                    com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this@MainActivity)
+                }
+            }
+        }
     }
 
     private fun applyMapPerspectiveMode(sourceKey: String) {
@@ -677,16 +695,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         when (viewModel.uiState.value.selectedTab) {
-            SelectedModeTab.FIXED -> {
+            SelectedModeTab.FIXED, SelectedModeTab.JOYSTICK -> {
                 viewModel.setFixedCoordinates(latitude, longitude)
                 updateFixedPinMarker(latitude, longitude)
+                val sessionPrefs = SessionPreferences(this@MainActivity)
+                sessionPrefs.lastLatitude = latitude
+                sessionPrefs.lastLongitude = longitude
+                com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this@MainActivity, latitude, longitude) { resolvedName ->
+                    sessionPrefs.lastLocationName = resolvedName
+                    binding.etAddressSearch.setText(resolvedName)
+                    binding.btnClearSearch.visibility = View.VISIBLE
+                    com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
+                    com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this@MainActivity)
+                }
             }
             SelectedModeTab.ROUTE -> {
                 viewModel.addRouteWaypoint(latitude, longitude)
-            }
-            SelectedModeTab.JOYSTICK -> {
-                viewModel.setFixedCoordinates(latitude, longitude)
-                updateFixedPinMarker(latitude, longitude)
             }
         }
     }
@@ -724,6 +748,7 @@ class MainActivity : AppCompatActivity() {
         val sessionPrefs = SessionPreferences(this@MainActivity)
         sessionPrefs.lastLocationName = title
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
+        com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this@MainActivity)
 
         binding.etAddressSearch.setText(title)
         binding.btnClearSearch.visibility = View.VISIBLE
@@ -1038,7 +1063,10 @@ class MainActivity : AppCompatActivity() {
 
         val sessionPrefs = SessionPreferences(this)
         sessionPrefs.lastLocationName = name
+        binding.etAddressSearch.setText(name)
+        binding.btnClearSearch.visibility = View.VISIBLE
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+        com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this)
 
         Toast.makeText(this, "Focused: $name", Toast.LENGTH_SHORT).show()
     }

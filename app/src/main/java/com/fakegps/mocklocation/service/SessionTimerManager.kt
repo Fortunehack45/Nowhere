@@ -276,17 +276,9 @@ object SessionTimerManager {
                             isUnlimited = false
                         )
 
-                        // Debounced home screen widget refresh (once per minute or last 60s)
-                        // Eliminates 98% of system Binder IPC transactions and stops CPU thermal load
-                        if (remainingSecs % 60L == 0L || remainingSecs <= 60L) {
-                            NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
-                            if (sessionPrefs.activeMode == "ROUTE") {
-                                NowhereRouteWidgetProvider.updateAllRouteWidgets(appContext)
-                            }
-                            if (sessionPrefs.isIpMaskingEnabled) {
-                                NowhereVpnWidgetProvider.updateAllVpnWidgets(appContext)
-                            }
-                        }
+                        // Real-time home screen widget refresh (every second)
+                        NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                        NowhereAppWidgetProvider.updateAllWidgets(appContext)
                     }
                 }
 

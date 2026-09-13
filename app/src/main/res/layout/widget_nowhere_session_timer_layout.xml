@@ -80,6 +80,18 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tvWidgetConnectedLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="📍 San Francisco, CA"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
             android:id="@+id/tvWidgetTotalAllocated"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

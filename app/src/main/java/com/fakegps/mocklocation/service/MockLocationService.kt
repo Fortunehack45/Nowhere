@@ -291,6 +291,11 @@ class MockLocationService : Service() {
 
         startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
         motionSyncEngine?.start(initialLat, initialLon, 0f)
+        com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this, initialLat, initialLon) { resolvedName ->
+            sessionPrefs.lastLocationName = resolvedName
+            updateLocationNotification(initialLat, initialLon, "Motion Sync Active")
+            updateAllWidgets()
+        }
         startContinuousHeartbeatLoop()
         updateAllWidgets()
     }
@@ -716,6 +721,12 @@ class MockLocationService : Service() {
         )
         updateLocationNotification(latitude, longitude, "Teleported / Fixed")
 
+        com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this, latitude, longitude) { resolvedName ->
+            sessionPrefs.lastLocationName = resolvedName
+            updateLocationNotification(latitude, longitude, "Teleported / Fixed")
+            updateAllWidgets()
+        }
+
         startContinuousHeartbeatLoop()
     }
 
@@ -724,6 +735,7 @@ class MockLocationService : Service() {
         simulationJob = serviceScope.launch {
             try {
                 var lastNotificationUpdateTime = 0L
+                var lastWidgetUpdateTime = 0L
                 while (isActive) {
                     if (!sessionPrefs.isPremiumActive()) {
                         val remaining = sessionPrefs.getTimeRemainingMillis()
@@ -773,6 +785,10 @@ class MockLocationService : Service() {
                     }
 
                     val now = android.os.SystemClock.elapsedRealtime()
+                    if (now - lastWidgetUpdateTime >= 1000L) {
+                        lastWidgetUpdateTime = now
+                        updateAllWidgets()
+                    }
                     if (now - lastNotificationUpdateTime >= 5000L) {
                         lastNotificationUpdateTime = now
                         val modeDesc = if (sessionPrefs.activeMode == "MOTION_SYNC") "Motion Sync Active" else "Teleported / Fixed"
@@ -864,6 +880,11 @@ class MockLocationService : Service() {
         )
         if (waypoints.isNotEmpty()) {
             updateLocationNotification(waypoints[0].latitude, waypoints[0].longitude, "Route Active (${transportMode.title})")
+            com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this, waypoints[0].latitude, waypoints[0].longitude) { resolvedName ->
+                sessionPrefs.lastLocationName = resolvedName
+                updateLocationNotification(waypoints[0].latitude, waypoints[0].longitude, "Route Active (${transportMode.title})")
+                updateAllWidgets()
+            }
         }
         updateAllWidgets()
 
@@ -1143,6 +1164,12 @@ class MockLocationService : Service() {
         )
         updateLocationNotification(startLat, startLon, "Joystick Active")
 
+        com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this, startLat, startLon) { resolvedName ->
+            sessionPrefs.lastLocationName = resolvedName
+            updateLocationNotification(startLat, startLon, "Joystick Active")
+            updateAllWidgets()
+        }
+
         simulationJob = serviceScope.launch {
             try {
                 val deltaSeconds = 0.1
@@ -1163,6 +1190,11 @@ class MockLocationService : Service() {
                     }
 
                     val now = android.os.SystemClock.elapsedRealtime()
+                    if (now - lastWidgetUpdateTime >= 1000L) {
+                        lastWidgetUpdateTime = now
+                        updateAllWidgets()
+                    }
+
                     if (joystickMagnitude > 0.01f) {
                         val speedMps = (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude
                         val distanceMeters = speedMps * deltaSeconds
@@ -1197,12 +1229,6 @@ class MockLocationService : Service() {
                                 speedMps = speedMps,
                                 bearingDegrees = joystickAngleDeg
                             )
-
-                            // Real-time home screen widget update during joystick movement
-                            if (now - lastWidgetUpdateTime >= 1500L) {
-                                lastWidgetUpdateTime = now
-                                updateAllWidgets()
-                            }
 
                             // Real-time notification update during joystick movement
                             if (now - lastNotificationUpdateTime >= 2500L) {

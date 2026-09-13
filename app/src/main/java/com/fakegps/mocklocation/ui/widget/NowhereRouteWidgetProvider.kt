@@ -48,15 +48,15 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
             val sessionPrefs = SessionPreferences(context)
             val settingsPrefs = AppSettingsPreferences(context)
 
-            val isActive = sessionPrefs.isSessionActive && sessionPrefs.activeMode == "ROUTE"
+            val isActive = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning() && sessionPrefs.activeMode == "ROUTE"
             val waypoints = sessionPrefs.getWaypoints()
             val speedKmh = sessionPrefs.lastSpeedKmh
 
             val totalDistMeters = sessionPrefs.routeTotalDistanceMeters
             val coveredDistMeters = sessionPrefs.routeCoveredDistanceMeters
             val remainingDistMeters = sessionPrefs.routeRemainingDistanceMeters
-
             val useImperial = settingsPrefs.useImperialUnits
+
             val totalFormatted: String
             val coveredFormatted: String
             val remainingFormatted: String
@@ -134,13 +134,29 @@ class NowhereRouteWidgetProvider : AppWidgetProvider() {
                 val dest = waypoints.last()
                 val originCoords = String.format(java.util.Locale.US, "%.4f, %.4f", origin.latitude, origin.longitude)
                 val destCoords = String.format(java.util.Locale.US, "%.4f, %.4f", dest.latitude, dest.longitude)
-                val originName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
-                    sessionPrefs.lastLocationName
+
+                val cachedOrigin = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(origin.latitude, origin.longitude)
+                val originName = if (!cachedOrigin.isNullOrBlank()) {
+                    cachedOrigin
                 } else {
+                    com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(context, origin.latitude, origin.longitude) {
+                        updateAllRouteWidgets(context)
+                    }
                     originCoords
                 }
+
+                val cachedDest = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(dest.latitude, dest.longitude)
+                val destName = if (!cachedDest.isNullOrBlank()) {
+                    cachedDest
+                } else {
+                    com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(context, dest.latitude, dest.longitude) {
+                        updateAllRouteWidgets(context)
+                    }
+                    destCoords
+                }
+
                 views.setTextViewText(R.id.tvRouteOrigin, originName)
-                views.setTextViewText(R.id.tvRouteDestination, destCoords)
+                views.setTextViewText(R.id.tvRouteDestination, destName)
             } else {
                 views.setTextViewText(R.id.tvRouteOrigin, "No Route Planned")
                 views.setTextViewText(R.id.tvRouteDestination, "Tap to plan route")

@@ -39,8 +39,23 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
         private fun buildSessionRemoteViews(context: Context, isDark: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_session_timer_layout)
             val sessionPrefs = SessionPreferences(context)
-            val isRunning = sessionPrefs.isSessionActive && !sessionPrefs.isSessionExpired
+            val isRunning = com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()
             val isExpired = sessionPrefs.isSessionExpired
+
+            val lat = sessionPrefs.lastLatitude
+            val lon = sessionPrefs.lastLongitude
+            val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
+            val locName = if (!cachedName.isNullOrBlank()) {
+                cachedName
+            } else if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active" && !sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .°]+$"))) {
+                sessionPrefs.lastLocationName
+            } else {
+                com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(context, lat, lon) { resolved ->
+                    sessionPrefs.lastLocationName = resolved
+                    updateAllSessionWidgets(context)
+                }
+                String.format(java.util.Locale.US, "%.4f°, %.4f°", lat, lon)
+            }
 
             val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
             views.setInt(R.id.ivWidgetTimerLogo, "setColorFilter", primaryColor)
@@ -61,6 +76,7 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
 
             views.setTextColor(R.id.tvWidgetTimeRemainingTitle, secondaryText)
             views.setTextColor(R.id.tvWidgetTimeRemaining, primaryText)
+            views.setTextColor(R.id.tvWidgetConnectedLocation, primaryText)
             views.setTextColor(R.id.tvWidgetExtendText, primaryText)
             views.setTextColor(R.id.tvWidgetOpenAppText, primaryText)
 
@@ -68,19 +84,23 @@ class NowhereSessionTimerWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.tvWidgetSessionStatus, "ACTIVE")
                 views.setTextColor(R.id.tvWidgetSessionStatus, primaryColor)
                 views.setTextViewText(R.id.tvWidgetTimeRemaining, sessionPrefs.formatRemainingTime())
+                views.setTextViewText(R.id.tvWidgetConnectedLocation, "📍 $locName")
                 views.setTextViewText(R.id.tvWidgetTotalAllocated, "Total: ${sessionPrefs.formatAllocatedDuration()}")
                 views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             } else if (isExpired) {
                 views.setTextViewText(R.id.tvWidgetSessionStatus, "EXPIRED")
                 views.setTextColor(R.id.tvWidgetSessionStatus, ContextCompat.getColor(context, R.color.badge_error_text))
                 views.setTextViewText(R.id.tvWidgetTimeRemaining, "00:00:00")
-                views.setTextViewText(R.id.tvWidgetTotalAllocated, "Tap +1h to resume")
+                views.setTextViewText(R.id.tvWidgetConnectedLocation, "📍 $locName")
+                views.setTextViewText(R.id.tvWidgetTotalAllocated, "Tap +2h to resume")
                 views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             } else {
-                views.setTextViewText(R.id.tvWidgetSessionStatus, "STANDBY")
+                val isPaused = sessionPrefs.isSessionPaused
+                views.setTextViewText(R.id.tvWidgetSessionStatus, if (isPaused) "PAUSED" else "STANDBY")
                 views.setTextColor(R.id.tvWidgetSessionStatus, secondaryText)
-                views.setTextViewText(R.id.tvWidgetTimeRemaining, "02:00:00")
-                views.setTextViewText(R.id.tvWidgetTotalAllocated, "Ready to start (2h)")
+                views.setTextViewText(R.id.tvWidgetTimeRemaining, sessionPrefs.formatRemainingTime())
+                views.setTextViewText(R.id.tvWidgetConnectedLocation, "📍 $locName")
+                views.setTextViewText(R.id.tvWidgetTotalAllocated, "Total: ${sessionPrefs.formatAllocatedDuration()}")
                 views.setTextColor(R.id.tvWidgetTotalAllocated, primaryColor)
             }
 
