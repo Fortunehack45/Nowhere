@@ -15,3 +15,17 @@
 local.properties
 app/build/
 app/robolectric-deps/
+
+# Secrets, Credentials, and Private Keys
+*.pem
+*.key
+*.p12
+*.pkcs12
+*service_account*.json
+*service-account*.json
+*credentials*.json
+.env
+.env.*
+secrets/
+**/secrets/
+deploy/secrets/
