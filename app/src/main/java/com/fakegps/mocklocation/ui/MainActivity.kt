@@ -319,9 +319,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (intent.getBooleanExtra("focus_search", false)) {
-            binding.etAddressSearch.requestFocus()
-            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-            imm?.showSoftInput(binding.etAddressSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            showSearchOverlay()
         }
 
         if (intent.getBooleanExtra("OPEN_WEATHER_DIALOG", false)) {
@@ -648,18 +646,17 @@ class MainActivity : AppCompatActivity() {
 
         updateFixedPinMarker(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude)
 
+        // Keep search bar clean with placeholder hint by default
+        binding.etAddressSearch.setText("")
+        binding.btnClearSearch.visibility = View.GONE
+
         val sessionPrefs = SessionPreferences(this)
-        if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active" && !sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .°]+$"))) {
-            binding.etAddressSearch.setText(sessionPrefs.lastLocationName)
-            binding.btnClearSearch.visibility = View.VISIBLE
-        } else {
+        if (sessionPrefs.lastLocationName.isBlank() || sessionPrefs.lastLocationName == "Mock Location Active" || sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .°]+$"))) {
             val lat = viewModel.uiState.value.fixedLatitude
             val lon = viewModel.uiState.value.fixedLongitude
             if (lat != 0.0 || lon != 0.0) {
                 com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this, lat, lon) { resolvedName ->
                     sessionPrefs.lastLocationName = resolvedName
-                    binding.etAddressSearch.setText(resolvedName)
-                    binding.btnClearSearch.visibility = View.VISIBLE
                     com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
                     com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this@MainActivity)
                 }
@@ -706,11 +703,11 @@ class MainActivity : AppCompatActivity() {
                 sessionPrefs.lastLongitude = longitude
                 com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this@MainActivity, latitude, longitude) { resolvedName ->
                     sessionPrefs.lastLocationName = resolvedName
-                    binding.etAddressSearch.setText(resolvedName)
-                    binding.btnClearSearch.visibility = View.VISIBLE
                     com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
                     com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this@MainActivity)
                 }
+                binding.etAddressSearch.setText("")
+                binding.btnClearSearch.visibility = View.GONE
             }
             SelectedModeTab.ROUTE -> {
                 viewModel.addRouteWaypoint(latitude, longitude)
@@ -1066,8 +1063,8 @@ class MainActivity : AppCompatActivity() {
 
         val sessionPrefs = SessionPreferences(this)
         sessionPrefs.lastLocationName = name
-        binding.etAddressSearch.setText(name)
-        binding.btnClearSearch.visibility = View.VISIBLE
+        binding.etAddressSearch.setText("")
+        binding.btnClearSearch.visibility = View.GONE
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
         com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this)
 
