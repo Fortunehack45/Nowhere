@@ -580,6 +580,7 @@ struct MainMapView: View {
                     gpxExportView
                 }
             }
+        }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
