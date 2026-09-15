@@ -29,6 +29,7 @@
 		7B0000142A00000000000001 /* SessionExtendSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000152A00000000000001 /* SessionExtendSheetView.swift */; };
 		7B0000152A00000000000001 /* HotspotTetheringSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000162A00000000000001 /* HotspotTetheringSheetView.swift */; };
 		7B0000162A00000000000001 /* WeatherSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0000172A00000000000001 /* WeatherSheetView.swift */; };
+		7B0000172A00000000000001 /* ayanfe_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 7A0000182A00000000000001 /* ayanfe_logo.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +57,7 @@
 		7A0000152A00000000000001 /* SessionExtendSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SessionExtendSheetView.swift; sourceTree = "<group>"; };
 		7A0000162A00000000000001 /* HotspotTetheringSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/HotspotTetheringSheetView.swift; sourceTree = "<group>"; };
 		7A0000172A00000000000001 /* WeatherSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/WeatherSheetView.swift; sourceTree = "<group>"; };
+		7A0000182A00000000000001 /* ayanfe_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ayanfe_logo.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 				7A0000122A00000000000001 /* HotspotLocationManager.swift */,
 				7A0000052A00000000000001 /* SimulationMode.swift */,
 				7A0000062A00000000000001 /* Info.plist */,
+				7A0000182A00000000000001 /* ayanfe_logo.png */,
 			);
 			path = Nowhere;
 			sourceTree = "<group>";
@@ -173,6 +176,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7B0000172A00000000000001 /* ayanfe_logo.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

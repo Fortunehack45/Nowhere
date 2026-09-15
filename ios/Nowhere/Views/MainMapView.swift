@@ -179,10 +179,16 @@ struct MainMapView: View {
                     .font(.system(size: 22, weight: .bold))
                     .foregroundColor(.red)
 
-                Text("NOWHERE")
-                    .font(.system(size: 16, weight: .black))
-                    .kerning(1.2)
-                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("NOWHERE")
+                        .font(.system(size: 16, weight: .black, design: .rounded))
+                        .kerning(1.2)
+                        .foregroundColor(.white)
+                    Text("BY ÀYÀNFẸ́")
+                        .font(.system(size: 8, weight: .black, design: .monospaced))
+                        .kerning(1.6)
+                        .foregroundColor(.red.opacity(0.9))
+                }
 
                 Spacer()
 
@@ -309,8 +315,22 @@ struct MainMapView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Color(red: 0.1, green: 0.1, blue: 0.12).opacity(0.95))
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.35), Color.white.opacity(0.08)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.35), radius: 18, x: 0, y: 8)
+        )
         .padding(.horizontal, 16)
         .padding(.top, 40)
     }
@@ -346,8 +366,15 @@ struct MainMapView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color(red: 0.13, green: 0.13, blue: 0.15))
-        .cornerRadius(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.white.opacity(0.16), lineWidth: 0.75)
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+        )
         .padding(.horizontal, 16)
     }
 
@@ -427,26 +454,55 @@ struct MainMapView: View {
     // MARK: - Segmented Mode Picker
     private var segmentedModePicker: some View {
         HStack(spacing: 4) {
-            modeButton(title: "Fixed", id: "FIXED")
-            modeButton(title: "Route", id: "ROUTE")
-            modeButton(title: "Joystick", id: "JOYSTICK")
-            modeButton(title: "GPX", id: "GPX")
+            modeButton(title: "Fixed", icon: "mappin.and.ellipse", id: "FIXED")
+            modeButton(title: "Route", icon: "arrow.triangle.turn.up.right.diamond.fill", id: "ROUTE")
+            modeButton(title: "Joystick", icon: "gamecontroller.fill", id: "JOYSTICK")
+            modeButton(title: "GPX", icon: "doc.badge.gearshape.fill", id: "GPX")
         }
         .padding(4)
-        .background(Color.black.opacity(0.65))
-        .cornerRadius(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.28), Color.white.opacity(0.06)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 5)
+        )
         .padding(.horizontal, 16)
     }
 
-    private func modeButton(title: String, id: String) -> some View {
-        Button(action: { selectedTab = id }) {
-            Text(title)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(selectedTab == id ? .white : .gray)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(selectedTab == id ? Color.red : Color.clear)
-                .cornerRadius(10)
+    private func modeButton(title: String, icon: String, id: String) -> some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.8)) {
+                selectedTab = id
+            }
+        }) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 10, weight: .bold))
+                Text(title)
+                    .font(.system(size: 12, weight: .bold))
+            }
+            .foregroundColor(selectedTab == id ? .white : .gray)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(
+                selectedTab == id ?
+                AnyView(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.red)
+                        .shadow(color: Color.red.opacity(0.4), radius: 6, x: 0, y: 2)
+                ) :
+                AnyView(Color.clear)
+            )
         }
     }
 
@@ -524,17 +580,22 @@ struct MainMapView: View {
                     gpxExportView
                 }
             }
-        }
-        .padding(14)
+        .padding(16)
         .background(
-            Color(red: 0.11, green: 0.11, blue: 0.13)
-                .opacity(0.96)
-                .background(.ultraThinMaterial)
-        )
-        .cornerRadius(24)
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.35), Color.white.opacity(0.08)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.4), radius: 24, x: 0, y: -6)
         )
         .gesture(
             DragGesture(minimumDistance: 15)

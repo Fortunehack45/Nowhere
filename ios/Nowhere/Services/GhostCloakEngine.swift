@@ -1,10 +1,11 @@
 import Foundation
 import CoreLocation
+import Combine
 
 /// Ghost Cloak Anti-Detection Engine for iOS.
 /// Synthesizes authentic NMEA-0183 hardware sentences, nanosecond clock uncertainty drift,
 /// genuine GNSS constellation distributions, and physical kinematics.
-class GhostCloakEngine {
+class GhostCloakEngine: ObservableObject {
 
     static let shared = GhostCloakEngine()
 

@@ -37,12 +37,15 @@ jobs:
             SYMROOT=build
 
       - name: Package Native iOS .ipa and .zip
+        id: package_ios
         run: |
           cd ios/build/Release-iphoneos
           mkdir -p Payload
           cp -r Nowhere.app Payload/
           zip -r Nowhere.ipa Payload
           zip -r Nowhere-iOS-Release.zip Nowhere.app
+          VERSION="1.2.${{ github.run_number }}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Upload iOS IPA Artifact
         continue-on-error: true
@@ -51,7 +54,7 @@ jobs:
           name: Nowhere-iOS-IPA
           path: ios/build/Release-iphoneos/Nowhere.ipa
           if-no-files-found: warn
-          retention-days: 1
+          retention-days: 14
 
       - name: Upload iOS App Bundle
         continue-on-error: true
@@ -60,4 +63,21 @@ jobs:
           name: Nowhere-iOS-App-Bundle
           path: ios/build/Release-iphoneos/Nowhere-iOS-Release.zip
           if-no-files-found: warn
-          retention-days: 1
+          retention-days: 14
+
+      - name: Publish iOS Release Assets
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        continue-on-error: true
+        with:
+          tag_name: ios-v${{ steps.package_ios.outputs.version }}
+          name: Nowhere iOS v${{ steps.package_ios.outputs.version }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          make_latest: false
+          files: |
+            ios/build/Release-iphoneos/Nowhere.ipa
+            ios/build/Release-iphoneos/Nowhere-iOS-Release.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

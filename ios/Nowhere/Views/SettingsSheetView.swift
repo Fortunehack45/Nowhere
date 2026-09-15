@@ -162,20 +162,52 @@ struct SettingsSheetView: View {
                     .disabled(updateChecker.isChecking)
                 }
 
-                // Section 5: Developer Portfolio & Contact
-                Section(header: Text("ABOUT NOWHERE").foregroundColor(.red)) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Nowhere GPS Simulator for iOS")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Text("v\(updateChecker.currentVersion) • Precision Location Spoofing")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                // Section 5: Software Studio & Maker Branding
+                Section(header: Text("ABOUT & DEVELOPER").foregroundColor(.red)) {
+                    HStack(spacing: 14) {
+                        if let uiImage = UIImage(named: "ayanfe_logo") ?? UIImage(contentsOfFile: Bundle.main.path(forResource: "ayanfe_logo", ofType: "png") ?? "") {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 52, height: 52)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                                .shadow(color: Color.black.opacity(0.3), radius: 4)
+                        } else {
+                            AsyncImage(url: URL(string: "https://iili.io/nn2VBpf.png")) { phase in
+                                if let image = phase.image {
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                } else {
+                                    Image(systemName: "app.badge.checkmark.fill")
+                                        .font(.system(size: 28))
+                                        .foregroundColor(.red)
+                                }
+                            }
+                            .frame(width: 52, height: 52)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                            .shadow(color: Color.black.opacity(0.3), radius: 4)
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Made by Àyànfẹ́")
+                                .font(.system(size: 15, weight: .black, design: .rounded))
+                                .foregroundColor(.white)
+                            Text("Àyànfẹ́ Software Studio • Mobile & Cyber-Security")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.gray)
+                            Text("Nowhere iOS v\(updateChecker.currentVersion)")
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(.red.opacity(0.9))
+                        }
                     }
+                    .padding(.vertical, 4)
 
                     Link(destination: URL(string: "https://fortuneadebayo.space")!) {
                         HStack {
-                            Text("Developer Website")
+                            Text("Studio Website")
                             Spacer()
                             Text("fortuneadebayo.space")
                                 .font(.caption)
@@ -195,19 +227,9 @@ struct SettingsSheetView: View {
 
                     Link(destination: URL(string: "https://t.me/+vcmA7kOtLEw3ZjM0")!) {
                         HStack {
-                            Text("Telegram Group")
+                            Text("Community Group")
                             Spacer()
-                            Text("Join Community")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                    }
-
-                    Link(destination: URL(string: "https://twitter.com/OnNerd_eth")!) {
-                        HStack {
-                            Text("Follow on X / Twitter")
-                            Spacer()
-                            Text("@OnNerd_eth")
+                            Text("Join Telegram")
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
