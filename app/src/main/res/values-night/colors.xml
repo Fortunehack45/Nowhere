@@ -12,33 +12,33 @@
     <color name="white_translucent">#1AFFFFFF</color>
     <color name="white_border">#26FFFFFF</color>
 
-    <!-- Surfaces (Dark Mode - Rich Smoked Obsidian 88% to 95%) -->
-    <color name="surface_dark">#000000</color>
-    <color name="surface_obsidian">#E61C1C1E</color>
-    <color name="surface_card">#E61C1C1E</color>
-    <color name="surface_card_elevated">#F02C2C2E</color>
-    <color name="surface_elevated">#F02C2C2E</color>
-    <color name="surface_glass">#E61C1C1E</color>
-    <color name="surface_search">#E62C2C2E</color>
-    <color name="card_dark">#E61C1C1E</color>
+    <!-- Surfaces (Dark Mode - Apple Dark Ash #1C1C1E to #2C2C2E) -->
+    <color name="surface_dark">#1C1C1E</color>
+    <color name="surface_obsidian">#1C1C1E</color>
+    <color name="surface_card">#2C2C2E</color>
+    <color name="surface_card_elevated">#3A3A3C</color>
+    <color name="surface_elevated">#3A3A3C</color>
+    <color name="surface_glass">#1C1C1E</color>
+    <color name="surface_search">#2C2C2E</color>
+    <color name="card_dark">#2C2C2E</color>
 
-    <!-- Frosted Glass Tokens (Dark Mode - Smoked Obsidian Glass - 88% to 95% Opacity/Blur) -->
-    <color name="surface_glass_sheet">#F2141416</color>
-    <color name="surface_glass_card">#E61C1C1E</color>
-    <color name="surface_glass_inner">#26FFFFFF</color>
+    <!-- Frosted Glass & Sheet Tokens (Dark Mode - Solid Ash for sheets, Frosted for HUD) -->
+    <color name="surface_glass_sheet">#1C1C1E</color>
+    <color name="surface_glass_card">#2C2C2E</color>
+    <color name="surface_glass_inner">#3A3A3C</color>
     <color name="glass_frosted_start">#E624242A</color>
     <color name="glass_frosted_end">#F016161C</color>
     <color name="glass_chip_start">#E62E2E36</color>
     <color name="glass_chip_end">#F01A1A22</color>
-    <color name="stroke_glass_specular">#40FFFFFF</color>
+    <color name="stroke_glass_specular">#38383A</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->
-    <color name="edge_blur_top_start">#E6000000</color>
-    <color name="edge_blur_top_mid">#80000000</color>
-    <color name="edge_blur_top_end">#00000000</color>
-    <color name="edge_blur_bottom_start">#00000000</color>
-    <color name="edge_blur_bottom_mid">#99000000</color>
-    <color name="edge_blur_bottom_end">#F2000000</color>
+    <color name="edge_blur_top_start">#E61C1C1E</color>
+    <color name="edge_blur_top_mid">#801C1C1E</color>
+    <color name="edge_blur_top_end">#001C1C1E</color>
+    <color name="edge_blur_bottom_start">#001C1C1E</color>
+    <color name="edge_blur_bottom_mid">#991C1C1E</color>
+    <color name="edge_blur_bottom_end">#F21C1C1E</color>
 
     <!-- Strokes & Hairline Dividers -->
     <color name="stroke_subtle">#38383A</color>

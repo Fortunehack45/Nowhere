@@ -126,13 +126,13 @@ object WireGuardTunnelManager {
      * Polls WireGuard GoBackend to verify that an actual cryptographic handshake was completed
      * (meaning return packets were received from the remote WireGuard server).
      */
-    suspend fun verifyHandshake(context: Context, maxWaitMs: Long = 6000L): Boolean = withContext(Dispatchers.IO) {
+    suspend fun verifyHandshake(context: Context, maxWaitMs: Long = 3000L): Boolean = withContext(Dispatchers.IO) {
         val wgBackend = getBackend(context)
         val tunnel = activeTunnel ?: return@withContext false
         val startTime = System.currentTimeMillis()
 
         while (System.currentTimeMillis() - startTime < maxWaitMs) {
-            kotlinx.coroutines.delay(400L)
+            kotlinx.coroutines.delay(300L)
             try {
                 val stats = wgBackend.getStatistics(tunnel)
                 if (stats.totalRx() > 0) {
@@ -144,6 +144,36 @@ object WireGuardTunnelManager {
             }
         }
         false
+    }
+
+    /**
+     * Synchronously and immediately tears down the active WireGuard tunnel.
+     * Guarantees that Android OS cleans up the VPN TUN interface instantly,
+     * restoring normal Wi-Fi / Mobile Data internet without leaving packets in a black hole.
+     */
+    fun stopTunnelSync(context: Context) {
+        try {
+            val wgBackend = getBackend(context)
+            val tunnel = activeTunnel
+            if (tunnel != null) {
+                wgBackend.setState(tunnel, Tunnel.State.DOWN, null)
+                Log.i(TAG, "WireGuard tunnel cleanly and synchronously set to DOWN.")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error stopping WireGuard tunnel sync: ${e.message}")
+        }
+    }
+
+    /**
+     * Returns live kernel throughput statistics from the WireGuard GoBackend.
+     */
+    fun getStatistics(context: Context): com.wireguard.android.backend.Statistics? {
+        return try {
+            val tunnel = activeTunnel ?: return null
+            getBackend(context).getStatistics(tunnel)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     /**

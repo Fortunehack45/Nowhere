@@ -2047,9 +2047,8 @@ class MainActivity : AppCompatActivity() {
                         binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
                     } else if ((timerState.isRunning || isSimRunning || timerState.remainingMillis > 0) && !timerState.isExpired) {
                         val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity)
-                        val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this@MainActivity)
                         binding.layoutSessionTimerBadge.visibility = View.VISIBLE
-                        binding.layoutSessionTimerBadge.backgroundTintList = android.content.res.ColorStateList.valueOf(lightTintColor)
+                        binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_card)
                         binding.tvSessionTimerBadge.text = timerState.formattedRemaining
                         binding.tvSessionTimerBadge.setTextColor(primaryColor)
                         binding.ivSessionTimerIcon.imageTintList = android.content.res.ColorStateList.valueOf(primaryColor)

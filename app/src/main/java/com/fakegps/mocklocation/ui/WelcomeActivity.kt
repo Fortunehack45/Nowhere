@@ -2,26 +2,38 @@ package com.fakegps.mocklocation.ui
 
 import android.Manifest
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
-import android.view.animation.DecelerateInterpolator
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.databinding.ActivityWelcomeBinding
+import com.fakegps.mocklocation.databinding.ItemWalkthroughSlideBinding
 import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
 import com.fakegps.mocklocation.util.PermissionHelper
+import com.fakegps.mocklocation.util.ThemeColorManager
 
 class WelcomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityWelcomeBinding
     private lateinit var settingsPrefs: AppSettingsPreferences
+    private lateinit var walkthroughAdapter: WalkthroughPagerAdapter
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        refreshReadinessStatus()
+        walkthroughAdapter.notifyItemChanged(3)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,50 +51,133 @@ class WelcomeActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Handle edge-to-edge system bar insets (Android 15+ & targetSdk 35)
-        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
-            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
-            val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusBarInset = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            val navBarInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
 
-            binding.scrollWelcome.setPadding(
-                binding.scrollWelcome.paddingLeft,
-                statusBarInset.top,
-                binding.scrollWelcome.paddingRight,
-                binding.scrollWelcome.paddingBottom
+            binding.layoutWalkthroughHeader.setPadding(
+                binding.layoutWalkthroughHeader.paddingLeft,
+                statusBarInset.top + (12 * resources.displayMetrics.density).toInt(),
+                binding.layoutWalkthroughHeader.paddingRight,
+                binding.layoutWalkthroughHeader.paddingBottom
             )
 
-            binding.layoutBottomAction.setPadding(
-                binding.layoutBottomAction.paddingLeft,
-                binding.layoutBottomAction.paddingTop,
-                binding.layoutBottomAction.paddingRight,
-                (16 * resources.displayMetrics.density).toInt() + navBarInset.bottom
+            binding.layoutWalkthroughBottomBar.setPadding(
+                binding.layoutWalkthroughBottomBar.paddingLeft,
+                binding.layoutWalkthroughBottomBar.paddingTop,
+                binding.layoutWalkthroughBottomBar.paddingRight,
+                navBarInset.bottom + (16 * resources.displayMetrics.density).toInt()
             )
 
             insets
         }
 
-        animateEntry()
+        setupViewPager()
         setupListeners()
         requestEssentialPermissions()
     }
 
     override fun onResume() {
         super.onResume()
-        refreshReadinessStatus()
+        if (::walkthroughAdapter.isInitialized) {
+            walkthroughAdapter.notifyItemChanged(3)
+        }
     }
 
-    private fun animateEntry() {
-        binding.ivWelcomeLogo.scaleX = 0.7f
-        binding.ivWelcomeLogo.scaleY = 0.7f
-        binding.ivWelcomeLogo.alpha = 0.0f
+    private fun setupViewPager() {
+        val slides = listOf(
+            WalkthroughSlide(
+                iconRes = R.drawable.ic_teleport,
+                badgeText = "STEP 01 • TELEPORT",
+                headlineText = "Track & Teleport Anywhere",
+                descriptionText = "Instantly spoof your device GPS coordinates anywhere across the globe with realistic satellite jitter, altitude, and bearing precision."
+            ),
+            WalkthroughSlide(
+                iconRes = R.drawable.ic_route,
+                badgeText = "STEP 02 • SIMULATION",
+                headlineText = "Realistic Routes & 360° Joystick",
+                descriptionText = "Simulate authentic driving, cycling, and walking trips with real-time speed curves, cornering deceleration, and intuitive thumbstick steering."
+            ),
+            WalkthroughSlide(
+                iconRes = R.drawable.ic_shield_check,
+                badgeText = "STEP 03 • STEALTH & SYNC",
+                headlineText = "Global Privacy & Hotspot Sync",
+                descriptionText = "Tether simulated coordinates to external laptops and consoles via Wi-Fi Hotspot, with Ghost Cloak anti-detection and automated triggers."
+            ),
+            WalkthroughSlide(
+                iconRes = R.drawable.ic_check_circle,
+                badgeText = "STEP 04 • READINESS",
+                headlineText = "Device Setup & Permissions",
+                descriptionText = "Configure Nowhere as your Mock Location App in Developer Options and enable background location permissions to begin.",
+                isSetupSlide = true
+            )
+        )
 
-        binding.ivWelcomeLogo.animate()
-            .scaleX(1.0f)
-            .scaleY(1.0f)
-            .alpha(1.0f)
-            .setDuration(700)
-            .setInterpolator(DecelerateInterpolator())
-            .start()
+        walkthroughAdapter = WalkthroughPagerAdapter(slides)
+        binding.pagerWalkthrough.adapter = walkthroughAdapter
+
+        binding.pagerWalkthrough.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                updateIndicator(position)
+                updateNavigationButtons(position)
+            }
+        })
+    }
+
+    private fun updateIndicator(position: Int) {
+        val dots = listOf(binding.viewDot1, binding.viewDot2, binding.viewDot3, binding.viewDot4)
+        val density = resources.displayMetrics.density
+
+        dots.forEachIndexed { index, dot ->
+            val params = dot.layoutParams
+            if (index == position) {
+                params.width = (22 * density).toInt()
+                dot.setBackgroundResource(R.drawable.bg_walkthrough_dot_active)
+            } else {
+                params.width = (7 * density).toInt()
+                dot.setBackgroundResource(R.drawable.bg_walkthrough_dot_inactive)
+            }
+            dot.layoutParams = params
+        }
+    }
+
+    private fun updateNavigationButtons(position: Int) {
+        val primaryColor = ThemeColorManager.getPrimaryColor(this)
+
+        if (position < 3) {
+            binding.btnWalkthroughSkip.visibility = View.VISIBLE
+            binding.btnWalkthroughNext.text = "NEXT"
+            binding.btnWalkthroughNext.setIconResource(R.drawable.ic_chevron_right)
+            binding.btnWalkthroughNext.backgroundTintList = ContextCompat.getColorStateList(this, R.color.surface_card_elevated)
+            binding.btnWalkthroughNext.setTextColor(ContextCompat.getColor(this, R.color.white))
+            binding.btnWalkthroughNext.iconTint = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
+        } else {
+            binding.btnWalkthroughSkip.visibility = View.INVISIBLE
+            binding.btnWalkthroughNext.text = "ENTER NOWHERE"
+            binding.btnWalkthroughNext.setIconResource(R.drawable.ic_teleport)
+            binding.btnWalkthroughNext.backgroundTintList = ColorStateList.valueOf(primaryColor)
+            binding.btnWalkthroughNext.setTextColor(ContextCompat.getColor(this, R.color.white))
+            binding.btnWalkthroughNext.iconTint = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
+        }
+    }
+
+    private fun setupListeners() {
+        binding.btnWalkthroughSkip.setOnClickListener {
+            binding.pagerWalkthrough.setCurrentItem(3, true)
+        }
+
+        binding.btnWalkthroughNext.setOnClickListener {
+            val current = binding.pagerWalkthrough.currentItem
+            if (current < 3) {
+                binding.pagerWalkthrough.setCurrentItem(current + 1, true)
+            } else {
+                settingsPrefs.hasCompletedOnboarding = true
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
+        }
     }
 
     private fun requestEssentialPermissions() {
@@ -96,62 +191,98 @@ class WelcomeActivity : AppCompatActivity() {
         permissionLauncher.launch(permissions.toTypedArray())
     }
 
-    private fun refreshReadinessStatus() {
-        val isMockEnabled = PermissionHelper.isMockLocationEnabled(this)
-        val hasLocation = PermissionHelper.hasFineLocationPermission(this)
-        val hasNotifications = PermissionHelper.hasNotificationPermission(this)
+    data class WalkthroughSlide(
+        val iconRes: Int,
+        val badgeText: String,
+        val headlineText: String,
+        val descriptionText: String,
+        val isSetupSlide: Boolean = false
+    )
 
-        // Mock Provider Check
-        if (isMockEnabled) {
-            binding.ivCheckMockProvider.setImageResource(R.drawable.ic_check_circle)
-            binding.tvMockProviderStatus.text = "Mock Location App Active in Developer Options"
-            binding.btnFixDeveloperSettings.text = "Configured"
-        } else {
-            binding.ivCheckMockProvider.setImageResource(R.drawable.ic_warning_circle)
-            binding.tvMockProviderStatus.text = "Mock Location App Not Selected in Developer Options"
-            binding.btnFixDeveloperSettings.text = "Select Nowhere"
+    inner class WalkthroughPagerAdapter(
+        private val slides: List<WalkthroughSlide>
+    ) : RecyclerView.Adapter<WalkthroughPagerAdapter.SlideViewHolder>() {
+
+        inner class SlideViewHolder(val itemBinding: ItemWalkthroughSlideBinding) :
+            RecyclerView.ViewHolder(itemBinding.root)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SlideViewHolder {
+            val itemBinding = ItemWalkthroughSlideBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            return SlideViewHolder(itemBinding)
         }
 
-        // Permissions Check
-        if (hasLocation && hasNotifications) {
-            binding.ivCheckPermissions.setImageResource(R.drawable.ic_check_circle)
-            binding.tvPermissionStatus.text = "Location & Notification Permissions Granted"
-        } else {
-            binding.ivCheckPermissions.setImageResource(R.drawable.ic_warning_circle)
-            binding.tvPermissionStatus.text = "Required Runtime Permissions Incomplete"
+        override fun getItemCount(): Int = slides.size
+
+        override fun onBindViewHolder(holder: SlideViewHolder, position: Int) {
+            val slide = slides[position]
+            with(holder.itemBinding) {
+                ivSlideGraphic.setImageResource(slide.iconRes)
+                tvSlideBadge.text = slide.badgeText
+                tvSlideHeadline.text = slide.headlineText
+                tvSlideDescription.text = slide.descriptionText
+
+                if (slide.isSetupSlide) {
+                    layoutSetupReadiness.visibility = View.VISIBLE
+                    bindReadinessStatus(holder.itemBinding)
+                } else {
+                    layoutSetupReadiness.visibility = View.GONE
+                }
+            }
         }
 
-        // Battery Optimization Check
-        val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(this)
-        if (isBatteryExempt) {
-            binding.ivCheckBattery.setImageResource(R.drawable.ic_check_circle)
-            binding.tvBatteryStatus.text = "Unrestricted Background Running Active"
-            binding.btnFixBattery.text = "Active"
-            binding.btnFixBattery.isEnabled = false
-        } else {
-            binding.ivCheckBattery.setImageResource(R.drawable.ic_warning_circle)
-            binding.tvBatteryStatus.text = "Battery Optimization may sleep background GPS"
-            binding.btnFixBattery.text = "Allow Unrestricted"
-            binding.btnFixBattery.isEnabled = true
-        }
-    }
+        private fun bindReadinessStatus(itemBinding: ItemWalkthroughSlideBinding) {
+            val context = this@WelcomeActivity
+            val isMockEnabled = PermissionHelper.isMockLocationEnabled(context)
+            val hasLocation = PermissionHelper.hasFineLocationPermission(context)
+            val hasNotifications = PermissionHelper.hasNotificationPermission(context)
+            val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(context)
 
-    private fun setupListeners() {
-        binding.btnFixDeveloperSettings.setOnClickListener {
-            SetupGuideDialog(this) {
-                PermissionHelper.openDeveloperSettings(this)
-            }.show()
-        }
+            // Mock Provider Check
+            if (isMockEnabled) {
+                itemBinding.ivCheckMockProvider.setImageResource(R.drawable.ic_check_circle)
+                itemBinding.tvMockProviderStatus.text = "Mock Location App Active in Developer Options"
+                itemBinding.btnFixDeveloperSettings.text = "Configured"
+            } else {
+                itemBinding.ivCheckMockProvider.setImageResource(R.drawable.ic_warning_circle)
+                itemBinding.tvMockProviderStatus.text = "Mock Location App Not Selected in Developer Options"
+                itemBinding.btnFixDeveloperSettings.text = "Select Nowhere"
+            }
 
-        binding.btnFixBattery.setOnClickListener {
-            PermissionHelper.requestIgnoreBatteryOptimizations(this)
-        }
+            // Permissions Check
+            if (hasLocation && hasNotifications) {
+                itemBinding.ivCheckPermissions.setImageResource(R.drawable.ic_check_circle)
+                itemBinding.tvPermissionStatus.text = "Location & Notification Permissions Granted"
+            } else {
+                itemBinding.ivCheckPermissions.setImageResource(R.drawable.ic_warning_circle)
+                itemBinding.tvPermissionStatus.text = "Required Runtime Permissions Incomplete"
+            }
 
-        binding.btnGetStarted.setOnClickListener {
-            settingsPrefs.hasCompletedOnboarding = true
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish()
+            // Battery Optimization Check
+            if (isBatteryExempt) {
+                itemBinding.ivCheckBattery.setImageResource(R.drawable.ic_check_circle)
+                itemBinding.tvBatteryStatus.text = "Unrestricted Background Running Active"
+                itemBinding.btnFixBattery.text = "Active"
+                itemBinding.btnFixBattery.isEnabled = false
+            } else {
+                itemBinding.ivCheckBattery.setImageResource(R.drawable.ic_warning_circle)
+                itemBinding.tvBatteryStatus.text = "Battery Optimization may sleep background GPS"
+                itemBinding.btnFixBattery.text = "Allow Unrestricted"
+                itemBinding.btnFixBattery.isEnabled = true
+            }
+
+            itemBinding.btnFixDeveloperSettings.setOnClickListener {
+                SetupGuideDialog(context) {
+                    PermissionHelper.openDeveloperSettings(context)
+                }.show()
+            }
+
+            itemBinding.btnFixBattery.setOnClickListener {
+                PermissionHelper.requestIgnoreBatteryOptimizations(context)
+            }
         }
     }
 }

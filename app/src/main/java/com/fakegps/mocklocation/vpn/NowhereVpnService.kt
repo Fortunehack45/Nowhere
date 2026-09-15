@@ -423,10 +423,10 @@ class NowhereVpnService : VpnService() {
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 5000L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 3000L)
         if (!handshakeConfirmed) {
             Log.w(TAG, "WireGuard handshake failed with $serverEndpoint (blocked/suspended) — preserving mobile data...")
-            WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
+            WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
             handleConnectionFailure(node, "Server handshake failed. Mobile data preserved.")
             return
         }
@@ -444,11 +444,7 @@ class NowhereVpnService : VpnService() {
      */
     private fun handleConnectionFailure(node: IpNode, reason: String) {
         disconnectInterface()
-        serviceScope.launch {
-            try {
-                WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-            } catch (ignored: Exception) {}
-        }
+        WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
         isRunning = false
         sessionPrefs.isIpMaskingEnabled = false
         activeServerNodeId = ""
@@ -467,15 +463,41 @@ class NowhereVpnService : VpnService() {
             var prevRx = totalRxBytes
             var prevTx = totalTxBytes
             var notificationCounter = 0
+            var deadPeerTicks = 0
+            var lastObservedRx = totalRxBytes
 
             while (isActive && isRunning) {
                 delay(1000L)
                 val durationSec = if (sessionStartTimeMs > 0L) (System.currentTimeMillis() - sessionStartTimeMs) / 1000L else 0L
 
+                // Read live stats from WireGuard GoBackend
+                val wgStats = WireGuardTunnelManager.getStatistics(this@NowhereVpnService)
+                if (wgStats != null) {
+                    val realRx = wgStats.totalRx()
+                    val realTx = wgStats.totalTx()
+                    if (realRx > 0L) totalRxBytes = realRx
+                    if (realTx > 0L) totalTxBytes = realTx
+                }
+
                 val rxRate = (totalRxBytes - prevRx).coerceAtLeast(0L)
                 val txRate = (totalTxBytes - prevTx).coerceAtLeast(0L)
                 prevRx = totalRxBytes
                 prevTx = totalTxBytes
+
+                // Dead Peer Detection / Blackhole Preventer:
+                // If user/apps are transmitting packets into the tunnel (txRate > 0)
+                // but ZERO return packets have been received from the server for > 10 consecutive seconds:
+                if (txRate > 0L && totalRxBytes == lastObservedRx) {
+                    deadPeerTicks++
+                    if (deadPeerTicks >= 10) {
+                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server dropped/unresponsive for 10s! Disengaging VPN to protect internet connectivity.")
+                        handleConnectionFailure(node, "VPN server unresponsive. Normal internet preserved.")
+                        break
+                    }
+                } else {
+                    deadPeerTicks = 0
+                    lastObservedRx = totalRxBytes
+                }
 
                 val stats = VpnTrafficStats(
                     downloadBytes = totalRxBytes,
@@ -523,11 +545,7 @@ class NowhereVpnService : VpnService() {
         trafficJob?.cancel()
         trafficJob = null
         sessionStartTimeMs = 0L
-        serviceScope.launch {
-            try {
-                WireGuardTunnelManager.stopTunnel(this@NowhereVpnService)
-            } catch (ignored: Exception) {}
-        }
+        WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
         disconnectInterface()
         releaseWakeLock()
         _vpnState.value = VpnState.Disconnected
@@ -550,6 +568,22 @@ class NowhereVpnService : VpnService() {
             vpnInterface?.close()
         } catch (ignored: Exception) {}
         vpnInterface = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(TAG, "NowhereVpnService onDestroy: ensuring 100% clean teardown of all VPN interfaces...")
+        unregisterNetworkWatchdog()
+        releaseWakeLock()
+        tunnelJob?.cancel()
+        trafficJob?.cancel()
+        serviceJob.cancel()
+        disconnectInterface()
+        WireGuardTunnelManager.stopTunnelSync(this)
+        isRunning = false
+        sessionPrefs.isIpMaskingEnabled = false
+        _vpnState.value = VpnState.Disconnected
+        Log.i(TAG, "NowhereVpnService destroyed: native internet routing fully restored.")
     }
 
     private fun createNotificationChannel() {
@@ -627,12 +661,5 @@ class NowhereVpnService : VpnService() {
         }
 
         return builder.build()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterNetworkWatchdog()
-        disconnectVpn()
-        serviceJob.cancel()
     }
 }

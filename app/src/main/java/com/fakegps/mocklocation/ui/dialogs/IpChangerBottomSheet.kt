@@ -127,11 +127,6 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         observeVpnState()
         observeKillSwitchState()
         refreshIpTelemetry()
-
-        if (sessionPrefs.isSessionActive && !NowhereVpnService.isRunning) {
-            val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
-            requestConnectVpn(node)
-        }
     }
 
     private fun setupTabs() {
