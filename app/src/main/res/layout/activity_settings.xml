@@ -898,7 +898,7 @@
                         android:layout_marginVertical="12dp"
                         android:background="@color/stroke_subtle" />
 
-                    <!-- Auto-Sync VPN with Simulation -->
+                    <!-- Emergency Kill Switch Leak Protection -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -914,7 +914,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Auto-Sync VPN with Mock GPS"
+                                android:text="Emergency Kill Switch Leak Protection"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -923,7 +923,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Automatically starts encrypted VPN on the closest server when simulation starts, and disconnects when simulation stops."
+                                android:text="Automatically halt all device internet traffic if mock GPS simulation stops unexpectedly, preventing real location leaks."
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -932,7 +932,7 @@
                             android:id="@+id/switchSettingsAutoVpnSync"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:checked="true"
+                            android:checked="false"
                             app:thumbTint="@color/primary"
                             app:trackTint="@color/stroke_subtle" />
                     </LinearLayout>

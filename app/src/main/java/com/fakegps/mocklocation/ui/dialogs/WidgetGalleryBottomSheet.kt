@@ -77,18 +77,11 @@ class WidgetGalleryBottomSheet : BottomSheetDialogFragment() {
                 providerClass = NowhereRouteWidgetProvider::class.java
             ),
             WidgetPreviewItem(
-                title = "IP Privacy Shield",
+                title = "Privacy Kill Switch Shield",
                 sizeLabel = "4 x 2",
-                description = "Instant 1-tap VPN masking toggle, displaying virtual IP address, active country node, and server latency.",
+                description = "Hardware-level OS packet sinkhole. Automatically blocks all device internet traffic if mock GPS simulation stops unexpectedly.",
                 layoutResId = R.layout.widget_nowhere_vpn_layout,
                 providerClass = NowhereVpnWidgetProvider::class.java
-            ),
-            WidgetPreviewItem(
-                title = "Game Booster FastPath & QoS",
-                sizeLabel = "4 x 2",
-                description = "1-Tap gaming route optimization with real-time ping (14ms), Google BBR FastPath, and traffic telemetry.",
-                layoutResId = R.layout.widget_nowhere_game_boost_layout,
-                providerClass = com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider::class.java
             ),
             WidgetPreviewItem(
                 title = "Location Weather Radar",

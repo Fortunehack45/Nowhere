@@ -695,15 +695,8 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Only engage VPN if user explicitly enabled both Auto VPN Sync and IP Masking
-        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
-            try {
-                val targetNode = sessionPrefs.activeIpNodeId.ifBlank { "us_central_gcp" }
-                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, targetNode)
-            } catch (e: Exception) {
-                Log.w(TAG, "VPN start failed (non-fatal): ${e.message}")
-            }
-        }
+        // Signal Kill Switch that mock GPS is active (arms protection, allows normal traffic)
+        com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStarted(this)
 
         serviceScope.launch(Dispatchers.IO) {
             com.fakegps.mocklocation.weather.WeatherManager.fetchWeather(this@MockLocationService, latitude, longitude)
@@ -861,15 +854,8 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Only engage VPN if user explicitly enabled both Auto VPN Sync and IP Masking
-        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning && waypoints.isNotEmpty()) {
-            try {
-                val targetNode = sessionPrefs.activeIpNodeId.ifBlank { "us_central_gcp" }
-                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, targetNode)
-            } catch (e: Exception) {
-                Log.w(TAG, "VPN start on route failed (non-fatal): ${e.message}")
-            }
-        }
+        // Signal Kill Switch that mock GPS is active (arms protection, allows normal traffic)
+        com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStarted(this)
 
         val totalRouteDist = simulator.totalDistanceMeters
         sendRouteStartedNotification(waypoints.size, totalRouteDist, speedKmh, transportMode.title)
@@ -1143,15 +1129,8 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Only engage VPN if user explicitly enabled both Auto VPN Sync and IP Masking
-        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
-            try {
-                val targetNode = sessionPrefs.activeIpNodeId.ifBlank { "us_central_gcp" }
-                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, targetNode)
-            } catch (e: Exception) {
-                Log.w(TAG, "VPN start failed on joystick (non-fatal): ${e.message}")
-            }
-        }
+        // Signal Kill Switch that mock GPS is active (arms protection, allows normal traffic)
+        com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStarted(this)
 
         val placeName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
             sessionPrefs.lastLocationName
@@ -1300,6 +1279,7 @@ class MockLocationService : Service() {
         activeMode = SimulationMode.Idle
         _serviceState.value = ServiceState.Idle
         try { updateAllWidgets() } catch (e: Exception) { Log.w(TAG, "widget update on stop (non-fatal): ${e.message}") }
+        try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS stopped") } catch (e: Exception) {}
         try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (e: Exception) {}
         stopSelf()
     }
@@ -1395,7 +1375,7 @@ class MockLocationService : Service() {
         try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
         try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
         try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
-        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
+        try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
         try { engine.stop() } catch (e: Exception) {}
         serviceJob.cancel()
         super.onDestroy()

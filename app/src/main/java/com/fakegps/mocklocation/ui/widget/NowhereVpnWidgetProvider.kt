@@ -6,15 +6,16 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.VpnService
 import android.os.Build
 import android.util.Log
 import android.widget.RemoteViews
-import androidx.core.content.ContextCompat
+import android.widget.Toast
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.ui.MainActivity
-import com.fakegps.mocklocation.vpn.IpManager
-import com.fakegps.mocklocation.vpn.NowhereVpnService
+import com.fakegps.mocklocation.vpn.KillSwitchManager
+import com.fakegps.mocklocation.vpn.KillSwitchSinkholeService
 
 class NowhereVpnWidgetProvider : AppWidgetProvider() {
 
@@ -40,10 +41,10 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
         private fun buildVpnRemoteViews(context: Context, isDark: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_nowhere_vpn_layout)
             val sessionPrefs = SessionPreferences(context)
-            val isRunning = NowhereVpnService.isRunning
-            val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
+            val isEnabled = sessionPrefs.isKillSwitchEnabled
+            val isSinkhole = KillSwitchSinkholeService.isSinkholeActive
+            val isMockActive = sessionPrefs.isSessionActive
 
-            val stats = NowhereVpnService.trafficStats.value
             val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(context)
             views.setInt(R.id.ivWidgetVpnLogo, "setColorFilter", primaryColor)
             views.setTextColor(R.id.tvWidgetVpnTitle, primaryColor)
@@ -61,21 +62,46 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
             views.setInt(R.id.btnWidgetVpnNodes, "setBackgroundResource", bgButtonRes)
             views.setTextColor(R.id.tvWidgetVpnNode, primaryText)
             views.setTextColor(R.id.tvWidgetVpnIp, secondaryText)
+            views.setTextViewText(R.id.tvWidgetVpnTitle, "KILL SWITCH")
+            views.setTextViewText(R.id.btnWidgetVpnNodes, "Manage")
 
-            if (isRunning) {
-                views.setTextViewText(R.id.tvWidgetVpnStatus, "ACTIVE")
-                views.setTextColor(R.id.tvWidgetVpnStatus, primaryColor)
-                views.setTextViewText(R.id.btnWidgetVpnToggle, "Disconnect Shield")
-                views.setTextViewText(R.id.tvWidgetVpnNode, "${node.flagEmoji} ${node.city}, ${node.country}")
-                views.setTextViewText(R.id.tvWidgetVpnIp, "Virtual IP: ${node.virtualIp} • Protected")
-                views.setTextViewText(R.id.tvWidgetVpnData, "↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
+            if (isEnabled) {
+                if (isSinkhole) {
+                    views.setTextViewText(R.id.tvWidgetVpnStatus, "LEAK HALTED")
+                    views.setTextColor(R.id.tvWidgetVpnStatus, android.graphics.Color.parseColor("#FF3B30"))
+                    views.setTextViewText(R.id.btnWidgetVpnToggle, "Bypass Shield")
+                    views.setTextViewText(R.id.tvWidgetVpnNode, "🛡️ Internet Halted")
+                    views.setTextViewText(R.id.tvWidgetVpnIp, "Mock GPS Inactive • Real Location Protected")
+                    views.setTextViewText(R.id.tvWidgetVpnData, "OS Sinkhole Active (0 B/s leak)")
+                } else if (isMockActive) {
+                    views.setTextViewText(R.id.tvWidgetVpnStatus, "ARMED")
+                    views.setTextColor(R.id.tvWidgetVpnStatus, android.graphics.Color.parseColor("#30D158"))
+                    views.setTextViewText(R.id.btnWidgetVpnToggle, "Disarm Shield")
+                    views.setTextViewText(R.id.tvWidgetVpnNode, "🛡️ Shield Armed & Active")
+                    views.setTextViewText(R.id.tvWidgetVpnIp, "Mock Location Injecting • Leaks Blocked")
+                    views.setTextViewText(R.id.tvWidgetVpnData, "Fail-safe: Cuts internet if GPS stops")
+                } else if (sessionPrefs.isKillSwitchBypassed) {
+                    views.setTextViewText(R.id.tvWidgetVpnStatus, "BYPASS")
+                    views.setTextColor(R.id.tvWidgetVpnStatus, android.graphics.Color.parseColor("#FF9500"))
+                    views.setTextViewText(R.id.btnWidgetVpnToggle, "Re-Arm Shield")
+                    views.setTextViewText(R.id.tvWidgetVpnNode, "⚠️ Emergency Bypass Active")
+                    views.setTextViewText(R.id.tvWidgetVpnIp, "Normal Internet Flow Restored")
+                    views.setTextViewText(R.id.tvWidgetVpnData, "Tap to re-engage leak shield")
+                } else {
+                    views.setTextViewText(R.id.tvWidgetVpnStatus, "LEAK HALTED")
+                    views.setTextColor(R.id.tvWidgetVpnStatus, android.graphics.Color.parseColor("#FF3B30"))
+                    views.setTextViewText(R.id.btnWidgetVpnToggle, "Disarm Shield")
+                    views.setTextViewText(R.id.tvWidgetVpnNode, "🛡️ Protection Active")
+                    views.setTextViewText(R.id.tvWidgetVpnIp, "Ready for Mock GPS simulation")
+                    views.setTextViewText(R.id.tvWidgetVpnData, "OS Sinkhole Standby")
+                }
             } else {
-                views.setTextViewText(R.id.tvWidgetVpnStatus, "DIRECT")
+                views.setTextViewText(R.id.tvWidgetVpnStatus, "DISABLED")
                 views.setTextColor(R.id.tvWidgetVpnStatus, secondaryText)
-                views.setTextViewText(R.id.btnWidgetVpnToggle, "Activate Shield")
-                views.setTextViewText(R.id.tvWidgetVpnNode, "${node.flagEmoji} ${node.name} (Ready)")
-                views.setTextViewText(R.id.tvWidgetVpnIp, "Direct Connection • Tap to Mask IP")
-                views.setTextViewText(R.id.tvWidgetVpnData, "↓ 0.00 KB  ↑ 0.00 KB (Standby)")
+                views.setTextViewText(R.id.btnWidgetVpnToggle, "Arm Shield")
+                views.setTextViewText(R.id.tvWidgetVpnNode, "🛡️ Kill Switch Standby")
+                views.setTextViewText(R.id.tvWidgetVpnIp, "Tap to enforce OS-level leak protection")
+                views.setTextViewText(R.id.tvWidgetVpnData, "Protection: Inactive")
             }
 
             // Open App Intent
@@ -98,17 +124,21 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
                 action = ACTION_VPN_WIDGET_TOGGLE
                 setPackage(context.packageName)
             }
-            views.setOnClickPendingIntent(
-                R.id.btnWidgetVpnToggle,
-                PendingIntent.getBroadcast(context, 202, toggleIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            val togglePendingIntent = PendingIntent.getBroadcast(
+                context,
+                202,
+                toggleIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+            views.setOnClickPendingIntent(R.id.layoutWidgetVpnToggle, togglePendingIntent)
+            views.setOnClickPendingIntent(R.id.btnWidgetVpnToggle, togglePendingIntent)
 
             return views
         }
 
         fun updateVpnWidgetDirect(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val prefs = com.fakegps.mocklocation.data.preferences.AppSettingsPreferences(context)
-            val finalViews = when (prefs.appTheme) {
+            val views = when (prefs.appTheme) {
                 "LIGHT" -> buildVpnRemoteViews(context, isDark = false)
                 "DARK" -> buildVpnRemoteViews(context, isDark = true)
                 else -> {
@@ -120,7 +150,7 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
                     }
                 }
             }
-            appWidgetManager.updateAppWidget(appWidgetId, finalViews)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
@@ -132,20 +162,34 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-
         when (intent.action) {
             ACTION_VPN_WIDGET_TOGGLE -> {
-                val isRunning = NowhereVpnService.isRunning
-                if (isRunning) {
-                    NowhereVpnService.stopVpn(context)
+                val sessionPrefs = SessionPreferences(context)
+                if (sessionPrefs.isKillSwitchEnabled) {
+                    if (KillSwitchSinkholeService.isSinkholeActive && !sessionPrefs.isKillSwitchBypassed) {
+                        KillSwitchManager.setBypassed(context, true)
+                        Toast.makeText(context, "Kill Switch: Emergency Bypass Active", Toast.LENGTH_SHORT).show()
+                    } else {
+                        KillSwitchManager.setEnabled(context, false)
+                        Toast.makeText(context, "Kill Switch: Disabled", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
-                    val sessionPrefs = SessionPreferences(context)
-                    val node = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.GLOBAL_PRIVACY_NODES.first()
-                    NowhereVpnService.startVpn(context, node)
+                    val vpnIntent = VpnService.prepare(context)
+                    if (vpnIntent != null) {
+                        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            putExtra("OPEN_VPN_DIALOG", true)
+                        }
+                        context.startActivity(openAppIntent)
+                        Toast.makeText(context, "Please grant VPN permission in Nowhere", Toast.LENGTH_SHORT).show()
+                    } else {
+                        KillSwitchManager.setEnabled(context, true)
+                        Toast.makeText(context, "Kill Switch: Armed & Active", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 updateAllVpnWidgets(context)
             }
-            ACTION_UPDATE_VPN_WIDGET, Intent.ACTION_LOCALE_CHANGED, Intent.ACTION_CONFIGURATION_CHANGED -> {
+            ACTION_UPDATE_VPN_WIDGET -> {
                 updateAllVpnWidgets(context)
             }
         }

@@ -320,7 +320,7 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchSettingsGhostCloak.isChecked = settingsPrefs.isGhostCloakEnabled
-        binding.switchSettingsAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled
+        binding.switchSettingsAutoVpnSync.isChecked = sessionPrefs.isKillSwitchEnabled
         binding.btnResetDefaults.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
         binding.btnResetDefaults.rippleColor = ColorStateList.valueOf(com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this))
         refreshThemeColorUI()
@@ -492,9 +492,15 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.switchSettingsAutoVpnSync.setOnCheckedChangeListener { _, isChecked ->
-            settingsPrefs.isAutoVpnSyncEnabled = isChecked
-            val msg = if (isChecked) "Auto-Sync VPN: Enabled" else "Auto-Sync VPN: Disabled"
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            val vpnIntent = android.net.VpnService.prepare(this)
+            if (isChecked && vpnIntent != null) {
+                com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet.newInstance()
+                    .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet.TAG)
+            } else {
+                com.fakegps.mocklocation.vpn.KillSwitchManager.setEnabled(this, isChecked)
+                val msg = if (isChecked) "Kill Switch Armed: Leak Protection ON" else "Kill Switch: Disabled"
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            }
         }
 
         binding.btnSettingsGhostCloakManage.setOnClickListener {

@@ -18,8 +18,9 @@ import java.io.FileInputStream
 
 /**
  * Hard OS-Level VPN Sinkhole for Nowhere Emergency Privacy Kill Switch.
- * Establishes a non-forwarding 0.0.0.0/0 route that intercepts and sinks 100% of device network packets
- * so no app can leak real IP or GPS data to the internet until the user re-arms mock location or bypasses.
+ * Establishes a non-forwarding 0.0.0.0/0 (and ::/0 for IPv6) route that intercepts
+ * and drops 100% of device network packets so no app can leak real IP or GPS data
+ * until the user resumes mock location or activates bypass.
  */
 class KillSwitchSinkholeService : VpnService() {
 
@@ -27,6 +28,7 @@ class KillSwitchSinkholeService : VpnService() {
         private const val TAG = "KillSwitchSinkhole"
         const val CHANNEL_ID = "nowhere_sinkhole_channel"
         const val NOTIFICATION_ID = 3004
+        const val ACTION_BYPASS = "com.fakegps.mocklocation.ACTION_KILL_SWITCH_BYPASS"
 
         var isSinkholeActive: Boolean = false
             private set
@@ -38,7 +40,14 @@ class KillSwitchSinkholeService : VpnService() {
     private var sinkholeJob: Job? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val reason = intent?.getStringExtra("EXTRA_REASON") ?: "Mock GPS / VPN is OFF"
+        if (intent?.action == ACTION_BYPASS) {
+            Log.i(TAG, "Emergency bypass triggered via notification action.")
+            KillSwitchManager.setBypassed(this, true)
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        val reason = intent?.getStringExtra("EXTRA_REASON") ?: "Mock GPS is inactive"
         startForegroundNotification(reason)
         activateSinkhole()
         return START_STICKY
@@ -57,11 +66,19 @@ class KillSwitchSinkholeService : VpnService() {
                     .setMtu(1420)
                     .setBlocking(false)
 
+                // Intercept IPv6 to prevent dual-stack carrier leaks
+                try {
+                    builder.addAddress("fd00:1::2", 64)
+                    builder.addRoute("::", 0)
+                } catch (ipv6Ex: Exception) {
+                    Log.w(TAG, "IPv6 sinkhole configuration skipped: ${ipv6Ex.message}")
+                }
+
                 sinkholeInterface = builder.establish()
                 if (sinkholeInterface != null) {
                     isSinkholeActive = true
                     Log.i(TAG, "🔒 Hardware/OS Kill Switch Sinkhole Active: 100% of network traffic halted.")
-                    
+
                     // Consume and drop all packets (zero byte transmission to internet)
                     val inStream = FileInputStream(sinkholeInterface!!.fileDescriptor)
                     val dropBuffer = ByteArray(16384)
@@ -105,15 +122,26 @@ class KillSwitchSinkholeService : VpnService() {
             PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
         )
 
+        val bypassIntent = Intent(this, KillSwitchSinkholeService::class.java).apply {
+            action = ACTION_BYPASS
+        }
+        val bypassPendingIntent = PendingIntent.getService(
+            this,
+            303,
+            bypassIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
+        )
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_shield_check)
             .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
             .setContentTitle("Kill Switch: Internet Halted")
             .setContentText("Protected: $reason")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("All device internet traffic is stopped at the OS level to protect your real location. Tap to resume mock GPS or 1-tap bypass."))
+            .setStyle(NotificationCompat.BigTextStyle().bigText("All device internet traffic is stopped at the OS level to protect your real location. Tap to resume mock GPS or use 1-tap emergency bypass."))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
+            .addAction(R.drawable.ic_shield_check, "Emergency Bypass", bypassPendingIntent)
             .build()
 
         startForeground(NOTIFICATION_ID, notification)

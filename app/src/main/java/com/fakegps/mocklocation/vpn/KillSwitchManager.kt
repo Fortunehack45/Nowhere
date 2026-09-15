@@ -5,9 +5,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.VpnService
 import android.os.Build
-import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.fakegps.mocklocation.R
@@ -16,8 +14,13 @@ import com.fakegps.mocklocation.ui.MainActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.io.FileInputStream
 
+/**
+ * Emergency Privacy Kill Switch Manager.
+ * Operates purely as a local 100% on-device packet sinkhole to guarantee zero real GPS or IP leaks.
+ * If mock GPS is running, internet flows normally while shielded.
+ * If mock GPS stops or is inactive with Kill Switch enabled, all device internet traffic is instantly halted.
+ */
 object KillSwitchManager {
 
     private const val TAG = "KillSwitchManager"
@@ -51,18 +54,55 @@ object KillSwitchManager {
         }
 
         val isMockLocationActive = prefs.isSessionActive
-        val isVpnActive = NowhereVpnService.isRunning
-
-        if (isMockLocationActive || isVpnActive) {
+        if (isMockLocationActive) {
             _status.value = KillSwitchStatus.Armed
             cancelNotification(context)
             stopSinkhole(context)
         } else {
-            // Both are inactive in normal standby; do not block internet
-            _status.value = KillSwitchStatus.Disabled
-            cancelNotification(context)
-            stopSinkhole(context)
+            // Mock GPS is inactive with Kill Switch armed: engage OS-level sinkhole!
+            val reason = "Mock GPS simulation is inactive"
+            _status.value = KillSwitchStatus.Triggered(reason)
+            startSinkhole(context, reason)
+            showKillSwitchNotification(context, reason)
         }
+    }
+
+    fun onMockLocationStarted(context: Context) {
+        val prefs = SessionPreferences(context)
+        if (!prefs.isKillSwitchEnabled) {
+            _status.value = KillSwitchStatus.Disabled
+            stopSinkhole(context)
+            cancelNotification(context)
+            return
+        }
+        // Auto-clear temporary bypass once new simulation starts
+        prefs.isKillSwitchBypassed = false
+        _status.value = KillSwitchStatus.Armed
+        stopSinkhole(context)
+        cancelNotification(context)
+        Log.i(TAG, "Mock location started: Kill Switch armed and active.")
+    }
+
+    fun onMockLocationStopped(context: Context, reason: String = "Mock GPS simulation stopped") {
+        val prefs = SessionPreferences(context)
+        if (!prefs.isKillSwitchEnabled) {
+            _status.value = KillSwitchStatus.Disabled
+            stopSinkhole(context)
+            cancelNotification(context)
+            return
+        }
+
+        if (prefs.isKillSwitchBypassed) {
+            _status.value = KillSwitchStatus.Bypassed
+            stopSinkhole(context)
+            cancelNotification(context)
+            return
+        }
+
+        _status.value = KillSwitchStatus.Triggered(reason)
+        startSinkhole(context, reason)
+        showKillSwitchNotification(context, reason)
+        Log.i(TAG, "Mock location stopped: Kill Switch engaged sinkhole ($reason).")
     }
 
     fun setEnabled(context: Context, enabled: Boolean) {
@@ -119,8 +159,8 @@ object KillSwitchManager {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_shield_check)
             .setContentTitle("Privacy Kill Switch Active")
-            .setContentText("Internet paused to protect real IP & GPS: $reason")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Internet traffic is physically halted at the OS level because $reason. Tap to resume mock protection or bypass the kill switch."))
+            .setContentText("Internet paused to prevent real location leaks: $reason")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("All device internet traffic is stopped at the OS level because $reason. Tap to resume mock GPS or bypass the kill switch."))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setOngoing(true)
             .setContentIntent(pendingIntent)

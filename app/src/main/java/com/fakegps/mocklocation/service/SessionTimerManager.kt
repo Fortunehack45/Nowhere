@@ -247,6 +247,7 @@ object SessionTimerManager {
                         if (!hasFiredExpired) {
                             hasFiredExpired = true
                             notifySessionExpired(appContext)
+                            com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(appContext, "Session quota expired")
                             // Trigger service expiration pause/stop
                             withContext(Dispatchers.Main) {
                                 val stopIntent = Intent(appContext, MockLocationService::class.java).apply {
