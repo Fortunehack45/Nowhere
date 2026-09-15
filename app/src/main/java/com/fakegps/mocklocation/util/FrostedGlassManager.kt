@@ -75,4 +75,53 @@ object FrostedGlassManager {
             }
         } catch (ignored: Exception) {}
     }
+
+    /**
+     * Applies adjustable frosted glass blur styling to the Main Page HUD menus:
+     * top brand bar, search bar, side tools deck, and bottom navigation container.
+     */
+    fun applyHudFrostedGlass(
+        context: android.content.Context,
+        cards: List<com.google.android.material.card.MaterialCardView>,
+        edgeBlurViews: List<View>,
+        blurPercent: Int = 90
+    ) {
+        val clampedPercent = blurPercent.coerceIn(50, 100)
+        val alphaFraction = clampedPercent / 100f
+        val alphaInt = (alphaFraction * 255f).toInt().coerceIn(0, 255)
+
+        val isNight = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+
+        val cardBgColor = if (isNight) {
+            // Apple Dark Ash: blend #1C1C1E to #2C2C2E based on alpha
+            android.graphics.Color.argb(alphaInt, 36, 36, 40)
+        } else {
+            // Apple Frosted Light: blend white with alpha
+            android.graphics.Color.argb(alphaInt, 255, 255, 255)
+        }
+
+        val strokeColor = if (isNight) {
+            // Specular hairline border
+            android.graphics.Color.argb(
+                (alphaInt * 0.45f).toInt().coerceIn(40, 120),
+                255, 255, 255
+            )
+        } else {
+            android.graphics.Color.argb(
+                (alphaInt * 0.20f).toInt().coerceIn(25, 60),
+                0, 0, 0
+            )
+        }
+
+        cards.forEach { card ->
+            card.setCardBackgroundColor(cardBgColor)
+            card.strokeColor = strokeColor
+            card.strokeWidth = (1.2f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+        }
+
+        edgeBlurViews.forEach { view ->
+            view.alpha = (alphaFraction * 1.05f).coerceIn(0.4f, 1.0f)
+        }
+    }
 }

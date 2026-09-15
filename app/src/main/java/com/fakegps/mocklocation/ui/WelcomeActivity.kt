@@ -33,7 +33,9 @@ class WelcomeActivity : AppCompatActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        walkthroughAdapter.notifyItemChanged(3)
+        if (::walkthroughAdapter.isInitialized) {
+            walkthroughAdapter.notifyDataSetChanged()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,40 +83,39 @@ class WelcomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (::walkthroughAdapter.isInitialized) {
-            walkthroughAdapter.notifyItemChanged(3)
+            walkthroughAdapter.notifyDataSetChanged()
         }
     }
 
     private fun setupViewPager() {
-        val slides = listOf(
-            WalkthroughSlide(
-                iconRes = R.drawable.ic_teleport,
-                badgeText = "STEP 01 • TELEPORT",
-                headlineText = "Track & Teleport Anywhere",
-                descriptionText = "Instantly spoof your device GPS coordinates anywhere across the globe with realistic satellite jitter, altitude, and bearing precision."
+        val steps = listOf(
+            SetupStep(
+                type = StepType.DEV_OPTIONS,
+                iconRes = R.drawable.ic_settings,
+                badgeText = "STEP 1 OF 3 • DEVELOPER OPTIONS",
+                headlineText = "Select Nowhere in Developer Options",
+                descriptionText = "Android requires Nowhere to be selected as your Mock Location App before GPS simulation can begin.",
+                tipText = "💡 Tip: In Developer Options, find 'Select mock location app' and choose Nowhere. If Developer Options is hidden on your phone, go to Settings > About Phone and tap 'Build Number' 7 times."
             ),
-            WalkthroughSlide(
-                iconRes = R.drawable.ic_route,
-                badgeText = "STEP 02 • SIMULATION",
-                headlineText = "Realistic Routes & 360° Joystick",
-                descriptionText = "Simulate authentic driving, cycling, and walking trips with real-time speed curves, cornering deceleration, and intuitive thumbstick steering."
+            SetupStep(
+                type = StepType.PERMISSIONS,
+                iconRes = R.drawable.ic_my_location,
+                badgeText = "STEP 2 OF 3 • SYSTEM PERMISSIONS",
+                headlineText = "Grant Location & Notification Access",
+                descriptionText = "Precise location is needed to initialize your coordinates, and notifications keep continuous background routes alive.",
+                tipText = "🔒 Privacy: Nowhere never uploads or shares your location data. Permissions are strictly used for on-device OS-level GPS injection."
             ),
-            WalkthroughSlide(
-                iconRes = R.drawable.ic_shield_check,
-                badgeText = "STEP 03 • STEALTH & SYNC",
-                headlineText = "Global Privacy & Hotspot Sync",
-                descriptionText = "Tether simulated coordinates to external laptops and consoles via Wi-Fi Hotspot, with Ghost Cloak anti-detection and automated triggers."
-            ),
-            WalkthroughSlide(
-                iconRes = R.drawable.ic_check_circle,
-                badgeText = "STEP 04 • READINESS",
-                headlineText = "Device Setup & Permissions",
-                descriptionText = "Configure Nowhere as your Mock Location App in Developer Options and enable background location permissions to begin.",
-                isSetupSlide = true
+            SetupStep(
+                type = StepType.BATTERY,
+                iconRes = R.drawable.ic_bolt,
+                badgeText = "STEP 3 OF 3 • BACKGROUND EXECUTION",
+                headlineText = "Allow Unrestricted Background Running",
+                descriptionText = "Prevent Android battery optimizations from putting GPS simulation to sleep when switching apps or locking your phone.",
+                tipText = "⚡ Tip: Disabling battery restrictions ensures zero stutter during long route simulations and keeps joystick steering responsive."
             )
         )
 
-        walkthroughAdapter = WalkthroughPagerAdapter(slides)
+        walkthroughAdapter = WalkthroughPagerAdapter(steps)
         binding.pagerWalkthrough.adapter = walkthroughAdapter
 
         binding.pagerWalkthrough.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -126,7 +127,7 @@ class WelcomeActivity : AppCompatActivity() {
     }
 
     private fun updateIndicator(position: Int) {
-        val dots = listOf(binding.viewDot1, binding.viewDot2, binding.viewDot3, binding.viewDot4)
+        val dots = listOf(binding.viewDot1, binding.viewDot2, binding.viewDot3)
         val density = resources.displayMetrics.density
 
         dots.forEachIndexed { index, dot ->
@@ -145,7 +146,7 @@ class WelcomeActivity : AppCompatActivity() {
     private fun updateNavigationButtons(position: Int) {
         val primaryColor = ThemeColorManager.getPrimaryColor(this)
 
-        if (position < 3) {
+        if (position < 2) {
             binding.btnWalkthroughSkip.visibility = View.VISIBLE
             binding.btnWalkthroughNext.text = "NEXT"
             binding.btnWalkthroughNext.setIconResource(R.drawable.ic_chevron_right)
@@ -164,12 +165,12 @@ class WelcomeActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         binding.btnWalkthroughSkip.setOnClickListener {
-            binding.pagerWalkthrough.setCurrentItem(3, true)
+            binding.pagerWalkthrough.setCurrentItem(2, true)
         }
 
         binding.btnWalkthroughNext.setOnClickListener {
             val current = binding.pagerWalkthrough.currentItem
-            if (current < 3) {
+            if (current < 2) {
                 binding.pagerWalkthrough.setCurrentItem(current + 1, true)
             } else {
                 settingsPrefs.hasCompletedOnboarding = true
@@ -191,97 +192,131 @@ class WelcomeActivity : AppCompatActivity() {
         permissionLauncher.launch(permissions.toTypedArray())
     }
 
-    data class WalkthroughSlide(
+    enum class StepType {
+        DEV_OPTIONS,
+        PERMISSIONS,
+        BATTERY
+    }
+
+    data class SetupStep(
+        val type: StepType,
         val iconRes: Int,
         val badgeText: String,
         val headlineText: String,
         val descriptionText: String,
-        val isSetupSlide: Boolean = false
+        val tipText: String
     )
 
     inner class WalkthroughPagerAdapter(
-        private val slides: List<WalkthroughSlide>
-    ) : RecyclerView.Adapter<WalkthroughPagerAdapter.SlideViewHolder>() {
+        private val steps: List<SetupStep>
+    ) : RecyclerView.Adapter<WalkthroughPagerAdapter.StepViewHolder>() {
 
-        inner class SlideViewHolder(val itemBinding: ItemWalkthroughSlideBinding) :
+        inner class StepViewHolder(val itemBinding: ItemWalkthroughSlideBinding) :
             RecyclerView.ViewHolder(itemBinding.root)
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SlideViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StepViewHolder {
             val itemBinding = ItemWalkthroughSlideBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
                 false
             )
-            return SlideViewHolder(itemBinding)
+            return StepViewHolder(itemBinding)
         }
 
-        override fun getItemCount(): Int = slides.size
+        override fun getItemCount(): Int = steps.size
 
-        override fun onBindViewHolder(holder: SlideViewHolder, position: Int) {
-            val slide = slides[position]
-            with(holder.itemBinding) {
-                ivSlideGraphic.setImageResource(slide.iconRes)
-                tvSlideBadge.text = slide.badgeText
-                tvSlideHeadline.text = slide.headlineText
-                tvSlideDescription.text = slide.descriptionText
-
-                if (slide.isSetupSlide) {
-                    layoutSetupReadiness.visibility = View.VISIBLE
-                    bindReadinessStatus(holder.itemBinding)
-                } else {
-                    layoutSetupReadiness.visibility = View.GONE
-                }
-            }
-        }
-
-        private fun bindReadinessStatus(itemBinding: ItemWalkthroughSlideBinding) {
+        override fun onBindViewHolder(holder: StepViewHolder, position: Int) {
+            val step = steps[position]
             val context = this@WelcomeActivity
-            val isMockEnabled = PermissionHelper.isMockLocationEnabled(context)
-            val hasLocation = PermissionHelper.hasFineLocationPermission(context)
-            val hasNotifications = PermissionHelper.hasNotificationPermission(context)
-            val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(context)
 
-            // Mock Provider Check
-            if (isMockEnabled) {
-                itemBinding.ivCheckMockProvider.setImageResource(R.drawable.ic_check_circle)
-                itemBinding.tvMockProviderStatus.text = "Mock Location App Active in Developer Options"
-                itemBinding.btnFixDeveloperSettings.text = "Configured"
-            } else {
-                itemBinding.ivCheckMockProvider.setImageResource(R.drawable.ic_warning_circle)
-                itemBinding.tvMockProviderStatus.text = "Mock Location App Not Selected in Developer Options"
-                itemBinding.btnFixDeveloperSettings.text = "Select Nowhere"
-            }
+            with(holder.itemBinding) {
+                ivSlideGraphic.setImageResource(step.iconRes)
+                tvSlideBadge.text = step.badgeText
+                tvSlideHeadline.text = step.headlineText
+                tvSlideDescription.text = step.descriptionText
+                tvStepTip.text = step.tipText
 
-            // Permissions Check
-            if (hasLocation && hasNotifications) {
-                itemBinding.ivCheckPermissions.setImageResource(R.drawable.ic_check_circle)
-                itemBinding.tvPermissionStatus.text = "Location & Notification Permissions Granted"
-            } else {
-                itemBinding.ivCheckPermissions.setImageResource(R.drawable.ic_warning_circle)
-                itemBinding.tvPermissionStatus.text = "Required Runtime Permissions Incomplete"
-            }
+                when (step.type) {
+                    StepType.DEV_OPTIONS -> {
+                        val isMockEnabled = PermissionHelper.isMockLocationEnabled(context)
+                        if (isMockEnabled) {
+                            ivStepStatusIcon.setImageResource(R.drawable.ic_check_circle)
+                            ivStepStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
+                            tvStepStatusTitle.text = "Status: Configured & Active"
+                            tvStepStatusTitle.setTextColor(ContextCompat.getColor(context, R.color.badge_success_text))
+                            tvStepStatusDetail.text = "Nowhere is active in Developer Options."
+                            btnStepAction.text = "Re-open Developer Options"
+                            btnStepAction.isEnabled = true
+                        } else {
+                            ivStepStatusIcon.setImageResource(R.drawable.ic_warning_circle)
+                            ivStepStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_warning_text)
+                            tvStepStatusTitle.text = "Status: Action Required"
+                            tvStepStatusTitle.setTextColor(ContextCompat.getColor(context, R.color.badge_warning_text))
+                            tvStepStatusDetail.text = "Select Nowhere as your Mock Location App."
+                            btnStepAction.text = "Open Developer Options"
+                            btnStepAction.isEnabled = true
+                        }
+                        btnStepAction.setIconResource(R.drawable.ic_settings)
+                        btnStepAction.setOnClickListener {
+                            SetupGuideDialog(context) {
+                                PermissionHelper.openDeveloperSettings(context)
+                            }.show()
+                        }
+                    }
 
-            // Battery Optimization Check
-            if (isBatteryExempt) {
-                itemBinding.ivCheckBattery.setImageResource(R.drawable.ic_check_circle)
-                itemBinding.tvBatteryStatus.text = "Unrestricted Background Running Active"
-                itemBinding.btnFixBattery.text = "Active"
-                itemBinding.btnFixBattery.isEnabled = false
-            } else {
-                itemBinding.ivCheckBattery.setImageResource(R.drawable.ic_warning_circle)
-                itemBinding.tvBatteryStatus.text = "Battery Optimization may sleep background GPS"
-                itemBinding.btnFixBattery.text = "Allow Unrestricted"
-                itemBinding.btnFixBattery.isEnabled = true
-            }
+                    StepType.PERMISSIONS -> {
+                        val hasLoc = PermissionHelper.hasFineLocationPermission(context)
+                        val hasNotif = PermissionHelper.hasNotificationPermission(context)
+                        val isGranted = hasLoc && hasNotif
 
-            itemBinding.btnFixDeveloperSettings.setOnClickListener {
-                SetupGuideDialog(context) {
-                    PermissionHelper.openDeveloperSettings(context)
-                }.show()
-            }
+                        if (isGranted) {
+                            ivStepStatusIcon.setImageResource(R.drawable.ic_check_circle)
+                            ivStepStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
+                            tvStepStatusTitle.text = "Status: Permissions Granted"
+                            tvStepStatusTitle.setTextColor(ContextCompat.getColor(context, R.color.badge_success_text))
+                            tvStepStatusDetail.text = "Precise location and notification access enabled."
+                            btnStepAction.text = "Permissions Active"
+                            btnStepAction.isEnabled = false
+                        } else {
+                            ivStepStatusIcon.setImageResource(R.drawable.ic_warning_circle)
+                            ivStepStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_warning_text)
+                            tvStepStatusTitle.text = "Status: Permissions Required"
+                            tvStepStatusTitle.setTextColor(ContextCompat.getColor(context, R.color.badge_warning_text))
+                            tvStepStatusDetail.text = "Grant location and notifications to proceed."
+                            btnStepAction.text = "Grant Permissions"
+                            btnStepAction.isEnabled = true
+                        }
+                        btnStepAction.setIconResource(R.drawable.ic_shield_check)
+                        btnStepAction.setOnClickListener {
+                            requestEssentialPermissions()
+                        }
+                    }
 
-            itemBinding.btnFixBattery.setOnClickListener {
-                PermissionHelper.requestIgnoreBatteryOptimizations(context)
+                    StepType.BATTERY -> {
+                        val isExempt = PermissionHelper.isIgnoringBatteryOptimizations(context)
+                        if (isExempt) {
+                            ivStepStatusIcon.setImageResource(R.drawable.ic_check_circle)
+                            ivStepStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
+                            tvStepStatusTitle.text = "Status: Unrestricted Running Active"
+                            tvStepStatusTitle.setTextColor(ContextCompat.getColor(context, R.color.badge_success_text))
+                            tvStepStatusDetail.text = "Background GPS simulation will not be throttled."
+                            btnStepAction.text = "Battery Unrestricted"
+                            btnStepAction.isEnabled = false
+                        } else {
+                            ivStepStatusIcon.setImageResource(R.drawable.ic_warning_circle)
+                            ivStepStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_warning_text)
+                            tvStepStatusTitle.text = "Status: Battery Optimized"
+                            tvStepStatusTitle.setTextColor(ContextCompat.getColor(context, R.color.badge_warning_text))
+                            tvStepStatusDetail.text = "Android may sleep GPS simulation in the background."
+                            btnStepAction.text = "Allow Unrestricted"
+                            btnStepAction.isEnabled = true
+                        }
+                        btnStepAction.setIconResource(R.drawable.ic_bolt)
+                        btnStepAction.setOnClickListener {
+                            PermissionHelper.requestIgnoreBatteryOptimizations(context)
+                        }
+                    }
+                }
             }
         }
     }

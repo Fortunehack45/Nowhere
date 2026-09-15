@@ -563,6 +563,16 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        val currentBlur = settingsPrefs.frostedGlassBlurPercent.toFloat().coerceIn(50f, 100f)
+        binding.sliderFrostedGlassBlur.value = currentBlur
+        binding.tvFrostedGlassBlurPercent.text = "${currentBlur.toInt()}%"
+
+        binding.sliderFrostedGlassBlur.addOnChangeListener { _, value, _ ->
+            val percent = value.toInt()
+            settingsPrefs.frostedGlassBlurPercent = percent
+            binding.tvFrostedGlassBlurPercent.text = "$percent%"
+        }
+
         binding.btnPinShortcut.setOnClickListener {
             pinNowhereShortcut()
         }

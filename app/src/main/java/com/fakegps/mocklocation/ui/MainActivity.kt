@@ -248,6 +248,8 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        applyHudFrostedGlass()
+
         binding.btnHeaderWidgets.setOnClickListener {
             WidgetGalleryBottomSheet().show(supportFragmentManager, "WIDGET_GALLERY")
         }
@@ -407,6 +409,7 @@ class MainActivity : AppCompatActivity() {
         checkBatteryOptimizationOnFirstLaunch()
         renderGhostCloakBadge()
         applyDynamicThemeAccent()
+        applyHudFrostedGlass()
         viewModel.requestWeatherUpdate(viewModel.uiState.value.fixedLatitude, viewModel.uiState.value.fixedLongitude, forceRefresh = true)
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
         val isSimRunning = isSimulationRunningCompat()
@@ -2479,6 +2482,26 @@ class MainActivity : AppCompatActivity() {
         binding.viewLivePulseDot.scaleX = 1.0f
         binding.viewLivePulseDot.scaleY = 1.0f
         binding.viewLivePulseDot.alpha = 1.0f
+    }
+
+    private fun applyHudFrostedGlass() {
+        val blurPercent = settingsPrefs.frostedGlassBlurPercent
+        val hudCards = listOf(
+            binding.cardTopBrandBar,
+            binding.cardSearchBar,
+            binding.cardSideButtons,
+            binding.cardBottomContainer
+        )
+        val edgeBlurViews = listOf(
+            binding.viewTopEdgeBlur,
+            binding.viewBottomEdgeBlur
+        )
+        com.fakegps.mocklocation.util.FrostedGlassManager.applyHudFrostedGlass(
+            context = this,
+            cards = hudCards,
+            edgeBlurViews = edgeBlurViews,
+            blurPercent = blurPercent
+        )
     }
 
     override fun onDestroy() {

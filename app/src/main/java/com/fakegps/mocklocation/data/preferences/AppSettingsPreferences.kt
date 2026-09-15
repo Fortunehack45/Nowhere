@@ -96,6 +96,7 @@ class AppSettingsPreferences(context: Context) {
         const val KEY_MAP_ANIMATIONS = "key_map_animations"
         const val KEY_HAPTIC_FEEDBACK = "key_haptic_feedback"
         const val KEY_NOTIFICATION_DETAILS = "key_notification_details"
+        const val KEY_FROSTED_GLASS_BLUR_PERCENT = "key_frosted_glass_blur_percent"
 
         // Anti-Detection & Ghost Cloak Suite Keys
         const val KEY_GHOST_CLOAK_ENABLED = "key_ghost_cloak_enabled"
@@ -223,6 +224,10 @@ class AppSettingsPreferences(context: Context) {
     var isSideMenuExpanded: Boolean
         get() = prefs.getBoolean("key_is_side_menu_expanded", true)
         set(value) = prefs.edit().putBoolean("key_is_side_menu_expanded", value).apply()
+
+    var frostedGlassBlurPercent: Int
+        get() = prefs.getInt(KEY_FROSTED_GLASS_BLUR_PERCENT, 90)
+        set(value) = prefs.edit().putInt(KEY_FROSTED_GLASS_BLUR_PERCENT, value).apply()
 
 
 
