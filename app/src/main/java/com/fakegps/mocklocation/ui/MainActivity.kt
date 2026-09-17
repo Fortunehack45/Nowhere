@@ -968,13 +968,16 @@ class MainActivity : AppCompatActivity() {
             viewModel.clearSearchResults()
         }
 
-        binding.btnCopyCoords.setOnClickListener {
+        val copyCoordsAction = {
+            binding.root.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
             val coordsText = binding.tvFixedCoords.text.toString()
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Mock Location Coordinates", coordsText)
             clipboard?.setPrimaryClip(clip)
             Toast.makeText(this, "Coordinates copied: $coordsText", Toast.LENGTH_SHORT).show()
         }
+        binding.btnCopyCoords.setOnClickListener { copyCoordsAction() }
+        binding.tvFixedCoords.setOnClickListener { copyCoordsAction() }
 
         // Quick Preset Destination Chips
         binding.chipPresetNewYork.setOnClickListener { selectPresetDestination("New York, USA", 40.7128, -74.0060) }
@@ -1994,7 +1997,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.weatherReport.collectLatest { report ->
                 if (report != null && !isFinishing && !isDestroyed) {
-                    binding.tvWeatherEmojiBadge.text = report.current.conditionEmoji
+                    binding.ivWeatherBadgeIcon.setImageResource(R.drawable.ic_weather_cloud_sun)
                     val tempStr = if (settingsPrefs.useImperialUnits) {
                         String.format(Locale.US, "%.0f°F", report.current.temperatureF)
                     } else {
@@ -2226,14 +2229,14 @@ class MainActivity : AppCompatActivity() {
                     val minutes = (secondsLeft % 3600) / 60
                     val seconds = secondsLeft % 60
                     if (hours > 0) {
-                        String.format(Locale.US, "⏱️ ETA: %dh %02dm", hours, minutes)
+                        String.format(Locale.US, "ETA: %dh %02dm", hours, minutes)
                     } else {
-                        String.format(Locale.US, "⏱️ ETA: %02dm %02ds", minutes, seconds)
+                        String.format(Locale.US, "ETA: %02dm %02ds", minutes, seconds)
                     }
                 } else if (remainingMeters <= 5.0 && runningState.totalDistanceMeters > 0) {
-                    "⏱️ ETA: Arrived"
+                    "ETA: Arrived"
                 } else {
-                    "⏱️ ETA: --"
+                    "ETA: --"
                 }
 
                 binding.tvRouteDistanceCovered.text = "Covered: $covered / $total"
@@ -2265,9 +2268,9 @@ class MainActivity : AppCompatActivity() {
                 val hrs = totalSeconds / 3600
                 val mins = (totalSeconds % 3600) / 60
                 val estTime = if (hrs > 0) {
-                    String.format(Locale.US, "⏱️ Est: %dh %02dm", hrs, mins)
+                    String.format(Locale.US, "Est: %dh %02dm", hrs, mins)
                 } else {
-                    String.format(Locale.US, "⏱️ Est: %dm", mins.coerceAtLeast(1))
+                    String.format(Locale.US, "Est: %dm", mins.coerceAtLeast(1))
                 }
 
                 binding.tvRouteDistanceCovered.text = "Route: $totalFormatted"

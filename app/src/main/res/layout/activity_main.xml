@@ -120,12 +120,13 @@
                             android:gravity="center"
                             android:paddingHorizontal="8dp">
 
-                            <TextView
-                                android:id="@+id/tvWeatherEmojiBadge"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="⛅"
-                                android:textSize="12sp" />
+                            <ImageView
+                                android:id="@+id/ivWeatherBadgeIcon"
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_weather_cloud_sun"
+                                app:tint="@color/text_primary"
+                                tools:ignore="ContentDescription" />
 
                             <TextView
                                 android:id="@+id/tvWeatherBadgeText"
@@ -1392,7 +1393,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
-                        android:text="⏱️ ETA: --"
+                        android:text="ETA: --"
                         android:textColor="@color/badge_warning_text"
                         android:textSize="11sp"
                         android:textStyle="bold" />

@@ -12,27 +12,35 @@
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="28dp"
+        android:paddingHorizontal="22dp"
+        android:paddingTop="20dp"
         android:paddingBottom="24dp">
 
         <!-- Glowing Circular Icon Illustration Container -->
         <FrameLayout
-            android:layout_width="140dp"
-            android:layout_height="140dp"
-            android:layout_marginBottom="24dp">
+            android:id="@+id/layoutSlideHero"
+            android:layout_width="130dp"
+            android:layout_height="130dp"
+            android:layout_marginBottom="20dp">
+
+            <!-- Ambient Radial Glow -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_walkthrough_hero_glow" />
 
             <!-- Outer Subtle Ring -->
             <View
-                android:layout_width="140dp"
-                android:layout_height="140dp"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_gravity="center"
                 android:background="@drawable/bg_status_pill"
                 android:backgroundTint="@color/surface_card" />
 
             <!-- Inner Circle -->
             <View
-                android:layout_width="104dp"
-                android:layout_height="104dp"
+                android:layout_width="92dp"
+                android:layout_height="92dp"
                 android:layout_gravity="center"
                 android:background="@drawable/bg_status_pill"
                 android:backgroundTint="@color/surface_card_elevated" />
@@ -40,15 +48,15 @@
             <!-- Center Icon -->
             <ImageView
                 android:id="@+id/ivSlideGraphic"
-                android:layout_width="52dp"
-                android:layout_height="52dp"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_bolt"
+                android:src="@drawable/ic_radar_target"
                 app:tint="@color/primary_bright"
                 tools:ignore="ContentDescription" />
         </FrameLayout>
 
-        <!-- Step Pill Badge -->
+        <!-- Step / Category Pill Badge -->
         <TextView
             android:id="@+id/tvSlideBadge"
             android:layout_width="wrap_content"
@@ -58,7 +66,7 @@
             android:letterSpacing="0.08"
             android:paddingHorizontal="14dp"
             android:paddingVertical="5dp"
-            android:text="STEP 1 OF 3 • DEVELOPER OPTIONS"
+            android:text="PRECISION GPS • SUB-METER LOCK"
             android:textColor="@color/primary_bright"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -68,11 +76,11 @@
             android:id="@+id/tvSlideHeadline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:gravity="center"
             android:letterSpacing="0.01"
             android:lineSpacingExtra="2dp"
-            android:text="Select Nowhere as Mock Location App"
+            android:text="Teleport Anywhere on Earth"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -82,21 +90,21 @@
             android:id="@+id/tvSlideDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="8dp"
             android:gravity="center"
             android:lineSpacingExtra="4dp"
-            android:text="Android requires Nowhere to be selected as your system Mock Location provider in Developer Settings."
+            android:text="Simulate real-time GPS coordinates with sub-meter accuracy, custom altitude, and realistic satellite terrain."
             android:textColor="@color/text_secondary"
             android:textSize="13.5sp" />
 
-        <!-- Dedicated Step Action Card -->
+        <!-- CONTAINER A: Feature Highlights Card (Used on Presentation Slides 1, 2, 3) -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardStepAction"
+            android:id="@+id/cardFeatureHighlights"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="20dp"
             app:cardBackgroundColor="@color/surface_card"
-            app:cardCornerRadius="18dp"
+            app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/stroke_subtle"
             app:strokeWidth="1dp">
@@ -105,9 +113,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="16dp">
 
-                <!-- Status Row -->
+                <!-- Feature Item 1 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -115,68 +123,377 @@
                     android:orientation="horizontal">
 
                     <ImageView
-                        android:id="@+id/ivStepStatusIcon"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_warning_circle"
+                        android:id="@+id/ivHighlight1"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_location_pin"
+                        app:tint="@color/primary_bright"
                         tools:ignore="ContentDescription" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/tvStepStatusTitle"
+                            android:id="@+id/tvHighlightTitle1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Status: Not Configured"
+                            android:text="Sub-Meter Coordinate Precision"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/tvStepStatusDetail"
+                            android:id="@+id/tvHighlightDesc1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Action required to enable mock GPS simulation"
+                            android:text="Accurate coordinate locking down to 6 decimals (~0.1m resolution)."
                             android:textColor="@color/text_muted"
                             android:textSize="11.5sp" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Primary Action Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStepAction"
-                    style="@style/Widget.Material3.Button.TonalButton"
+                <!-- Divider -->
+                <View
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="16dp"
-                    android:backgroundTint="@color/surface_card_elevated"
-                    android:letterSpacing="0.04"
-                    android:text="Open Developer Options"
-                    android:textColor="@color/primary_bright"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/ic_settings"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/primary_bright"
-                    app:strokeColor="@color/stroke_subtle"
-                    app:strokeWidth="1dp" />
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@color/stroke_subtle" />
 
-                <!-- Helpful Guide Subtext / Tip -->
-                <TextView
-                    android:id="@+id/tvStepTip"
+                <!-- Feature Item 2 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:lineSpacingExtra="2dp"
-                    android:text="💡 Tip: If Developer Options is hidden on your phone, go to Settings &gt; About Phone and tap 'Build Number' 7 times."
-                    android:textColor="@color/text_muted"
-                    android:textSize="11sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/ivHighlight2"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_globe"
+                        app:tint="@color/primary_bright"
+                        tools:ignore="ContentDescription" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvHighlightTitle2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Worldwide Multi-Source Maps"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvHighlightDesc2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Explore with Mapnik, OpenTopo, Wikimedia, and USGS Satellite."
+                            android:textColor="@color/text_muted"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@color/stroke_subtle" />
+
+                <!-- Feature Item 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/ivHighlight3"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/primary_bright"
+                        tools:ignore="ContentDescription" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvHighlightTitle3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Instant Search &amp; Favorites"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvHighlightDesc3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Debounced geocoding search, local history, and bookmark drawers."
+                            android:textColor="@color/text_muted"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- CONTAINER B: Interactive Setup Hub Card (Used on Setup Step 4) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSetupHub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stroke_subtle"
+            app:strokeWidth="1dp"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- 1. Developer Mock Location Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/ivDevStatusIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_warning_circle"
+                        app:tint="@color/badge_warning_text"
+                        tools:ignore="ContentDescription" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvDevStatusTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Developer Mock Provider"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvDevStatusDetail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Select Nowhere in Developer Options"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDevAction"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:letterSpacing="0.02"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="0dp"
+                        android:text="Setup"
+                        android:textColor="@color/primary_bright"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="10dp"
+                        app:strokeColor="@color/stroke_subtle"
+                        app:strokeWidth="1dp" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@color/stroke_subtle" />
+
+                <!-- 2. System Permissions Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/ivPermStatusIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_warning_circle"
+                        app:tint="@color/badge_warning_text"
+                        tools:ignore="ContentDescription" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvPermStatusTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="System Permissions"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvPermStatusDetail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Location &amp; notification access"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPermAction"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:letterSpacing="0.02"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="0dp"
+                        android:text="Grant"
+                        android:textColor="@color/primary_bright"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="10dp"
+                        app:strokeColor="@color/stroke_subtle"
+                        app:strokeWidth="1dp" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@color/stroke_subtle" />
+
+                <!-- 3. Battery Optimization Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/ivBatteryStatusIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_warning_circle"
+                        app:tint="@color/badge_warning_text"
+                        tools:ignore="ContentDescription" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvBatteryStatusTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Background Execution"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvBatteryStatusDetail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Prevent Android from sleeping GPS"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnBatteryAction"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:backgroundTint="@color/surface_card_elevated"
+                        android:letterSpacing="0.02"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="0dp"
+                        android:text="Allow"
+                        android:textColor="@color/primary_bright"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="10dp"
+                        app:strokeColor="@color/stroke_subtle"
+                        app:strokeWidth="1dp" />
+                </LinearLayout>
+
+                <!-- Privacy Guarantee Banner (Anti-Slop Clean Callout) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_status_pill"
+                    android:backgroundTint="@color/surface_card_elevated"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_shield_check"
+                        app:tint="@color/badge_success_text"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:lineSpacingExtra="1dp"
+                        android:text="100% on-device OS-level GPS injection. Nowhere never tracks, collects, or transmits your coordinates."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

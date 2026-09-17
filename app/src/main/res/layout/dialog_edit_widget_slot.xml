@@ -79,7 +79,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:layout_marginStart="4dp"
-        android:text="💡 Type any city/place and tap Find to auto-fill coordinates"
+        android:text="Tip: Type any city or place and tap Find to auto-fill coordinates"
         android:textColor="@color/text_muted"
         android:textSize="11sp" />
 

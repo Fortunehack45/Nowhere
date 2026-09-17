@@ -39,17 +39,52 @@
         app:layout_constraintTop_toBottomOf="@id/tvSavedRoutesTitle"
         tools:listitem="@layout/item_saved_route" />
 
-    <TextView
+    <!-- Composed Empty State -->
+    <LinearLayout
         android:id="@+id/tvEmptySavedRoutes"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="No saved routes. Plot waypoints and tap 'Save Route'."
-        android:textColor="@color/text_muted"
-        android:textSize="13sp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/rvSavedRoutes"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/rvSavedRoutes" />
+        app:layout_constraintTop_toTopOf="@id/rvSavedRoutes">
+
+        <FrameLayout
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/bg_status_pill"
+            android:backgroundTint="@color/surface_card_elevated">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_route"
+                app:tint="@color/primary_bright"
+                tools:ignore="ContentDescription" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="No Saved Routes"
+            android:textColor="@color/text_primary"
+            android:textSize="14.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:text="Tap waypoints on the map in Route Mode and tap Save Route to store simulation paths."
+            android:textColor="@color/text_muted"
+            android:textSize="12sp" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

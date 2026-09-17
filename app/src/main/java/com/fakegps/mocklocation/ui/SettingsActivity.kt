@@ -39,7 +39,7 @@ class SettingsActivity : AppCompatActivity() {
     ) { isGranted ->
         refreshNotificationPermissionUI()
         if (isGranted) {
-            Toast.makeText(this, "🔔 Notifications enabled", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Notifications enabled", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -156,8 +156,8 @@ class SettingsActivity : AppCompatActivity() {
 
             binding.tvSettingsPremiumTitle.text = "Nowhere Pro Engine"
             binding.tvSettingsPremiumSubtitle.text = when {
-                isVip -> "🔥 VIP Offer: Save $discount% on Annual Pass • Unlimited & Zero Ads"
-                entitlement.hasFreeTrial -> "✨ Free Trial Available • Unlimited duration & zero ads"
+                isVip -> "VIP Offer: Save $discount% on Annual Pass • Unlimited & Zero Ads"
+                entitlement.hasFreeTrial -> "Free Trial Available • Unlimited duration & zero ads"
                 formattedPrice != null -> "From $formattedPrice/mo • Unlimited duration & zero ads"
                 else -> "Unlimited session duration & 100% zero ads"
             }

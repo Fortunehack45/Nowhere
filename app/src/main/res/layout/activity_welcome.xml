@@ -43,7 +43,7 @@
         app:layout_constraintBottom_toTopOf="@id/layoutDotsIndicator"
         app:layout_constraintTop_toBottomOf="@id/layoutWalkthroughHeader" />
 
-    <!-- 3-Dot Page Indicator -->
+    <!-- 4-Dot Dynamic Page Indicator -->
     <LinearLayout
         android:id="@+id/layoutDotsIndicator"
         android:layout_width="wrap_content"
@@ -71,6 +71,13 @@
 
         <View
             android:id="@+id/viewDot3"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/bg_walkthrough_dot_inactive" />
+
+        <View
+            android:id="@+id/viewDot4"
             android:layout_width="7dp"
             android:layout_height="7dp"
             android:layout_marginHorizontal="4dp"

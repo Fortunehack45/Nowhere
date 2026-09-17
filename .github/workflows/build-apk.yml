@@ -1,4 +1,4 @@
-name: Build Nowhere APK
+name: Build Nowhere APK & AAB
 
 on:
   push:
@@ -7,12 +7,16 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build & Package APK
+    name: Build & Package Android (APK & AAB)
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +40,7 @@ jobs:
           chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: ./gradlew testDebugUnitTest --continue --stacktrace
 
       - name: Build Debug & Release APKs and Google Play Bundle (AAB)
         run: ./gradlew assembleDebug assembleRelease bundleRelease --stacktrace
@@ -68,7 +72,7 @@ jobs:
           fi
 
       - name: Publish GitHub Release (Progressive Updates)
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         continue-on-error: true
         with:
@@ -78,6 +82,7 @@ jobs:
           draft: false
           prerelease: false
           make_latest: true
+          fail_on_unmatched_files: false
           files: |
             app/build/outputs/apk/release/*.apk
             app/build/outputs/apk/debug/*.apk
@@ -101,7 +106,7 @@ jobs:
         with:
           name: Nowhere-Deobfuscation-Mapping-v${{ steps.extract_version.outputs.version }}
           path: app/build/outputs/mapping/release/*.txt
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 30
 
       - name: Upload Release APK Artifact
