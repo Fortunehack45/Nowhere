@@ -50,6 +50,7 @@ struct MainMapView: View {
     // Location name
     @State private var activeLocationName: String = "San Francisco"
     @State private var isBottomDeckCollapsed: Bool = false
+    @State private var hasCopiedCoords: Bool = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -175,50 +176,87 @@ struct MainMapView: View {
     private var topNavigationBar: some View {
         VStack(spacing: 8) {
             HStack {
-                Image(systemName: "location.north.circle.fill")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.red)
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red.opacity(0.18))
+                            .frame(width: 34, height: 34)
+                        Image(systemName: "location.north.circle.fill")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.red)
+                    }
 
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("NOWHERE")
-                        .font(.system(size: 16, weight: .black, design: .rounded))
-                        .kerning(1.2)
-                        .foregroundColor(.white)
-                    Text("BY ÀYÀNFẸ́")
-                        .font(.system(size: 8, weight: .black, design: .monospaced))
-                        .kerning(1.6)
-                        .foregroundColor(.red.opacity(0.9))
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack(spacing: 6) {
+                            Text("NOWHERE")
+                                .font(.system(size: 16, weight: .black, design: .rounded))
+                                .kerning(1.2)
+                                .foregroundColor(.white)
+
+                            if engine.isSimulating {
+                                HStack(spacing: 3) {
+                                    Circle()
+                                        .fill(Color.green)
+                                        .frame(width: 6, height: 6)
+                                    Text("LIVE")
+                                        .font(.system(size: 8, weight: .black, design: .rounded))
+                                        .foregroundColor(.green)
+                                }
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(Color.green.opacity(0.18))
+                                .cornerRadius(4)
+                            }
+                        }
+
+                        Text("BY ÀYÀNFẸ́")
+                            .font(.system(size: 8, weight: .black, design: .monospaced))
+                            .kerning(1.6)
+                            .foregroundColor(.red.opacity(0.9))
+                    }
                 }
 
                 Spacer()
 
                 // Top action buttons: Favorites, Routes, Settings
                 HStack(spacing: 8) {
-                    Button(action: { showFavoritesSheet = true }) {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        showFavoritesSheet = true
+                    }) {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 14))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.white.opacity(0.1))
+                            .frame(width: 32, height: 32)
+                            .background(Color.white.opacity(0.12))
                             .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 0.8))
                     }
 
-                    Button(action: { showRoutesSheet = true }) {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        showRoutesSheet = true
+                    }) {
                         Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
-                            .font(.system(size: 14))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.white.opacity(0.1))
+                            .frame(width: 32, height: 32)
+                            .background(Color.white.opacity(0.12))
                             .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 0.8))
                     }
 
-                    Button(action: { showSettingsSheet = true }) {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        showSettingsSheet = true
+                    }) {
                         Image(systemName: "gearshape.fill")
-                            .font(.system(size: 14))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.white.opacity(0.1))
+                            .frame(width: 32, height: 32)
+                            .background(Color.white.opacity(0.12))
                             .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 0.8))
                     }
                 }
             }
@@ -395,16 +433,17 @@ struct MainMapView: View {
 
     private func presetChip(title: String, coord: CLLocationCoordinate2D, name: String) -> some View {
         Button(action: {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             teleportTo(coord: coord, name: name)
         }) {
             Text(title)
                 .font(.system(size: 11, weight: .bold))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(Color(white: 0.15))
+                .background(Color(white: 0.14))
                 .foregroundColor(.white)
                 .cornerRadius(12)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.14), lineWidth: 0.8))
         }
     }
 
@@ -481,6 +520,7 @@ struct MainMapView: View {
 
     private func modeButton(title: String, icon: String, id: String) -> some View {
         Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             withAnimation(.spring(response: 0.32, dampingFraction: 0.8)) {
                 selectedTab = id
             }
@@ -498,8 +538,18 @@ struct MainMapView: View {
                 selectedTab == id ?
                 AnyView(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color.red)
-                        .shadow(color: Color.red.opacity(0.4), radius: 6, x: 0, y: 2)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.22, blue: 0.24), Color(red: 0.82, green: 0.08, blue: 0.18)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.white.opacity(0.22), lineWidth: 0.8)
+                        )
+                        .shadow(color: Color.red.opacity(0.45), radius: 6, x: 0, y: 2)
                 ) :
                 AnyView(Color.clear)
             )
@@ -627,80 +677,145 @@ struct MainMapView: View {
 
     private func quickSlotButton(name: String, lat: Double, lon: Double) -> some View {
         Button(action: {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             teleportTo(coord: CLLocationCoordinate2D(latitude: lat, longitude: lon), name: name)
         }) {
-            Text(name)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(Color.white.opacity(0.08))
-                .cornerRadius(8)
+            HStack(spacing: 4) {
+                Image(systemName: "mappin")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(.red)
+                Text(name.isEmpty ? "Unset" : name)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 6)
+            .background(Color.white.opacity(0.08))
+            .cornerRadius(10)
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1), lineWidth: 0.8))
         }
     }
 
     // MARK: - Mode Controls Subviews
 
     private var fixedControlsView: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 11) {
+            // Live Status Banner when simulating
+            if engine.isSimulating {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 7, height: 7)
+                        .shadow(color: Color.green.opacity(0.8), radius: 3)
+                    Text("SIMULATION ACTIVE • LOCATION INJECTED")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundColor(.green)
+                    Spacer()
+                    Text("ANTI-DETECTION ON")
+                        .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                        .foregroundColor(.green.opacity(0.8))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.green.opacity(0.12))
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.green.opacity(0.22), lineWidth: 0.8))
+            }
+
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("COORDINATES")
-                        .font(.system(size: 9, weight: .bold))
+                    Text("TARGET COORDINATES")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .tracking(0.6)
                         .foregroundColor(.gray)
                     Text(String(format: "%.5f°, %.5f°", pinnedLocation.latitude, pinnedLocation.longitude))
-                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                        .font(.system(size: 13.5, weight: .bold, design: .monospaced))
                         .foregroundColor(.white)
                 }
                 Spacer()
 
                 Button(action: {
                     UIPasteboard.general.string = String(format: "%.5f, %.5f", pinnedLocation.latitude, pinnedLocation.longitude)
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    withAnimation { hasCopiedCoords = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        withAnimation { hasCopiedCoords = false }
+                    }
                 }) {
-                    Image(systemName: "doc.on.doc")
-                        .foregroundColor(.gray)
-                        .padding(8)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(Circle())
+                    HStack(spacing: 4) {
+                        Image(systemName: hasCopiedCoords ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(hasCopiedCoords ? .green : .gray)
+                        if hasCopiedCoords {
+                            Text("Copied")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.green)
+                        }
+                    }
+                    .padding(8)
+                    .background(hasCopiedCoords ? Color.green.opacity(0.15) : Color.white.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
 
                 Button(action: {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     storage.addFavorite(name: activeLocationName, coordinate: pinnedLocation)
                 }) {
-                    Image(systemName: "star")
-                        .foregroundColor(.red)
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.yellow)
                         .padding(8)
                         .background(Color.white.opacity(0.08))
-                        .clipShape(Circle())
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
             }
 
             HStack(spacing: 10) {
                 Button(action: {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     engine.startFixed(coordinate: pinnedLocation)
                     updateLocationName(coord: pinnedLocation)
                 }) {
-                    HStack {
-                        Image(systemName: "location.fill")
+                    HStack(spacing: 6) {
+                        Image(systemName: engine.isSimulating ? "location.fill" : "bolt.fill")
+                            .font(.system(size: 13, weight: .bold))
                         Text(engine.isSimulating ? "Teleported Active" : "Inject Location")
+                            .font(.system(size: 14, weight: .bold))
                     }
-                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.red)
+                    .padding(.vertical, 13)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 1.0, green: 0.22, blue: 0.24), Color(red: 0.82, green: 0.08, blue: 0.18)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .cornerRadius(14)
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.2), lineWidth: 0.8))
+                    .shadow(color: Color.red.opacity(0.4), radius: 8, x: 0, y: 3)
                 }
 
                 if engine.isSimulating {
-                    Button(action: { engine.stop() }) {
-                        Text("Stop")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.red)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.08))
-                            .cornerRadius(14)
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        engine.stop()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "stop.fill")
+                                .font(.system(size: 11))
+                            Text("Stop")
+                                .font(.system(size: 13, weight: .bold))
+                        }
+                        .foregroundColor(.red)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 13)
+                        .background(Color.red.opacity(0.12))
+                        .cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.red.opacity(0.3), lineWidth: 0.8))
                     }
                 }
             }
@@ -726,71 +841,99 @@ struct MainMapView: View {
 
             HStack(spacing: 8) {
                 Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     waypoints.append(RoutePoint(latitude: region.center.latitude, longitude: region.center.longitude))
                 }) {
-                    Text("+ Add Waypoint")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(8)
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 11))
+                        Text("Add Waypoint")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(8)
                 }
 
                 Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     if !waypoints.isEmpty { waypoints.removeLast() }
                 }) {
-                    Text("Undo")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.gray)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.08))
-                        .cornerRadius(8)
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.uturn.backward")
+                            .font(.system(size: 10))
+                        Text("Undo")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(8)
                 }
 
                 Spacer()
 
-                Button(action: { showSaveRouteDialog = true }) {
-                    Text("Save Route")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.red)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.08))
-                        .cornerRadius(8)
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showSaveRouteDialog = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .font(.system(size: 10))
+                        Text("Save Route")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.red.opacity(0.12))
+                    .cornerRadius(8)
                 }
             }
 
             HStack(spacing: 10) {
                 Button(action: {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     if engine.isSimulating {
                         engine.togglePause()
                     } else {
                         engine.startRoute(waypoints: waypoints, speedKmh: speedKmh, isLooping: isLooping, mode: transportMode)
                     }
                 }) {
-                    HStack {
+                    HStack(spacing: 6) {
                         Image(systemName: engine.isSimulating ? (engine.isPaused ? "play.fill" : "pause.fill") : "play.fill")
+                            .font(.system(size: 13, weight: .bold))
                         Text(engine.isSimulating ? (engine.isPaused ? "Resume" : "Pause") : "Start Route")
+                            .font(.system(size: 14, weight: .bold))
                     }
-                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.red)
+                    .padding(.vertical, 13)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 1.0, green: 0.22, blue: 0.24), Color(red: 0.82, green: 0.08, blue: 0.18)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .cornerRadius(14)
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.2), lineWidth: 0.8))
+                    .shadow(color: Color.red.opacity(0.4), radius: 8, x: 0, y: 3)
                 }
 
                 Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     waypoints.removeAll()
                     engine.stop()
                 }) {
                     Text("Clear")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.gray)
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 13)
                         .background(Color.white.opacity(0.08))
                         .cornerRadius(14)
                 }
@@ -826,22 +969,32 @@ struct MainMapView: View {
                 .foregroundColor(.gray)
 
             Button(action: {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 let pts = waypoints.isEmpty ? [RoutePoint(latitude: pinnedLocation.latitude, longitude: pinnedLocation.longitude)] : waypoints
                 if let url = GPXManager.shared.exportGPXFile(waypoints: pts) {
                     gpxExportURL = url
                     showShareSheet = true
                 }
             }) {
-                HStack {
-                    Image(systemName: "square.and.arrow.up")
+                HStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.up.fill")
+                        .font(.system(size: 13, weight: .bold))
                     Text("AirDrop / Export GPX Track")
+                        .font(.system(size: 14, weight: .bold))
                 }
-                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.red)
+                .padding(.vertical, 13)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 1.0, green: 0.22, blue: 0.24), Color(red: 0.82, green: 0.08, blue: 0.18)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.2), lineWidth: 0.8))
+                .shadow(color: Color.red.opacity(0.4), radius: 8, x: 0, y: 3)
             }
         }
     }

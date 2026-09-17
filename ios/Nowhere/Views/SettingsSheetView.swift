@@ -20,7 +20,7 @@ struct SettingsSheetView: View {
         NavigationView {
             Form {
                 // Section 1: Quick Destinations Widget Slots
-                Section(header: Text("QUICK DESTINATION WIDGET SLOTS").foregroundColor(.red)) {
+                Section(header: sectionHeader(title: "QUICK DESTINATION WIDGET SLOTS", systemImage: "target")) {
                     slotRow(slotNumber: 1, name: storage.slot1Name, lat: storage.slot1Lat, lon: storage.slot1Lon) {
                         openSlotEditor(slot: 1, name: storage.slot1Name, lat: storage.slot1Lat, lon: storage.slot1Lon)
                     }
@@ -35,7 +35,7 @@ struct SettingsSheetView: View {
                 }
 
                 // Section 2: Realism & Spoofing Enhancements
-                Section(header: Text("REALISM & SIMULATION").foregroundColor(.red)) {
+                Section(header: sectionHeader(title: "REALISM & SIMULATION", systemImage: "waveform.path.ecg")) {
                     Toggle("Stationary GPS Jitter", isOn: $storage.randomizeJitter)
 
                     if storage.randomizeJitter {
@@ -63,7 +63,7 @@ struct SettingsSheetView: View {
                 }
 
                 // Section 3: Anti-Detection Ghost Cloak Suite
-                Section(header: Text("ANTI-DETECTION & GHOST CLOAK").foregroundColor(.red)) {
+                Section(header: sectionHeader(title: "ANTI-DETECTION & GHOST CLOAK", systemImage: "shield.checkered")) {
                     Toggle("Master Ghost Cloak", isOn: $storage.isGhostCloakEnabled)
 
                     if storage.isGhostCloakEnabled {
@@ -74,12 +74,12 @@ struct SettingsSheetView: View {
                 }
 
                 // Section 4: IP Privacy Shield & Auto-Sync
-                Section(header: Text("IP PRIVACY SHIELD & AUTO-SYNC").foregroundColor(.red)) {
+                Section(header: sectionHeader(title: "IP PRIVACY SHIELD & AUTO-SYNC", systemImage: "network.badge.shield.half.filled")) {
                     Toggle("Auto-Sync VPN with Mock GPS", isOn: $storage.isAutoVpnSyncEnabled)
                 }
 
                 // Section 5: Appearance & Units
-                Section(header: Text("PREFERENCES").foregroundColor(.red)) {
+                Section(header: sectionHeader(title: "PREFERENCES", systemImage: "paintpalette.fill")) {
                     Picker("Theme", selection: $storage.appTheme) {
                         Text("Dark Mode").tag("DARK")
                         Text("Light Mode").tag("LIGHT")
@@ -94,8 +94,8 @@ struct SettingsSheetView: View {
                     Toggle("Haptic Feedback", isOn: $storage.hapticFeedback)
                 }
 
-                // Section 4: Updates
-                Section(header: Text("APP UPDATES").foregroundColor(.red)) {
+                // Section 6: Updates
+                Section(header: sectionHeader(title: "APP UPDATES", systemImage: "arrow.triangle.2.circlepath.circle.fill")) {
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Installed Version")
@@ -162,76 +162,159 @@ struct SettingsSheetView: View {
                     .disabled(updateChecker.isChecking)
                 }
 
-                // Section 5: Software Studio & Maker Branding
-                Section(header: Text("ABOUT & DEVELOPER").foregroundColor(.red)) {
-                    HStack(spacing: 14) {
-                        if let uiImage = UIImage(named: "ayanfe_logo") ?? UIImage(contentsOfFile: Bundle.main.path(forResource: "ayanfe_logo", ofType: "png") ?? "") {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 52, height: 52)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
-                                .shadow(color: Color.black.opacity(0.3), radius: 4)
-                        } else {
-                            AsyncImage(url: URL(string: "https://iili.io/nn2VBpf.png")) { phase in
-                                if let image = phase.image {
-                                    image
+                // Section 7: Software Studio & Maker Branding
+                Section(header: sectionHeader(title: "ABOUT & DEVELOPER", systemImage: "sparkles")) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 14) {
+                            // High-contrast rounded card for ÁYÁNFÈ logo
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.white)
+                                    .frame(width: 58, height: 58)
+                                    .shadow(color: Color.black.opacity(0.35), radius: 6, x: 0, y: 3)
+
+                                if let uiImage = UIImage(named: "ayanfe_logo") ?? UIImage(contentsOfFile: Bundle.main.path(forResource: "ayanfe_logo", ofType: "png") ?? "") {
+                                    Image(uiImage: uiImage)
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
+                                        .frame(width: 50, height: 50)
+                                        .padding(4)
                                 } else {
-                                    Image(systemName: "app.badge.checkmark.fill")
-                                        .font(.system(size: 28))
-                                        .foregroundColor(.red)
+                                    AsyncImage(url: URL(string: "https://iili.io/noehpqb.png")) { phase in
+                                        if let image = phase.image {
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fit)
+                                                .frame(width: 50, height: 50)
+                                                .padding(4)
+                                        } else {
+                                            Image(systemName: "app.badge.checkmark.fill")
+                                                .font(.system(size: 26))
+                                                .foregroundColor(.red)
+                                        }
+                                    }
                                 }
                             }
-                            .frame(width: 52, height: 52)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
-                            .shadow(color: Color.black.opacity(0.3), radius: 4)
-                        }
 
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Made by Àyànfẹ́")
-                                .font(.system(size: 15, weight: .black, design: .rounded))
-                                .foregroundColor(.white)
-                            Text("Àyànfẹ́ Software Studio • Mobile & Cyber-Security")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(.gray)
-                            Text("Nowhere iOS v\(updateChecker.currentVersion)")
-                                .font(.system(size: 10, design: .monospaced))
-                                .foregroundColor(.red.opacity(0.9))
+                            VStack(alignment: .leading, spacing: 3) {
+                                HStack(spacing: 6) {
+                                    Text("Made by Àyànfẹ́")
+                                        .font(.system(size: 15, weight: .black, design: .rounded))
+                                        .foregroundColor(.white)
+
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .font(.system(size: 9))
+                                            .foregroundColor(.green)
+                                        Text("STUDIO")
+                                            .font(.system(size: 8, weight: .black, design: .rounded))
+                                            .foregroundColor(.green)
+                                    }
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 2)
+                                    .background(Color.green.opacity(0.15))
+                                    .cornerRadius(4)
+                                }
+
+                                Text("Àyànfẹ́ Software Studio • Mobile & Cyber-Security")
+                                    .font(.system(size: 10.5, weight: .medium))
+                                    .foregroundColor(.gray)
+
+                                Text("Nowhere iOS v\(updateChecker.currentVersion) • Production Build")
+                                    .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
+                                    .foregroundColor(.red.opacity(0.9))
+                            }
                         }
+                        .padding(.vertical, 4)
+
+                        // Privacy & Zero-Telemetry Guarantee Pill
+                        HStack(spacing: 8) {
+                            Image(systemName: "lock.shield.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.green)
+
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Zero-Telemetry Privacy Guarantee")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                                Text("100% on-device spoofing. No tracking, logs, or analytics.")
+                                    .font(.system(size: 9.5))
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Color.white.opacity(0.04))
+                        .cornerRadius(10)
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.08), lineWidth: 0.8))
                     }
-                    .padding(.vertical, 4)
 
                     Link(destination: URL(string: "https://fortuneadebayo.space")!) {
                         HStack {
-                            Text("Studio Website")
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(Color.red.opacity(0.15))
+                                    .frame(width: 26, height: 26)
+                                Image(systemName: "globe")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.red)
+                            }
+                            Text("Studio Portfolio")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white)
                             Spacer()
                             Text("fortuneadebayo.space")
-                                .font(.caption)
+                                .font(.system(size: 11))
                                 .foregroundColor(.red)
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.red.opacity(0.7))
                         }
                     }
 
                     Link(destination: URL(string: "https://t.me/nowhere_proxy")!) {
                         HStack {
-                            Text("Telegram Channel")
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(Color.blue.opacity(0.15))
+                                    .frame(width: 26, height: 26)
+                                Image(systemName: "paperplane.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.blue)
+                            }
+                            Text("Telegram Announcements")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white)
                             Spacer()
                             Text("t.me/nowhere_proxy")
-                                .font(.caption)
-                                .foregroundColor(.red)
+                                .font(.system(size: 11))
+                                .foregroundColor(.blue)
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.blue.opacity(0.7))
                         }
                     }
 
                     Link(destination: URL(string: "https://t.me/+vcmA7kOtLEw3ZjM0")!) {
                         HStack {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(Color.blue.opacity(0.15))
+                                    .frame(width: 26, height: 26)
+                                Image(systemName: "person.2.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.blue)
+                            }
                             Text("Community Group")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white)
                             Spacer()
                             Text("Join Telegram")
-                                .font(.caption)
-                                .foregroundColor(.red)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.blue)
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.blue.opacity(0.7))
                         }
                     }
                 }
@@ -240,10 +323,18 @@ struct SettingsSheetView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Done") {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 16))
+                            Text("Done")
+                                .font(.system(size: 14, weight: .bold))
+                        }
+                        .foregroundColor(.red)
                     }
-                    .foregroundColor(.red)
                 }
             }
             .sheet(isPresented: $showEditSlot1) {
@@ -253,23 +344,70 @@ struct SettingsSheetView: View {
         .preferredColorScheme(.dark)
     }
 
+    private func sectionHeader(title: String, systemImage: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.red)
+            Text(title)
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .tracking(0.8)
+                .foregroundColor(.red)
+        }
+    }
+
     private func slotRow(slotNumber: Int, name: String, lat: Double, lon: Double, onEdit: @escaping () -> Void) -> some View {
-        HStack {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.red.opacity(0.15))
+                    .frame(width: 32, height: 32)
+                Image(systemName: "mappin.and.ellipse")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.red)
+            }
+
             VStack(alignment: .leading, spacing: 2) {
-                Text("Slot \(slotNumber): \(name)")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
+                HStack(spacing: 6) {
+                    Text("SLOT \(slotNumber)")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1.5)
+                        .background(Color.red.opacity(0.2))
+                        .foregroundColor(.red)
+                        .cornerRadius(4)
+
+                    Text(name.isEmpty ? "Unassigned" : name)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                }
+
                 Text(String(format: "%.4f°, %.4f°", lat, lon))
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundColor(.gray)
             }
+
             Spacer()
-            Button("Edit") {
+
+            Button(action: {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 onEdit()
+            }) {
+                HStack(spacing: 3) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 10, weight: .bold))
+                    Text("Edit")
+                        .font(.system(size: 12, weight: .bold))
+                }
+                .foregroundColor(.red)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.red.opacity(0.12))
+                .cornerRadius(8)
             }
-            .font(.system(size: 12, weight: .bold))
-            .foregroundColor(.red)
+            .buttonStyle(BorderlessButtonStyle())
         }
+        .padding(.vertical, 2)
     }
 
     private func openSlotEditor(slot: Int, name: String, lat: Double, lon: Double) {

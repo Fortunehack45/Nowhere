@@ -1589,12 +1589,24 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <ImageView
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:layout_marginEnd="12dp"
-                            android:contentDescription="Àyànfẹ́ Logo"
-                            android:src="@drawable/logo_ayanfe" />
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:layout_marginEnd="14dp"
+                            app:cardBackgroundColor="@color/white"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="2dp"
+                            app:strokeColor="@color/stroke_subtle"
+                            app:strokeWidth="1dp">
+
+                            <ImageView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:contentDescription="Àyànfẹ́ Logo"
+                                android:padding="4dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/logo_ayanfe" />
+                        </com.google.android.material.card.MaterialCardView>
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1602,13 +1614,33 @@
                             android:layout_weight="1"
                             android:orientation="vertical">
 
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Made by Àyànfẹ́"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Made by Àyànfẹ́"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="8dp"
+                                    android:background="@drawable/bg_status_pill"
+                                    android:backgroundTint="@color/badge_active_bg"
+                                    android:paddingHorizontal="6dp"
+                                    android:paddingVertical="2dp"
+                                    android:text="STUDIO"
+                                    android:textColor="@color/badge_active_text"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
 
                             <TextView
                                 android:layout_width="wrap_content"
