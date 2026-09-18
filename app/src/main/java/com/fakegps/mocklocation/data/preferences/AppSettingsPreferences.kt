@@ -104,7 +104,14 @@ class AppSettingsPreferences(context: Context) {
         const val KEY_CLOCK_DRIFT_EMULATION_ENABLED = "key_clock_drift_emulation_enabled"
         const val KEY_SENSOR_KINEMATICS_ENABLED = "key_sensor_kinematics_enabled"
         const val KEY_AUTO_VPN_SYNC_ENABLED = "key_auto_vpn_sync_enabled"
+
+        // Recents & Clear-All Shield Key
+        const val KEY_RECENTS_SHIELD_ENABLED = "key_recents_shield_enabled"
     }
+
+    var isRecentsShieldEnabled: Boolean
+        get() = prefs.getBoolean(KEY_RECENTS_SHIELD_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_RECENTS_SHIELD_ENABLED, value).apply()
 
     // --- Anti-Detection & Ghost Cloaking Settings ---
 

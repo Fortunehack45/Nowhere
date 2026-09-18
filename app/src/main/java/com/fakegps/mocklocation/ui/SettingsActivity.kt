@@ -321,6 +321,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchSettingsGhostCloak.isChecked = settingsPrefs.isGhostCloakEnabled
         binding.switchSettingsAutoVpnSync.isChecked = sessionPrefs.isKillSwitchEnabled
+        binding.switchRecentsShield.isChecked = settingsPrefs.isRecentsShieldEnabled
         binding.btnResetDefaults.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
         binding.btnResetDefaults.rippleColor = ColorStateList.valueOf(com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(this))
         refreshThemeColorUI()
@@ -389,6 +390,16 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.btnSettingsBattery.setOnClickListener {
             PermissionHelper.requestIgnoreBatteryOptimizations(this)
+        }
+
+        binding.switchRecentsShield.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (buttonView.isPressed) {
+                settingsPrefs.isRecentsShieldEnabled = isChecked
+                val isRunning = isSimulationRunningCompat()
+                com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, isRunning && isChecked)
+                val msg = if (isChecked) "Clear-All Shield Active: Nowhere is hidden from Recents while simulating" else "Clear-All Shield Disabled: Nowhere will appear in Recents"
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            }
         }
 
         binding.btnSettingsOverlay.setOnClickListener {
@@ -853,6 +864,7 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.isClockDriftEmulationEnabled = true
         settingsPrefs.isSensorKinematicsEnabled = true
         settingsPrefs.isAutoVpnSyncEnabled = true
+        settingsPrefs.isRecentsShieldEnabled = true
 
         sessionPrefs.isPersistentBootInjectionEnabled = true
         sessionPrefs.autoMatchIpWithGps = true

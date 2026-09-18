@@ -47,10 +47,10 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
             }
             ACTION_RESTORE_MOCK_SESSION -> {
                 android.util.Log.i("MockLocationReceiver", "ACTION_RESTORE_MOCK_SESSION received. Checking simulation status...")
-                if (!MockLocationService.isSimulationRunning()) {
-                    val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(context)
-                    if (sessionPrefs.isSessionActive) {
-                        android.util.Log.i("MockLocationReceiver", "Active session found. Resuming MockLocationService in foreground...")
+                val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(context)
+                if (sessionPrefs.isSessionActive) {
+                    if (!MockLocationService.isSimulationRunning()) {
+                        android.util.Log.i("MockLocationReceiver", "Active session found but service is down. Resuming MockLocationService in foreground...")
                         val serviceIntent = Intent(context, MockLocationService::class.java).apply {
                             action = MockLocationService.ACTION_RESTORE_SESSION
                         }
@@ -63,6 +63,9 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
                         } catch (e: Exception) {
                             android.util.Log.e("MockLocationReceiver", "Failed to startForegroundService from alarm broadcast: ${e.message}", e)
                         }
+                    } else {
+                        // Re-arm watchdog check for continuous background health
+                        activeService?.scheduleWatchdog()
                     }
                 }
             }

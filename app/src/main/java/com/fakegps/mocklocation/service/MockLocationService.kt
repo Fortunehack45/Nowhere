@@ -288,6 +288,7 @@ class MockLocationService : Service() {
             isPaused = false
         )
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
         startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
         motionSyncEngine?.start(initialLat, initialLon, 0f)
@@ -311,6 +312,7 @@ class MockLocationService : Service() {
         if (sessionPrefs.isSessionActive) {
             acquireWakeLock()
             isStopping.set(false)
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
             // 1. Immediately re-anchor the foreground notification to maintain foreground priority
             val placeName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
@@ -477,7 +479,7 @@ class MockLocationService : Service() {
         )
 
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         }
         val openAppPendingIntent = PendingIntent.getActivity(
             this,
@@ -568,7 +570,7 @@ class MockLocationService : Service() {
                 )
 
                 val openAppIntent = Intent(this@MockLocationService, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
                 }
                 val openAppPendingIntent = PendingIntent.getActivity(
                     this@MockLocationService,
@@ -660,39 +662,34 @@ class MockLocationService : Service() {
         }
     }
 
-    private fun scheduleWatchdog() {
-        // Watchdog: only schedule a one-shot keepalive if no session is currently running.
-        // Uses inexact alarm to avoid SCHEDULE_EXACT_ALARM permission requirement on Android 12+.
+    fun scheduleWatchdog() {
         if (!sessionPrefs.isSessionActive) return
-        if (_serviceState.value is ServiceState.Running) return // Already running — no need
         try {
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-            val watchdogIntent = Intent(applicationContext, MockLocationService::class.java).apply {
-                action = ACTION_RESTORE_SESSION
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+            val broadcastIntent = Intent(applicationContext, MockLocationServiceReceiver::class.java).apply {
+                action = MockLocationServiceReceiver.ACTION_RESTORE_MOCK_SESSION
             }
-            val pendingIntent = PendingIntent.getService(
+            val pendingIntent = PendingIntent.getBroadcast(
                 applicationContext,
                 999,
-                watchdogIntent,
+                broadcastIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            val triggerTime = android.os.SystemClock.elapsedRealtime() + 90_000L // 90s keepalive
-            // Use setAndAllowWhileIdle (inexact) — avoids SCHEDULE_EXACT_ALARM SecurityException on API 31+
+            val triggerTime = android.os.SystemClock.elapsedRealtime() + 60_000L // 60s keepalive check
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager?.setAndAllowWhileIdle(
+                alarmManager.setAndAllowWhileIdle(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     triggerTime,
                     pendingIntent
                 )
             } else {
-                alarmManager?.set(
+                alarmManager.set(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     triggerTime,
                     pendingIntent
                 )
             }
-        } catch (e: SecurityException) {
-            Log.w(TAG, "Watchdog alarm permission denied — service will rely on START_STICKY for self-recovery.")
+            Log.d(TAG, "Watchdog alarm scheduled for 60s safety heartbeat.")
         } catch (e: Exception) {
             Log.w(TAG, "Could not schedule watchdog alarm: ${e.message}")
         }
@@ -700,17 +697,18 @@ class MockLocationService : Service() {
 
     private fun cancelWatchdog() {
         try {
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-            val watchdogIntent = Intent(applicationContext, MockLocationService::class.java).apply {
-                action = ACTION_RESTORE_SESSION
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+            val broadcastIntent = Intent(applicationContext, MockLocationServiceReceiver::class.java).apply {
+                action = MockLocationServiceReceiver.ACTION_RESTORE_MOCK_SESSION
             }
-            val pendingIntent = PendingIntent.getService(
+            val pendingIntent = PendingIntent.getBroadcast(
                 applicationContext,
                 999,
-                watchdogIntent,
+                broadcastIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            alarmManager?.cancel(pendingIntent)
+            alarmManager.cancel(pendingIntent)
+            Log.d(TAG, "Watchdog alarm cancelled.")
         } catch (ignored: Exception) {}
     }
 
@@ -760,6 +758,7 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
         // Automatically sync and engage single powerful WireGuard VPN Shield
         if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
@@ -929,6 +928,7 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
         // Automatically sync and engage single powerful WireGuard VPN Shield
         if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
@@ -1213,6 +1213,7 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
         // Automatically sync and engage single powerful WireGuard VPN Shield
         if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
@@ -1363,6 +1364,7 @@ class MockLocationService : Service() {
             return
         }
         Log.i(TAG, "stopSpoofing called by user. Terminating simulation and releasing all resources.")
+        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, false)
         cancelWatchdog()
         cancelBackgroundRestartAlarm()
         stopCurrentLoop()
@@ -1400,6 +1402,7 @@ class MockLocationService : Service() {
             return
         }
         acquireWakeLock()
+        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
         SessionTimerManager.resumeExistingTimer(this)
 
         when (sessionPrefs.activeMode) {

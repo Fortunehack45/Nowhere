@@ -409,8 +409,10 @@ class MainActivity : AppCompatActivity() {
         val isSimRunning = isSimulationRunningCompat()
         if (isSimRunning) {
             com.fakegps.mocklocation.service.SessionTimerManager.resumeExistingTimer(this)
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
         } else {
             com.fakegps.mocklocation.service.SessionTimerManager.updateStaticState(this)
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, false)
         }
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             if (binding.adBannerContainer.childCount == 0) {
@@ -436,10 +438,16 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         binding.mapView.onPause()
+        if (isSimulationRunningCompat()) {
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
+        }
     }
 
     override fun onStop() {
         super.onStop()
+        if (isSimulationRunningCompat()) {
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
+        }
         try {
             connectivityManager?.unregisterNetworkCallback(networkCallback)
         } catch (_: Exception) {}
@@ -1264,6 +1272,7 @@ class MainActivity : AppCompatActivity() {
             }
             startForegroundServiceCompat(intent)
             mockService?.startMotionSync(lat, lon)
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
             lifecycleScope.launch(Dispatchers.IO) {
                 AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setMotionSyncEnabled(true)
             }
@@ -1278,6 +1287,9 @@ class MainActivity : AppCompatActivity() {
         }
         startService(intent)
         mockService?.stopMotionSync()
+        if (!isSimulationRunningCompat()) {
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, false)
+        }
         lifecycleScope.launch(Dispatchers.IO) {
             AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setMotionSyncEnabled(false)
         }
@@ -1676,6 +1688,7 @@ class MainActivity : AppCompatActivity() {
             }
             startForegroundServiceCompat(intent)
             mockService?.startFixed(state.fixedLatitude, state.fixedLongitude)
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
             com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
         }
     }
@@ -1765,6 +1778,7 @@ class MainActivity : AppCompatActivity() {
             putExtra(MockLocationService.EXTRA_TRANSPORT_MODE, state.transportMode.name)
         }
         startForegroundServiceCompat(intent)
+        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
         com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
     }
 
@@ -1786,12 +1800,14 @@ class MainActivity : AppCompatActivity() {
             }
             startForegroundServiceCompat(intent)
             mockService?.startJoystick(state.fixedLatitude, state.fixedLongitude, state.joystickSpeedKmh)
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
             com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
         }
     }
 
     private fun stopSpoofing() {
         performHapticFeedbackIfEnabled()
+        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, false)
         com.fakegps.mocklocation.service.SessionTimerManager.stopTimer(this)
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_STOP

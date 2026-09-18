@@ -25,12 +25,12 @@ object OEMDetector {
 
     fun getOEMGuidanceMessage(): String {
         return when (getDeviceOEM()) {
-            OEM.XIAOMI -> "Xiaomi/MIUI aggressive battery saver may terminate the mock location background service. Please enable Autostart and set Battery Saver to 'No Restrictions'."
-            OEM.SAMSUNG -> "Samsung OneUI may put background apps to sleep. Please add this app to 'Never Sleeping Apps' in Device Care settings."
-            OEM.HUAWEI -> "Huawei EMUI may aggressively stop background services. Please go to Battery > App Launch and set this app to 'Manage Manually'."
-            OEM.OPPO_ONEPLUS -> "ColorOS/OxygenOS may kill background services when the screen is locked. Please allow background activity in Battery settings."
-            OEM.VIVO -> "Vivo FuntouchOS may terminate background location apps. Please allow 'High Background Power Consumption'."
-            OEM.OTHER -> "Please ensure battery optimization is disabled so location spoofing continues reliably when the app is backgrounded."
+            OEM.XIAOMI -> "Xiaomi / HyperOS / MIUI may kill background apps on 'Clear All'. Please enable Autostart, set Battery Saver to 'No Restrictions', and Lock Nowhere in Recent Apps (swipe card down to show padlock 🔒)."
+            OEM.SAMSUNG -> "Samsung OneUI may sleep background GPS or kill it on 'Clear All'. Please add Nowhere to 'Never Sleeping Apps' in Device Care, and lock Nowhere in Recent Apps (tap app icon in recents > 'Lock this app' 🔒)."
+            OEM.HUAWEI -> "Huawei EMUI may aggressively stop background services. Go to Battery > App Launch and set Nowhere to 'Manage Manually' (Auto-launch, Secondary launch, and Run in background enabled)."
+            OEM.OPPO_ONEPLUS -> "ColorOS/OxygenOS may kill background services on 'Clear All'. Please allow background activity in Battery settings and lock Nowhere in Recent Apps (tap 3-dots > Lock 🔒)."
+            OEM.VIVO -> "Vivo FuntouchOS may terminate background location apps. Please allow 'High Background Power Consumption' and lock Nowhere in Recent Apps (swipe card down > Lock 🔒)."
+            OEM.OTHER -> "Please ensure battery optimization is disabled so location spoofing continues reliably when Nowhere is backgrounded or cleared from recents."
         }
     }
 
