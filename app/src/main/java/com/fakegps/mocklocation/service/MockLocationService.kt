@@ -391,6 +391,25 @@ class MockLocationService : Service() {
         }
     }
 
+    fun cancelBackgroundRestartAlarm() {
+        try {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+            val broadcastIntent = Intent(applicationContext, MockLocationServiceReceiver::class.java).apply {
+                action = MockLocationServiceReceiver.ACTION_RESTORE_MOCK_SESSION
+            }
+            val broadcastPendingIntent = PendingIntent.getBroadcast(
+                applicationContext,
+                199,
+                broadcastIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.cancel(broadcastPendingIntent)
+            Log.d(TAG, "Background restart alarm cancelled.")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to cancel restart alarm: ${e.message}")
+        }
+    }
+
 
 
     private fun acquireWakeLock() {
@@ -1343,8 +1362,9 @@ class MockLocationService : Service() {
             Log.d(TAG, "stopSpoofing already in progress, skipping duplicate call.")
             return
         }
-        Log.i(TAG, "stopSpoofing called. Terminating simulation and releasing resources.")
+        Log.i(TAG, "stopSpoofing called by user. Terminating simulation and releasing all resources.")
         cancelWatchdog()
+        cancelBackgroundRestartAlarm()
         stopCurrentLoop()
         releaseWakeLock()
         try { engine.stop() } catch (e: Exception) { Log.w(TAG, "engine.stop() error (non-fatal): ${e.message}") }
@@ -1354,9 +1374,14 @@ class MockLocationService : Service() {
         activeMode = SimulationMode.Idle
         _serviceState.value = ServiceState.Idle
         try { updateAllWidgets() } catch (e: Exception) { Log.w(TAG, "widget update on stop (non-fatal): ${e.message}") }
+        try { FloatingJoystickService.stop(this) } catch (e: Exception) {}
         try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
-        try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS stopped") } catch (e: Exception) {}
+        try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS stopped by user") } catch (e: Exception) {}
         try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (e: Exception) {}
+        try {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            nm?.cancel(NOTIFICATION_ID)
+        } catch (e: Exception) {}
         stopSelf()
     }
 

@@ -1798,6 +1798,9 @@ class MainActivity : AppCompatActivity() {
         }
         startService(intent)
         mockService?.stopSpoofing()
+        try {
+            com.fakegps.mocklocation.service.FloatingJoystickService.stop(this)
+        } catch (ignored: Exception) {}
         viewModel.onServiceStateUpdated(ServiceState.Idle)
         com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Simulation stopped")
         com.fakegps.mocklocation.ads.AdManager.showInterstitialIfReady(this)
