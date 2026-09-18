@@ -288,7 +288,6 @@ class MockLocationService : Service() {
             isPaused = false
         )
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
-        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
         startForegroundNotification("Motion Sync Active", "Syncing mock movement with physical sensors")
         motionSyncEngine?.start(initialLat, initialLon, 0f)
@@ -312,7 +311,6 @@ class MockLocationService : Service() {
         if (sessionPrefs.isSessionActive) {
             acquireWakeLock()
             isStopping.set(false)
-            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
             // 1. Immediately re-anchor the foreground notification to maintain foreground priority
             val placeName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
@@ -758,7 +756,6 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
-        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
         // Automatically sync and engage single powerful WireGuard VPN Shield
         if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
@@ -928,7 +925,6 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
-        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
         // Automatically sync and engage single powerful WireGuard VPN Shield
         if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
@@ -1213,7 +1209,6 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
-        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
 
         // Automatically sync and engage single powerful WireGuard VPN Shield
         if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
@@ -1364,7 +1359,7 @@ class MockLocationService : Service() {
             return
         }
         Log.i(TAG, "stopSpoofing called by user. Terminating simulation and releasing all resources.")
-        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, false)
+        com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
         cancelWatchdog()
         cancelBackgroundRestartAlarm()
         stopCurrentLoop()
@@ -1402,7 +1397,6 @@ class MockLocationService : Service() {
             return
         }
         acquireWakeLock()
-        com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
         SessionTimerManager.resumeExistingTimer(this)
 
         when (sessionPrefs.activeMode) {

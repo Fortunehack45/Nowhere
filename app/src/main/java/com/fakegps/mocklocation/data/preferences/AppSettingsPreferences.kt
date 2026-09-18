@@ -110,7 +110,7 @@ class AppSettingsPreferences(context: Context) {
     }
 
     var isRecentsShieldEnabled: Boolean
-        get() = prefs.getBoolean(KEY_RECENTS_SHIELD_ENABLED, true)
+        get() = prefs.getBoolean(KEY_RECENTS_SHIELD_ENABLED, false)
         set(value) = prefs.edit().putBoolean(KEY_RECENTS_SHIELD_ENABLED, value).apply()
 
     // --- Anti-Detection & Ghost Cloaking Settings ---

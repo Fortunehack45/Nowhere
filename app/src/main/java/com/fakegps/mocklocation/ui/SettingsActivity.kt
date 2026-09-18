@@ -395,9 +395,13 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchRecentsShield.setOnCheckedChangeListener { buttonView, isChecked ->
             if (buttonView.isPressed) {
                 settingsPrefs.isRecentsShieldEnabled = isChecked
-                val isRunning = isSimulationRunningCompat()
-                com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, isRunning && isChecked)
-                val msg = if (isChecked) "Clear-All Shield Active: Nowhere is hidden from Recents while simulating" else "Clear-All Shield Disabled: Nowhere will appear in Recents"
+                if (!isChecked) {
+                    com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
+                } else {
+                    val isRunning = isSimulationRunningCompat()
+                    com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, isRunning)
+                }
+                val msg = if (isChecked) "Recents Shield Active: Nowhere will be hidden from Recents while simulating" else "Nowhere will always appear in Recent Apps"
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
             }
         }
@@ -864,7 +868,7 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.isClockDriftEmulationEnabled = true
         settingsPrefs.isSensorKinematicsEnabled = true
         settingsPrefs.isAutoVpnSyncEnabled = true
-        settingsPrefs.isRecentsShieldEnabled = true
+        settingsPrefs.isRecentsShieldEnabled = false
 
         sessionPrefs.isPersistentBootInjectionEnabled = true
         sessionPrefs.autoMatchIpWithGps = true

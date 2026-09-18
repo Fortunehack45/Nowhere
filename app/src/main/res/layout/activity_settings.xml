@@ -666,7 +666,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Hides Nowhere from Recent Apps while active so 'Clear All' cannot force-stop mock location"
+                                android:text="Optional stealth mode: Hides Nowhere from Recent Apps while active. Keep OFF so Nowhere stays in your Recent Apps list"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>

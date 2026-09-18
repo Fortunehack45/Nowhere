@@ -21,6 +21,7 @@ object RecentsShieldManager {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
 
         val prefs = AppSettingsPreferences(context)
+        // Strictly only exclude if the user explicitly enabled the setting in Settings
         val targetExcluded = shouldExclude && prefs.isRecentsShieldEnabled
 
         try {
@@ -42,6 +43,25 @@ object RecentsShieldManager {
             }
         } catch (e: Exception) {
             Log.w(TAG, "Error accessing ActivityManager for recents shield: ${e.message}")
+        }
+    }
+
+    /**
+     * Unconditionally ensures Nowhere is visible in the Android Recent Apps / Overview tray.
+     */
+    fun ensureVisibleInRecents(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
+        try {
+            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+            val appTasks = activityManager?.appTasks ?: return
+            for (task in appTasks) {
+                try {
+                    task.setExcludeFromRecents(false)
+                } catch (_: Exception) {}
+            }
+            Log.d(TAG, "ensureVisibleInRecents: Task confirmed visible in Android Recents overview.")
+        } catch (e: Exception) {
+            Log.w(TAG, "Error ensuring visible in recents: ${e.message}")
         }
     }
 }
