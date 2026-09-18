@@ -1,9 +1,10 @@
 package com.fakegps.mocklocation.ui.dialogs
 
 import android.app.Activity
-import android.content.Intent
+import android.content.Context
 import android.net.VpnService
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,16 +13,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.fakegps.mocklocation.R
+import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.LayoutDialogIpChangerBinding
-import com.fakegps.mocklocation.vpn.KillSwitchManager
+import com.fakegps.mocklocation.vpn.NowhereVpnService
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
- * Emergency Privacy Kill Switch Bottom Sheet.
- * Manages OS-level local packet sinkhole leak protection.
+ * Nowhere Ghost VPN Shield Bottom Sheet.
+ * Manages the single high-performance WireGuard anti-detection tunnel.
  */
 class IpChangerBottomSheet @JvmOverloads constructor(
     private var currentMockLat: Double? = null,
@@ -50,19 +52,17 @@ class IpChangerBottomSheet @JvmOverloads constructor(
     private val binding get() = _binding!!
 
     private lateinit var sessionPrefs: SessionPreferences
+    private lateinit var settingsPrefs: AppSettingsPreferences
 
     private val vpnPrepareLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val ctx = context ?: return@registerForActivityResult
         if (result.resultCode == Activity.RESULT_OK) {
-            KillSwitchManager.setEnabled(ctx, true)
-            binding.switchKillSwitchMaster.isChecked = true
-            Toast.makeText(ctx, "Kill Switch Armed: Leak Protection ON", Toast.LENGTH_SHORT).show()
+            NowhereVpnService.start(ctx, "us_central_gcp")
+            Toast.makeText(ctx, "Ghost Shield Activated", Toast.LENGTH_SHORT).show()
         } else {
-            binding.switchKillSwitchMaster.isChecked = false
-            KillSwitchManager.setEnabled(ctx, false)
-            Toast.makeText(ctx, "VPN Permission is required for OS Kill Switch sinkhole", Toast.LENGTH_LONG).show()
+            Toast.makeText(ctx, "VPN Permission required to activate Ghost Shield", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -87,115 +87,133 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        sessionPrefs = SessionPreferences(requireContext())
+        val ctx = requireContext()
+        sessionPrefs = SessionPreferences(ctx)
+        settingsPrefs = AppSettingsPreferences(ctx)
 
-        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, ctx)
 
-        setupKillSwitchControls()
-        observeKillSwitchState()
-        KillSwitchManager.evaluate(requireContext())
+        setupControls()
+        observeVpnState()
+        observeTrafficStats()
     }
 
-    private fun setupKillSwitchControls() {
-        binding.switchKillSwitchMaster.isChecked = sessionPrefs.isKillSwitchEnabled
+    private fun setupControls() {
+        val ctx = requireContext()
 
-        binding.switchKillSwitchMaster.setOnCheckedChangeListener { _, isChecked ->
-            val ctx = context ?: return@setOnCheckedChangeListener
-            if (isChecked) {
+        // Auto-Sync Switch
+        binding.switchAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled
+        binding.switchAutoVpnSync.setOnCheckedChangeListener { buttonView, isChecked ->
+            buttonView.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            settingsPrefs.isAutoVpnSyncEnabled = isChecked
+            sessionPrefs.isIpMaskingEnabled = isChecked
+            val statusMsg = if (isChecked) "VPN Auto-Sync Enabled" else "VPN Auto-Sync Disabled"
+            Toast.makeText(ctx, statusMsg, Toast.LENGTH_SHORT).show()
+            onShieldStateChanged?.invoke()
+        }
+
+        // Manual Toggle Button
+        binding.btnToggleVpnManual.setOnClickListener { button ->
+            button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            if (NowhereVpnService.isRunning) {
+                NowhereVpnService.stop(ctx)
+                Toast.makeText(ctx, "Ghost Shield Deactivated", Toast.LENGTH_SHORT).show()
+            } else {
                 val prepareIntent = VpnService.prepare(ctx)
                 if (prepareIntent != null) {
                     vpnPrepareLauncher.launch(prepareIntent)
                 } else {
-                    KillSwitchManager.setEnabled(ctx, true)
-                    Toast.makeText(ctx, "Kill Switch Armed: Leak Protection ON", Toast.LENGTH_SHORT).show()
+                    NowhereVpnService.start(ctx, "us_central_gcp")
+                    Toast.makeText(ctx, "Activating Ghost Shield...", Toast.LENGTH_SHORT).show()
                 }
-            } else {
-                KillSwitchManager.setEnabled(ctx, false)
-                Toast.makeText(ctx, "Kill Switch Disabled", Toast.LENGTH_SHORT).show()
             }
-            onShieldStateChanged?.invoke()
         }
 
-        binding.btnKillSwitchBypass.setOnClickListener {
-            val ctx = context ?: return@setOnClickListener
-            val newBypassState = !sessionPrefs.isKillSwitchBypassed
-            KillSwitchManager.setBypassed(ctx, newBypassState)
-            if (newBypassState) {
-                Toast.makeText(ctx, "Emergency Bypass Active (Internet allowed)", Toast.LENGTH_SHORT).show()
-                binding.btnKillSwitchBypass.text = "Re-Arm Kill Switch Shield"
-            } else {
-                Toast.makeText(ctx, "Kill Switch Re-Armed", Toast.LENGTH_SHORT).show()
-                binding.btnKillSwitchBypass.text = "Temporary Emergency Bypass (Allow Internet)"
-            }
-            onShieldStateChanged?.invoke()
-        }
-
-        binding.btnResumeMockLocation.setOnClickListener {
-            val ctx = context ?: return@setOnClickListener
+        binding.btnDone.setOnClickListener {
             dismiss()
-            Toast.makeText(ctx, "Starting mock GPS to unblock internet...", Toast.LENGTH_SHORT).show()
-            val intent = Intent(ctx, com.fakegps.mocklocation.service.MockLocationService::class.java).apply {
-                action = com.fakegps.mocklocation.service.MockLocationService.ACTION_START_FIXED
-                putExtra(com.fakegps.mocklocation.service.MockLocationService.EXTRA_LATITUDE, sessionPrefs.lastLatitude)
-                putExtra(com.fakegps.mocklocation.service.MockLocationService.EXTRA_LONGITUDE, sessionPrefs.lastLongitude)
-            }
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                ctx.startForegroundService(intent)
-            } else {
-                ctx.startService(intent)
-            }
         }
 
-        binding.btnIpChangerClose.setOnClickListener { dismiss() }
-        binding.btnDone.setOnClickListener { dismiss() }
+        binding.btnIpChangerClose.setOnClickListener {
+            dismiss()
+        }
     }
 
-    private fun observeKillSwitchState() {
+    private fun observeVpnState() {
         viewLifecycleOwner.lifecycleScope.launch {
-            KillSwitchManager.status.collectLatest { status ->
-                if (_binding == null || !isAdded) return@collectLatest
+            NowhereVpnService.vpnState.collectLatest { state ->
                 val ctx = context ?: return@collectLatest
+                when (state) {
+                    is NowhereVpnService.VpnState.Connected -> {
+                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
+                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_text)
+                        binding.tvVpnStateTitle.text = "Ghost Shield Protected"
+                        binding.tvVpnBadge.text = "PROTECTED"
+                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_success_text))
+                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_bg)
+                        binding.tvVpnDescription.text = "Kernel WireGuard tunnel active with BBR congestion control and TCP MSS Clamping. Zero packet inspection leaks."
 
-                when (status) {
-                    is KillSwitchManager.KillSwitchStatus.Armed -> {
-                        binding.tvKillSwitchStateTitle.text = "Kill Switch Armed & Active"
-                        binding.tvKillSwitchBadge.text = "ARMED"
-                        binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_success_text))
-                        binding.tvKillSwitchDescription.text = "Mock GPS is actively injecting. All outgoing internet traffic is shielded. If mock GPS stops, internet will halt instantly to prevent real location leaks."
-                        binding.ivKillSwitchShield.setColorFilter(ContextCompat.getColor(ctx, R.color.badge_success_text))
-                        binding.btnResumeMockLocation.visibility = View.GONE
-                        binding.btnKillSwitchBypass.visibility = View.VISIBLE
-                        binding.btnKillSwitchBypass.text = "Temporary Emergency Bypass"
+                        binding.btnToggleVpnManual.isEnabled = true
+                        binding.btnToggleVpnManual.text = "Deactivate Ghost Shield"
+                        binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
+                        binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+                        binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.text_primary)
+                        binding.layoutVpnTelemetry.visibility = View.VISIBLE
+                        binding.tvServerNodeInfo.text = "Primary Google Cloud WireGuard Node • Live"
                     }
-                    is KillSwitchManager.KillSwitchStatus.Triggered -> {
-                        binding.tvKillSwitchStateTitle.text = "Internet Traffic Halted"
-                        binding.tvKillSwitchBadge.text = "LEAK SHIELDED"
-                        binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.btn_stop_text))
-                        binding.tvKillSwitchDescription.text = "All outgoing internet traffic is stopped at the OS level because ${status.reason}. Resume mock GPS or use emergency bypass."
-                        binding.ivKillSwitchShield.setColorFilter(ContextCompat.getColor(ctx, R.color.btn_stop_text))
-                        binding.btnResumeMockLocation.visibility = View.VISIBLE
-                        binding.btnKillSwitchBypass.visibility = View.VISIBLE
-                        binding.btnKillSwitchBypass.text = "Temporary Emergency Bypass (Allow Internet)"
+                    is NowhereVpnService.VpnState.Connecting -> {
+                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
+                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
+                        binding.tvVpnStateTitle.text = "Connecting to Secure Tunnel..."
+                        binding.tvVpnBadge.text = "CONNECTING"
+                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_warning_text))
+                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_bg)
+                        binding.tvVpnDescription.text = "Negotiating ChaCha20-Poly1305 WireGuard cryptographic handshake on port 51820..."
+
+                        binding.btnToggleVpnManual.isEnabled = false
+                        binding.btnToggleVpnManual.text = "Connecting..."
                     }
-                    is KillSwitchManager.KillSwitchStatus.Bypassed -> {
-                        binding.tvKillSwitchStateTitle.text = "Kill Switch Bypassed"
-                        binding.tvKillSwitchBadge.text = "BYPASS ON"
-                        binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_warning_text))
-                        binding.tvKillSwitchDescription.text = "Temporary emergency bypass is active. Internet traffic is flowing freely without leak interruption."
-                        binding.ivKillSwitchShield.setColorFilter(ContextCompat.getColor(ctx, R.color.badge_warning_text))
-                        binding.btnResumeMockLocation.visibility = View.GONE
-                        binding.btnKillSwitchBypass.visibility = View.VISIBLE
-                        binding.btnKillSwitchBypass.text = "Re-Arm Kill Switch Shield"
+                    is NowhereVpnService.VpnState.Error -> {
+                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
+                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_text)
+                        binding.tvVpnStateTitle.text = "Tunnel Offline"
+                        binding.tvVpnBadge.text = "OFFLINE"
+                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_error_text))
+                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_bg)
+                        binding.tvVpnDescription.text = "Could not complete handshake. Mobile data connection has been safely preserved."
+
+                        binding.btnToggleVpnManual.isEnabled = true
+                        binding.btnToggleVpnManual.text = "Retry Ghost Shield Connection"
+                        binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
+                        binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
+                        binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
                     }
-                    is KillSwitchManager.KillSwitchStatus.Disabled -> {
-                        binding.tvKillSwitchStateTitle.text = "Kill Switch Disabled"
-                        binding.tvKillSwitchBadge.text = "OFF"
-                        binding.tvKillSwitchBadge.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
-                        binding.tvKillSwitchDescription.text = "Enable the Emergency Kill Switch to ensure your real IP and GPS coordinates are never exposed if mock simulation stops."
-                        binding.ivKillSwitchShield.setColorFilter(ContextCompat.getColor(ctx, R.color.text_muted))
-                        binding.btnResumeMockLocation.visibility = View.GONE
-                        binding.btnKillSwitchBypass.visibility = View.GONE
+                    is NowhereVpnService.VpnState.Disconnected -> {
+                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
+                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.text_muted)
+                        binding.tvVpnStateTitle.text = "Ghost Shield Inactive"
+                        binding.tvVpnBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) "SYNCED" else "IDLE"
+                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
+                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
+                        binding.tvVpnDescription.text = "Connects automatically when mock GPS starts. Tap Activate below to engage protection anytime."
+
+                        binding.btnToggleVpnManual.isEnabled = true
+                        binding.btnToggleVpnManual.text = "Activate Ghost Shield Now"
+                        binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
+                        binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
+                        binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
+                        binding.tvServerNodeInfo.text = "Primary Google Cloud WireGuard Node • Ready"
                     }
+                }
+            }
+        }
+    }
+
+    private fun observeTrafficStats() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            NowhereVpnService.trafficStats.collectLatest { stats ->
+                if (_binding != null && NowhereVpnService.isRunning) {
+                    binding.tvVpnDownRate.text = stats.formatDownloadRate()
+                    binding.tvVpnUpRate.text = stats.formatUploadRate()
                 }
             }
         }

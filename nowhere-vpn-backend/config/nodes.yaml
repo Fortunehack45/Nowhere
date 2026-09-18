@@ -1,95 +1,23 @@
-# Nowhere VPN - Real Production WireGuard Server Inventory
-# Single source of truth for physical/VPS node instances.
-# Only live, physically provisioned and verified WireGuard nodes are enabled.
+# Nowhere VPN - Single High-Performance Production WireGuard Server
+# Single source of truth for the primary Google Cloud WireGuard node.
 
 nodes:
   # ============================================================================
-  # GOOGLE CLOUD PRODUCTION NODE (LIVE - VERIFIED)
+  # PRIMARY GOOGLE CLOUD PRODUCTION NODE
   # ============================================================================
   - id: us_central_gcp
-    region_group: us_central
+    region_group: nowhere_primary
     country: US
-    country_name: United States
-    city: Council Bluffs (US Central)
+    country_name: "Nowhere Primary Secure Shield"
+    city: "Google Cloud Node"
     endpoint: 104.197.128.154:51820
     server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
     ssh_host: 127.0.0.1
     ssh_port: 22
-    ssh_user: deploy
-    ssh_key_path: /secrets/nowhere_deploy.pem
+    ssh_user: root
+    ssh_key_path: ""
     tunnel_subnet: 10.8.0.0/24
     dns: 1.1.1.1,1.0.0.1
     interface: wg0
-    capacity_peers: 250
+    capacity_peers: 500
     enabled: true
-
-  # ============================================================================
-  # FUTURE REGIONAL NODES (Disabled until separate physical VPS is provisioned)
-  # ============================================================================
-  - id: uk_lon_1
-    region_group: uk_lon
-    country: GB
-    country_name: United Kingdom
-    city: London
-    endpoint: 104.197.128.154:51820
-    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
-    ssh_host: 127.0.0.1
-    ssh_port: 22
-    ssh_user: deploy
-    ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.0.0/24
-    dns: 1.1.1.1,1.0.0.1
-    interface: wg0
-    capacity_peers: 250
-    enabled: false
-
-  - id: de_fra_1
-    region_group: de_fra
-    country: DE
-    country_name: Germany
-    city: Frankfurt
-    endpoint: 104.197.128.154:51820
-    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
-    ssh_host: 127.0.0.1
-    ssh_port: 22
-    ssh_user: deploy
-    ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.0.0/24
-    dns: 1.1.1.1,1.0.0.1
-    interface: wg0
-    capacity_peers: 250
-    enabled: false
-
-  - id: jp_tyo_1
-    region_group: jp_tyo
-    country: JP
-    country_name: Japan
-    city: Tokyo
-    endpoint: 104.197.128.154:51820
-    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
-    ssh_host: 127.0.0.1
-    ssh_port: 22
-    ssh_user: deploy
-    ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.0.0/24
-    dns: 1.1.1.1,1.0.0.1
-    interface: wg0
-    capacity_peers: 250
-    enabled: false
-
-  - id: sg_sin_1
-    region_group: sg_sin
-    country: SG
-    country_name: Singapore
-    city: Singapore
-    endpoint: 104.197.128.154:51820
-    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
-    ssh_host: 127.0.0.1
-    ssh_port: 22
-    ssh_user: deploy
-    ssh_key_path: /secrets/nowhere_deploy.pem
-    tunnel_subnet: 10.8.0.0/24
-    dns: 1.1.1.1,1.0.0.1
-    interface: wg0
-    capacity_peers: 250
-    enabled: false

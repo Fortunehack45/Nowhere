@@ -695,6 +695,15 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
+        // Automatically sync and engage single powerful WireGuard VPN Shield
+        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+            try {
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+            } catch (e: Exception) {
+                Log.w(TAG, "VPN auto-sync start failed (non-fatal): ${e.message}")
+            }
+        }
+
         // Signal Kill Switch that mock GPS is active (arms protection, allows normal traffic)
         com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStarted(this)
 
@@ -853,6 +862,15 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+
+        // Automatically sync and engage single powerful WireGuard VPN Shield
+        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+            try {
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+            } catch (e: Exception) {
+                Log.w(TAG, "VPN auto-sync start on route failed (non-fatal): ${e.message}")
+            }
+        }
 
         // Signal Kill Switch that mock GPS is active (arms protection, allows normal traffic)
         com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStarted(this)
@@ -1129,6 +1147,15 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
+        // Automatically sync and engage single powerful WireGuard VPN Shield
+        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+            try {
+                com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+            } catch (e: Exception) {
+                Log.w(TAG, "VPN auto-sync start on joystick failed (non-fatal): ${e.message}")
+            }
+        }
+
         // Signal Kill Switch that mock GPS is active (arms protection, allows normal traffic)
         com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStarted(this)
 
@@ -1279,6 +1306,7 @@ class MockLocationService : Service() {
         activeMode = SimulationMode.Idle
         _serviceState.value = ServiceState.Idle
         try { updateAllWidgets() } catch (e: Exception) { Log.w(TAG, "widget update on stop (non-fatal): ${e.message}") }
+        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
         try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS stopped") } catch (e: Exception) {}
         try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (e: Exception) {}
         stopSelf()
@@ -1375,6 +1403,7 @@ class MockLocationService : Service() {
         try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
         try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
         try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
+        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
         try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
         try { engine.stop() } catch (e: Exception) {}
         serviceJob.cancel()

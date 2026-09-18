@@ -46,7 +46,7 @@
                     android:id="@+id/tvSheetTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Privacy Kill Switch"
+                    android:text="Nowhere Ghost VPN"
                     android:textColor="@color/text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -55,7 +55,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Local OS-level network leak protection"
+                    android:text="Enterprise Anti-Detection WireGuard Shield"
                     android:textColor="@color/text_muted"
                     android:textSize="11.5sp" />
             </LinearLayout>
@@ -71,10 +71,10 @@
         </LinearLayout>
 
         <!-- ============================================================= -->
-        <!-- EMERGENCY KILL SWITCH HERO STATUS CARD -->
+        <!-- GHOST SHIELD HERO STATUS CARD -->
         <!-- ============================================================= -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardKillSwitchStatus"
+            android:id="@+id/cardVpnStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -97,7 +97,7 @@
                     android:orientation="horizontal">
 
                     <ImageView
-                        android:id="@+id/ivKillSwitchShield"
+                        android:id="@+id/ivVpnShield"
                         android:layout_width="28dp"
                         android:layout_height="28dp"
                         android:src="@drawable/ic_shield_check"
@@ -105,44 +105,145 @@
                         tools:ignore="ContentDescription" />
 
                     <TextView
-                        android:id="@+id/tvKillSwitchStateTitle"
+                        android:id="@+id/tvVpnStateTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:text="Kill Switch Armed &amp; Active"
+                        android:text="Ghost Shield Protected"
                         android:textColor="@color/text_primary"
-                        android:textSize="14sp"
+                        android:textSize="14.5sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvKillSwitchBadge"
+                        android:id="@+id/tvVpnBadge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_status_pill"
                         android:backgroundTint="#1A30D158"
                         android:paddingHorizontal="8dp"
                         android:paddingVertical="3dp"
-                        android:text="ARMED"
+                        android:text="PROTECTED"
                         android:textColor="@color/badge_success_text"
                         android:textSize="10sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/tvKillSwitchDescription"
+                    android:id="@+id/tvVpnDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:lineSpacingMultiplier="1.25"
-                    android:text="If mock GPS stops unexpectedly, the Kill Switch immediately pauses all device internet traffic at the OS level to ensure your real location is never exposed."
+                    android:lineSpacingMultiplier="1.2"
+                    android:text="Device network traffic is secured inside our kernel WireGuard tunnel with Google BBR congestion control and TCP MSS Clamping to prevent leak detection."
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
+
+                <!-- Telemetry Row (Live Rates & Latency) -->
+                <LinearLayout
+                    android:id="@+id/layoutVpnTelemetry"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_card_glass"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="8dp"
+                    android:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="DOWNLOAD"
+                            android:textColor="@color/text_muted"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvVpnDownRate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="0.0 KB/s"
+                            android:textColor="@color/text_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="24dp"
+                        android:background="@color/border_subtle" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="UPLOAD"
+                            android:textColor="@color/text_muted"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvVpnUpRate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="0.0 KB/s"
+                            android:textColor="@color/text_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="24dp"
+                        android:background="@color/border_subtle" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LATENCY"
+                            android:textColor="@color/text_muted"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvVpnPing"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="12 ms"
+                            android:textColor="@color/badge_success_text"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================= -->
-        <!-- MASTER KILL SWITCH TOGGLE CARD -->
+        <!-- AUTO-SYNC WITH MOCK LOCATION TOGGLE -->
         <!-- ============================================================= -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -170,7 +271,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Emergency Network Kill Switch"
+                        android:text="Sync with Mock Location"
                         android:textColor="@color/text_primary"
                         android:textSize="13.5sp"
                         android:textStyle="bold" />
@@ -179,13 +280,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Enforces 100% leak protection when offline"
+                        android:text="Engages VPN on mock start; disengages on stop"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>
 
                 <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchKillSwitchMaster"
+                    android:id="@+id/switchAutoVpnSync"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:thumbTint="@color/switch_thumb_selector"
@@ -194,38 +295,25 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================= -->
-        <!-- ACTION BUTTONS: RESUME MOCK & EMERGENCY BYPASS -->
+        <!-- MANUAL ON-DEMAND TOGGLE BUTTON -->
         <!-- ============================================================= -->
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnResumeMockLocation"
+            android:id="@+id/btnToggleVpnManual"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="12dp"
             android:backgroundTint="@color/primary"
-            android:text="Start / Resume Mock Location"
+            android:text="Activate Ghost Shield Now"
             android:textColor="@color/white"
-            android:textSize="12.5sp"
+            android:textSize="13sp"
             android:textStyle="bold"
-            android:visibility="gone"
             app:cornerRadius="12dp"
-            app:icon="@drawable/ic_play"
+            app:icon="@drawable/ic_shield_check"
             app:iconGravity="textStart"
             app:iconTint="@color/white" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnKillSwitchBypass"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="10dp"
-            android:text="Temporary Emergency Bypass (Allow Internet)"
-            android:textColor="@color/primary"
-            android:textSize="12.5sp"
-            android:textStyle="bold"
-            app:cornerRadius="12dp" />
-
         <!-- ============================================================= -->
-        <!-- HOW LEAK PROTECTION WORKS INFO CARD -->
+        <!-- ENTERPRISE ANTI-DETECTION SPECS (NO RAW EMOJIS) -->
         <!-- ============================================================= -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -247,11 +335,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.05"
-                    android:text="HOW PROTECTION WORKS"
+                    android:text="ANTI-DETECTION SPECIFICATIONS"
                     android:textColor="@color/text_muted"
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
+                <!-- Spec 1: WireGuard -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -259,22 +348,24 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🛡️"
-                        android:textSize="14sp" />
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_shield_check"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Zero GPS / IP Leaks: Apps can never probe your real physical location when mock GPS is stopped."
+                        android:text="Kernel WireGuard (UDP 51820): ChaCha20-Poly1305 encryption with cellular MTU 1280 to eliminate carrier fragmentation."
                         android:textColor="@color/text_secondary"
                         android:textSize="11.5sp" />
                 </LinearLayout>
 
+                <!-- Spec 2: Google BBR -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -282,22 +373,24 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔒"
-                        android:textSize="14sp" />
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_radar_target"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="100% On-Device Sinkhole: Local packet blocker directly inside Android. Zero remote servers, zero battery drain."
+                        android:text="Google BBR Congestion Control: Zero-bufferbloat pacing prevents abnormal latency spikes flagged by anti-spoof systems."
                         android:textColor="@color/text_secondary"
                         android:textSize="11.5sp" />
                 </LinearLayout>
 
+                <!-- Spec 3: TCP MSS Clamping -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -305,30 +398,67 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⚡"
-                        android:textSize="14sp" />
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_settings"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Instant Emergency Override: Tap Emergency Bypass anytime you need internet without stopping Nowhere."
+                        android:text="TCP MSS Clamping (PMTU): Modifies SYN headers so sites and fraud detection engines cannot fingerprint tunnel packet sizes."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+
+                <!-- Spec 4: Encrypted DNS -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_wifi"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:text="Encrypted DNS Shield: Routes 100% of DNS lookups through Cloudflare / Google (1.1.1.1, 8.8.8.8) to stop local carrier ISP leaks."
                         android:textColor="@color/text_secondary"
                         android:textSize="11.5sp" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Close / Done Button -->
+        <!-- Server Status Text -->
+        <TextView
+            android:id="@+id/tvServerNodeInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="Primary Google Cloud WireGuard Node • Ready"
+            android:textColor="@color/text_muted"
+            android:textSize="11sp" />
+
+        <!-- Done Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDone"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="10dp"
             android:layout_marginBottom="6dp"
             android:backgroundTint="@color/surface_elevated"
             android:text="Done"

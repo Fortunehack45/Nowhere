@@ -173,10 +173,20 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            com.fakegps.mocklocation.vpn.KillSwitchManager.setEnabled(this, true)
-            Toast.makeText(this, "Kill Switch Armed: Leak Protection ON", Toast.LENGTH_SHORT).show()
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+            Toast.makeText(this, "Nowhere Ghost Shield Activated", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "VPN permission is needed for Kill Switch sinkhole", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "VPN permission is required for Ghost Shield", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun prepareVpnPermissionIfRequired(): Boolean {
+        val prepareIntent = android.net.VpnService.prepare(this)
+        return if (prepareIntent != null) {
+            vpnPermissionLauncher.launch(prepareIntent)
+            false
+        } else {
+            true
         }
     }
 
@@ -1818,48 +1828,47 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupIpShield() {
         binding.layoutIpShieldBadge.setOnClickListener {
-            val bottomSheet = com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet(
-                currentMockLat = viewModel.uiState.value.fixedLatitude,
-                currentMockLon = viewModel.uiState.value.fixedLongitude
+            val bottomSheet = com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet.newInstance(
+                lat = viewModel.uiState.value.fixedLatitude,
+                lon = viewModel.uiState.value.fixedLongitude
             )
             bottomSheet.show(supportFragmentManager, "IpChangerBottomSheet")
         }
 
         lifecycleScope.launch {
-            com.fakegps.mocklocation.vpn.KillSwitchManager.status.collectLatest { status ->
-                when (status) {
-                    is com.fakegps.mocklocation.vpn.KillSwitchManager.KillSwitchStatus.Armed -> {
+            com.fakegps.mocklocation.vpn.NowhereVpnService.vpnState.collectLatest { vpnState ->
+                when (vpnState) {
+                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connected -> {
                         binding.layoutIpShieldBadge.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this@MainActivity)
                         binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
-                        binding.tvIpShieldBadge.text = "SHIELD ARMED"
+                        binding.tvIpShieldBadge.text = "GHOST SHIELD"
                     }
-                    is com.fakegps.mocklocation.vpn.KillSwitchManager.KillSwitchStatus.Triggered -> {
-                        binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)
-                        binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.white)
-                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
-                        binding.tvIpShieldBadge.text = "LEAK HALTED"
-                    }
-                    is com.fakegps.mocklocation.vpn.KillSwitchManager.KillSwitchStatus.Bypassed -> {
+                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connecting -> {
                         binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
                         binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_warning_text)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_warning_text))
-                        binding.tvIpShieldBadge.text = "BYPASS ON"
+                        binding.tvIpShieldBadge.text = "CONNECTING..."
                     }
-                    is com.fakegps.mocklocation.vpn.KillSwitchManager.KillSwitchStatus.Disabled -> {
+                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Error -> {
+                        binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)
+                        binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
+                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.white)
+                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
+                        binding.tvIpShieldBadge.text = "SHIELD ERROR"
+                    }
+                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Disconnected -> {
                         binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
                         binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_muted)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_muted))
-                        binding.tvIpShieldBadge.text = "SHIELD OFF"
+                        binding.tvIpShieldBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) "SHIELD SYNCED" else "SHIELD OFF"
                     }
                 }
             }
         }
-        com.fakegps.mocklocation.vpn.KillSwitchManager.evaluate(this)
     }
 
     private fun setupGhostCloak() {
