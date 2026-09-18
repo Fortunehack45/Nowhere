@@ -36,6 +36,15 @@ class FloatingJoystickService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        android.util.Log.i("FloatingJoystickService", "onTaskRemoved: app swiped, keeping floating joystick active.")
+    }
+
     override fun onCreate() {
         super.onCreate()
         sessionPrefs = SessionPreferences(this)

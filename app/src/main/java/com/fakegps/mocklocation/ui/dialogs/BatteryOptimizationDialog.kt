@@ -66,10 +66,9 @@ class BatteryOptimizationDialog(
             if (isAggressiveOem) {
                 sessionPrefs.hasPromptedOemWidgetNudge = true
             }
-            // First try OEM specific launcher
-            val launched = OEMDetector.openOEMSpecificSettings(activity)
-            if (!launched) {
-                PermissionHelper.requestIgnoreBatteryOptimizations(activity)
+            PermissionHelper.requestIgnoreBatteryOptimizations(activity)
+            if (isAggressiveOem) {
+                OEMDetector.openOEMSpecificSettings(activity)
             }
             dialog.dismiss()
             checkNextStep()

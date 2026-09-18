@@ -160,6 +160,7 @@ class NowhereVpnService : VpnService() {
     private var sessionStartTimeMs: Long = 0L
     private var connectivityManager: ConnectivityManager? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private val isExplicitlyDisconnecting = java.util.concurrent.atomic.AtomicBoolean(false)
 
     override fun onCreate() {
         super.onCreate()
@@ -203,10 +204,12 @@ class NowhereVpnService : VpnService() {
         acquireWakeLock()
         when (intent?.action) {
             ACTION_CONNECT -> {
+                isExplicitlyDisconnecting.set(false)
                 val nodeId = intent.getStringExtra(EXTRA_NODE_ID) ?: sessionPrefs.activeIpNodeId
                 connectVpn(nodeId)
             }
             ACTION_CONNECT_TUNNEL_CONFIG -> {
+                isExplicitlyDisconnecting.set(false)
                 val nodeId = intent.getStringExtra(EXTRA_NODE_ID) ?: "game_boost"
                 val endpoint = intent.getStringExtra(EXTRA_ENDPOINT) ?: ""
                 val serverPubkey = intent.getStringExtra(EXTRA_SERVER_PUBKEY) ?: ""
@@ -216,15 +219,27 @@ class NowhereVpnService : VpnService() {
                 connectDirectTunnel(nodeId, endpoint, serverPubkey, assignedIp, dns, customName)
             }
             ACTION_DISCONNECT -> {
+                isExplicitlyDisconnecting.set(true)
                 disconnectVpn()
             }
             else -> {
                 if (sessionPrefs.isIpMaskingEnabled) {
+                    isExplicitlyDisconnecting.set(false)
                     connectVpn(sessionPrefs.activeIpNodeId)
                 }
             }
         }
         return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Log.i(TAG, "NowhereVpnService onTaskRemoved: app swiped away. Keeping WireGuard tunnel active in background.")
+        if (isRunning || sessionPrefs.isIpMaskingEnabled) {
+            acquireWakeLock()
+            val currentNode = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.availableNodes.first()
+            startForegroundNotification(currentNode, _trafficStats.value)
+        }
     }
 
     private var activeClientPublicKey: String = ""
@@ -532,6 +547,9 @@ class NowhereVpnService : VpnService() {
     }
 
     private fun disconnectVpn() {
+        isExplicitlyDisconnecting.set(true)
+        sessionPrefs.isIpMaskingEnabled = false
+        isRunning = false
         Log.i(TAG, "Disconnecting VPN tunnel...")
         val clientPubkeyToRemove = activeClientPublicKey
         val serverNodeIdToRemove = activeServerNodeId
@@ -584,7 +602,7 @@ class NowhereVpnService : VpnService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.i(TAG, "NowhereVpnService onDestroy: ensuring 100% clean teardown of all VPN interfaces...")
+        Log.i(TAG, "NowhereVpnService onDestroy: cleaning up VPN resources...")
         unregisterNetworkWatchdog()
         releaseWakeLock()
         tunnelJob?.cancel()
@@ -593,9 +611,13 @@ class NowhereVpnService : VpnService() {
         disconnectInterface()
         WireGuardTunnelManager.stopTunnelSync(this)
         isRunning = false
-        sessionPrefs.isIpMaskingEnabled = false
-        _vpnState.value = VpnState.Disconnected
-        Log.i(TAG, "NowhereVpnService destroyed: native internet routing fully restored.")
+        if (isExplicitlyDisconnecting.get()) {
+            sessionPrefs.isIpMaskingEnabled = false
+            _vpnState.value = VpnState.Disconnected
+        } else {
+            Log.i(TAG, "NowhereVpnService OS recreation: preserving isIpMaskingEnabled for auto-reconnect.")
+        }
+        Log.i(TAG, "NowhereVpnService destroyed: native internet routing restored.")
     }
 
     private fun createNotificationChannel() {

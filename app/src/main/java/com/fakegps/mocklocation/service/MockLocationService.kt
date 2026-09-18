@@ -307,57 +307,87 @@ class MockLocationService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        Log.d(TAG, "onTaskRemoved: App swiped away or closed. Service will remain active in background.")
+        Log.i(TAG, "onTaskRemoved: User swiped Nowhere from Recents. Maintaining active mock location in background.")
         if (sessionPrefs.isSessionActive) {
             acquireWakeLock()
-            val restartServiceIntent = Intent(applicationContext, MockLocationService::class.java).apply {
-                action = ACTION_RESTORE_SESSION
-            }
-            val restartPendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                PendingIntent.getForegroundService(
-                    applicationContext,
-                    99,
-                    restartServiceIntent,
-                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-                )
+            isStopping.set(false)
+
+            // 1. Immediately re-anchor the foreground notification to maintain foreground priority
+            val placeName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+                sessionPrefs.lastLocationName
             } else {
-                PendingIntent.getService(
-                    applicationContext,
-                    99,
-                    restartServiceIntent,
-                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-                )
+                String.format(Locale.US, "%.5f°, %.5f°", currentSimLat, currentSimLon)
             }
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-            val triggerAt = android.os.SystemClock.elapsedRealtime() + 1000L
+            startForegroundNotification(
+                "📍 $placeName",
+                "Nowhere Active • Running in background"
+            )
+
+            // 2. Ensure continuous heartbeat loop is actively pulsing GPS fixes
+            if (simulationJob == null || !simulationJob!!.isActive) {
+                startContinuousHeartbeatLoop()
+            }
+
+            // 3. Keep WireGuard VPN Shield connected if auto-sync is active
+            if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+                try {
+                    com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
+                } catch (e: Exception) {
+                    Log.w(TAG, "VPN auto-sync start onTaskRemoved failed: ${e.message}")
+                }
+            }
+
+            // 4. Schedule AlarmManager safety restart with dual PendingIntents (BroadcastReceiver + Service)
+            scheduleBackgroundRestartAlarm()
+        }
+    }
+
+    fun scheduleBackgroundRestartAlarm() {
+        if (!sessionPrefs.isSessionActive) return
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val triggerAt = android.os.SystemClock.elapsedRealtime() + 1000L
+
+        // Primary: Broadcast to MockLocationServiceReceiver (officially supported on Android 12-15)
+        val broadcastIntent = Intent(applicationContext, MockLocationServiceReceiver::class.java).apply {
+            action = MockLocationServiceReceiver.ACTION_RESTORE_MOCK_SESSION
+        }
+        val broadcastPendingIntent = PendingIntent.getBroadcast(
+            applicationContext,
+            199,
+            broadcastIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager?.canScheduleExactAlarms() == true) {
+                if (alarmManager.canScheduleExactAlarms()) {
                     alarmManager.setExactAndAllowWhileIdle(
                         AlarmManager.ELAPSED_REALTIME_WAKEUP,
                         triggerAt,
-                        restartPendingIntent
+                        broadcastPendingIntent
                     )
                 } else {
-                    Log.w(TAG, "Exact alarm permission not granted — scheduling while idle fallback.")
-                    alarmManager?.setAndAllowWhileIdle(
+                    alarmManager.setAndAllowWhileIdle(
                         AlarmManager.ELAPSED_REALTIME_WAKEUP,
                         triggerAt,
-                        restartPendingIntent
+                        broadcastPendingIntent
                     )
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager?.setExactAndAllowWhileIdle(
+                alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     triggerAt,
-                    restartPendingIntent
+                    broadcastPendingIntent
                 )
             } else {
-                alarmManager?.setExact(
+                alarmManager.setExact(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     triggerAt,
-                    restartPendingIntent
+                    broadcastPendingIntent
                 )
             }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to schedule restart alarm: ${e.message}")
         }
     }
 
@@ -453,14 +483,31 @@ class MockLocationService : Service() {
             .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
             .build()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Standard startForeground with location type failed (${e.message}), attempting fallback: ", e)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    startForeground(
+                        NOTIFICATION_ID,
+                        notification,
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                    )
+                } else {
+                    startForeground(NOTIFICATION_ID, notification)
+                }
+            } catch (fallbackEx: Exception) {
+                Log.e(TAG, "All startForeground attempts encountered exception: ${fallbackEx.message}")
+            }
         }
         scheduleWatchdog()
     }
@@ -1391,23 +1438,28 @@ class MockLocationService : Service() {
             SessionTimerManager.stopTimer(this)
             activeMode = SimulationMode.Idle
             _serviceState.value = ServiceState.Idle
+
+            isSimulationPaused = false
+            cancelWatchdog()
+            stopCurrentLoop()
+            releaseWakeLock()
+            try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
+            try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
+            try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
+            try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
+            try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
+            try { engine.stop() } catch (e: Exception) {}
+            serviceJob.cancel()
         } else {
             // System killed or recreated service (e.g. swiped from recents or OEM memory trim):
-            // Freeze quota and keep isSessionActive = true so START_STICKY or AlarmManager restores simulation
+            // DO NOT stop the engine, DO NOT stop VPN, DO NOT drop session!
+            // Keep state intact so the restart alarm or START_STICKY resumes seamlessly.
+            Log.i(TAG, "onDestroy called by OS (not user initiated stop). Preserving mock state for automatic recovery.")
             SessionTimerManager.pauseTimer(this)
+            cancelWatchdog()
+            stopCurrentLoop()
+            scheduleBackgroundRestartAlarm()
         }
-
-        isSimulationPaused = false
-        cancelWatchdog()
-        stopCurrentLoop()
-        releaseWakeLock()
-        try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
-        try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
-        try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
-        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
-        try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
-        try { engine.stop() } catch (e: Exception) {}
-        serviceJob.cancel()
         super.onDestroy()
     }
 }

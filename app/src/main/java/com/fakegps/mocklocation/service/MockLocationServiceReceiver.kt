@@ -13,6 +13,8 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
         const val EXTRA_MAGNITUDE = "extra_magnitude"
         const val EXTRA_SPEED = "extra_speed"
 
+        const val ACTION_RESTORE_MOCK_SESSION = "com.fakegps.mocklocation.ACTION_RESTORE_MOCK_SESSION"
+
         var activeService: MockLocationService? = null
 
         fun sendJoystickUpdate(context: Context, angle: Float, magnitude: Float, speedKmh: Float? = null) {
@@ -35,12 +37,34 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        if (intent?.action == ACTION_JOYSTICK_VECTOR) {
-            val angle = intent.getFloatExtra(EXTRA_ANGLE, 0.0f)
-            val magnitude = intent.getFloatExtra(EXTRA_MAGNITUDE, 0.0f)
-            val speed = if (intent.hasExtra(EXTRA_SPEED)) intent.getFloatExtra(EXTRA_SPEED, 20.0f) else null
-            if (context != null) {
+        if (context == null) return
+        when (intent?.action) {
+            ACTION_JOYSTICK_VECTOR -> {
+                val angle = intent.getFloatExtra(EXTRA_ANGLE, 0.0f)
+                val magnitude = intent.getFloatExtra(EXTRA_MAGNITUDE, 0.0f)
+                val speed = if (intent.hasExtra(EXTRA_SPEED)) intent.getFloatExtra(EXTRA_SPEED, 20.0f) else null
                 sendJoystickUpdate(context, angle, magnitude, speed)
+            }
+            ACTION_RESTORE_MOCK_SESSION -> {
+                android.util.Log.i("MockLocationReceiver", "ACTION_RESTORE_MOCK_SESSION received. Checking simulation status...")
+                if (!MockLocationService.isSimulationRunning()) {
+                    val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(context)
+                    if (sessionPrefs.isSessionActive) {
+                        android.util.Log.i("MockLocationReceiver", "Active session found. Resuming MockLocationService in foreground...")
+                        val serviceIntent = Intent(context, MockLocationService::class.java).apply {
+                            action = MockLocationService.ACTION_RESTORE_SESSION
+                        }
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                androidx.core.content.ContextCompat.startForegroundService(context, serviceIntent)
+                            } else {
+                                context.startService(serviceIntent)
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("MockLocationReceiver", "Failed to startForegroundService from alarm broadcast: ${e.message}", e)
+                        }
+                    }
+                }
             }
         }
     }

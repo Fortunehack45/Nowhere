@@ -210,26 +210,6 @@ class IpChangerBottomSheet @JvmOverloads constructor(
             }
         }
     }
-                    is NowhereVpnService.VpnState.Disconnected -> {
-                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.text_muted)
-                        binding.tvVpnStateTitle.text = "Ghost Shield Inactive"
-                        binding.tvVpnBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) "SYNCED" else "IDLE"
-                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
-                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
-                        binding.tvVpnDescription.text = "Connects automatically when mock GPS starts. Tap Activate below to engage protection anytime."
-
-                        binding.btnToggleVpnManual.isEnabled = true
-                        binding.btnToggleVpnManual.text = "Activate Ghost Shield Now"
-                        binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
-                        binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
-                        binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
-                        binding.tvServerNodeInfo.text = "Server: $host • Port 51820"
-                    }
-                }
-            }
-        }
-    }
 
     private fun observeTrafficStats() {
         viewLifecycleOwner.lifecycleScope.launch {
