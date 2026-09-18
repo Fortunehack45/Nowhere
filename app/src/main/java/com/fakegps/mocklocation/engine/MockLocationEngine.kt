@@ -263,7 +263,13 @@ class MockLocationEngine(
         if (lastSuccessfulLocation != null) {
             // Also inject directly into Google Play Services Fused Location Provider Client for 100% rubberband immunity
             try {
-                fusedLocationClient.setMockLocation(lastSuccessfulLocation)
+                val gmsFix = Location(lastSuccessfulLocation).apply {
+                    provider = LocationManager.GPS_PROVIDER
+                    accuracy = if (horizontalAccuracy < 1.0f) 1.5f else horizontalAccuracy
+                    time = nowMs
+                    elapsedRealtimeNanos = nowNanos
+                }
+                fusedLocationClient.setMockLocation(gmsFix)
             } catch (ignored: Exception) {}
             return Result.success(lastSuccessfulLocation)
         } else {

@@ -797,12 +797,13 @@ class MockLocationService : Service() {
                         updateLocationNotification(lat, lon, modeDesc)
                     }
 
-                    // Adaptive anti-overheating heartbeat interval:
-                    // 1000ms–1200ms when stationary or user-configured, saving 75% CPU cycles and stopping device heat
+                    // Steady 1Hz GPS heartbeat cadence (1000ms stationary, 500ms-800ms moving):
+                    // Guarantees Google Maps, navigation, and background apps continuously receive fresh GPS fixes
+                    // without entering stale state ("ash/grey dot").
                     val loopDelay = if (spd > 0.05f) {
-                        settingsPrefs.updateIntervalMovingMs.coerceIn(500L, 1000L)
+                        settingsPrefs.updateIntervalMovingMs.coerceIn(500L, 800L)
                     } else {
-                        settingsPrefs.updateIntervalStationaryMs.coerceIn(1000L, 2000L)
+                        1000L
                     }
                     delay(loopDelay)
                 }

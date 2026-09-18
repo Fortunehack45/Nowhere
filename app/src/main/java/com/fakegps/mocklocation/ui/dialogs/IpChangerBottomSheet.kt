@@ -129,6 +129,13 @@ class IpChangerBottomSheet @JvmOverloads constructor(
             }
         }
 
+        // Server Configuration Dialog
+        updateServerInfoDisplay()
+        binding.layoutServerConfig.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            showServerConfigDialog()
+        }
+
         binding.btnDone.setOnClickListener {
             dismiss()
         }
@@ -138,10 +145,61 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         }
     }
 
+    private fun updateServerInfoDisplay() {
+        val ctx = context ?: return
+        val currentUrl = com.fakegps.mocklocation.vpn.NowhereApiClient.getCustomBackendUrl(ctx)
+        val host = currentUrl.substringAfter("://").substringBefore(":").substringBefore("/")
+        binding.tvServerNodeInfo.text = "Server: $host • Port 51820"
+    }
+
+    private fun showServerConfigDialog() {
+        val ctx = context ?: return
+        val currentUrl = com.fakegps.mocklocation.vpn.NowhereApiClient.getCustomBackendUrl(ctx)
+        val currentHost = currentUrl.substringAfter("://").substringBefore(":").substringBefore("/")
+        val input = android.widget.EditText(ctx).apply {
+            setText(currentHost)
+            setSelection(text.length)
+            hint = "e.g. 34.123.45.67"
+            setSingleLine(true)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+        }
+        val container = android.widget.FrameLayout(ctx).apply {
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, pad / 2)
+            addView(input)
+        }
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+            .setTitle("Configure VPN Server IP")
+            .setMessage("Enter your live Google Cloud VM External IP or Hostname:")
+            .setView(container)
+            .setPositiveButton("Save & Connect") { _, _ ->
+                var rawInput = input.text.toString().trim()
+                if (rawInput.isNotBlank()) {
+                    val cleanHost = rawInput.removePrefix("http://").removePrefix("https://").substringBefore("/").substringBefore(":")
+                    val newUrl = "http://$cleanHost:8080"
+                    com.fakegps.mocklocation.vpn.NowhereApiClient.setCustomBackendUrl(ctx, newUrl)
+                    updateServerInfoDisplay()
+                    Toast.makeText(ctx, "Server IP updated to $cleanHost!", Toast.LENGTH_SHORT).show()
+                    val prepareIntent = VpnService.prepare(ctx)
+                    if (prepareIntent != null) {
+                        vpnPrepareLauncher.launch(prepareIntent)
+                    } else {
+                        NowhereVpnService.start(ctx, "us_central_gcp")
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun observeVpnState() {
         viewLifecycleOwner.lifecycleScope.launch {
             NowhereVpnService.vpnState.collectLatest { state ->
                 val ctx = context ?: return@collectLatest
+                val currentUrl = com.fakegps.mocklocation.vpn.NowhereApiClient.getCustomBackendUrl(ctx)
+                val host = currentUrl.substringAfter("://").substringBefore(":").substringBefore("/")
+
                 when (state) {
                     is NowhereVpnService.VpnState.Connected -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
@@ -158,7 +216,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.text_primary)
                         binding.layoutVpnTelemetry.visibility = View.VISIBLE
-                        binding.tvServerNodeInfo.text = "Primary Google Cloud WireGuard Node • Live"
+                        binding.tvServerNodeInfo.text = "Server: $host • Live & Protected"
                     }
                     is NowhereVpnService.VpnState.Connecting -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
@@ -167,7 +225,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                         binding.tvVpnBadge.text = "CONNECTING"
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_warning_text))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_bg)
-                        binding.tvVpnDescription.text = "Negotiating ChaCha20-Poly1305 WireGuard cryptographic handshake on port 51820..."
+                        binding.tvVpnDescription.text = "Negotiating ChaCha20-Poly1305 WireGuard handshake with $host:51820..."
 
                         binding.btnToggleVpnManual.isEnabled = false
                         binding.btnToggleVpnManual.text = "Connecting..."
@@ -175,17 +233,18 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                     is NowhereVpnService.VpnState.Error -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
                         binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_text)
-                        binding.tvVpnStateTitle.text = "Tunnel Offline"
+                        binding.tvVpnStateTitle.text = "VPN Server Offline"
                         binding.tvVpnBadge.text = "OFFLINE"
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_error_text))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_bg)
-                        binding.tvVpnDescription.text = "Could not complete handshake. Mobile data connection has been safely preserved."
+                        binding.tvVpnDescription.text = "Cannot reach server at $host. Ensure your Google Cloud VM is running or tap 'Configure Server IP' below."
 
                         binding.btnToggleVpnManual.isEnabled = true
                         binding.btnToggleVpnManual.text = "Retry Ghost Shield Connection"
                         binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
+                        binding.tvServerNodeInfo.text = "Server: $host • Offline (Tap to change)"
                     }
                     is NowhereVpnService.VpnState.Disconnected -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
@@ -201,7 +260,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                         binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
-                        binding.tvServerNodeInfo.text = "Primary Google Cloud WireGuard Node • Ready"
+                        binding.tvServerNodeInfo.text = "Server: $host • Port 51820"
                     }
                 }
             }
