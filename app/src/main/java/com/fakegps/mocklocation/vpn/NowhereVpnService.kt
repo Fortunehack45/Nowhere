@@ -382,7 +382,19 @@ class NowhereVpnService : VpnService() {
                 val rawIp = tunnelResp.assignedIp
                 val assignedTunnelIp = if (rawIp.contains("/")) rawIp.substringBefore("/") else rawIp
                 val tunnelDns = tunnelResp.dns.firstOrNull() ?: "1.1.1.1"
-                val serverEndpoint = tunnelResp.endpoint
+                val rawEndpoint = tunnelResp.endpoint
+                val rawPort = if (rawEndpoint.contains(":")) rawEndpoint.substringAfter(":") else "51820"
+                val backendHost = NowhereApiClient.getCustomBackendUrl(this@NowhereVpnService)
+                    .substringAfter("://").substringBefore(":").substringBefore("/")
+
+                // Auto-correct stale server IP or local placeholder to the live verified backend host
+                val serverEndpoint = if (backendHost.isNotBlank() && (rawEndpoint.contains("104.197.128.154") || rawEndpoint.startsWith("127.0.0.1") || rawEndpoint.startsWith("localhost") || !rawEndpoint.startsWith(backendHost))) {
+                    "$backendHost:$rawPort"
+                } else if (rawEndpoint.isNotBlank()) {
+                    rawEndpoint
+                } else {
+                    "$backendHost:$rawPort"
+                }
                 val serverPubkey = tunnelResp.serverPubkey
 
                 Log.i(TAG, "Provisioned WireGuard peer! Server: $serverEndpoint, Assigned IP: $assignedTunnelIp")
@@ -423,7 +435,7 @@ class NowhereVpnService : VpnService() {
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 3000L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 5000L)
         if (!handshakeConfirmed) {
             Log.w(TAG, "WireGuard handshake failed with $serverEndpoint (blocked/suspended) — preserving mobile data...")
             WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
