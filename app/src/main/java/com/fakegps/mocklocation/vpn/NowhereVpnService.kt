@@ -237,7 +237,7 @@ class NowhereVpnService : VpnService() {
         Log.i(TAG, "NowhereVpnService onTaskRemoved: app swiped away. Keeping WireGuard tunnel active in background.")
         if (isRunning || sessionPrefs.isIpMaskingEnabled) {
             acquireWakeLock()
-            val currentNode = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.availableNodes.first()
+            val currentNode = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.PRIMARY_SECURE_NODE
             startForegroundNotification(currentNode, _trafficStats.value)
         }
     }
