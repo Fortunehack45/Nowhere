@@ -10,7 +10,7 @@ nodes:
     country: US
     country_name: "Nowhere Primary Secure Shield"
     city: "Google Cloud Node"
-    endpoint: 104.197.128.154:51820
+    endpoint: 35.254.180.81:51820
     server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
     ssh_host: 127.0.0.1
     ssh_port: 22

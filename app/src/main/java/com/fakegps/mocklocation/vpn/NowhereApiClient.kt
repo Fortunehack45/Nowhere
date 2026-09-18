@@ -17,8 +17,8 @@ object NowhereApiClient {
     private const val TAG = "NowhereApiClient"
 
     // Production Google Cloud VPS Server
-    const val DEFAULT_SERVER_HOST = "104.197.128.154"
-    const val DEFAULT_BASE_URL = "http://104.197.128.154:8080"
+    const val DEFAULT_SERVER_HOST = "35.254.180.81"
+    const val DEFAULT_BASE_URL = "http://35.254.180.81:8080"
     const val DEFAULT_API_KEY = "nowhere_live_prod_key_77a9c84e1b"
 
     data class TunnelResponse(
