@@ -501,9 +501,7 @@ class NowhereVpnService : VpnService() {
         val cm = connectivityManager ?: (getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)
             ?: return@withContext true
 
-        val networks = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            cm.allNetworks
-        } else {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             return@withContext true
         }
 
