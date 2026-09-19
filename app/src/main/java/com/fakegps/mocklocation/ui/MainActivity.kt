@@ -1649,7 +1649,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
-        // VPN removed; KillSwitchManager manages leak protection automatically
+        val settingsPrefs = AppSettingsPreferences(this)
+        if (settingsPrefs.isAutoVpnSyncEnabled) {
+            val sessionPrefs = SessionPreferences(this)
+            sessionPrefs.isIpMaskingEnabled = true
+            if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+                val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
+                try {
+                    com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
+                } catch (e: Exception) {
+                    android.util.Log.w("MainActivity", "Failed to auto-engage VPN: ${e.message}")
+                }
+            }
+        }
     }
 
     private fun ensureActiveSessionOrPrompt(onActive: () -> Unit): Boolean {
@@ -1807,6 +1819,9 @@ class MainActivity : AppCompatActivity() {
         mockService?.stopSpoofing()
         try {
             com.fakegps.mocklocation.service.FloatingJoystickService.stop(this)
+        } catch (ignored: Exception) {}
+        try {
+            com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this)
         } catch (ignored: Exception) {}
         viewModel.onServiceStateUpdated(ServiceState.Idle)
         com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Simulation stopped")

@@ -306,10 +306,10 @@ class NowhereVpnService : VpnService() {
                                 setUnderlyingNetworks(arrayOf(network))
                             } catch (ignored: Exception) {}
                         }
-                        if (vpnInterface == null) {
+                        if (!WireGuardTunnelManager.isTunnelActive(this@NowhereVpnService)) {
                             serviceScope.launch {
                                 delay(300L)
-                                if (isRunning && vpnInterface == null) {
+                                if (isRunning && !WireGuardTunnelManager.isTunnelActive(this@NowhereVpnService)) {
                                     connectVpn(sessionPrefs.activeIpNodeId)
                                 }
                             }
@@ -341,7 +341,7 @@ class NowhereVpnService : VpnService() {
 
     private fun connectVpn(nodeId: String) {
         val targetNodeId = if (nodeId.isNotBlank()) nodeId else sessionPrefs.activeIpNodeId
-        if (isRunning && activeServerNodeId == targetNodeId && vpnInterface != null) {
+        if (isRunning && activeServerNodeId == targetNodeId && WireGuardTunnelManager.isTunnelActive(this@NowhereVpnService)) {
             Log.d(TAG, "VPN already running and connected to $targetNodeId; preserving active tunnel")
             return
         }
@@ -450,21 +450,17 @@ class NowhereVpnService : VpnService() {
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 4000L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 6000L)
         if (!handshakeConfirmed) {
-            Log.w(TAG, "WireGuard handshake failed with $serverEndpoint (blocked/suspended) — preserving mobile data...")
-            WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
-            handleConnectionFailure(node, "Server handshake failed. Mobile data preserved.")
-            return
-        }
-
-        Log.i(TAG, "Verifying internet egress through WireGuard tunnel...")
-        val internetReachable = verifyInternetThroughTunnel()
-        if (!internetReachable) {
-            Log.w(TAG, "VPN tunnel active but internet egress failed with $serverEndpoint — preserving mobile data...")
-            WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
-            handleConnectionFailure(node, "VPN server has no internet route. Mobile data preserved.")
-            return
+            Log.w(TAG, "WireGuard handshake initial check timed out for $serverEndpoint; attempting 1 keepalive retry...")
+            delay(1000L)
+            val retryConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 3000L)
+            if (!retryConfirmed) {
+                Log.w(TAG, "WireGuard handshake failed with $serverEndpoint — preserving mobile data...")
+                WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
+                handleConnectionFailure(node, "Server handshake failed. Mobile data preserved.")
+                return
+            }
         }
 
         isRunning = true
@@ -491,63 +487,6 @@ class NowhereVpnService : VpnService() {
         } catch (ignored: Exception) {}
         stopSelf()
         Log.i(TAG, "🔒 VPN fail-safe active: $reason. Mobile data and Wi-Fi remain 100% operational.")
-    }
-
-    /**
-     * Actively probes whether internet packets can egress out of the WireGuard tunnel.
-     * Prevents holding a dead tunnel that blackholes device traffic.
-     */
-    private suspend fun verifyInternetThroughTunnel(): Boolean = withContext(Dispatchers.IO) {
-        val cm = connectivityManager ?: (getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)
-            ?: return@withContext true
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            return@withContext true
-        }
-
-        // Search for VPN network transport
-        var vpnNetwork: Network? = null
-        for (attempt in 0..4) {
-            for (net in cm.allNetworks) {
-                val caps = cm.getNetworkCapabilities(net)
-                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                    vpnNetwork = net
-                    break
-                }
-            }
-            if (vpnNetwork != null) break
-            delay(250L)
-        }
-
-        if (vpnNetwork == null) {
-            return@withContext true
-        }
-
-        try {
-            val targets = arrayOf(
-                "http://connectivitycheck.gstatic.com/generate_204",
-                "http://clients3.google.com/generate_204",
-                "http://1.1.1.1"
-            )
-            for (target in targets) {
-                try {
-                    val conn = vpnNetwork.openConnection(URL(target)) as HttpURLConnection
-                    conn.connectTimeout = 2500
-                    conn.readTimeout = 2500
-                    conn.instanceFollowRedirects = false
-                    val code = conn.responseCode
-                    conn.disconnect()
-                    if (code in 200..399 || code == 204) {
-                        Log.i(TAG, "VPN tunnel internet routing confirmed via $target (HTTP $code)")
-                        return@withContext true
-                    }
-                } catch (ignored: Exception) {}
-            }
-            false
-        } catch (e: Exception) {
-            Log.w(TAG, "Internet check through VPN network failed: ${e.message}")
-            false
-        }
     }
 
     private fun launchTrafficMonitor(node: IpNode) {
@@ -579,11 +518,11 @@ class NowhereVpnService : VpnService() {
 
                 // Dead Peer Detection / Blackhole Preventer:
                 // If user/apps are transmitting packets into the tunnel (txRate > 0)
-                // but ZERO return packets have been received from the server for > 10 consecutive seconds:
+                // but ZERO return packets have been received from the server for > 30 consecutive seconds:
                 if (txRate > 0L && totalRxBytes == lastObservedRx) {
                     deadPeerTicks++
-                    if (deadPeerTicks >= 10) {
-                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server dropped/unresponsive for 10s! Disengaging VPN to protect internet connectivity.")
+                    if (deadPeerTicks >= 30) {
+                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server dropped/unresponsive for 30s! Disengaging VPN to protect internet connectivity.")
                         handleConnectionFailure(node, "VPN server unresponsive. Normal internet preserved.")
                         break
                     }
