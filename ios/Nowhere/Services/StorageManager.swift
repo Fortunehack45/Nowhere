@@ -38,7 +38,7 @@ class StorageManager: ObservableObject {
     @AppStorage("is_nmea_synthesis_enabled") var isNmeaSynthesisEnabled: Bool = true
     @AppStorage("is_clock_drift_emulation_enabled") var isClockDriftEmulationEnabled: Bool = true
     @AppStorage("is_sensor_kinematics_enabled") var isSensorKinematicsEnabled: Bool = true
-    @AppStorage("is_auto_vpn_sync_enabled") var isAutoVpnSyncEnabled: Bool = true
+    @AppStorage("is_auto_vpn_sync_enabled") var isAutoVpnSyncEnabled: Bool = false
 
     private let favoritesKey = "nowhere_favorites_v1"
     private let routesKey = "nowhere_saved_routes_v1"

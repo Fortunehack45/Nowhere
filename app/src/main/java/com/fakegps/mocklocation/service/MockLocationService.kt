@@ -328,14 +328,6 @@ class MockLocationService : Service() {
                 startContinuousHeartbeatLoop()
             }
 
-            // 3. Keep WireGuard VPN Shield connected if auto-sync is active
-            if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
-                try {
-                    com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
-                } catch (e: Exception) {
-                    Log.w(TAG, "VPN auto-sync start onTaskRemoved failed: ${e.message}")
-                }
-            }
 
             // 4. Schedule AlarmManager safety restart with dual PendingIntents (BroadcastReceiver + Service)
             scheduleBackgroundRestartAlarm()
@@ -757,8 +749,8 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically sync and engage single powerful WireGuard VPN Shield
-        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Only sync WireGuard VPN Shield if user explicitly opted in and enabled IP masking
+        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             try {
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
             } catch (e: Exception) {
@@ -926,8 +918,8 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically sync and engage single powerful WireGuard VPN Shield
-        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Only sync WireGuard VPN Shield if user explicitly opted in and enabled IP masking
+        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             try {
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
             } catch (e: Exception) {
@@ -1210,8 +1202,8 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Automatically sync and engage single powerful WireGuard VPN Shield
-        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Only sync WireGuard VPN Shield if user explicitly opted in and enabled IP masking
+        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             try {
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
             } catch (e: Exception) {

@@ -26,8 +26,10 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.DatagramPacket
 import java.net.DatagramSocket
+import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.SocketTimeoutException
+import java.net.URL
 
 class NowhereVpnService : VpnService() {
 
@@ -223,13 +225,11 @@ class NowhereVpnService : VpnService() {
                 disconnectVpn()
             }
             else -> {
-                if (sessionPrefs.isIpMaskingEnabled) {
-                    isExplicitlyDisconnecting.set(false)
-                    connectVpn(sessionPrefs.activeIpNodeId)
-                }
+                Log.d(TAG, "NowhereVpnService received unexpected intent or null action; stopping to preserve mobile data")
+                stopSelf()
             }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -276,11 +276,11 @@ class NowhereVpnService : VpnService() {
         }
         startForegroundNotification(node, _trafficStats.value)
 
-        tunnelJob?.cancel()
+        val cleanEndpoint = NowhereApiClient.sanitizeEndpoint(endpoint)
         tunnelJob = serviceScope.launch {
             try {
                 disconnectInterface()
-                bringUpTunnel(node, endpoint, serverPubkey, assignedIp, dns)
+                bringUpTunnel(node, cleanEndpoint, serverPubkey, assignedIp, dns)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -450,11 +450,20 @@ class NowhereVpnService : VpnService() {
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 5000L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 4000L)
         if (!handshakeConfirmed) {
             Log.w(TAG, "WireGuard handshake failed with $serverEndpoint (blocked/suspended) — preserving mobile data...")
             WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
             handleConnectionFailure(node, "Server handshake failed. Mobile data preserved.")
+            return
+        }
+
+        Log.i(TAG, "Verifying internet egress through WireGuard tunnel...")
+        val internetReachable = verifyInternetThroughTunnel()
+        if (!internetReachable) {
+            Log.w(TAG, "VPN tunnel active but internet egress failed with $serverEndpoint — preserving mobile data...")
+            WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
+            handleConnectionFailure(node, "VPN server has no internet route. Mobile data preserved.")
             return
         }
 
@@ -482,6 +491,65 @@ class NowhereVpnService : VpnService() {
         } catch (ignored: Exception) {}
         stopSelf()
         Log.i(TAG, "🔒 VPN fail-safe active: $reason. Mobile data and Wi-Fi remain 100% operational.")
+    }
+
+    /**
+     * Actively probes whether internet packets can egress out of the WireGuard tunnel.
+     * Prevents holding a dead tunnel that blackholes device traffic.
+     */
+    private suspend fun verifyInternetThroughTunnel(): Boolean = withContext(Dispatchers.IO) {
+        val cm = connectivityManager ?: (getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)
+            ?: return@withContext true
+
+        val networks = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            cm.allNetworks
+        } else {
+            return@withContext true
+        }
+
+        // Search for VPN network transport
+        var vpnNetwork: Network? = null
+        for (attempt in 0..4) {
+            for (net in cm.allNetworks) {
+                val caps = cm.getNetworkCapabilities(net)
+                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                    vpnNetwork = net
+                    break
+                }
+            }
+            if (vpnNetwork != null) break
+            delay(250L)
+        }
+
+        if (vpnNetwork == null) {
+            return@withContext true
+        }
+
+        try {
+            val targets = arrayOf(
+                "http://connectivitycheck.gstatic.com/generate_204",
+                "http://clients3.google.com/generate_204",
+                "http://1.1.1.1"
+            )
+            for (target in targets) {
+                try {
+                    val conn = vpnNetwork.openConnection(URL(target)) as HttpURLConnection
+                    conn.connectTimeout = 2500
+                    conn.readTimeout = 2500
+                    conn.instanceFollowRedirects = false
+                    val code = conn.responseCode
+                    conn.disconnect()
+                    if (code in 200..399 || code == 204) {
+                        Log.i(TAG, "VPN tunnel internet routing confirmed via $target (HTTP $code)")
+                        return@withContext true
+                    }
+                } catch (ignored: Exception) {}
+            }
+            false
+        } catch (e: Exception) {
+            Log.w(TAG, "Internet check through VPN network failed: ${e.message}")
+            false
+        }
     }
 
     private fun launchTrafficMonitor(node: IpNode) {
@@ -611,12 +679,8 @@ class NowhereVpnService : VpnService() {
         disconnectInterface()
         WireGuardTunnelManager.stopTunnelSync(this)
         isRunning = false
-        if (isExplicitlyDisconnecting.get()) {
-            sessionPrefs.isIpMaskingEnabled = false
-            _vpnState.value = VpnState.Disconnected
-        } else {
-            Log.i(TAG, "NowhereVpnService OS recreation: preserving isIpMaskingEnabled for auto-reconnect.")
-        }
+        sessionPrefs.isIpMaskingEnabled = false
+        _vpnState.value = VpnState.Disconnected
         Log.i(TAG, "NowhereVpnService destroyed: native internet routing restored.")
     }
 

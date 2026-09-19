@@ -68,6 +68,16 @@ object NowhereApiClient {
         return prefs.getString("custom_api_key", DEFAULT_API_KEY) ?: DEFAULT_API_KEY
     }
 
+    fun sanitizeEndpoint(rawEndpoint: String): String {
+        val trimmed = rawEndpoint.trim()
+        val port = if (trimmed.contains(":")) trimmed.substringAfter(":") else "51820"
+        return if (trimmed.isEmpty() || trimmed.contains("104.197.128.154") || trimmed.startsWith("127.0.0.1") || trimmed.startsWith("localhost")) {
+            "$DEFAULT_SERVER_HOST:$port"
+        } else {
+            trimmed
+        }
+    }
+
     /**
      * Connects to a WireGuard node/region on the live control-plane.
      */
@@ -126,13 +136,16 @@ object NowhereApiClient {
                     dnsList.add("1.1.1.1")
                 }
 
+                val rawEndpoint = json.optString("endpoint", "$DEFAULT_SERVER_HOST:51820")
+                val cleanEndpoint = sanitizeEndpoint(rawEndpoint)
+
                 val resp = TunnelResponse(
-                    nodeId = json.optString("node_id", "us_nyc_1"),
+                    nodeId = json.optString("node_id", "us_central_gcp"),
                     country = json.optString("country", "US"),
                     countryName = json.optString("country_name", "United States"),
-                    city = json.optString("city", "New York"),
+                    city = json.optString("city", "Google Cloud Node"),
                     serverPubkey = json.optString("server_pubkey", ""),
-                    endpoint = json.optString("endpoint", "$DEFAULT_SERVER_HOST:51820"),
+                    endpoint = cleanEndpoint,
                     assignedIp = json.optString("assigned_ip", "10.8.0.2/32"),
                     clientPrivateKey = if (json.has("client_private_key")) json.getString("client_private_key") else null,
                     clientPublicKey = json.optString("client_public_key", ""),
@@ -186,13 +199,16 @@ object NowhereApiClient {
                 val responseText = conn.inputStream.bufferedReader().use { it.readText() }
                 val json = JSONObject(responseText)
 
+                val rawEndpoint = json.optString("endpoint", "$DEFAULT_SERVER_HOST:51820")
+                val cleanEndpoint = sanitizeEndpoint(rawEndpoint)
+
                 val resp = TunnelResponse(
-                    nodeId = json.optString("node_id", "us_nyc_1"),
+                    nodeId = json.optString("node_id", "us_central_gcp"),
                     country = json.optString("country", "US"),
                     countryName = json.optString("country_name", "United States"),
-                    city = json.optString("city", "New York"),
+                    city = json.optString("city", "Google Cloud Node"),
                     serverPubkey = json.optString("server_pubkey", ""),
-                    endpoint = json.optString("endpoint", "$DEFAULT_SERVER_HOST:51820"),
+                    endpoint = cleanEndpoint,
                     assignedIp = json.optString("assigned_ip", "10.8.0.2/32"),
                     clientPrivateKey = if (json.has("client_private_key")) json.getString("client_private_key") else null,
                     clientPublicKey = json.optString("client_public_key", ""),
@@ -284,6 +300,9 @@ object NowhereApiClient {
                 val list = mutableListOf<IpNode>()
                 for (i in 0 until nodesArray.length()) {
                     val item = nodesArray.getJSONObject(i)
+                    val rawEndpoint = item.optString("endpoint", DEFAULT_SERVER_HOST)
+                    val cleanEndpoint = sanitizeEndpoint(rawEndpoint)
+                    val virtualIp = cleanEndpoint.substringBefore(":")
                     list.add(
                         IpNode(
                             id = item.optString("id", "us_central_gcp"),
@@ -294,7 +313,7 @@ object NowhereApiClient {
                             city = item.optString("city", "Central"),
                             latitude = 41.2619,
                             longitude = -95.8608,
-                            virtualIp = item.optString("endpoint", DEFAULT_SERVER_HOST).substringBefore(":"),
+                            virtualIp = virtualIp,
                             pingMs = 15
                         )
                     )

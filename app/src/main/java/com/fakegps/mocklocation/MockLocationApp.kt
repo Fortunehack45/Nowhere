@@ -34,5 +34,18 @@ class MockLocationApp : Application() {
 
         // Initialize Google AdMob App Open Ads Manager
         appOpenAdManager = AppOpenAdManager(this)
+
+        // Data Protection Safety Check: ensure auto-VPN sync and IP masking do not hijack mobile data
+        val vpnSafetyMigrated = sharedPrefs.getBoolean("key_vpn_safety_reset_done", false)
+        if (!vpnSafetyMigrated) {
+            settingsPrefs.isAutoVpnSyncEnabled = false
+            val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(this)
+            sessionPrefs.isIpMaskingEnabled = false
+            sessionPrefs.isKillSwitchEnabled = false
+            sharedPrefs.edit().putBoolean("key_vpn_safety_reset_done", true).apply()
+            try {
+                com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this)
+            } catch (ignored: Exception) {}
+        }
     }
 }

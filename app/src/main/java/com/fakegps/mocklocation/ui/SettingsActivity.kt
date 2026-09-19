@@ -867,7 +867,7 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.isNmeaSynthesisEnabled = true
         settingsPrefs.isClockDriftEmulationEnabled = true
         settingsPrefs.isSensorKinematicsEnabled = true
-        settingsPrefs.isAutoVpnSyncEnabled = true
+        settingsPrefs.isAutoVpnSyncEnabled = false
         settingsPrefs.isRecentsShieldEnabled = false
 
         sessionPrefs.isPersistentBootInjectionEnabled = true
