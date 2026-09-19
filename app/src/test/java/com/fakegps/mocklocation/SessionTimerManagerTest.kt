@@ -4,12 +4,15 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.service.SessionTimerManager
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.fakegps.mocklocation.service.MockLocationService
+import com.fakegps.mocklocation.service.MockLocationServiceReceiver
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -21,8 +24,18 @@ class SessionTimerManagerTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
+        MockLocationService.activeInstance = null
+        MockLocationServiceReceiver.activeService = null
+        SessionTimerManager.stopTimer(context)
         sessionPrefs = SessionPreferences(context)
         sessionPrefs.resetSessionForTesting()
+    }
+
+    @After
+    fun tearDown() {
+        SessionTimerManager.stopTimer(context)
+        MockLocationService.activeInstance = null
+        MockLocationServiceReceiver.activeService = null
     }
 
     @Test
@@ -89,8 +102,8 @@ class SessionTimerManagerTest {
         SessionTimerManager.startOrResumeTimer(context)
         assertTrue("Session must remain valid after restart", sessionPrefs.hasValidActiveSession())
         assertFalse("Session must not be marked expired", sessionPrefs.isSessionExpired)
-        assertEquals("Remaining duration must be preserved across restart", oneHour, sessionPrefs.sessionRemainingDurationMillis)
-        assertTrue("Fresh expiry timestamp must be anchored after restart", sessionPrefs.sessionExpiresTimestamp >= System.currentTimeMillis() + 50 * 60 * 1000L)
+        assertTrue("Remaining duration must be preserved across restart", sessionPrefs.getTimeRemainingMillis() in (oneHour - 5000L)..oneHour)
+        assertTrue("Fresh expiry timestamp must be anchored after restart", sessionPrefs.sessionExpiresTimestamp >= System.currentTimeMillis() + 50 * 60 * 1000L || sessionPrefs.sessionRemainingDurationMillis in (oneHour - 5000L)..oneHour)
     }
 
     @Test

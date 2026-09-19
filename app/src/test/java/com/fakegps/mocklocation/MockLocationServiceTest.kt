@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.service.MockLocationService
+import com.fakegps.mocklocation.service.MockLocationServiceReceiver
 import com.fakegps.mocklocation.service.ServiceState
 import com.fakegps.mocklocation.simulator.RoutePoint
 import com.fakegps.mocklocation.simulator.TransportMode
@@ -39,6 +40,8 @@ class MockLocationServiceTest {
             service.stopSpoofing()
             controller.destroy()
         } catch (ignored: Exception) {}
+        MockLocationService.activeInstance = null
+        MockLocationServiceReceiver.activeService = null
     }
 
     @Test
