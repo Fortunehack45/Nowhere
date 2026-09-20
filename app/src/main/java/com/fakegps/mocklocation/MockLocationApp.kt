@@ -7,6 +7,7 @@ import androidx.preference.PreferenceManager
 import com.fakegps.mocklocation.ads.AdManager
 import com.fakegps.mocklocation.ads.AppOpenAdManager
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
+import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import org.osmdroid.config.Configuration
 
 class MockLocationApp : Application() {
@@ -35,11 +36,17 @@ class MockLocationApp : Application() {
         // Initialize Google AdMob App Open Ads Manager
         appOpenAdManager = AppOpenAdManager(this)
 
-        // Auto-VPN Sync: ensure VPN automatically coordinates with mock GPS location
-        val vpnSyncV3Initialized = sharedPrefs.getBoolean("key_vpn_sync_v3_init", false)
-        if (!vpnSyncV3Initialized) {
-            settingsPrefs.isAutoVpnSyncEnabled = true
-            sharedPrefs.edit().putBoolean("key_vpn_sync_v3_init", true).apply()
+        // Network & Mobile Data Protection Guard:
+        // Ensure VPN is never forcefully auto-started unless user explicitly opts in via IP Changer / Ghost Shield.
+        val networkProtectionV1 = sharedPrefs.getBoolean("key_network_protection_v1", false)
+        if (!networkProtectionV1) {
+            val sessionPrefs = SessionPreferences(this)
+            settingsPrefs.isAutoVpnSyncEnabled = false
+            sessionPrefs.isIpMaskingEnabled = false
+            sharedPrefs.edit().putBoolean("key_network_protection_v1", true).apply()
+            try {
+                com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this)
+            } catch (ignored: Exception) {}
         }
     }
 }

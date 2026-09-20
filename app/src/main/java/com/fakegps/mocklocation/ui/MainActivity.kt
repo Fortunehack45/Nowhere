@@ -1649,10 +1649,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
-        val settingsPrefs = AppSettingsPreferences(this)
-        if (settingsPrefs.isAutoVpnSyncEnabled) {
-            val sessionPrefs = SessionPreferences(this)
-            sessionPrefs.isIpMaskingEnabled = true
+        val sessionPrefs = SessionPreferences(this)
+        if (sessionPrefs.isIpMaskingEnabled && settingsPrefs.isAutoVpnSyncEnabled) {
             if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
                 val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
                 try {
@@ -1889,7 +1887,8 @@ class MainActivity : AppCompatActivity() {
                         binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_muted)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_muted))
-                        binding.tvIpShieldBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) "SHIELD SYNCED" else "SHIELD OFF"
+                        val sessionPrefs = SessionPreferences(this@MainActivity)
+                        binding.tvIpShieldBadge.text = if (sessionPrefs.isIpMaskingEnabled && settingsPrefs.isAutoVpnSyncEnabled) "SHIELD SYNCED" else "SHIELD OFF"
                     }
                 }
             }
