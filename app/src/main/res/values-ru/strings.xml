@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">Высокоточный симулятор GPS и маршрутов</string>
+    <string name="title_search_hint">Поиск города, координат или адреса...</string>
+    
+    <string name="tab_fixed">Фиксированная</string>
+    <string name="tab_route">Маршрут</string>
+    <string name="tab_joystick">Джойстик</string>
+
+    <string name="status_mock_active">NOWHERE АКТИВЕН</string>
+    <string name="status_standby">ОЖИДАНИЕ</string>
+    <string name="status_paused">ПАУЗА</string>
+
+    <string name="btn_start_teleport">Включить локацию</string>
+    <string name="btn_stop_simulation">Остановить симуляцию</string>
+    <string name="btn_start_route">Начать маршрут</string>
+    <string name="btn_pause_route">Пауза</string>
+    <string name="btn_resume_route">Продолжить</string>
+    <string name="btn_clear_route">Очистить точки</string>
+    <string name="btn_import_gpx">Импорт GPX</string>
+    <string name="btn_save_favorite">Сохранить точку</string>
+    <string name="btn_open_dev_options">Параметры разработчика</string>
+    <string name="btn_dismiss">Закрыть</string>
+    <string name="btn_change">Изменить</string>
+    <string name="btn_close">Закрыть</string>
+    <string name="btn_done">Готово</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_language_title">Язык приложения</string>
+    <string name="settings_language_subtitle">Выберите из 10 основных языков мира</string>
+    <string name="settings_language_desc">Мгновенный перевод интерфейса на выбранный язык</string>
+    <string name="settings_theme_title">Внешний вид и тема</string>
+    <string name="settings_theme_dark">Темная</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_system">Системная</string>
+    <string name="settings_general">Основные</string>
+    <string name="settings_privacy_vpn">VPN и щит конфиденциальности</string>
+
+    <string name="vpn_shield_synced">ЩИТ СИНХРОНИЗИРОВАН</string>
+    <string name="vpn_shield_off">ЩИТ ВЫКЛЮЧЕН</string>
+    <string name="vpn_ghost_shield">ПРИЗРАЧНЫЙ ЩИТ</string>
+    <string name="vpn_connecting">ПОДКЛЮЧЕНИЕ...</string>
+    <string name="vpn_error">ОШИБКА ЩИТА</string>
+    <string name="ghost_cloak_stealth">МАСКИРОВКА</string>
+    <string name="hotspot_badge_title">ТОЧКА ДОСТУПА BETA</string>
+
+    <string name="warning_mock_provider_required">Фиктивные координаты отключены: выберите Nowhere в параметрах разработчика.</string>
+    <string name="warning_revoked_at_runtime">Разрешение на фиктивные координаты было отозвано системой.</string>
+    <string name="warning_battery_optimization">Оптимизация батареи может остановить фоновую симуляцию.</string>
+    <string name="widget_icon_description">Динамический значок 1x1 и быстрый телепорт</string>
+    <string name="widget_quick_actions_description">Быстрые действия и плавающий джойстик</string>
+    <string name="widget_route_description">Симулятор маршрута в реальном времени</string>
+    <string name="widget_search_description">Быстрый поиск адресов и телепортация</string>
+    <string name="widget_favorites_description">Закладки и сохраненные координаты</string>
+    <string name="widget_weather_description">Погода и условия в текущей точке</string>
+    <string name="widget_session_timer_description">Таймер сессии и управление временем</string>
+    <string name="widget_vpn_description">Скрытый IP и защитный VPN-щит</string>
+</resources>

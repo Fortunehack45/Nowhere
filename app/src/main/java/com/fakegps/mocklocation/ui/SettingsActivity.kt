@@ -27,8 +27,15 @@ import kotlinx.coroutines.withContext
 import android.view.View
 import android.widget.TextView
 import android.widget.RadioButton
+import android.content.Context
+import com.fakegps.mocklocation.util.LocaleHelper
+import com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet
 
 class SettingsActivity : AppCompatActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.wrapContext(newBase))
+    }
 
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var settingsPrefs: AppSettingsPreferences
@@ -318,6 +325,9 @@ class SettingsActivity : AppCompatActivity() {
             else -> binding.rbUnitMetric.isChecked = true
         }
 
+        val currentLanguage = LocaleHelper.getSelectedLanguageItem(this)
+        binding.tvSettingsLanguageCurrent.text = "${currentLanguage.nativeName} ${currentLanguage.flagEmoji}"
+
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchSettingsGhostCloak.isChecked = settingsPrefs.isGhostCloakEnabled
         binding.switchSettingsAutoVpnSync.isChecked = sessionPrefs.isKillSwitchEnabled
@@ -331,6 +341,15 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         binding.btnBack.setOnClickListener { finish() }
+
+        binding.layoutSettingsLanguage.setOnClickListener {
+            val sheet = LanguageSelectorBottomSheet.newInstance()
+            sheet.onLanguageChanged = {
+                val updated = LocaleHelper.getSelectedLanguageItem(this)
+                binding.tvSettingsLanguageCurrent.text = "${updated.nativeName} ${updated.flagEmoji}"
+            }
+            sheet.show(supportFragmentManager, LanguageSelectorBottomSheet.TAG)
+        }
 
         binding.btnResetDefaults.setOnClickListener {
             resetToDefaults()

@@ -190,6 +190,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(com.fakegps.mocklocation.util.LocaleHelper.wrapContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         settingsPrefs = AppSettingsPreferences(this)
@@ -241,11 +245,15 @@ class MainActivity : AppCompatActivity() {
                 binding.includedSearchOverlay.layoutSearchOverlayHeader.paddingRight,
                 binding.includedSearchOverlay.layoutSearchOverlayHeader.paddingBottom
             )
-
             insets
         }
 
         applyHudFrostedGlass()
+
+        binding.btnHeaderLanguage.setOnClickListener {
+            com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet.newInstance()
+                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet.TAG)
+        }
 
         binding.btnHeaderWidgets.setOnClickListener {
             WidgetGalleryBottomSheet().show(supportFragmentManager, "WIDGET_GALLERY")
@@ -1650,7 +1658,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
         val sessionPrefs = SessionPreferences(this)
-        if (sessionPrefs.isIpMaskingEnabled && settingsPrefs.isAutoVpnSyncEnabled) {
+        if (settingsPrefs.isAutoVpnSyncEnabled) {
+            sessionPrefs.isIpMaskingEnabled = true
             if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
                 val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
                 try {

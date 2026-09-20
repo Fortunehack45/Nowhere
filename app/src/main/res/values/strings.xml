@@ -22,6 +22,28 @@
     <string name="btn_save_favorite">Save Pinned Point</string>
     <string name="btn_open_dev_options">Open Developer Options</string>
     <string name="btn_dismiss">Dismiss</string>
+    <string name="btn_change">Change</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_done">Done</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_language_title">App Language</string>
+    <string name="settings_language_subtitle">Choose from top 10 global languages</string>
+    <string name="settings_language_desc">Instant UI translation in your preferred language</string>
+    <string name="settings_theme_title">Appearance &amp; Theme</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_system">System Default</string>
+    <string name="settings_general">General</string>
+    <string name="settings_privacy_vpn">VPN &amp; Ghost Shield</string>
+
+    <string name="vpn_shield_synced">SHIELD SYNCED</string>
+    <string name="vpn_shield_off">SHIELD OFF</string>
+    <string name="vpn_ghost_shield">GHOST SHIELD</string>
+    <string name="vpn_connecting">CONNECTING...</string>
+    <string name="vpn_error">SHIELD ERROR</string>
+    <string name="ghost_cloak_stealth">GHOST CLOAK</string>
+    <string name="hotspot_badge_title">HOTSPOT BETA</string>
 
     <string name="warning_mock_provider_required">Mock Provider Disabled: Set Nowhere as mock location app in Developer Options to spoof system-wide GPS.</string>
     <string name="warning_revoked_at_runtime">Mock location provider was revoked by system settings. Re-enable Nowhere in Developer Options.</string>

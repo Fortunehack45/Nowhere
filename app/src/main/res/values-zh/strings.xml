@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">高精度 GPS 与路线模拟器</string>
+    <string name="title_search_hint">搜索城市、坐标或地址...</string>
+    
+    <string name="tab_fixed">固定位置</string>
+    <string name="tab_route">路线模拟</string>
+    <string name="tab_joystick">摇杆控制</string>
+
+    <string name="status_mock_active">NOWHERE 运行中</string>
+    <string name="status_standby">待命</string>
+    <string name="status_paused">已暂停</string>
+
+    <string name="btn_start_teleport">启动定位</string>
+    <string name="btn_stop_simulation">停止模拟</string>
+    <string name="btn_start_route">开始路线</string>
+    <string name="btn_pause_route">暂停</string>
+    <string name="btn_resume_route">继续</string>
+    <string name="btn_clear_route">清除途经点</string>
+    <string name="btn_import_gpx">导入 GPX</string>
+    <string name="btn_save_favorite">保存标记点</string>
+    <string name="btn_open_dev_options">打开开发者选项</string>
+    <string name="btn_dismiss">关闭</string>
+    <string name="btn_change">更改</string>
+    <string name="btn_close">关闭</string>
+    <string name="btn_done">完成</string>
+
+    <string name="settings_title">设置</string>
+    <string name="settings_language_title">应用语言</string>
+    <string name="settings_language_subtitle">选择全球前 10 大语言</string>
+    <string name="settings_language_desc">即时切换为你偏好的语言界面</string>
+    <string name="settings_theme_title">外观与主题</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_general">通用设置</string>
+    <string name="settings_privacy_vpn">VPN 与隐身护盾</string>
+
+    <string name="vpn_shield_synced">护盾已同步</string>
+    <string name="vpn_shield_off">护盾关闭</string>
+    <string name="vpn_ghost_shield">隐身护盾</string>
+    <string name="vpn_connecting">正在连接...</string>
+    <string name="vpn_error">护盾异常</string>
+    <string name="ghost_cloak_stealth">幽灵隐匿</string>
+    <string name="hotspot_badge_title">热点同步 BETA</string>
+
+    <string name="warning_mock_provider_required">模拟位置未启用：请在开发者选项中将 Nowhere 设置为模拟位置应用。</string>
+    <string name="warning_revoked_at_runtime">模拟位置提供程序已被系统设置撤销。请在开发者选项中重新开启。</string>
+    <string name="warning_battery_optimization">系统省电策略可能会在设备息屏时中断后台模拟。</string>
+    <string name="widget_icon_description">动态 1x1 应用图标及瞬移快捷方式</string>
+    <string name="widget_quick_actions_description">快捷传送与浮窗摇杆启动器</string>
+    <string name="widget_route_description">实时路线模拟器与控制器</string>
+    <string name="widget_search_description">即时地址检索与瞬移工具</string>
+    <string name="widget_favorites_description">收藏夹与已保存坐标快捷启动</string>
+    <string name="widget_weather_description">当前坐标天气与环境状况</string>
+    <string name="widget_session_timer_description">活跃模拟会话倒计时与控制组件</string>
+    <string name="widget_vpn_description">隐身 IP 与 VPN 隐私防护盾</string>
+</resources>

@@ -14,9 +14,17 @@ class MockLocationApp : Application() {
 
     private lateinit var appOpenAdManager: AppOpenAdManager
 
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(com.fakegps.mocklocation.util.LocaleHelper.wrapContext(base))
+    }
+
     override fun onCreate() {
         super.onCreate()
         val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+
+        // Apply user selected language on startup
+        val selectedLanguage = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
+        com.fakegps.mocklocation.util.LocaleHelper.applyLanguage(this, selectedLanguage)
 
         Configuration.getInstance().load(this@MockLocationApp, sharedPrefs)
         Configuration.getInstance().userAgentValue = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36 NowhereLocationSimulator/1.0"
@@ -36,17 +44,13 @@ class MockLocationApp : Application() {
         // Initialize Google AdMob App Open Ads Manager
         appOpenAdManager = AppOpenAdManager(this)
 
-        // Network & Mobile Data Protection Guard:
-        // Ensure VPN is never forcefully auto-started unless user explicitly opts in via IP Changer / Ghost Shield.
-        val networkProtectionV1 = sharedPrefs.getBoolean("key_network_protection_v1", false)
-        if (!networkProtectionV1) {
+        // Auto-VPN Coordination: VPN connects on location start, disconnects on stop.
+        val vpnCoordinationInitialized = sharedPrefs.getBoolean("key_vpn_coordination_v1", false)
+        if (!vpnCoordinationInitialized) {
             val sessionPrefs = SessionPreferences(this)
-            settingsPrefs.isAutoVpnSyncEnabled = false
-            sessionPrefs.isIpMaskingEnabled = false
-            sharedPrefs.edit().putBoolean("key_network_protection_v1", true).apply()
-            try {
-                com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this)
-            } catch (ignored: Exception) {}
+            settingsPrefs.isAutoVpnSyncEnabled = true
+            sessionPrefs.isIpMaskingEnabled = true
+            sharedPrefs.edit().putBoolean("key_vpn_coordination_v1", true).apply()
         }
     }
 }

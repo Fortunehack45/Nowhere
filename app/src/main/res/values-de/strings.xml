@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">Präzisions-GPS- und Routensimulator</string>
+    <string name="title_search_hint">Stadt, Koordinaten oder Adresse suchen...</string>
+    
+    <string name="tab_fixed">Fest</string>
+    <string name="tab_route">Route</string>
+    <string name="tab_joystick">Joystick</string>
+
+    <string name="status_mock_active">NOWHERE AKTIV</string>
+    <string name="status_standby">STANDBY</string>
+    <string name="status_paused">PAUSIERT</string>
+
+    <string name="btn_start_teleport">Standort starten</string>
+    <string name="btn_stop_simulation">Simulation stoppen</string>
+    <string name="btn_start_route">Route starten</string>
+    <string name="btn_pause_route">Pause</string>
+    <string name="btn_resume_route">Fortsetzen</string>
+    <string name="btn_clear_route">Wegpunkte löschen</string>
+    <string name="btn_import_gpx">GPX importieren</string>
+    <string name="btn_save_favorite">Punkt speichern</string>
+    <string name="btn_open_dev_options">Entwickleroptionen öffnen</string>
+    <string name="btn_dismiss">Schließen</string>
+    <string name="btn_change">Ändern</string>
+    <string name="btn_close">Schließen</string>
+    <string name="btn_done">Fertig</string>
+
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_language_title">App-Sprache</string>
+    <string name="settings_language_subtitle">Wählen Sie aus den 10 wichtigsten Weltsprachen</string>
+    <string name="settings_language_desc">Sofortige Übersetzung in Ihre bevorzugte Sprache</string>
+    <string name="settings_theme_title">Erscheinungsbild &amp; Design</string>
+    <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_theme_light">Hell</string>
+    <string name="settings_theme_system">Systemstandard</string>
+    <string name="settings_general">Allgemein</string>
+    <string name="settings_privacy_vpn">VPN &amp; Ghost-Schild</string>
+
+    <string name="vpn_shield_synced">SCHILD SYNCHRONISIERT</string>
+    <string name="vpn_shield_off">SCHILD AUS</string>
+    <string name="vpn_ghost_shield">GHOST-SCHILD</string>
+    <string name="vpn_connecting">VERBINDEN...</string>
+    <string name="vpn_error">SCHILD-FEHLER</string>
+    <string name="ghost_cloak_stealth">TARNUNG</string>
+    <string name="hotspot_badge_title">HOTSPOT BETA</string>
+
+    <string name="warning_mock_provider_required">Simulierter Standort deaktiviert: Wählen Sie Nowhere in den Entwickleroptionen.</string>
+    <string name="warning_revoked_at_runtime">Der simulierte Standortanbieter wurde durch Systemeinstellungen widerrufen.</string>
+    <string name="warning_battery_optimization">Die Akkuoptimierung kann die Hintergrundsimulation beenden.</string>
+    <string name="widget_icon_description">Dynamisches 1x1-App-Symbol und Schnell-Teleport</string>
+    <string name="widget_quick_actions_description">Schnellaktionen und schwebender Joystick</string>
+    <string name="widget_route_description">Live-Routensimulator und Steuerung</string>
+    <string name="widget_search_description">Sofortige Adresssuche und Teleporter</string>
+    <string name="widget_favorites_description">Lesezeichen und gespeicherte Koordinaten</string>
+    <string name="widget_weather_description">Wetter und Bedingungen an aktuellen Koordinaten</string>
+    <string name="widget_session_timer_description">Sitzungs-Countdown und Zeitsteuerung</string>
+    <string name="widget_vpn_description">Stealth-IP und VPN-Datenschutzschild</string>
+</resources>

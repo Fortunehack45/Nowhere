@@ -1,6 +1,7 @@
 package com.fakegps.mocklocation.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Build
@@ -37,6 +38,10 @@ class WelcomeActivity : AppCompatActivity() {
         if (::walkthroughAdapter.isInitialized) {
             walkthroughAdapter.notifyItemChanged(3)
         }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(com.fakegps.mocklocation.util.LocaleHelper.wrapContext(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

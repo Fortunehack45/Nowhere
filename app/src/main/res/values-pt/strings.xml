@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">Simulador de GPS e Rotas de Alta Precisão</string>
+    <string name="title_search_hint">Buscar cidade, coordenadas ou endereço...</string>
+    
+    <string name="tab_fixed">Fixo</string>
+    <string name="tab_route">Rota</string>
+    <string name="tab_joystick">Joystick</string>
+
+    <string name="status_mock_active">NOWHERE ATIVO</string>
+    <string name="status_standby">EM ESPERA</string>
+    <string name="status_paused">PAUSADO</string>
+
+    <string name="btn_start_teleport">Iniciar Localização</string>
+    <string name="btn_stop_simulation">Parar Simulação</string>
+    <string name="btn_start_route">Iniciar Rota</string>
+    <string name="btn_pause_route">Pausar</string>
+    <string name="btn_resume_route">Retomar</string>
+    <string name="btn_clear_route">Limpar Pontos</string>
+    <string name="btn_import_gpx">Importar GPX</string>
+    <string name="btn_save_favorite">Salvar Ponto</string>
+    <string name="btn_open_dev_options">Opções do Desenvolvedor</string>
+    <string name="btn_dismiss">Dispensar</string>
+    <string name="btn_change">Alterar</string>
+    <string name="btn_close">Fechar</string>
+    <string name="btn_done">Concluído</string>
+
+    <string name="settings_title">Configurações</string>
+    <string name="settings_language_title">Idioma do Aplicativo</string>
+    <string name="settings_language_subtitle">Escolha entre os 10 principais idiomas do mundo</string>
+    <string name="settings_language_desc">Tradução instantânea no seu idioma preferido</string>
+    <string name="settings_theme_title">Aparência e Tema</string>
+    <string name="settings_theme_dark">Escuro</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_system">Padrão do Sistema</string>
+    <string name="settings_general">Geral</string>
+    <string name="settings_privacy_vpn">VPN e Escudo Fantasma</string>
+
+    <string name="vpn_shield_synced">ESCUDO SINCRONIZADO</string>
+    <string name="vpn_shield_off">ESCUDO DESLIGADO</string>
+    <string name="vpn_ghost_shield">ESCUDO FANTASMA</string>
+    <string name="vpn_connecting">CONECTANDO...</string>
+    <string name="vpn_error">ERRO NO ESCUDO</string>
+    <string name="ghost_cloak_stealth">CAPA FANTASMA</string>
+    <string name="hotspot_badge_title">HOTSPOT BETA</string>
+
+    <string name="warning_mock_provider_required">Localização fictícia desativada: Defina Nowhere nas Opções do Desenvolvedor.</string>
+    <string name="warning_revoked_at_runtime">O provedor de localização simulada foi revogado pelas configurações do sistema.</string>
+    <string name="warning_battery_optimization">A economia de bateria pode suspender a simulação em segundo plano.</string>
+    <string name="widget_icon_description">Ícone de app 1x1 e atalho de teletransporte rápido</string>
+    <string name="widget_quick_actions_description">Iniciador de ações rápidas e joystick flutuante</string>
+    <string name="widget_route_description">Simulador de rota ao vivo e controles</string>
+    <string name="widget_search_description">Busca rápida de endereços e teletransporte</string>
+    <string name="widget_favorites_description">Marcadores rápidos e coordenadas salvas</string>
+    <string name="widget_weather_description">Clima e condições nas coordenadas atuais</string>
+    <string name="widget_session_timer_description">Contagem regressiva da sessão e controles</string>
+    <string name="widget_vpn_description">IP furtivo e escudo de privacidade VPN</string>
+</resources>

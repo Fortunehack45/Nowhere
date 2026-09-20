@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">高精度 GPS ＆ ルートシミュレーター</string>
+    <string name="title_search_hint">都市、座標、住所を検索...</string>
+    
+    <string name="tab_fixed">固定位置</string>
+    <string name="tab_route">ルート</string>
+    <string name="tab_joystick">ジョイスティック</string>
+
+    <string name="status_mock_active">NOWHERE 稼働中</string>
+    <string name="status_standby">待機中</string>
+    <string name="status_paused">一時停止中</string>
+
+    <string name="btn_start_teleport">位置偽装を開始</string>
+    <string name="btn_stop_simulation">シミュレーション停止</string>
+    <string name="btn_start_route">ルート開始</string>
+    <string name="btn_pause_route">一時停止</string>
+    <string name="btn_resume_route">再開</string>
+    <string name="btn_clear_route">ウェイポイント消去</string>
+    <string name="btn_import_gpx">GPXインポート</string>
+    <string name="btn_save_favorite">地点を保存</string>
+    <string name="btn_open_dev_options">開発者向けオプション</string>
+    <string name="btn_dismiss">閉じる</string>
+    <string name="btn_change">変更</string>
+    <string name="btn_close">閉じる</string>
+    <string name="btn_done">完了</string>
+
+    <string name="settings_title">設定</string>
+    <string name="settings_language_title">アプリ言語</string>
+    <string name="settings_language_subtitle">世界の主要10言語から選択</string>
+    <string name="settings_language_desc">お好みの言語に即座にUIを切り替えます</string>
+    <string name="settings_theme_title">外観とテーマ</string>
+    <string name="settings_theme_dark">ダーク</string>
+    <string name="settings_theme_light">ライト</string>
+    <string name="settings_theme_system">システムデフォルト</string>
+    <string name="settings_general">一般</string>
+    <string name="settings_privacy_vpn">VPN ＆ ゴーストシールド</string>
+
+    <string name="vpn_shield_synced">シールド同期完了</string>
+    <string name="vpn_shield_off">シールドオフ</string>
+    <string name="vpn_ghost_shield">ゴーストシールド</string>
+    <string name="vpn_connecting">接続中...</string>
+    <string name="vpn_error">シールドエラー</string>
+    <string name="ghost_cloak_stealth">ステルスマント</string>
+    <string name="hotspot_badge_title">ホットスポット BETA</string>
+
+    <string name="warning_mock_provider_required">仮の現在地情報が無効です: 開発者向けオプションでNowhereを選択してください。</string>
+    <string name="warning_revoked_at_runtime">仮の現在地プロバイダがシステム設定によって取り消されました。</string>
+    <string name="warning_battery_optimization">バッテリー節約機能によりバックグラウンド動作が停止する可能性があります。</string>
+    <string name="widget_icon_description">ダイナミック1x1アプリアイコン＆高速テレポート</string>
+    <string name="widget_quick_actions_description">クイックアクション＆フローティングジョイスティック</string>
+    <string name="widget_route_description">リアルタイムルートシミュレーターと操作</string>
+    <string name="widget_search_description">即時住所検索とテレポート</string>
+    <string name="widget_favorites_description">ブックマークと保存済み座標</string>
+    <string name="widget_weather_description">現在座標の天気と環境状況</string>
+    <string name="widget_session_timer_description">セッションカウントダウンと時間管理</string>
+    <string name="widget_vpn_description">ステルスIPとVPNプライバシーシールド</string>
+</resources>

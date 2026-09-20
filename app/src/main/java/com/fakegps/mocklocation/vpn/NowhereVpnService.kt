@@ -450,11 +450,11 @@ class NowhereVpnService : VpnService() {
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 6000L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 3500L)
         if (!handshakeConfirmed) {
-            Log.w(TAG, "WireGuard handshake initial check timed out for $serverEndpoint; attempting 1 keepalive retry...")
-            delay(1000L)
-            val retryConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 3000L)
+            Log.w(TAG, "WireGuard handshake initial check timed out for $serverEndpoint; attempting 1 quick keepalive retry...")
+            delay(500L)
+            val retryConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 1500L)
             if (!retryConfirmed) {
                 Log.w(TAG, "WireGuard handshake failed with $serverEndpoint — preserving mobile data...")
                 WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
@@ -518,11 +518,11 @@ class NowhereVpnService : VpnService() {
 
                 // Dead Peer Detection / Blackhole Preventer:
                 // If user/apps are transmitting packets into the tunnel (txRate > 0)
-                // but ZERO return packets have been received from the server for > 12 consecutive seconds:
+                // but ZERO return packets have been received from the server for >= 6 consecutive seconds:
                 if (txRate > 0L && totalRxBytes == lastObservedRx) {
                     deadPeerTicks++
-                    if (deadPeerTicks >= 12) {
-                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server dropped/unresponsive for 12s! Disengaging VPN to protect internet connectivity.")
+                    if (deadPeerTicks >= 6) {
+                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server dropped/unresponsive for 6s! Disengaging VPN to protect internet connectivity.")
                         handleConnectionFailure(node, "VPN server unresponsive. Normal internet preserved.")
                         break
                     }

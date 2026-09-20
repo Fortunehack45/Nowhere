@@ -376,6 +376,17 @@
                     android:orientation="horizontal">
 
                     <ImageButton
+                        android:id="@+id/btnHeaderLanguage"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_status_pill"
+                        android:padding="7dp"
+                        android:src="@drawable/ic_globe"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
+
+                    <ImageButton
                         android:id="@+id/btnHeaderWidgets"
                         android:layout_width="34dp"
                         android:layout_height="34dp"

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">محاكي نظام تحديد المواقع والمسارات فائق الدقة</string>
+    <string name="title_search_hint">ابحث عن مدينة أو إحداثيات أو عنوان...</string>
+    
+    <string name="tab_fixed">موقع ثابت</string>
+    <string name="tab_route">مسار</string>
+    <string name="tab_joystick">عصا التحكم</string>
+
+    <string name="status_mock_active">NOWHERE نشط</string>
+    <string name="status_standby">في وضع الاستعداد</string>
+    <string name="status_paused">متوقف مؤقتاً</string>
+
+    <string name="btn_start_teleport">بدء الموقع</string>
+    <string name="btn_stop_simulation">إيقاف المحاكاة</string>
+    <string name="btn_start_route">بدء المسار</string>
+    <string name="btn_pause_route">إيقاف مؤقت</string>
+    <string name="btn_resume_route">استئناف</string>
+    <string name="btn_clear_route">مسح النقاط</string>
+    <string name="btn_import_gpx">استيراد GPX</string>
+    <string name="btn_save_favorite">حفظ النقطة</string>
+    <string name="btn_open_dev_options">خيارات المطور</string>
+    <string name="btn_dismiss">إلغاء</string>
+    <string name="btn_change">تغيير</string>
+    <string name="btn_close">إغلاق</string>
+    <string name="btn_done">تم</string>
+
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_language_title">لغة التطبيق</string>
+    <string name="settings_language_subtitle">اختر من بين أفضل 10 لغات عالمية</string>
+    <string name="settings_language_desc">ترجمة فورية للواجهة بلغتك المفضلة</string>
+    <string name="settings_theme_title">المظهر والسمة</string>
+    <string name="settings_theme_dark">داكن</string>
+    <string name="settings_theme_light">فاتح</string>
+    <string name="settings_theme_system">افتراضي النظام</string>
+    <string name="settings_general">عام</string>
+    <string name="settings_privacy_vpn">VPN ودرع التخفي</string>
+
+    <string name="vpn_shield_synced">الدرع متزامن</string>
+    <string name="vpn_shield_off">الدرع متوقف</string>
+    <string name="vpn_ghost_shield">درع الشبح</string>
+    <string name="vpn_connecting">جارٍ الاتصال...</string>
+    <string name="vpn_error">خطأ في الدرع</string>
+    <string name="ghost_cloak_stealth">عباءة الشبح</string>
+    <string name="hotspot_badge_title">نقطة اتصال تجريبية</string>
+
+    <string name="warning_mock_provider_required">موفر المحاكاة معطل: عيّن Nowhere كتطبيق للموقع الوهمي في خيارات المطور.</string>
+    <string name="warning_revoked_at_runtime">تم إلغاء موفر الموقع الوهمي من إعدادات النظام.</string>
+    <string name="warning_battery_optimization">قد يوقف موفر طاقة البطارية المحاكاة في الخلفية.</string>
+    <string name="widget_icon_description">أيقونة التطبيق الديناميكية واختصار النقل السريع 1x1</string>
+    <string name="widget_quick_actions_description">مشغل الإجراءات السريعة وعصا التحكم العائمة</string>
+    <string name="widget_route_description">محاكي المسارات الحية وأدوات التحكم</string>
+    <string name="widget_search_description">بحث فوري عن العناوين والانتقال</string>
+    <string name="widget_favorites_description">إشارات مرجعية سريعة وإحداثيات محفوظة</string>
+    <string name="widget_weather_description">طقس وظروف الإحداثيات الحالية</string>
+    <string name="widget_session_timer_description">العد التنازلي لجلسة المحاكاة النشطة</string>
+    <string name="widget_vpn_description">عنوان IP خفي ودرع خصوصية VPN</string>
+</resources>

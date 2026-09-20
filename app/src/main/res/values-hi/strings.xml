@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">सटीक जीपीएस और रूट सिम्युलेटर</string>
+    <string name="title_search_hint">शहर, निर्देशांक या पता खोजें...</string>
+    
+    <string name="tab_fixed">निश्चित स्थान</string>
+    <string name="tab_route">रूट</string>
+    <string name="tab_joystick">जॉयस्टिक</string>
+
+    <string name="status_mock_active">NOWHERE सक्रिय</string>
+    <string name="status_standby">तैयार</string>
+    <string name="status_paused">रुका हुआ</string>
+
+    <string name="btn_start_teleport">स्थान शुरू करें</string>
+    <string name="btn_stop_simulation">सिमुलेशन रोकें</string>
+    <string name="btn_start_route">रूट शुरू करें</string>
+    <string name="btn_pause_route">रोकें</string>
+    <string name="btn_resume_route">पुनः शुरू करें</string>
+    <string name="btn_clear_route">वेपॉइंट हटाएं</string>
+    <string name="btn_import_gpx">GPX आयात करें</string>
+    <string name="btn_save_favorite">पिन सहेजें</string>
+    <string name="btn_open_dev_options">डेवलपर विकल्प खोलें</string>
+    <string name="btn_dismiss">खारिज करें</string>
+    <string name="btn_change">बदलें</string>
+    <string name="btn_close">बंद करें</string>
+    <string name="btn_done">पूर्ण</string>
+
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="settings_language_title">ऐप भाषा</string>
+    <string name="settings_language_subtitle">विश्व की शीर्ष 10 भाषाओं में से चुनें</string>
+    <string name="settings_language_desc">अपनी पसंदीदा भाषा में तुरंत अनुवाद</string>
+    <string name="settings_theme_title">दिखावट और थीम</string>
+    <string name="settings_theme_dark">डार्क</string>
+    <string name="settings_theme_light">लाइट</string>
+    <string name="settings_theme_system">सिस्टम डिफ़ॉल्ट</string>
+    <string name="settings_general">सामान्य</string>
+    <string name="settings_privacy_vpn">VPN और घोस्ट शील्ड</string>
+
+    <string name="vpn_shield_synced">शील्ड सिंक किया गया</string>
+    <string name="vpn_shield_off">शील्ड बंद</string>
+    <string name="vpn_ghost_shield">घोस्ट शील्ड</string>
+    <string name="vpn_connecting">कनेक्ट हो रहा है...</string>
+    <string name="vpn_error">शील्ड त्रुटि</string>
+    <string name="ghost_cloak_stealth">घोस्ट क्लोक</string>
+    <string name="hotspot_badge_title">हॉटस्पॉट बीटा</string>
+
+    <string name="warning_mock_provider_required">मॉक प्रदाता अक्षम: डेवलपर विकल्पों में Nowhere को मॉक लोकेशन ऐप के रूप में सेट करें।</string>
+    <string name="warning_revoked_at_runtime">सिस्टम सेटिंग्स द्वारा मॉक लोकेशन प्रदाता निरस्त कर दिया गया था।</string>
+    <string name="warning_battery_optimization">बैटरी सेवर बैकग्राउंड सिमुलेशन को रोक सकता है।</string>
+    <string name="widget_icon_description">डायनामिक 1x1 ऐप आइकन और क्विक टेलीपोर्ट शॉर्टकट</string>
+    <string name="widget_quick_actions_description">क्विक टेलीपोर्ट और जॉयस्टिक लॉन्चर</string>
+    <string name="widget_route_description">लाइव रूट सिम्युलेटर और नियंत्रण</string>
+    <string name="widget_search_description">त्वरित पता खोज और टेलीपोर्टर</string>
+    <string name="widget_favorites_description">त्वरित बुकमार्क और सहेजे गए निर्देशांक</string>
+    <string name="widget_weather_description">वर्तमान स्थान का मौसम और स्थितियां</string>
+    <string name="widget_session_timer_description">सक्रिय सत्र उलटी गिनती और नियंत्रण</string>
+    <string name="widget_vpn_description">गोपनीयता IP और VPN शील्ड</string>
+</resources>

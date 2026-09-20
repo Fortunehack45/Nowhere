@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nowhere</string>
+    <string name="app_tagline">Simulateur GPS et d\'itinéraires de haute précision</string>
+    <string name="title_search_hint">Rechercher une ville, coordonnées ou adresse...</string>
+    
+    <string name="tab_fixed">Fixe</string>
+    <string name="tab_route">Itinéraire</string>
+    <string name="tab_joystick">Joystick</string>
+
+    <string name="status_mock_active">NOWHERE ACTIF</string>
+    <string name="status_standby">EN ATTENTE</string>
+    <string name="status_paused">EN PAUSE</string>
+
+    <string name="btn_start_teleport">Activer la position</string>
+    <string name="btn_stop_simulation">Arrêter la simulation</string>
+    <string name="btn_start_route">Démarrer l\'itinéraire</string>
+    <string name="btn_pause_route">Pause</string>
+    <string name="btn_resume_route">Reprendre</string>
+    <string name="btn_clear_route">Effacer les points</string>
+    <string name="btn_import_gpx">Importer GPX</string>
+    <string name="btn_save_favorite">Enregistrer le point</string>
+    <string name="btn_open_dev_options">Options pour les développeurs</string>
+    <string name="btn_dismiss">Fermer</string>
+    <string name="btn_change">Modifier</string>
+    <string name="btn_close">Fermer</string>
+    <string name="btn_done">Terminé</string>
+
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_language_title">Langue de l\'application</string>
+    <string name="settings_language_subtitle">Choisissez parmi les 10 principales langues</string>
+    <string name="settings_language_desc">Traduction instantanée dans votre langue préférée</string>
+    <string name="settings_theme_title">Apparence et Thème</string>
+    <string name="settings_theme_dark">Sombre</string>
+    <string name="settings_theme_light">Clair</string>
+    <string name="settings_theme_system">Système par défaut</string>
+    <string name="settings_general">Général</string>
+    <string name="settings_privacy_vpn">VPN et Bouclier Fantôme</string>
+
+    <string name="vpn_shield_synced">BOUCLIER SYNCHRONISÉ</string>
+    <string name="vpn_shield_off">BOUCLIER DÉSACTIVÉ</string>
+    <string name="vpn_ghost_shield">BOUCLIER FANTÔME</string>
+    <string name="vpn_connecting">CONNEXION EN COURS...</string>
+    <string name="vpn_error">ERREUR DU BOUCLIER</string>
+    <string name="ghost_cloak_stealth">CAPE FANTÔME</string>
+    <string name="hotspot_badge_title">POINT D\'ACCÈS BÊTA</string>
+
+    <string name="warning_mock_provider_required">Position fictive désactivée: Définissez Nowhere dans les options pour les développeurs.</string>
+    <string name="warning_revoked_at_runtime">Le fournisseur de position fictive a été révoqué par le système.</string>
+    <string name="warning_battery_optimization">L\'optimisation de la batterie peut interrompre la simulation en arrière-plan.</string>
+    <string name="widget_icon_description">Icône dynamique 1x1 et raccourci de téléportation rapide</string>
+    <string name="widget_quick_actions_description">Lanceur d\'actions rapides et joystick flottant</string>
+    <string name="widget_route_description">Simulateur d\'itinéraire en direct et commandes</string>
+    <string name="widget_search_description">Recherche rapide d\'adresses et téléportation</string>
+    <string name="widget_favorites_description">Favoris et coordonnées enregistrées</string>
+    <string name="widget_weather_description">Météo et conditions aux coordonnées actuelles</string>
+    <string name="widget_session_timer_description">Compte à rebours de session et contrôles</string>
+    <string name="widget_vpn_description">IP furtive et bouclier de confidentialité VPN</string>
+</resources>
