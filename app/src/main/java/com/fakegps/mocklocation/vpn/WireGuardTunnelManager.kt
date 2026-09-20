@@ -88,7 +88,7 @@ object WireGuardTunnelManager {
             val ifaceBuilder = Interface.Builder()
                 .parsePrivateKey(clientPrivKey)
                 .addAddress(InetNetwork.parse(cleanAssignedIp))
-                .setMtu(1280) // 1280 bytes guarantees zero cellular UDP fragmentation across all global carriers
+                .setMtu(1360) // 1360 bytes: optimal for LTE/5G mobile carriers avoiding MTU blackholes
                 .excludeApplication(context.packageName)
 
             val dnsCandidates = linkedSetOf<String>().apply {

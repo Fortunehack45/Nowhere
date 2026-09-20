@@ -168,7 +168,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:letterSpacing="0.04"
-                                android:text="DIRECT"
+                                android:text="@string/status_direct"
                                 android:textColor="@color/text_primary"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
@@ -201,7 +201,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:letterSpacing="0.04"
-                                android:text="CLOAK BETA"
+                                android:text="@string/badge_cloak"
                                 android:textColor="@color/primary_bright"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
@@ -233,7 +233,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:letterSpacing="0.04"
-                                android:text="HOTSPOT BETA"
+                                android:text="@string/badge_hotspot"
                                 android:textColor="@color/text_primary"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
@@ -265,7 +265,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:letterSpacing="0.04"
-                                android:text="AUTO"
+                                android:text="@string/badge_auto"
                                 android:textColor="@color/text_primary"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
@@ -332,7 +332,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:letterSpacing="0.04"
-                                android:text="GET PRO"
+                                android:text="@string/badge_pro"
                                 android:textColor="@color/primary_bright"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
@@ -360,7 +360,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="5dp"
                                 android:letterSpacing="0.05"
-                                android:text="STANDBY"
+                                android:text="@string/status_standby"
                                 android:textColor="@color/text_muted"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
@@ -1469,7 +1469,7 @@
                     android:background="@drawable/bg_segmented_pill_item"
                     android:button="@null"
                     android:gravity="center"
-                    android:text="Foot"
+                    android:text="@string/transport_walk"
                     android:textColor="@color/color_segmented_text"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -1477,12 +1477,13 @@
                 <RadioButton
                     android:id="@+id/rbTransportVehicle"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="34dp"
+                    android:layout_marginHorizontal="2dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_segmented_pill_item"
+                    android:background="@null"
                     android:button="@null"
                     android:gravity="center"
-                    android:text="Vehicle"
+                    android:text="@string/transport_drive"
                     android:textColor="@color/color_segmented_text"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -1490,12 +1491,13 @@
                 <RadioButton
                     android:id="@+id/rbTransportAircraft"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="34dp"
+                    android:layout_marginHorizontal="2dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_segmented_pill_item"
+                    android:background="@null"
                     android:button="@null"
                     android:gravity="center"
-                    android:text="Aircraft"
+                    android:text="@string/transport_fly"
                     android:textColor="@color/color_segmented_text"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -1503,12 +1505,13 @@
                 <RadioButton
                     android:id="@+id/rbTransportShip"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_segmented_pill_item"
+                    android:background="@null"
                     android:button="@null"
                     android:gravity="center"
-                    android:text="Ship"
+                    android:text="@string/transport_ship"
                     android:textColor="@color/color_segmented_text"
                     android:textSize="11sp"
                     android:textStyle="bold" />

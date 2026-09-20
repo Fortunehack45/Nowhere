@@ -1,59 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nowhere</string>
-    <string name="app_tagline">محاكي نظام تحديد المواقع والمسارات فائق الدقة</string>
+    <string name="app_tagline">محاكي نظام تحديد المواقع والمسارات بدقة عالية</string>
     <string name="title_search_hint">ابحث عن مدينة أو إحداثيات أو عنوان...</string>
-    
-    <string name="tab_fixed">موقع ثابت</string>
+
+    <!-- Mode Tabs -->
+    <string name="tab_fixed">ثابت</string>
     <string name="tab_route">مسار</string>
     <string name="tab_joystick">عصا التحكم</string>
+    <string name="mode_teleport">انتقال فوري</string>
+    <string name="mode_route">مسار</string>
+    <string name="mode_joystick">عصا التحكم</string>
+    <string name="mode_motion_sync">مزامنة الحركة</string>
 
+    <!-- Status & Badges -->
     <string name="status_mock_active">NOWHERE نشط</string>
     <string name="status_standby">في وضع الاستعداد</string>
+    <string name="status_active">نشط</string>
     <string name="status_paused">متوقف مؤقتاً</string>
+    <string name="status_expired">منتهي الصلاحية</string>
+    <string name="status_direct">مباشر</string>
+    <string name="badge_auto">تلقائي</string>
+    <string name="badge_auto_on">تلقائي مفعّل</string>
+    <string name="badge_pro">الترقية للمحترف</string>
+    <string name="badge_pro_discount">برو (خصم 15%)</string>
+    <string name="badge_cloak">التخفي التجريبي</string>
+    <string name="badge_raw_gps">نظام GPS مباشر</string>
+    <string name="badge_hotspot">نقطة اتصال تجريبية</string>
+    <string name="badge_sync">مزامنة تجريبية</string>
+    <string name="badge_unlimited">غير محدود</string>
+    <string name="selected_language_badge">محدد</string>
+    <string name="hud_search_results">نتائج البحث</string>
+    <string name="hud_recent_searches">عمليات البحث الأخيرة</string>
+    <string name="hud_slide_down_hide">اسحب لأسفل أو انقر للإخفاء</string>
+    <string name="hud_slide_up_show">اسحب لأعلى أو انقر للإظهار</string>
 
-    <string name="btn_start_teleport">بدء الموقع</string>
+    <!-- Action Buttons -->
+    <string name="btn_start_teleport">بدء الانتقال</string>
+    <string name="btn_start_joystick">تفعيل عصا التحكم</string>
+    <string name="btn_start_simulation">بدء المحاكاة</string>
     <string name="btn_stop_simulation">إيقاف المحاكاة</string>
     <string name="btn_start_route">بدء المسار</string>
+    <string name="btn_stop_route">إيقاف المسار</string>
     <string name="btn_pause_route">إيقاف مؤقت</string>
     <string name="btn_resume_route">استئناف</string>
-    <string name="btn_clear_route">مسح النقاط</string>
+    <string name="btn_clear_route">مسح المسار</string>
     <string name="btn_import_gpx">استيراد GPX</string>
-    <string name="btn_save_favorite">حفظ النقطة</string>
-    <string name="btn_open_dev_options">خيارات المطور</string>
-    <string name="btn_dismiss">إلغاء</string>
+    <string name="btn_save_route">حفظ المسار</string>
+    <string name="btn_save_favorite">حفظ الموقع</string>
+    <string name="btn_history">السجل</string>
+    <string name="btn_favorites">المفضلة</string>
+    <string name="btn_weather">الطقس</string>
+    <string name="btn_open_dev_options">فتح خيارات المطور</string>
+    <string name="btn_dismiss">تجاهل</string>
     <string name="btn_change">تغيير</string>
     <string name="btn_close">إغلاق</string>
     <string name="btn_done">تم</string>
 
+    <!-- Transport Modes -->
+    <string name="transport_walk">مشي</string>
+    <string name="transport_cycle">دراجة</string>
+    <string name="transport_drive">قيادة</string>
+    <string name="transport_fly">طيران</string>
+    <string name="transport_ship">سفينة</string>
+
+    <!-- Settings Screen -->
     <string name="settings_title">الإعدادات</string>
     <string name="settings_language_title">لغة التطبيق</string>
-    <string name="settings_language_subtitle">اختر من بين أفضل 10 لغات عالمية</string>
-    <string name="settings_language_desc">ترجمة فورية للواجهة بلغتك المفضلة</string>
+    <string name="settings_language_subtitle">اختر لغة</string>
+    <string name="settings_language_desc">ترجمة فورية لواجهة التطبيق بلغتك المفضلة</string>
     <string name="settings_theme_title">المظهر والسمة</string>
     <string name="settings_theme_dark">داكن</string>
     <string name="settings_theme_light">فاتح</string>
-    <string name="settings_theme_system">افتراضي النظام</string>
+    <string name="settings_theme_system">تلقائي حسب النظام</string>
     <string name="settings_general">عام</string>
-    <string name="settings_privacy_vpn">VPN ودرع التخفي</string>
+    <string name="settings_privacy_vpn">الشبكة الافتراضية ودرع التخفي</string>
+    <string name="settings_section_session">الباقة الاحترافية والجلسة</string>
+    <string name="settings_section_map">الخريطة والتحكم</string>
+    <string name="settings_section_antidetect">مكافحة الاكتشاف والمحاكاة الواقعية</string>
+    <string name="settings_section_shortcuts">اختصارات الواجهة المصغرة</string>
+    <string name="settings_session_countdown">العد التنازلي للجلسة النشطة</string>
+    <string name="settings_extend_two_hours">تمديد ساعتين</string>
+    <string name="settings_extend_day">تمديد 24 ساعة</string>
+    <string name="settings_upgrade_pro">ترقية إلى Pro</string>
+    <string name="settings_persistent_service">خدمة التشغيل الدائم بالخلفية</string>
+    <string name="settings_persistent_service_desc">الحفاظ على تشغيل الموقع الوهمي بعد إغلاق التطبيق</string>
+    <string name="settings_ghost_cloak">عباءة التخفي (مكافحة الاكتشاف)</string>
+    <string name="settings_ghost_cloak_desc">حجب إشارات الموقع الوهمي عن التطبيقات الأخرى</string>
+    <string name="settings_auto_vpn">مزامنة VPN التلقائية</string>
+    <string name="settings_auto_vpn_desc">مطابقة عنوان IP للشبكة مع الموقع الوهمي</string>
+    <string name="settings_speed_units">وحدات السرعة</string>
+    <string name="settings_haptic">الاستجابة اللمسية</string>
+    <string name="settings_reset_defaults">إعادة التعيين للإعدادات الافتراضية</string>
 
+    <!-- VPN & Shield -->
     <string name="vpn_shield_synced">الدرع متزامن</string>
     <string name="vpn_shield_off">الدرع متوقف</string>
-    <string name="vpn_ghost_shield">درع الشبح</string>
+    <string name="vpn_ghost_shield">درع التخفي</string>
     <string name="vpn_connecting">جارٍ الاتصال...</string>
     <string name="vpn_error">خطأ في الدرع</string>
-    <string name="ghost_cloak_stealth">عباءة الشبح</string>
+    <string name="ghost_cloak_stealth">عباءة التخفي</string>
     <string name="hotspot_badge_title">نقطة اتصال تجريبية</string>
 
-    <string name="warning_mock_provider_required">موفر المحاكاة معطل: عيّن Nowhere كتطبيق للموقع الوهمي في خيارات المطور.</string>
-    <string name="warning_revoked_at_runtime">تم إلغاء موفر الموقع الوهمي من إعدادات النظام.</string>
-    <string name="warning_battery_optimization">قد يوقف موفر طاقة البطارية المحاكاة في الخلفية.</string>
-    <string name="widget_icon_description">أيقونة التطبيق الديناميكية واختصار النقل السريع 1x1</string>
-    <string name="widget_quick_actions_description">مشغل الإجراءات السريعة وعصا التحكم العائمة</string>
-    <string name="widget_route_description">محاكي المسارات الحية وأدوات التحكم</string>
+    <!-- Warnings & Dialogs -->
+    <string name="warning_mock_provider_required">تطبيق المواقع الوهمية معطل: اختر Nowhere في خيارات المطور.</string>
+    <string name="warning_revoked_at_runtime">تم إلغاء إذن محاكاة الموقع من النظام. أعد تفعيل Nowhere في خيارات المطور.</string>
+    <string name="warning_battery_optimization">موفر البطارية قد يوقف المحاكاة عند إيقاف تشغيل الشاشة.</string>
+
+    <!-- Widgets -->
+    <string name="widget_icon_description">أيقونة تفاعلية واختصار للانتقال الفوري</string>
+    <string name="widget_quick_actions_description">انتقال سريع وتشغيل عصا التحكم العائمة</string>
+    <string name="widget_route_description">محاكي المسارات والتحكم المباشر</string>
     <string name="widget_search_description">بحث فوري عن العناوين والانتقال</string>
-    <string name="widget_favorites_description">إشارات مرجعية سريعة وإحداثيات محفوظة</string>
-    <string name="widget_weather_description">طقس وظروف الإحداثيات الحالية</string>
-    <string name="widget_session_timer_description">العد التنازلي لجلسة المحاكاة النشطة</string>
-    <string name="widget_vpn_description">عنوان IP خفي ودرع خصوصية VPN</string>
+    <string name="widget_favorites_description">المواقع المفضلة والإحداثيات المحفوظة</string>
+    <string name="widget_weather_description">حالة الطقس ودرجات الحرارة الحالية</string>
+    <string name="widget_session_timer_description">العد التنازلي للجلسة وعناصر التحكم</string>
+    <string name="widget_vpn_description">درع الخصوصية وعنوان IP المتخفي</string>
 </resources>

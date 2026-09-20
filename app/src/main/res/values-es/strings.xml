@@ -3,32 +3,71 @@
     <string name="app_name">Nowhere</string>
     <string name="app_tagline">Simulador de GPS y Rutas de Precisión</string>
     <string name="title_search_hint">Buscar ciudad, coordenadas o dirección...</string>
-    
+
+    <!-- Mode Tabs -->
     <string name="tab_fixed">Fijo</string>
     <string name="tab_route">Ruta</string>
     <string name="tab_joystick">Joystick</string>
+    <string name="mode_teleport">TELETRANSPORTE</string>
+    <string name="mode_route">RUTA</string>
+    <string name="mode_joystick">JOYSTICK</string>
+    <string name="mode_motion_sync">SINCRONIZACIÓN DE MOVIMIENTO</string>
 
+    <!-- Status & Badges -->
     <string name="status_mock_active">NOWHERE ACTIVO</string>
     <string name="status_standby">EN ESPERA</string>
+    <string name="status_active">ACTIVO</string>
     <string name="status_paused">PAUSADO</string>
+    <string name="status_expired">EXPIRADO</string>
+    <string name="status_direct">DIRECTO</string>
+    <string name="badge_auto">AUTO</string>
+    <string name="badge_auto_on">AUTO ACTIVO</string>
+    <string name="badge_pro">OBTENER PRO</string>
+    <string name="badge_pro_discount">PRO (15% DTO)</string>
+    <string name="badge_cloak">CAMUFLAJE BETA</string>
+    <string name="badge_raw_gps">GPS DIRECTO</string>
+    <string name="badge_hotspot">ZONA WI-FI BETA</string>
+    <string name="badge_sync">SINCRONIZACIÓN BETA</string>
+    <string name="badge_unlimited">ILIMITADO</string>
+    <string name="selected_language_badge">SELECCIONADO</string>
+    <string name="hud_search_results">RESULTADOS DE BÚSQUEDA</string>
+    <string name="hud_recent_searches">BÚSQUEDAS RECIENTES</string>
+    <string name="hud_slide_down_hide">Desliza hacia abajo para ocultar</string>
+    <string name="hud_slide_up_show">Desliza hacia arriba para mostrar</string>
 
-    <string name="btn_start_teleport">Iniciar Ubicación</string>
+    <!-- Action Buttons -->
+    <string name="btn_start_teleport">Iniciar Teletransporte</string>
+    <string name="btn_start_joystick">Activar Joystick</string>
+    <string name="btn_start_simulation">Iniciar Simulación</string>
     <string name="btn_stop_simulation">Detener Simulación</string>
     <string name="btn_start_route">Iniciar Ruta</string>
+    <string name="btn_stop_route">Detener Ruta</string>
     <string name="btn_pause_route">Pausar</string>
     <string name="btn_resume_route">Reanudar</string>
-    <string name="btn_clear_route">Limpiar Puntos</string>
+    <string name="btn_clear_route">Borrar Ruta</string>
     <string name="btn_import_gpx">Importar GPX</string>
-    <string name="btn_save_favorite">Guardar Punto</string>
-    <string name="btn_open_dev_options">Opciones de Desarrollador</string>
+    <string name="btn_save_route">Guardar Ruta</string>
+    <string name="btn_save_favorite">Guardar Destino</string>
+    <string name="btn_history">Historial</string>
+    <string name="btn_favorites">Favoritos</string>
+    <string name="btn_weather">Clima</string>
+    <string name="btn_open_dev_options">Abrir Opciones de Desarrollador</string>
     <string name="btn_dismiss">Descartar</string>
     <string name="btn_change">Cambiar</string>
     <string name="btn_close">Cerrar</string>
     <string name="btn_done">Listo</string>
 
+    <!-- Transport Modes -->
+    <string name="transport_walk">Caminar</string>
+    <string name="transport_cycle">Bicicleta</string>
+    <string name="transport_drive">Conducir</string>
+    <string name="transport_fly">Volar</string>
+    <string name="transport_ship">Barco</string>
+
+    <!-- Settings Screen -->
     <string name="settings_title">Ajustes</string>
     <string name="settings_language_title">Idioma de la Aplicación</string>
-    <string name="settings_language_subtitle">Elige entre los 10 idiomas principales</string>
+    <string name="settings_language_subtitle">Elige un idioma</string>
     <string name="settings_language_desc">Traducción instantánea en tu idioma preferido</string>
     <string name="settings_theme_title">Apariencia y Tema</string>
     <string name="settings_theme_dark">Oscuro</string>
@@ -36,24 +75,45 @@
     <string name="settings_theme_system">Predeterminado del Sistema</string>
     <string name="settings_general">General</string>
     <string name="settings_privacy_vpn">VPN y Escudo Fantasma</string>
+    <string name="settings_section_session">PREMIUM Y SESIÓN</string>
+    <string name="settings_section_map">MAPA Y CONTROLES</string>
+    <string name="settings_section_antidetect">ANTIDETECCIÓN Y REALISMO</string>
+    <string name="settings_section_shortcuts">ACCESOS DIRECTOS DE WIDGETS</string>
+    <string name="settings_session_countdown">Cuenta Regresiva de Sesión Activa</string>
+    <string name="settings_extend_two_hours">Extender +2 Horas</string>
+    <string name="settings_extend_day">Extender +24 Horas</string>
+    <string name="settings_upgrade_pro">Mejorar a Pro</string>
+    <string name="settings_persistent_service">Servicio Persistente en Segundo Plano</string>
+    <string name="settings_persistent_service_desc">Mantiene la simulación GPS activa tras cerrar la app</string>
+    <string name="settings_ghost_cloak">Camuflaje Fantasma (Antidetección)</string>
+    <string name="settings_ghost_cloak_desc">Oculta indicadores de simulación ante las aplicaciones</string>
+    <string name="settings_auto_vpn">Sincronización Automática VPN</string>
+    <string name="settings_auto_vpn_desc">Sincroniza la IP WireGuard con la ubicación simulada</string>
+    <string name="settings_speed_units">Unidades de Velocidad</string>
+    <string name="settings_haptic">Respuesta Háptica</string>
+    <string name="settings_reset_defaults">Restablecer Valores Predeterminados</string>
 
+    <!-- VPN & Shield -->
     <string name="vpn_shield_synced">ESCUDO SINCRONIZADO</string>
     <string name="vpn_shield_off">ESCUDO DESACTIVADO</string>
     <string name="vpn_ghost_shield">ESCUDO FANTASMA</string>
     <string name="vpn_connecting">CONECTANDO...</string>
     <string name="vpn_error">ERROR DE ESCUDO</string>
-    <string name="ghost_cloak_stealth">CAPA FANTASMA</string>
-    <string name="hotspot_badge_title">ZONA WIFI BETA</string>
+    <string name="ghost_cloak_stealth">CAMUFLAJE FANTASMA</string>
+    <string name="hotspot_badge_title">ZONA WI-FI BETA</string>
 
-    <string name="warning_mock_provider_required">Proveedor de prueba desactivado: Establece Nowhere en Opciones de desarrollador.</string>
-    <string name="warning_revoked_at_runtime">El proveedor de ubicación fue revocado por los ajustes del sistema.</string>
+    <!-- Warnings & Dialogs -->
+    <string name="warning_mock_provider_required">Proveedor de simulación desactivado: selecciona Nowhere en Opciones de desarrollador.</string>
+    <string name="warning_revoked_at_runtime">El proveedor de simulación fue revocado. Vuelve a habilitar Nowhere en Opciones de desarrollador.</string>
     <string name="warning_battery_optimization">El ahorro de batería puede suspender la simulación en segundo plano.</string>
-    <string name="widget_icon_description">Acceso directo y teletransporte rápido 1x1</string>
-    <string name="widget_quick_actions_description">Lanzador de acciones rápidas y joystick</string>
-    <string name="widget_route_description">Simulador de rutas en vivo y controles</string>
-    <string name="widget_search_description">Búsqueda rápida de direcciones</string>
+
+    <!-- Widgets -->
+    <string name="widget_icon_description">Icono dinámico y acceso rápido a teletransporte</string>
+    <string name="widget_quick_actions_description">Teletransporte rápido y control por joystick</string>
+    <string name="widget_route_description">Simulador y controles de ruta en vivo</string>
+    <string name="widget_search_description">Búsqueda rápida de direcciones y teletransporte</string>
     <string name="widget_favorites_description">Marcadores y coordenadas guardadas</string>
-    <string name="widget_weather_description">Clima y condiciones en coordenadas actuales</string>
-    <string name="widget_session_timer_description">Temporizador de sesión y cuenta regresiva</string>
-    <string name="widget_vpn_description">Escudo de privacidad VPN e IP sigilosa</string>
+    <string name="widget_weather_description">Clima y condiciones meteorológicas</string>
+    <string name="widget_session_timer_description">Cuenta regresiva y controles de sesión</string>
+    <string name="widget_vpn_description">Escudo de privacidad IP y VPN</string>
 </resources>

@@ -327,6 +327,9 @@ class SettingsActivity : AppCompatActivity() {
 
         val currentLanguage = LocaleHelper.getSelectedLanguageItem(this)
         binding.tvSettingsLanguageCurrent.text = "${currentLanguage.nativeName} ${currentLanguage.flagEmoji}"
+        binding.tvSettingsLanguageCurrent.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
+        binding.tvSettingsLanguageCurrent.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
+        binding.ivSettingsLanguageIcon.imageTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
 
         binding.switchSettingsBootInjection.isChecked = sessionPrefs.isPersistentBootInjectionEnabled
         binding.switchSettingsGhostCloak.isChecked = settingsPrefs.isGhostCloakEnabled
@@ -631,6 +634,9 @@ class SettingsActivity : AppCompatActivity() {
         val theme = com.fakegps.mocklocation.util.ThemeColorManager.getCurrentTheme(this)
         binding.tvSettingsThemeColorDesc.text = "${theme.displayName} (${theme.primaryColorHex})"
         binding.viewThemeColorDot.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
+        binding.tvSettingsLanguageCurrent.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this)
+        binding.tvSettingsLanguageCurrent.setTextColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
+        binding.ivSettingsLanguageIcon.imageTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
     }
 
     private fun showThemeColorPickerDialog() {

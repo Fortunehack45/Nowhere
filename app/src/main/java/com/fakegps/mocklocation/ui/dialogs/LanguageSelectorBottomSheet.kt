@@ -15,6 +15,8 @@ import com.fakegps.mocklocation.util.SupportedLanguage
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import androidx.core.content.ContextCompat
 
+import com.fakegps.mocklocation.util.ThemeColorManager
+
 class LanguageSelectorBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: LayoutDialogLanguageSelectorBinding? = null
@@ -47,6 +49,9 @@ class LanguageSelectorBottomSheet : BottomSheetDialogFragment() {
         binding.btnLanguageClose.setOnClickListener {
             dismiss()
         }
+
+        binding.ivLanguageHeaderIcon.imageTintList = ThemeColorManager.getPrimaryColorStateList(requireContext())
+        ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
 
         setupRecyclerView()
     }
@@ -102,32 +107,42 @@ class LanguageSelectorBottomSheet : BottomSheetDialogFragment() {
         override fun onBindViewHolder(holder: LanguageViewHolder, position: Int) {
             val item = languages[position]
             val isSelected = item.code == selectedCode
+            val context = holder.itemView.context
 
             holder.binding.tvLanguageFlag.text = item.flagEmoji
             holder.binding.tvLanguageNativeName.text = item.nativeName
             holder.binding.tvLanguageEnglishName.text = item.englishName
 
             if (isSelected) {
-                holder.binding.ivLanguageSelectedCheck.visibility = View.VISIBLE
-                holder.binding.cardLanguageOption.strokeColor = ContextCompat.getColor(
-                    holder.itemView.context,
-                    R.color.primary
+                holder.binding.tvLanguageSelectedPill.visibility = View.VISIBLE
+                holder.binding.tvLanguageSelectedPill.backgroundTintList =
+                    ThemeColorManager.getLightTintStateList(context)
+                holder.binding.tvLanguageSelectedPill.setTextColor(
+                    ThemeColorManager.getPrimaryColor(context)
                 )
+
+                holder.binding.ivLanguageSelectedCheck.visibility = View.VISIBLE
+                holder.binding.ivLanguageSelectedCheck.imageTintList =
+                    ThemeColorManager.getPrimaryColorStateList(context)
+
+                holder.binding.cardLanguageOption.strokeColor =
+                    ThemeColorManager.getPrimaryColor(context)
                 holder.binding.cardLanguageOption.setCardBackgroundColor(
                     ContextCompat.getColor(
-                        holder.itemView.context,
+                        context,
                         R.color.surface_card_elevated
                     )
                 )
             } else {
+                holder.binding.tvLanguageSelectedPill.visibility = View.GONE
                 holder.binding.ivLanguageSelectedCheck.visibility = View.GONE
                 holder.binding.cardLanguageOption.strokeColor = ContextCompat.getColor(
-                    holder.itemView.context,
+                    context,
                     R.color.stroke_subtle
                 )
                 holder.binding.cardLanguageOption.setCardBackgroundColor(
                     ContextCompat.getColor(
-                        holder.itemView.context,
+                        context,
                         R.color.surface_card
                     )
                 )

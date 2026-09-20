@@ -518,11 +518,11 @@ class NowhereVpnService : VpnService() {
 
                 // Dead Peer Detection / Blackhole Preventer:
                 // If user/apps are transmitting packets into the tunnel (txRate > 0)
-                // but ZERO return packets have been received from the server for >= 6 consecutive seconds:
+                // but ZERO return packets have been received from the server for >= 3 consecutive seconds:
                 if (txRate > 0L && totalRxBytes == lastObservedRx) {
                     deadPeerTicks++
-                    if (deadPeerTicks >= 6) {
-                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server dropped/unresponsive for 6s! Disengaging VPN to protect internet connectivity.")
+                    if (deadPeerTicks >= 3) {
+                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server dropped/unresponsive for 3s! Disengaging VPN to protect internet connectivity.")
                         handleConnectionFailure(node, "VPN server unresponsive. Normal internet preserved.")
                         break
                     }

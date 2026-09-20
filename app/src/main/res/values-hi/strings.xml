@@ -3,41 +3,98 @@
     <string name="app_name">Nowhere</string>
     <string name="app_tagline">सटीक जीपीएस और रूट सिम्युलेटर</string>
     <string name="title_search_hint">शहर, निर्देशांक या पता खोजें...</string>
-    
-    <string name="tab_fixed">निश्चित स्थान</string>
+
+    <!-- Mode Tabs -->
+    <string name="tab_fixed">निश्चित</string>
     <string name="tab_route">रूट</string>
     <string name="tab_joystick">जॉयस्टिक</string>
+    <string name="mode_teleport">टेलीपोर्ट</string>
+    <string name="mode_route">रूट</string>
+    <string name="mode_joystick">जॉयस्टिक</string>
+    <string name="mode_motion_sync">मोशन सिंक</string>
 
-    <string name="status_mock_active">NOWHERE सक्रिय</string>
-    <string name="status_standby">तैयार</string>
-    <string name="status_paused">रुका हुआ</string>
+    <!-- Status & Badges -->
+    <string name="status_mock_active">NOWHERE सक्रिय है</string>
+    <string name="status_standby">स्टैंडबाय</string>
+    <string name="status_active">सक्रिय</string>
+    <string name="status_paused">रोका गया</string>
+    <string name="status_expired">समाप्त</string>
+    <string name="status_direct">सीधा</string>
+    <string name="badge_auto">ऑटो</string>
+    <string name="badge_auto_on">ऑटो चालू</string>
+    <string name="badge_pro">प्रो प्राप्त करें</string>
+    <string name="badge_pro_discount">प्रो (15% छूट)</string>
+    <string name="badge_cloak">क्लोकिंग बीटा</string>
+    <string name="badge_raw_gps">कच्चा जीपीएस</string>
+    <string name="badge_hotspot">हॉटस्पॉट बीटा</string>
+    <string name="badge_sync">सिंक बीटा</string>
+    <string name="badge_unlimited">असीमित</string>
+    <string name="selected_language_badge">चयनित</string>
+    <string name="hud_search_results">खोज परिणाम</string>
+    <string name="hud_recent_searches">हाल की खोजें</string>
+    <string name="hud_slide_down_hide">छिपाने के लिए नीचे स्वाइप करें</string>
+    <string name="hud_slide_up_show">दिखाने के लिए ऊपर स्वाइप करें</string>
 
+    <!-- Action Buttons -->
     <string name="btn_start_teleport">स्थान शुरू करें</string>
+    <string name="btn_start_joystick">जॉयस्टिक सक्रिय करें</string>
+    <string name="btn_start_simulation">सिमुलेशन शुरू करें</string>
     <string name="btn_stop_simulation">सिमुलेशन रोकें</string>
     <string name="btn_start_route">रूट शुरू करें</string>
+    <string name="btn_stop_route">रूट रोकें</string>
     <string name="btn_pause_route">रोकें</string>
-    <string name="btn_resume_route">पुनः शुरू करें</string>
-    <string name="btn_clear_route">वेपॉइंट हटाएं</string>
+    <string name="btn_resume_route">फिर शुरू करें</string>
+    <string name="btn_clear_route">रूट हटाएं</string>
     <string name="btn_import_gpx">GPX आयात करें</string>
-    <string name="btn_save_favorite">पिन सहेजें</string>
+    <string name="btn_save_route">रूट सहेजें</string>
+    <string name="btn_save_favorite">स्थान सहेजें</string>
+    <string name="btn_history">इतिहास</string>
+    <string name="btn_favorites">पसंदीदा</string>
+    <string name="btn_weather">मौसम</string>
     <string name="btn_open_dev_options">डेवलपर विकल्प खोलें</string>
     <string name="btn_dismiss">खारिज करें</string>
     <string name="btn_change">बदलें</string>
     <string name="btn_close">बंद करें</string>
-    <string name="btn_done">पूर्ण</string>
+    <string name="btn_done">हो गया</string>
 
+    <!-- Transport Modes -->
+    <string name="transport_walk">पैदल</string>
+    <string name="transport_cycle">साइकिल</string>
+    <string name="transport_drive">गाड़ी</string>
+    <string name="transport_fly">उड़ान</string>
+    <string name="transport_ship">जहाज</string>
+
+    <!-- Settings Screen -->
     <string name="settings_title">सेटिंग्स</string>
-    <string name="settings_language_title">ऐप भाषा</string>
-    <string name="settings_language_subtitle">विश्व की शीर्ष 10 भाषाओं में से चुनें</string>
-    <string name="settings_language_desc">अपनी पसंदीदा भाषा में तुरंत अनुवाद</string>
+    <string name="settings_language_title">ऐप की भाषा</string>
+    <string name="settings_language_subtitle">एक भाषा चुनें</string>
+    <string name="settings_language_desc">अपनी पसंदीदा भाषा में तत्काल अनुवाद</string>
     <string name="settings_theme_title">दिखावट और थीम</string>
     <string name="settings_theme_dark">डार्क</string>
     <string name="settings_theme_light">लाइट</string>
     <string name="settings_theme_system">सिस्टम डिफ़ॉल्ट</string>
     <string name="settings_general">सामान्य</string>
     <string name="settings_privacy_vpn">VPN और घोस्ट शील्ड</string>
+    <string name="settings_section_session">प्रीमियम और सत्र</string>
+    <string name="settings_section_map">मानचित्र और नियंत्रण</string>
+    <string name="settings_section_antidetect">एंटी-डिटेक्शन और यथार्थवाद</string>
+    <string name="settings_section_shortcuts">कस्टम विजेट शॉर्टकट</string>
+    <string name="settings_session_countdown">सक्रिय सत्र उलटी गिनती</string>
+    <string name="settings_extend_two_hours">+2 घंटे बढ़ाएं</string>
+    <string name="settings_extend_day">+24 घंटे बढ़ाएं</string>
+    <string name="settings_upgrade_pro">प्रो में अपग्रेड करें</string>
+    <string name="settings_persistent_service">निरंतर पृष्ठभूमि सेवा</string>
+    <string name="settings_persistent_service_desc">ऐप बंद होने के बाद भी जीपीएस सिमुलेशन सक्रिय रखें</string>
+    <string name="settings_ghost_cloak">घोस्ट क्लोक (एंटी-डिटेक्शन)</string>
+    <string name="settings_ghost_cloak_desc">मॉक लोकेशन को अन्य ऐप्स से पूरी तरह छुपाएं</string>
+    <string name="settings_auto_vpn">ऑटो-वीपीएन शील्ड सिंक</string>
+    <string name="settings_auto_vpn_desc">नकली स्थान के साथ वायरगार्ड आईपी सिंक करें</string>
+    <string name="settings_speed_units">गति की इकाइयाँ</string>
+    <string name="settings_haptic">हैप्टिक कंपन प्रतिक्रिया</string>
+    <string name="settings_reset_defaults">डिफ़ॉल्ट सेटिंग्स रीसेट करें</string>
 
-    <string name="vpn_shield_synced">शील्ड सिंक किया गया</string>
+    <!-- VPN & Shield -->
+    <string name="vpn_shield_synced">शील्ड सिंक की गई</string>
     <string name="vpn_shield_off">शील्ड बंद</string>
     <string name="vpn_ghost_shield">घोस्ट शील्ड</string>
     <string name="vpn_connecting">कनेक्ट हो रहा है...</string>
@@ -45,15 +102,18 @@
     <string name="ghost_cloak_stealth">घोस्ट क्लोक</string>
     <string name="hotspot_badge_title">हॉटस्पॉट बीटा</string>
 
-    <string name="warning_mock_provider_required">मॉक प्रदाता अक्षम: डेवलपर विकल्पों में Nowhere को मॉक लोकेशन ऐप के रूप में सेट करें।</string>
-    <string name="warning_revoked_at_runtime">सिस्टम सेटिंग्स द्वारा मॉक लोकेशन प्रदाता निरस्त कर दिया गया था।</string>
+    <!-- Warnings & Dialogs -->
+    <string name="warning_mock_provider_required">मॉक प्रदाता अक्षम: डेवलपर विकल्पों में Nowhere को मॉक लोकेशन ऐप के रूप में चुनें।</string>
+    <string name="warning_revoked_at_runtime">मॉक लोकेशन प्रदाता निरस्त कर दिया गया। डेवलपर विकल्पों में फिर सक्षम करें।</string>
     <string name="warning_battery_optimization">बैटरी सेवर बैकग्राउंड सिमुलेशन को रोक सकता है।</string>
-    <string name="widget_icon_description">डायनामिक 1x1 ऐप आइकन और क्विक टेलीपोर्ट शॉर्टकट</string>
-    <string name="widget_quick_actions_description">क्विक टेलीपोर्ट और जॉयस्टिक लॉन्चर</string>
+
+    <!-- Widgets -->
+    <string name="widget_icon_description">डायनामिक ऐप आइकन और त्वरित टेलीपोर्ट</string>
+    <string name="widget_quick_actions_description">त्वरित टेलीपोर्ट और जॉयस्टिक ओवरले लॉन्चर</string>
     <string name="widget_route_description">लाइव रूट सिम्युलेटर और नियंत्रण</string>
     <string name="widget_search_description">त्वरित पता खोज और टेलीपोर्टर</string>
-    <string name="widget_favorites_description">त्वरित बुकमार्क और सहेजे गए निर्देशांक</string>
-    <string name="widget_weather_description">वर्तमान स्थान का मौसम और स्थितियां</string>
-    <string name="widget_session_timer_description">सक्रिय सत्र उलटी गिनती और नियंत्रण</string>
-    <string name="widget_vpn_description">गोपनीयता IP और VPN शील्ड</string>
+    <string name="widget_favorites_description">पसंदीदा और सहेजे गए निर्देशांक</string>
+    <string name="widget_weather_description">वर्तमान स्थान का मौसम और विवरण</string>
+    <string name="widget_session_timer_description">सत्र उलटी गिनती और नियंत्रण</string>
+    <string name="widget_vpn_description">स्टील्थ आईपी और वीपीएन गोपनीयता शील्ड</string>
 </resources>

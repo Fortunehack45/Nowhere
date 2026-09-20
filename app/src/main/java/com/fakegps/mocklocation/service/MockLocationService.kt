@@ -254,7 +254,7 @@ class MockLocationService : Service() {
                 }
             }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     fun startMotionSync(initialLat: Double, initialLon: Double) {
@@ -338,10 +338,6 @@ class MockLocationService : Service() {
             if (simulationJob == null || !simulationJob!!.isActive) {
                 startContinuousHeartbeatLoop()
             }
-
-
-            // 4. Schedule AlarmManager safety restart with dual PendingIntents (BroadcastReceiver + Service)
-            scheduleBackgroundRestartAlarm()
         }
     }
 
@@ -1457,40 +1453,26 @@ class MockLocationService : Service() {
     }
 
     override fun onDestroy() {
-        // IMPORTANT: Do NOT call stopSpoofing() here — it calls stopSelf() which creates a
-        // recursive destroy loop when Android system legitimately destroys the service.
-        // Instead, only cancel coroutines and release resources directly.
         if (activeInstance == this) activeInstance = null
         if (MockLocationServiceReceiver.activeService == this) MockLocationServiceReceiver.activeService = null
 
-        val isUserInitiatedStop = isStopping.get()
-        if (isUserInitiatedStop) {
-            sessionPrefs.isSessionActive = false
-            SessionTimerManager.stopTimer(this)
-            activeMode = SimulationMode.Idle
-            _serviceState.value = ServiceState.Idle
+        sessionPrefs.isSessionActive = false
+        SessionTimerManager.stopTimer(this)
+        activeMode = SimulationMode.Idle
+        _serviceState.value = ServiceState.Idle
 
-            isSimulationPaused = false
-            cancelWatchdog()
-            stopCurrentLoop()
-            releaseWakeLock()
-            try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
-            try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
-            try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
-            try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
-            try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
-            try { engine.stop() } catch (e: Exception) {}
-            serviceJob.cancel()
-        } else {
-            // System killed or recreated service (e.g. swiped from recents or OEM memory trim):
-            // DO NOT stop the engine, DO NOT stop VPN, DO NOT drop session!
-            // Keep state intact so the restart alarm or START_STICKY resumes seamlessly.
-            Log.i(TAG, "onDestroy called by OS (not user initiated stop). Preserving mock state for automatic recovery.")
-            SessionTimerManager.pauseTimer(this)
-            cancelWatchdog()
-            stopCurrentLoop()
-            scheduleBackgroundRestartAlarm()
-        }
+        isSimulationPaused = false
+        cancelWatchdog()
+        cancelBackgroundRestartAlarm()
+        stopCurrentLoop()
+        releaseWakeLock()
+        try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
+        try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
+        try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
+        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
+        try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
+        try { engine.stop() } catch (e: Exception) {}
+        serviceJob.cancel()
         super.onDestroy()
     }
 }

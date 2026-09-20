@@ -48,7 +48,7 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
             ACTION_RESTORE_MOCK_SESSION -> {
                 android.util.Log.i("MockLocationReceiver", "ACTION_RESTORE_MOCK_SESSION received. Checking simulation status...")
                 val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(context)
-                if (sessionPrefs.isSessionActive) {
+                if (sessionPrefs.isSessionActive && sessionPrefs.isPersistentBootInjectionEnabled) {
                     if (!MockLocationService.isSimulationRunning()) {
                         android.util.Log.i("MockLocationReceiver", "Active session found but service is down. Resuming MockLocationService in foreground...")
                         val serviceIntent = Intent(context, MockLocationService::class.java).apply {
@@ -67,6 +67,8 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
                         // Re-arm watchdog check for continuous background health
                         activeService?.scheduleWatchdog()
                     }
+                } else {
+                    android.util.Log.d("MockLocationReceiver", "Session not active or persistent mode disabled. Ignoring restore intent.")
                 }
             }
         }

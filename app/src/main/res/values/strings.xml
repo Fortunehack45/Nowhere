@@ -4,31 +4,70 @@
     <string name="app_tagline">Precision GPS &amp; Route Simulator</string>
     <string name="title_search_hint">Search city, coordinates, or address...</string>
     
+    <!-- Mode Tabs -->
     <string name="tab_fixed">Fixed</string>
     <string name="tab_route">Route</string>
     <string name="tab_joystick">Joystick</string>
+    <string name="mode_teleport">TELEPORT</string>
+    <string name="mode_route">ROUTE</string>
+    <string name="mode_joystick">JOYSTICK</string>
+    <string name="mode_motion_sync">MOTION SYNC</string>
 
+    <!-- Status & Badges -->
     <string name="status_mock_active">NOWHERE ACTIVE</string>
     <string name="status_standby">STANDBY</string>
+    <string name="status_active">ACTIVE</string>
     <string name="status_paused">PAUSED</string>
+    <string name="status_expired">EXPIRED</string>
+    <string name="status_direct">DIRECT</string>
+    <string name="badge_auto">AUTO</string>
+    <string name="badge_auto_on">AUTO ON</string>
+    <string name="badge_pro">GET PRO</string>
+    <string name="badge_pro_discount">PRO (15% OFF)</string>
+    <string name="badge_cloak">CLOAK BETA</string>
+    <string name="badge_raw_gps">RAW GPS</string>
+    <string name="badge_hotspot">HOTSPOT BETA</string>
+    <string name="badge_sync">SYNC BETA</string>
+    <string name="badge_unlimited">UNLIMITED</string>
+    <string name="selected_language_badge">SELECTED</string>
+    <string name="hud_search_results">SEARCH RESULTS</string>
+    <string name="hud_recent_searches">RECENT SEARCHES</string>
+    <string name="hud_slide_down_hide">Slide down or tap to hide</string>
+    <string name="hud_slide_up_show">Slide up or tap to show</string>
 
-    <string name="btn_start_teleport">Engage Location</string>
+    <!-- Action Buttons -->
+    <string name="btn_start_teleport">Engage Teleport</string>
+    <string name="btn_start_joystick">Engage Joystick</string>
+    <string name="btn_start_simulation">Start Simulation</string>
     <string name="btn_stop_simulation">Stop Simulation</string>
     <string name="btn_start_route">Start Route</string>
+    <string name="btn_stop_route">Stop Route</string>
     <string name="btn_pause_route">Pause</string>
     <string name="btn_resume_route">Resume</string>
-    <string name="btn_clear_route">Clear Waypoints</string>
+    <string name="btn_clear_route">Clear Route</string>
     <string name="btn_import_gpx">Import GPX</string>
-    <string name="btn_save_favorite">Save Pinned Point</string>
+    <string name="btn_save_route">Save Route</string>
+    <string name="btn_save_favorite">Save Destination</string>
+    <string name="btn_history">History</string>
+    <string name="btn_favorites">Favorites</string>
+    <string name="btn_weather">Weather</string>
     <string name="btn_open_dev_options">Open Developer Options</string>
     <string name="btn_dismiss">Dismiss</string>
     <string name="btn_change">Change</string>
     <string name="btn_close">Close</string>
     <string name="btn_done">Done</string>
 
+    <!-- Transport Modes -->
+    <string name="transport_walk">Walk</string>
+    <string name="transport_cycle">Cycle</string>
+    <string name="transport_drive">Drive</string>
+    <string name="transport_fly">Fly</string>
+    <string name="transport_ship">Ship</string>
+
+    <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
     <string name="settings_language_title">App Language</string>
-    <string name="settings_language_subtitle">Choose from top 10 global languages</string>
+    <string name="settings_language_subtitle">Choose a language</string>
     <string name="settings_language_desc">Instant UI translation in your preferred language</string>
     <string name="settings_theme_title">Appearance &amp; Theme</string>
     <string name="settings_theme_dark">Dark</string>
@@ -36,7 +75,25 @@
     <string name="settings_theme_system">System Default</string>
     <string name="settings_general">General</string>
     <string name="settings_privacy_vpn">VPN &amp; Ghost Shield</string>
+    <string name="settings_section_session">PREMIUM &amp; SESSION</string>
+    <string name="settings_section_map">MAP &amp; CONTROLS</string>
+    <string name="settings_section_antidetect">ANTI-DETECTION &amp; REALISM</string>
+    <string name="settings_section_shortcuts">CUSTOM WIDGET SHORTCUTS</string>
+    <string name="settings_session_countdown">Active Session Countdown</string>
+    <string name="settings_extend_two_hours">Extend +2 Hours</string>
+    <string name="settings_extend_day">Extend +24 Hours</string>
+    <string name="settings_upgrade_pro">Upgrade to Pro</string>
+    <string name="settings_persistent_service">Persistent Background Service</string>
+    <string name="settings_persistent_service_desc">Maintains active GPS spoofing after app is closed</string>
+    <string name="settings_ghost_cloak">Ghost Cloak (Anti-Detection)</string>
+    <string name="settings_ghost_cloak_desc">Hooks system location APIs to hide mock flags</string>
+    <string name="settings_auto_vpn">Auto-VPN Shield Sync</string>
+    <string name="settings_auto_vpn_desc">Synchronizes WireGuard privacy IP matching mocked location</string>
+    <string name="settings_speed_units">Speed Units</string>
+    <string name="settings_haptic">Haptic Feedback</string>
+    <string name="settings_reset_defaults">Reset to Defaults</string>
 
+    <!-- VPN & Shield -->
     <string name="vpn_shield_synced">SHIELD SYNCED</string>
     <string name="vpn_shield_off">SHIELD OFF</string>
     <string name="vpn_ghost_shield">GHOST SHIELD</string>
@@ -45,9 +102,12 @@
     <string name="ghost_cloak_stealth">GHOST CLOAK</string>
     <string name="hotspot_badge_title">HOTSPOT BETA</string>
 
+    <!-- Warnings & Dialogs -->
     <string name="warning_mock_provider_required">Mock Provider Disabled: Set Nowhere as mock location app in Developer Options to spoof system-wide GPS.</string>
     <string name="warning_revoked_at_runtime">Mock location provider was revoked by system settings. Re-enable Nowhere in Developer Options.</string>
     <string name="warning_battery_optimization">OEM battery saver may kill background simulation when device sleeps.</string>
+
+    <!-- Widgets -->
     <string name="widget_icon_description">Dynamic 1x1 App Icon &amp; Quick Teleport Shortcut</string>
     <string name="widget_quick_actions_description">Quick teleport and joystick overlay launcher</string>
     <string name="widget_route_description">Live route simulator and controls</string>

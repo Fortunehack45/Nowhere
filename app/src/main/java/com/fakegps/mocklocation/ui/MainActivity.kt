@@ -288,13 +288,13 @@ class MainActivity : AppCompatActivity() {
             com.fakegps.mocklocation.hotspot.HotspotLocationServer.connectedClientsCount.collect { count ->
                 if (!isFinishing && !isDestroyed) {
                     if (count > 0) {
-                        binding.tvHotspotBadge.text = "SYNC BETA ($count)"
+                        binding.tvHotspotBadge.text = "${getString(R.string.badge_sync)} ($count)"
                         binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.badge_success_text))
                     } else if (com.fakegps.mocklocation.hotspot.HotspotLocationServer.isServerRunning.value) {
-                        binding.tvHotspotBadge.text = "HOTSPOT BETA"
+                        binding.tvHotspotBadge.text = getString(R.string.badge_hotspot)
                         binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bright))
                     } else {
-                        binding.tvHotspotBadge.text = "HOTSPOT BETA"
+                        binding.tvHotspotBadge.text = getString(R.string.badge_hotspot)
                         binding.ivHotspotBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.text_primary))
                     }
                 }
@@ -962,11 +962,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (query.isNotEmpty()) {
-                binding.includedSearchOverlay.tvSearchSectionTitle.text = "SEARCH RESULTS"
+                binding.includedSearchOverlay.tvSearchSectionTitle.text = getString(R.string.hud_search_results)
                 binding.includedSearchOverlay.btnClearAllSearchHistory.visibility = View.GONE
                 viewModel.searchAddress(query)
             } else {
-                binding.includedSearchOverlay.tvSearchSectionTitle.text = "RECENT SEARCHES"
+                binding.includedSearchOverlay.tvSearchSectionTitle.text = getString(R.string.hud_recent_searches)
                 viewModel.clearSearchResults()
                 showRecentHistory()
             }
@@ -1047,7 +1047,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showRecentHistory() {
         val overlay = binding.includedSearchOverlay
-        overlay.tvSearchSectionTitle.text = "RECENT SEARCHES"
+        overlay.tvSearchSectionTitle.text = getString(R.string.hud_recent_searches)
         if (latestHistoryItems.isNotEmpty()) {
             overlay.btnClearAllSearchHistory.visibility = View.VISIBLE
             overlay.layoutSearchOverlayEmptyState.visibility = View.GONE
@@ -1238,12 +1238,12 @@ class MainActivity : AppCompatActivity() {
                     val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MainActivity)
                     val lightTintCsl = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this@MainActivity)
                     if (isAnyAutoActive) {
-                        binding.tvAutomationBadgeText.text = "AUTO ON"
+                        binding.tvAutomationBadgeText.text = getString(R.string.badge_auto_on)
                         binding.tvAutomationBadgeText.setTextColor(primaryColor)
                         binding.ivAutomationBadgeIcon.imageTintList = android.content.res.ColorStateList.valueOf(primaryColor)
                         binding.layoutAutomationBadge.backgroundTintList = lightTintCsl
                     } else {
-                        binding.tvAutomationBadgeText.text = "AUTO"
+                        binding.tvAutomationBadgeText.text = getString(R.string.badge_auto)
                         binding.tvAutomationBadgeText.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_primary))
                         binding.ivAutomationBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_primary)
                         binding.layoutAutomationBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
@@ -1438,7 +1438,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.layoutExpandableBottomControls.visibility = if (expanded) View.VISIBLE else View.GONE
         binding.ivToggleBottomDeck.setImageResource(if (expanded) R.drawable.ic_chevron_down else R.drawable.ic_chevron_up)
-        binding.tvToggleBottomDeckLabel.text = if (expanded) "Slide down or tap to hide" else "Slide up or tap to show"
+        binding.tvToggleBottomDeckLabel.text = if (expanded) getString(R.string.hud_slide_down_hide) else getString(R.string.hud_slide_up_show)
     }
 
     private fun setupBottomDeckToggle() {
@@ -1875,21 +1875,21 @@ class MainActivity : AppCompatActivity() {
                         binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
-                        binding.tvIpShieldBadge.text = "GHOST SHIELD"
+                        binding.tvIpShieldBadge.text = getString(R.string.vpn_ghost_shield)
                     }
                     is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connecting -> {
                         binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
                         binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_warning_text)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_warning_text))
-                        binding.tvIpShieldBadge.text = "CONNECTING..."
+                        binding.tvIpShieldBadge.text = getString(R.string.vpn_connecting)
                     }
                     is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Error -> {
                         binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)
                         binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.white)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
-                        binding.tvIpShieldBadge.text = "SHIELD ERROR"
+                        binding.tvIpShieldBadge.text = getString(R.string.vpn_error)
                     }
                     is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Disconnected -> {
                         binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
@@ -1897,7 +1897,7 @@ class MainActivity : AppCompatActivity() {
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_muted)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_muted))
                         val sessionPrefs = SessionPreferences(this@MainActivity)
-                        binding.tvIpShieldBadge.text = if (sessionPrefs.isIpMaskingEnabled && settingsPrefs.isAutoVpnSyncEnabled) "SHIELD SYNCED" else "SHIELD OFF"
+                        binding.tvIpShieldBadge.text = if (sessionPrefs.isIpMaskingEnabled && settingsPrefs.isAutoVpnSyncEnabled) getString(R.string.vpn_shield_synced) else getString(R.string.vpn_shield_off)
                     }
                 }
             }
@@ -1918,12 +1918,12 @@ class MainActivity : AppCompatActivity() {
             binding.layoutGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_active_bg)
             binding.ivGhostCloakIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.primary_bright)
             binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(this, R.color.primary_bright))
-            binding.tvGhostCloakBadge.text = "CLOAK BETA"
+            binding.tvGhostCloakBadge.text = getString(R.string.badge_cloak)
         } else {
             binding.layoutGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.surface_elevated)
             binding.ivGhostCloakIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.text_muted)
             binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
-            binding.tvGhostCloakBadge.text = "RAW GPS"
+            binding.tvGhostCloakBadge.text = getString(R.string.badge_raw_gps)
         }
     }
 
@@ -1951,6 +1951,9 @@ class MainActivity : AppCompatActivity() {
         binding.fabOpenFavorites.imageTintList = primaryCsl
         binding.fabOpenHistory.imageTintList = primaryCsl
         binding.ivSearchIcon.imageTintList = primaryCsl
+        binding.btnHeaderLanguage.imageTintList = primaryCsl
+        binding.btnHeaderWidgets.imageTintList = primaryCsl
+        binding.btnHeaderSettings.imageTintList = primaryCsl
 
         // Dynamic Joystick Colors
         binding.joystickOverlay.setJoystickColor(primaryColor)
@@ -2055,14 +2058,14 @@ class MainActivity : AppCompatActivity() {
             com.fakegps.mocklocation.billing.BillingManager.getInstance(this@MainActivity).isPremium.collectLatest { isPremium ->
                 if (!isFinishing && !isDestroyed) {
                     if (isPremium) {
-                        binding.tvPremiumBadge.text = "PREMIUM"
+                        binding.tvPremiumBadge.text = getString(R.string.status_active)
                         binding.tvPremiumBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
                         binding.ivPremiumBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
                         binding.layoutPremiumBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_bg)
                         com.fakegps.mocklocation.ads.AdManager.clearBanner(binding.adBannerContainer)
                     } else {
                         val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this@MainActivity)
-                        binding.tvPremiumBadge.text = if (isVip) "PRO (15% OFF)" else "GET PRO"
+                        binding.tvPremiumBadge.text = if (isVip) getString(R.string.badge_pro_discount) else getString(R.string.badge_pro)
                         binding.tvPremiumBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.primary_bright))
                         binding.ivPremiumBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.primary_bright)
                         binding.layoutPremiumBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
@@ -2081,7 +2084,7 @@ class MainActivity : AppCompatActivity() {
                     if (timerState.isUnlimited) {
                         binding.layoutSessionTimerBadge.visibility = if (isSimRunning) View.VISIBLE else View.GONE
                         binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_bg)
-                        binding.tvSessionTimerBadge.text = "UNLIMITED"
+                        binding.tvSessionTimerBadge.text = getString(R.string.badge_unlimited)
                         binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
                         binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
                     } else if ((timerState.isRunning || isSimRunning || timerState.remainingMillis > 0) && !timerState.isExpired) {
@@ -2094,7 +2097,7 @@ class MainActivity : AppCompatActivity() {
                     } else if (timerState.isExpired) {
                         binding.layoutSessionTimerBadge.visibility = View.VISIBLE
                         binding.layoutSessionTimerBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)
-                        binding.tvSessionTimerBadge.text = "EXPIRED"
+                        binding.tvSessionTimerBadge.text = getString(R.string.status_expired)
                         binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_error_text))
                         binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_text)
                     } else {
@@ -2342,7 +2345,7 @@ class MainActivity : AppCompatActivity() {
                 binding.mapView.controller.setCenter(GeoPoint(running.latitude, running.longitude))
             }
         } else {
-            binding.btnJoystickToggle.text = "Engage Joystick"
+            binding.btnJoystickToggle.text = getString(R.string.btn_start_joystick)
             binding.btnJoystickToggle.setIconResource(R.drawable.ic_play)
             binding.btnJoystickToggle.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
             binding.btnJoystickToggle.setTextColor(ContextCompat.getColor(this, R.color.white))

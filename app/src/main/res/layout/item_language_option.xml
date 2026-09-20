@@ -55,13 +55,30 @@
                 tools:text="English" />
         </LinearLayout>
 
+        <!-- Selected Status Pill Badge -->
+        <TextView
+            android:id="@+id/tvLanguageSelectedPill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_status_pill"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.04"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:text="@string/selected_language_badge"
+            android:textSize="10.5sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            tools:text="SELECTED"
+            tools:visibility="visible" />
+
         <ImageView
             android:id="@+id/ivLanguageSelectedCheck"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:src="@drawable/ic_check_circle"
             android:visibility="gone"
-            app:tint="@color/primary"
             tools:visibility="visible" />
 
     </LinearLayout>
