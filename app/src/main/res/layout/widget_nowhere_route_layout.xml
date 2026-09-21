@@ -28,7 +28,7 @@
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:letterSpacing="0.08"
-            android:text="ROUTE SIMULATOR"
+            android:text="@string/route_layo_route_simulator"
             android:textColor="@color/primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -53,7 +53,7 @@
             android:background="@drawable/bg_status_pill"
             android:paddingHorizontal="6dp"
             android:paddingVertical="2dp"
-            android:text="ACTIVE"
+            android:text="@string/status_active"
             android:textColor="@color/badge_active_text"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -80,7 +80,7 @@
                 android:layout_width="44dp"
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.05"
-                android:text="FROM:"
+                android:text="@string/route_layo_from"
                 android:textColor="@color/primary_bright"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -93,7 +93,7 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="Start Point"
+                android:text="@string/route_layo_start_point"
                 android:textColor="@color/text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -112,7 +112,7 @@
                 android:layout_width="44dp"
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.05"
-                android:text="TO:"
+                android:text="@string/route_layo_to"
                 android:textColor="@color/primary"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -125,7 +125,7 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="Destination"
+                android:text="@string/route_layo_destination"
                 android:textColor="@color/text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -147,7 +147,7 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Covered: 0.0 km / 0.0 km"
+            android:text="@string/route_layo_covered_00_km_00_km"
             android:textColor="@color/text_primary"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -156,7 +156,7 @@
             android:id="@+id/tvWidgetRouteRemaining"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0.0 km left"
+            android:text="@string/route_layo_00_km_left"
             android:textColor="@color/primary"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -189,7 +189,7 @@
             android:ellipsize="end"
             android:fontFamily="monospace"
             android:maxLines="1"
-            android:text="Leg 2 / 5 • 45%"
+            android:text="@string/route_layo_leg_2_5_45"
             android:textColor="@color/text_secondary"
             android:textSize="10sp" />
 
@@ -213,7 +213,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:paddingHorizontal="10dp"
-                android:text="Pause"
+                android:text="@string/btn_pause_route"
                 android:textColor="@color/white"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -228,7 +228,7 @@
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
             android:paddingHorizontal="10dp"
-            android:text="Stop"
+            android:text="@string/favorites__stop"
             android:textColor="@color/primary"
             android:textSize="10sp"
             android:textStyle="bold" />

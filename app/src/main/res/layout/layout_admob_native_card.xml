@@ -34,7 +34,7 @@
                     android:background="@drawable/bg_status_pill"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="2dp"
-                    android:text="Ad"
+                    android:text="@string/admob_nati_ad"
                     android:textColor="@color/primary"
                     android:textSize="10sp"
                     android:textStyle="bold" />

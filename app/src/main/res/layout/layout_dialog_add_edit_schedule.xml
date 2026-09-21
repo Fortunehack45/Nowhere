@@ -12,7 +12,7 @@
         android:id="@+id/tvAddEditScheduleTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="New Automation Schedule"
+        android:text="@string/add_edit_s_new_automation_schedule"
         android:textColor="@color/text_primary"
         android:textSize="17sp"
         android:textStyle="bold" />
@@ -24,7 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="Schedule Name">
+        android:hint="@string/add_edit_s_schedule_name">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etScheduleName"
@@ -39,7 +39,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:text="Recurrence Type"
+        android:text="@string/add_edit_s_recurrence_type"
         android:textColor="@color/text_muted"
         android:textSize="12sp"
         android:textStyle="bold" />
@@ -65,7 +65,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Trigger Time"
+            android:text="@string/add_edit_s_trigger_time"
             android:textColor="@color/text_muted"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -88,7 +88,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:text="Target Destination"
+        android:text="@string/add_edit_s_target_destination"
         android:textColor="@color/text_muted"
         android:textSize="12sp"
         android:textStyle="bold" />
@@ -106,7 +106,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:checked="true"
-            android:text="Favorite Location"
+            android:text="@string/add_edit_s_favorite_location"
             android:textColor="@color/text_primary"
             android:textSize="12sp" />
 
@@ -115,7 +115,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Saved Route"
+            android:text="@string/add_edit_s_saved_route"
             android:textColor="@color/text_primary"
             android:textSize="12sp" />
     </RadioGroup>
@@ -145,7 +145,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Loop Recurrence"
+                android:text="@string/add_edit_s_loop_recurrence"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -153,7 +153,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Repeats at next interval after route completion"
+                android:text="@string/add_edit_s_repeats_at_next_interval_after"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -172,7 +172,7 @@
         android:layout_width="match_parent"
         android:layout_height="46dp"
         android:layout_marginTop="18dp"
-        android:text="Save Schedule"
+        android:text="@string/add_edit_s_save_schedule"
         android:textColor="@color/white"
         android:textStyle="bold"
         app:backgroundTint="@color/primary"

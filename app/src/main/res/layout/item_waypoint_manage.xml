@@ -63,7 +63,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Pass-through (0s)"
+                android:text="@string/item_waypo_passthrough_0s"
                 android:textColor="@color/primary"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -80,7 +80,7 @@
             android:insetBottom="0dp"
             android:minWidth="0dp"
             android:paddingHorizontal="10dp"
-            android:text="Stop: 0s"
+            android:text="@string/item_waypo_stop_0s"
             android:textColor="@color/text_primary"
             android:textSize="11sp"
             app:cornerRadius="18dp"

@@ -147,14 +147,14 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                     is NowhereVpnService.VpnState.Connected -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
                         binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_text)
-                        binding.tvVpnStateTitle.text = "Ghost Shield Protected"
-                        binding.tvVpnBadge.text = "PROTECTED"
+                        binding.tvVpnStateTitle.text = getString(R.string.vpn_state_protected)
+                        binding.tvVpnBadge.text = getString(R.string.vpn_badge_protected)
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_success_text))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_bg)
                         binding.tvVpnDescription.text = "Kernel WireGuard tunnel active with BBR congestion control and TCP MSS Clamping. Zero packet inspection leaks."
 
                         binding.btnToggleVpnManual.isEnabled = true
-                        binding.btnToggleVpnManual.text = "Deactivate Ghost Shield"
+                        binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_deactivate)
                         binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.text_primary)
@@ -164,27 +164,27 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                     is NowhereVpnService.VpnState.Connecting -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
                         binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
-                        binding.tvVpnStateTitle.text = "Connecting to Secure Tunnel..."
-                        binding.tvVpnBadge.text = "CONNECTING"
+                        binding.tvVpnStateTitle.text = getString(R.string.vpn_state_connecting)
+                        binding.tvVpnBadge.text = getString(R.string.vpn_badge_connecting)
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_warning_text))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_bg)
                         binding.tvVpnDescription.text = "Negotiating ChaCha20-Poly1305 WireGuard cryptographic handshake on port 51820..."
 
                         binding.btnToggleVpnManual.isEnabled = false
-                        binding.btnToggleVpnManual.text = "Connecting..."
+                        binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_connecting)
                         binding.tvServerNodeInfo.text = "Nowhere Ghost Shield Network • Connecting"
                     }
                     is NowhereVpnService.VpnState.Error -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
                         binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_text)
-                        binding.tvVpnStateTitle.text = "Shield Temporarily Offline"
-                        binding.tvVpnBadge.text = "OFFLINE"
+                        binding.tvVpnStateTitle.text = getString(R.string.vpn_state_offline)
+                        binding.tvVpnBadge.text = getString(R.string.vpn_badge_offline)
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_error_text))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_bg)
                         binding.tvVpnDescription.text = "Could not complete handshake. Mobile data and Wi-Fi remain safely preserved."
 
                         binding.btnToggleVpnManual.isEnabled = true
-                        binding.btnToggleVpnManual.text = "Retry Connection"
+                        binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_retry)
                         binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
@@ -193,14 +193,14 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                     is NowhereVpnService.VpnState.Disconnected -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
                         binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.text_muted)
-                        binding.tvVpnStateTitle.text = "Ghost Shield Inactive"
-                        binding.tvVpnBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) "SYNCED" else "IDLE"
+                        binding.tvVpnStateTitle.text = getString(R.string.vpn_state_inactive)
+                        binding.tvVpnBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) "SYNCED" else getString(R.string.vpn_badge_inactive)
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
                         binding.tvVpnDescription.text = "Connects automatically when mock GPS starts. Tap Activate below to engage protection anytime."
 
                         binding.btnToggleVpnManual.isEnabled = true
-                        binding.btnToggleVpnManual.text = "Activate Ghost Shield Now"
+                        binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_activate)
                         binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)

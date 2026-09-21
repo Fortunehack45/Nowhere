@@ -46,7 +46,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:letterSpacing="0.01"
-            android:text="Enjoying Nowhere?"
+            android:text="@string/app_review_enjoying_nowhere"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -57,7 +57,7 @@
             android:layout_marginTop="8dp"
             android:gravity="center"
             android:lineSpacingExtra="3dp"
-            android:text="Your 5-star rating on Google Play supports continuous development, fast updates, and advanced GPS simulation features!"
+            android:text="@string/app_review_your_5star_rating_on_google"
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
@@ -83,7 +83,7 @@
                     android:id="@+id/tvRatingPrompt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Tap stars to rate:"
+                    android:text="@string/app_review_tap_stars_to_rate"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -173,7 +173,7 @@
             android:layout_marginTop="20dp"
             android:backgroundTint="@color/primary"
             android:letterSpacing="0.02"
-            android:text="⭐ Rate on Google Play"
+            android:text="@string/app_review_rate_on_google_play"
             android:textColor="@color/white"
             android:textSize="15sp"
             android:textStyle="bold"
@@ -189,7 +189,7 @@
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:backgroundTint="@color/surface_card_elevated"
-            android:text="Remind Me Later"
+            android:text="@string/app_review_remind_me_later"
             android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:textStyle="bold"
@@ -202,7 +202,7 @@
             android:layout_width="wrap_content"
             android:layout_height="38dp"
             android:layout_marginTop="4dp"
-            android:text="Never Ask Again"
+            android:text="@string/app_review_never_ask_again"
             android:textColor="@color/text_muted"
             android:textSize="12sp" />
 

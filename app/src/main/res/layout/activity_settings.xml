@@ -39,7 +39,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:letterSpacing="0.02"
-                android:text="Settings &amp; Engine"
+                android:text="@string/settings_settings_engine"
                 android:textColor="@color/text_primary"
                 android:textSize="17sp"
                 android:textStyle="bold"
@@ -52,7 +52,7 @@
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
-                android:text="Reset"
+                android:text="@string/settings_reset"
                 android:textColor="@color/primary_bright"
                 android:textSize="13sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="NOWHERE PREMIUM"
+                android:text="@string/settings_nowhere_premium"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -131,7 +131,7 @@
                                 android:layout_height="wrap_content"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text="Nowhere Pro Engine"
+                                android:text="@string/settings_nowhere_pro_engine"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14.5sp"
                                 android:textStyle="bold" />
@@ -143,7 +143,7 @@
                                 android:layout_marginTop="2dp"
                                 android:ellipsize="end"
                                 android:maxLines="2"
-                                android:text="Unlimited session duration &amp; 100% zero ads"
+                                android:text="@string/settings_unlimited_session_duration_100_zero"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="11.5sp" />
                         </LinearLayout>
@@ -156,7 +156,7 @@
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="0dp"
                             android:backgroundTint="@color/primary"
-                            android:text="UPGRADE"
+                            android:text="@string/settings_upgrade"
                             android:textColor="@color/white"
                             android:textSize="11.5sp"
                             android:textStyle="bold"
@@ -176,7 +176,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="SIMULATION DURATION &amp; TIMER"
+                android:text="@string/settings_simulation_duration_timer"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -217,7 +217,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Active Session Countdown"
+                            android:text="@string/settings_session_countdown"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -253,7 +253,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Total Allocated: 2h 00m"
+                        android:text="@string/settings_total_allocated_2h_00m"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
@@ -282,7 +282,7 @@
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="+2 Hours Video"
+                            android:text="@string/settings_2_hours_video"
                             android:textColor="@color/primary_bright"
                             android:textSize="12sp"
                             android:textStyle="bold"
@@ -298,7 +298,7 @@
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Manage Session"
+                            android:text="@string/settings_manage_session"
                             android:textColor="@color/text_primary"
                             android:textSize="12sp"
                             app:cornerRadius="10dp" />
@@ -313,7 +313,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="QUICK DESTINATIONS WIDGET SLOTS"
+                android:text="@string/settings_quick_destinations_widget_slots"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -339,7 +339,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Customize the 3 one-tap teleport countries or cities displayed on your home screen widget."
+                        android:text="@string/settings_customize_the_3_onetap_teleport"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
@@ -361,7 +361,7 @@
                                 android:id="@+id/tvWidgetSlot1Title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Slot 1: Paris"
+                                android:text="@string/settings_slot_1_paris"
                                 android:textColor="@color/text_primary"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -382,7 +382,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Edit"
+                            android:text="@string/settings_edit"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp" />
@@ -412,7 +412,7 @@
                                 android:id="@+id/tvWidgetSlot2Title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Slot 2: Tokyo"
+                                android:text="@string/settings_slot_2_tokyo"
                                 android:textColor="@color/text_primary"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -433,7 +433,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Edit"
+                            android:text="@string/settings_edit"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp" />
@@ -463,7 +463,7 @@
                                 android:id="@+id/tvWidgetSlot3Title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Slot 3: New York"
+                                android:text="@string/settings_slot_3_new_york"
                                 android:textColor="@color/text_primary"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -484,7 +484,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Edit"
+                            android:text="@string/settings_edit"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp" />
@@ -498,7 +498,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="SYSTEM PERMISSIONS &amp; ACCESS"
+                android:text="@string/settings_system_permissions_access"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -536,7 +536,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Mock Location App"
+                                android:text="@string/settings_mock_location_app"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -546,7 +546,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Checking developer options status..."
+                                android:text="@string/settings_checking_developer_options_status"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -563,7 +563,7 @@
                                 android:layout_height="36dp"
                                 android:layout_marginEnd="6dp"
                                 android:backgroundTint="@color/surface_card_elevated"
-                                android:text="Auto Root"
+                                android:text="@string/settings_auto_root"
                                 android:textColor="@color/primary_bright"
                                 android:textSize="11sp"
                                 android:textStyle="bold"
@@ -578,7 +578,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="36dp"
                                 android:backgroundTint="@color/surface_card_elevated"
-                                android:text="Configure"
+                                android:text="@string/main_configure"
                                 android:textColor="@color/primary_bright"
                                 android:textSize="11sp"
                                 app:cornerRadius="8dp" />
@@ -607,7 +607,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Background Battery Access"
+                                android:text="@string/settings_background_battery_access"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -617,7 +617,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Allow uninterrupted background simulation"
+                                android:text="@string/settings_allow_uninterrupted_background_simulation"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -628,7 +628,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Exempt"
+                            android:text="@string/settings_exempt"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp" />
@@ -656,7 +656,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Clear-All &amp; Recents Shield"
+                                android:text="@string/settings_clearall_recents_shield"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -666,7 +666,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Optional stealth mode: Hides Nowhere from Recent Apps while active. Keep OFF so Nowhere stays in your Recent Apps list"
+                                android:text="@string/settings_optional_stealth_mode_hides_nowhere"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -701,7 +701,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Display Over Other Apps"
+                                android:text="@string/settings_display_over_other_apps"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -711,7 +711,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Required for floating joystick overlay"
+                                android:text="@string/settings_required_for_floating_joystick_overlay"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -722,7 +722,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Grant"
+                            android:text="@string/settings_grant"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp" />
@@ -736,7 +736,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="HOTSPOT GPS TETHERING &amp; SYNC"
+                android:text="@string/settings_hotspot_gps_tethering_sync"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -773,7 +773,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Tether GPS to Connected Devices"
+                                android:text="@string/settings_tether_gps_to_connected_devices"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -782,7 +782,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Broadcasts mock GPS coordinates to any iPad, laptop, iPhone, or car head unit connected to your hotspot via HTTP Radar &amp; NMEA 0183."
+                                android:text="@string/settings_broadcasts_mock_gps_coordinates_to"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -793,7 +793,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Configure"
+                            android:text="@string/main_configure"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp" />
@@ -807,7 +807,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="SYSTEM LOCATION INJECTOR"
+                android:text="@string/settings_system_location_injector"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -844,7 +844,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Auto-Inject on Device Boot"
+                                android:text="@string/main_autoinject_on_device_boot"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -853,7 +853,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Automatically resurrects and locks spoofed GPS into Android test provider when the phone turns on or restarts."
+                                android:text="@string/settings_automatically_resurrects_and_locks_spoofed"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -875,7 +875,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="ANTI-DETECTION &amp; GHOST CLOAK"
+                android:text="@string/settings_antidetection_ghost_cloak"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -914,7 +914,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Ghost Cloak (Anti-Detection Suite)"
+                                android:text="@string/settings_ghost_cloak_antidetection_suite"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -923,7 +923,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Synthesizes hardware NMEA streams, nano-clock drift, and strips mock flags so third-party apps never detect spoofing."
+                                android:text="@string/settings_synthesizes_hardware_nmea_streams_nanoclock"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -959,7 +959,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Emergency Kill Switch Leak Protection"
+                                android:text="@string/settings_emergency_kill_switch_leak_protection"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -968,7 +968,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Automatically halt all device internet traffic if mock GPS simulation stops unexpectedly, preventing real location leaks."
+                                android:text="@string/settings_automatically_halt_all_device_internet"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -999,7 +999,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="NMEA Streams, Kinematics &amp; Diagnostics"
+                            android:text="@string/settings_nmea_streams_kinematics_diagnostics"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp" />
 
@@ -1009,7 +1009,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:backgroundTint="@color/surface_card_elevated"
-                            android:text="Configure &amp; Test"
+                            android:text="@string/settings_configure_test"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             app:cornerRadius="8dp" />
@@ -1023,7 +1023,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="ADVANCED LOCATION ENGINE"
+                android:text="@string/settings_advanced_location_engine"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -1061,7 +1061,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Google Play Fused Provider"
+                                android:text="@string/settings_google_play_fused_provider"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -1070,7 +1070,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Injects 'fused' mock test provider alongside GPS and Network for full Play Services compatibility."
+                                android:text="@string/settings_injects_fused_mock_test_provider"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -1105,7 +1105,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Realistic Satellite Jitter"
+                                android:text="@string/settings_realistic_satellite_jitter"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -1114,7 +1114,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Applies Gaussian noise simulation to bypass anti-spoofing heuristic detection."
+                                android:text="@string/settings_applies_gaussian_noise_simulation_to"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -1143,7 +1143,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Jitter Variance Radius"
+                                android:text="@string/settings_jitter_variance_radius"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="12sp" />
 
@@ -1152,7 +1152,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="monospace"
-                                android:text="Radius: 2.0 m"
+                                android:text="@string/settings_radius_20_m"
                                 android:textColor="@color/primary"
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
@@ -1181,7 +1181,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Coordinate Decimal Truncation"
+                        android:text="@string/settings_coordinate_decimal_truncation"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -1190,7 +1190,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Emulate precision limits of physical GNSS hardware chips."
+                        android:text="@string/settings_emulate_precision_limits_of_physical"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
 
@@ -1211,7 +1211,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Full (8 Dec)"
+                            android:text="@string/settings_full_8_dec"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1224,7 +1224,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="6 Dec (~0.1m)"
+                            android:text="@string/settings_6_dec_01m"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1237,7 +1237,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="4 Dec (~11m)"
+                            android:text="@string/settings_4_dec_11m"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1252,7 +1252,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="THEME, MAP TILES &amp; VISUALS"
+                android:text="@string/settings_theme_map_tiles_visuals"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -1278,7 +1278,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="App Theme Mode"
+                        android:text="@string/settings_app_theme_mode"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -1300,7 +1300,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Dark"
+                            android:text="@string/settings_theme_dark"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1313,7 +1313,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Light"
+                            android:text="@string/settings_theme_light"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1326,7 +1326,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="System Default"
+                            android:text="@string/settings_theme_system"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1423,7 +1423,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Main Menu Frosted Glass Blur"
+                                android:text="@string/settings_main_menu_frosted_glass_blur"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -1432,7 +1432,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Adjust blur opacity on top, side, and bottom HUD decks"
+                                android:text="@string/settings_adjust_blur_opacity_on_top"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -1468,7 +1468,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Map Tile Source"
+                        android:text="@string/settings_map_tile_source"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -1490,7 +1490,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Standard"
+                            android:text="@string/settings_standard"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1503,7 +1503,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Terrain"
+                            android:text="@string/settings_terrain"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1516,7 +1516,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Satellite"
+                            android:text="@string/settings_satellite"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1532,7 +1532,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Distance &amp; Speed Units"
+                        android:text="@string/settings_distance_speed_units"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -1554,7 +1554,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Metric (KM/H, Meters)"
+                            android:text="@string/settings_metric_kmh_meters"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1567,7 +1567,7 @@
                             android:background="@drawable/bg_segmented_pill_item"
                             android:button="@null"
                             android:gravity="center"
-                            android:text="Imperial (MPH, Feet)"
+                            android:text="@string/settings_imperial_mph_feet"
                             android:textColor="@color/color_segmented_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1601,7 +1601,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Pin Nowhere App Icon to Home Screen"
+                            android:text="@string/settings_pin_nowhere_app_icon_to"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -1609,7 +1609,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Add Icon"
+                            android:text="@string/settings_add_icon"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -1642,7 +1642,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="App Theme Accent Color"
+                                android:text="@string/settings_app_theme_accent_color"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -1652,7 +1652,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Crimson Red (Default)"
+                                android:text="@string/settings_crimson_red_default"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -1675,7 +1675,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:letterSpacing="0.04"
-                android:text="DEVELOPER &amp; COMMUNITY SUPPORT"
+                android:text="@string/settings_developer_community_support"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -1737,7 +1737,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Made by Àyànfẹ́"
+                                    android:text="@string/settings_made_by_ynf"
                                     android:textColor="@color/text_primary"
                                     android:textSize="16sp"
                                     android:textStyle="bold" />
@@ -1750,7 +1750,7 @@
                                     android:backgroundTint="@color/badge_active_bg"
                                     android:paddingHorizontal="6dp"
                                     android:paddingVertical="2dp"
-                                    android:text="STUDIO"
+                                    android:text="@string/settings_studio"
                                     android:textColor="@color/badge_active_text"
                                     android:textSize="9sp"
                                     android:textStyle="bold" />
@@ -1760,7 +1760,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Àyànfẹ́ Software Studio • Mobile &amp; Cyber-Security"
+                                android:text="@string/settings_ynf_software_studio_mobile_cybersecurity"
                                 android:textColor="@color/text_muted"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -1795,7 +1795,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="fortuneadebayo.space"
+                            android:text="@string/settings_fortuneadebayospace"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -1803,7 +1803,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Visit Portfolio"
+                            android:text="@string/settings_visit_portfolio"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -1832,7 +1832,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="@OnNerd_eth"
+                            android:text="@string/settings_onnerd_eth"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -1840,7 +1840,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Follow on X"
+                            android:text="@string/settings_follow_on_x"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -1868,7 +1868,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Nowhere Telegram Channel"
+                            android:text="@string/settings_nowhere_telegram_channel"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -1876,7 +1876,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Join Channel"
+                            android:text="@string/settings_join_channel"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -1904,7 +1904,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Nowhere Community Group"
+                            android:text="@string/settings_nowhere_community_group"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -1912,7 +1912,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Join Group"
+                            android:text="@string/settings_join_group"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -1948,7 +1948,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Chat on WhatsApp"
+                            android:text="@string/settings_chat_on_whatsapp"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -1984,7 +1984,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Chat on WhatsApp"
+                            android:text="@string/settings_chat_on_whatsapp"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -1999,7 +1999,7 @@
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="8dp"
                 android:letterSpacing="0.06"
-                android:text="LEGAL &amp; POLICIES"
+                android:text="@string/settings_legal_policies"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -2043,7 +2043,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Interactive Feature Tour &amp; Guide"
+                            android:text="@string/settings_interactive_feature_tour_guide"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -2051,7 +2051,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Start Tour"
+                            android:text="@string/settings_start_tour"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -2081,7 +2081,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Legal Disclaimer &amp; Fair Use Policy"
+                            android:text="@string/settings_legal_disclaimer_fair_use_policy"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -2089,7 +2089,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Read Policy"
+                            android:text="@string/settings_read_policy"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -2119,7 +2119,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Privacy Policy &amp; Data Safety"
+                            android:text="@string/settings_privacy_policy_data_safety"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -2127,7 +2127,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Privacy"
+                            android:text="@string/settings_privacy"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -2157,7 +2157,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Push Notifications &amp; Alerts"
+                            android:text="@string/settings_push_notifications_alerts"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -2166,7 +2166,7 @@
                             android:id="@+id/tvNotificationPermissionStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Allowed"
+                            android:text="@string/settings_allowed"
                             android:textColor="@color/badge_success_text"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -2196,7 +2196,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Rate &amp; Review on Google Play"
+                            android:text="@string/settings_rate_review_on_google_play"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -2235,7 +2235,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Nowhere Version v1.0.0"
+                            android:text="@string/settings_nowhere_version_v100"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -2244,7 +2244,7 @@
                             android:id="@+id/tvCheckUpdateStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Check Updates"
+                            android:text="@string/settings_check_updates"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -2282,7 +2282,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Nowhere Location Simulator"
+                    android:text="@string/settings_nowhere_location_simulator"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -2292,7 +2292,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Version 1.0.0 (Build 1) • Stable"
+                    android:text="@string/settings_version_100_build_1_stable"
                     android:textColor="@color/primary_bright"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -2301,7 +2301,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Powered by Àyànfẹ́ • Zero-Telemetry Privacy"
+                    android:text="@string/settings_powered_by_ynf_zerotelemetry_privacy"
                     android:textColor="@color/text_muted"
                     android:textSize="11sp" />
             </LinearLayout>

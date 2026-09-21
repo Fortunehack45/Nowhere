@@ -44,7 +44,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Widget Gallery &amp; Previews"
+                    android:text="@string/widget_gal_widget_gallery_previews"
                     android:textColor="@color/text_primary"
                     android:textSize="17sp"
                     android:textStyle="bold" />
@@ -53,7 +53,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Preview and pin functional widgets directly to your Home Screen"
+                    android:text="@string/widget_gal_preview_and_pin_functional_widgets"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
             </LinearLayout>

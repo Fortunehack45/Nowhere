@@ -21,7 +21,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="14dp"
         android:letterSpacing="0.04"
-        android:text="BACKGROUND RESILIENCE"
+        android:text="@string/battery_op_background_resilience"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold" />
@@ -32,7 +32,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:lineSpacingExtra="4dp"
-        android:text="Aggressive manufacturer battery optimizations may kill Nowhere when the screen turns off. Please allow unrestricted background activity."
+        android:text="@string/battery_op_aggressive_manufacturer_battery_optimizations_may"
         android:textColor="@color/text_secondary"
         android:textSize="13sp" />
 
@@ -65,7 +65,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:letterSpacing="0.03"
-                android:text="RECOMMENDED PRO-TIP"
+                android:text="@string/battery_op_recommended_protip"
                 android:textColor="@color/primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -86,7 +86,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:lineSpacingExtra="3dp"
-            android:text="Add the Nowhere Quick Actions or Icon widget to your home screen — active widgets prevent aggressive battery managers from freezing or killing background location spoofing."
+            android:text="@string/battery_op_add_the_nowhere_quick_actions"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
     </LinearLayout>
@@ -97,7 +97,7 @@
         android:layout_height="50dp"
         android:layout_marginTop="20dp"
         android:backgroundTint="@color/badge_warning_text"
-        android:text="Allow Unrestricted Background"
+        android:text="@string/battery_op_allow_unrestricted_background"
         android:textColor="@color/surface_dark"
         android:textStyle="bold"
         app:cornerRadius="12dp" />
@@ -108,7 +108,7 @@
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:layout_marginTop="6dp"
-        android:text="Dismiss"
+        android:text="@string/btn_dismiss"
         android:textColor="@color/text_muted" />
 
 </LinearLayout>

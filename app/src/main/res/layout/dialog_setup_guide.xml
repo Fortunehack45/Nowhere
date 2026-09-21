@@ -19,7 +19,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="14dp"
         android:letterSpacing="0.04"
-        android:text="MOCK LOCATION SETUP"
+        android:text="@string/setup_guid_mock_location_setup"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold" />
@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:lineSpacingExtra="4dp"
-        android:text="To simulate GPS system-wide across all apps, Android requires Nowhere to be selected as your Mock Location Provider:\n\n1. Tap 'Open Developer Options'.\n2. Scroll down to 'Select mock location app'.\n3. Choose 'Nowhere'."
+        android:text="@string/setup_guid_to_simulate_gps_systemwide_across"
         android:textColor="@color/text_secondary"
         android:textSize="13sp" />
 
@@ -42,7 +42,7 @@
         android:layout_marginTop="16dp"
         android:backgroundTint="@color/surface_card_elevated"
         android:letterSpacing="0.03"
-        android:text="Auto-Grant via Root (1-Tap)"
+        android:text="@string/setup_guid_autogrant_via_root_1tap"
         android:textColor="@color/primary_bright"
         android:textStyle="bold"
         app:cornerRadius="12dp"
@@ -58,7 +58,7 @@
         android:layout_marginTop="10dp"
         android:backgroundTint="@color/primary"
         android:letterSpacing="0.03"
-        android:text="Open Developer Options"
+        android:text="@string/btn_open_dev_options"
         android:textColor="@color/white"
         android:textStyle="bold"
         app:cornerRadius="12dp" />
@@ -69,7 +69,7 @@
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:layout_marginTop="4dp"
-        android:text="I'll configure later"
+        android:text="@string/setup_guid_ill_configure_later"
         android:textColor="@color/text_muted" />
 
 </LinearLayout>

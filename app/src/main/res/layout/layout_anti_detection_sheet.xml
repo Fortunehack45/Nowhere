@@ -50,7 +50,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="GHOST CLOAK SUITE"
+                    android:text="@string/anti_detec_ghost_cloak_suite"
                     android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -63,7 +63,7 @@
                     android:backgroundTint="@color/badge_active_bg"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="2dp"
-                    android:text="BETA"
+                    android:text="@string/anti_detec_beta"
                     android:textColor="@color/primary_bright"
                     android:textSize="9.5sp"
                     android:textStyle="bold" />
@@ -73,7 +73,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Defeats mock location detectors in banking, dating &amp; enterprise apps"
+                android:text="@string/anti_detec_defeats_mock_location_detectors_in"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -86,7 +86,7 @@
             android:backgroundTint="@color/badge_active_bg"
             android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"
-            android:text="CLOAKED"
+            android:text="@string/anti_detec_cloaked"
             android:textColor="@color/primary_bright"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -119,7 +119,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Master Ghost Cloak"
+                    android:text="@string/anti_detec_master_ghost_cloak"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -128,7 +128,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Intercepts location requests, scrubs mock signatures, and synthesizes authentic hardware sensor telemetry."
+                    android:text="@string/anti_detec_intercepts_location_requests_scrubs_mock"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -176,7 +176,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Hardware NMEA-0183 Synthesizer"
+                        android:text="@string/anti_detec_hardware_nmea0183_synthesizer"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -185,7 +185,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Streams valid $GPRMC, $GPGGA, $GPGSA &amp; $GPGSV hardware sentences."
+                        android:text="@string/anti_detec_streams_valid_gprmc_gpgga_gpgsa"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -221,7 +221,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Micro-Clock Monotonic Drift &amp; Uncertainty"
+                        android:text="@string/anti_detec_microclock_monotonic_drift_uncertainty"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -230,7 +230,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Injects realistic 15-38ns boot-clock uncertainty and microsecond jitter."
+                        android:text="@string/anti_detec_injects_realistic_1538ns_bootclock_uncertainty"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -266,7 +266,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Inertial Kinematics &amp; Centripetal Motion"
+                        android:text="@string/anti_detec_inertial_kinematics_centripetal_motion"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -275,7 +275,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Emulates physical turn G-forces and road micro-vibrations."
+                        android:text="@string/anti_detec_emulates_physical_turn_gforces_and"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -298,7 +298,7 @@
         android:layout_marginStart="4dp"
         android:layout_marginTop="16dp"
         android:letterSpacing="0.06"
-        android:text="LIVE CLOAK DIAGNOSTICS"
+        android:text="@string/anti_detec_live_cloak_diagnostics"
         android:textColor="@color/primary"
         android:textSize="12sp"
         android:textStyle="bold" />
@@ -339,7 +339,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="Fused + GPS + Network + Passive Providers: Active"
+                    android:text="@string/anti_detec_fused_gps_network_passive_providers"
                     android:textColor="@color/text_primary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -365,7 +365,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="Nanosecond Clock Uncertainty: Synchronized (~24.5 ns)"
+                    android:text="@string/anti_detec_nanosecond_clock_uncertainty_synchronized_245"
                     android:textColor="@color/text_primary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -391,7 +391,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="NMEA-0183 Sentence Stream: 18 Tracked Satellites"
+                    android:text="@string/anti_detec_nmea0183_sentence_stream_18_tracked"
                     android:textColor="@color/text_primary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -420,7 +420,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="Wi-Fi Scanning: Disabled (Zero-Fluctuation Shield Active)"
+                    android:text="@string/anti_detec_wifi_scanning_disabled_zerofluctuation_shield"
                     android:textColor="@color/text_primary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -434,7 +434,7 @@
                 android:background="@drawable/bg_pill_container"
                 android:fontFamily="monospace"
                 android:padding="10dp"
-                android:text="$GPRMC,120530.00,A,3746.4940,N,12225.1640,W,10.5,45.0,300826,,,A*7C\n$GPGGA,120530.00,3746.4940,N,12225.1640,W,1,16,0.9,15.0,M,0.0,M,,*5A"
+                android:text="@string/anti_detec_gprmc12053000a37464940n122251640w105450300826a7cngpgga1205300037464940n122251640w11609150m00m5a"
                 android:textColor="@color/primary_bright"
                 android:textSize="10sp" />
         </LinearLayout>
@@ -455,7 +455,7 @@
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:backgroundTint="@color/surface_card_elevated"
-            android:text="1-Tap Root Stealth"
+            android:text="@string/anti_detec_1tap_root_stealth"
             android:textColor="@color/primary_bright"
             android:textSize="12sp"
             app:cornerRadius="12dp" />
@@ -467,7 +467,7 @@
             android:layout_height="48dp"
             android:layout_weight="1"
             android:backgroundTint="@color/primary"
-            android:text="Done"
+            android:text="@string/btn_done"
             android:textColor="@color/white"
             android:textSize="13sp"
             app:cornerRadius="12dp" />

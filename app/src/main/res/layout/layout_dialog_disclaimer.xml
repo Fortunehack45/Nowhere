@@ -42,7 +42,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Legal Disclaimer &amp; Fair Use"
+                    android:text="@string/disclaimer_legal_disclaimer_fair_use"
                     android:textColor="@color/text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -51,7 +51,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Important usage policy &amp; guidelines"
+                    android:text="@string/disclaimer_important_usage_policy_guidelines"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -83,7 +83,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Developer &amp; QA Simulation"
+                    android:text="@string/disclaimer_developer_qa_simulation"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -93,7 +93,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="Nowhere Location Simulator is built strictly for software developers, QA test automation, geolocation feature verification, route simulation, privacy masking, and academic research."
+                    android:text="@string/disclaimer_nowhere_location_simulator_is_built"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -119,7 +119,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="User Compliance &amp; Third-Party Terms"
+                    android:text="@string/disclaimer_user_compliance_thirdparty_terms"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -129,7 +129,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="The user is solely responsible for ensuring their usage conforms with the Terms of Service (ToS), EULAs, and community guidelines of any third-party apps, websites, games, or platforms."
+                    android:text="@string/disclaimer_the_user_is_solely_responsible"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -155,7 +155,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Safety-Critical &amp; Emergency Systems"
+                    android:text="@string/disclaimer_safetycritical_emergency_systems"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -165,7 +165,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="Nowhere must NEVER be used in real-life automotive driving navigation, aviation, maritime navigation, or emergency services (such as 911, 112, or local dispatch)."
+                    android:text="@string/disclaimer_nowhere_must_never_be_used"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -191,7 +191,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Zero-Telemetry Privacy Policy"
+                    android:text="@string/disclaimer_zerotelemetry_privacy_policy"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -201,7 +201,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="Nowhere runs entirely on-device. We do not track, store, or share your real or simulated coordinates with any external party."
+                    android:text="@string/disclaimer_nowhere_runs_entirely_ondevice_we"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -213,7 +213,7 @@
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:backgroundTint="@color/primary"
-            android:text="I Understand &amp; Accept"
+            android:text="@string/disclaimer_i_understand_accept"
             android:textColor="@color/white"
             android:textSize="14sp"
             android:textStyle="bold"

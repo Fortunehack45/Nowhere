@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:letterSpacing="0.04"
-        android:text="SAVED SIMULATION ROUTES"
+        android:text="@string/bottom_she_saved_simulation_routes"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold"
@@ -72,7 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="No Saved Routes"
+            android:text="@string/bottom_she_no_saved_routes"
             android:textColor="@color/text_primary"
             android:textSize="14.5sp"
             android:textStyle="bold" />
@@ -82,7 +82,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:gravity="center"
-            android:text="Tap waypoints on the map in Route Mode and tap Save Route to store simulation paths."
+            android:text="@string/bottom_she_tap_waypoints_on_the_map"
             android:textColor="@color/text_muted"
             android:textSize="12sp" />
     </LinearLayout>

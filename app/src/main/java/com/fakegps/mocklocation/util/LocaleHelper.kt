@@ -34,6 +34,8 @@ object LocaleHelper {
         SupportedLanguage("ja", "日本語", "Japanese", "🇯🇵")
     )
 
+    var isLanguageStale: Boolean = false
+
     fun getSelectedLanguage(context: Context): String {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         return prefs.getString(KEY_APP_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
@@ -48,12 +50,33 @@ object LocaleHelper {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         prefs.edit().putString(KEY_APP_LANGUAGE, languageCode).apply()
 
+        isLanguageStale = true
+
+        val locale = Locale.forLanguageTag(languageCode)
+        Locale.setDefault(locale)
+
         // Modern AndroidX in-app language switching (supported from Android 13 down to API 21)
         val appLocale = LocaleListCompat.forLanguageTags(languageCode)
         AppCompatDelegate.setApplicationLocales(appLocale)
 
-        val locale = Locale.forLanguageTag(languageCode)
-        Locale.setDefault(locale)
+        // Force synchronous update across active Context and ApplicationContext resources
+        updateResources(context, locale)
+        try {
+            updateResources(context.applicationContext, locale)
+        } catch (ignored: Exception) {}
+    }
+
+    private fun updateResources(context: Context, locale: Locale) {
+        val res = context.resources
+        val config = Configuration(res.configuration)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            config.setLocales(LocaleList(locale))
+        } else {
+            @Suppress("DEPRECATION")
+            config.locale = locale
+        }
+        @Suppress("DEPRECATION")
+        res.updateConfiguration(config, res.displayMetrics)
     }
 
     fun wrapContext(context: Context): Context {
@@ -61,15 +84,19 @@ object LocaleHelper {
         val locale = Locale.forLanguageTag(languageCode)
         Locale.setDefault(locale)
 
-        val config = Configuration(context.resources.configuration)
+        val res = context.resources
+        val config = Configuration(res.configuration)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             config.setLocales(LocaleList(locale))
-            return context.createConfigurationContext(config)
+            val newContext = context.createConfigurationContext(config)
+            @Suppress("DEPRECATION")
+            newContext.resources.updateConfiguration(config, newContext.resources.displayMetrics)
+            return newContext
         } else {
             @Suppress("DEPRECATION")
             config.locale = locale
             @Suppress("DEPRECATION")
-            context.resources.updateConfiguration(config, context.resources.displayMetrics)
+            res.updateConfiguration(config, res.displayMetrics)
             return context
         }
     }

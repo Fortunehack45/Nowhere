@@ -48,7 +48,7 @@
                     android:gravity="center"
                     android:letterSpacing="0.08"
                     android:paddingHorizontal="10dp"
-                    android:text="1 OF 5"
+                    android:text="@string/spotlight__1_of_5"
                     android:textColor="@color/text_secondary"
                     android:textSize="10sp"
                     android:textStyle="bold" />
@@ -67,7 +67,7 @@
                     android:insetBottom="0dp"
                     android:minWidth="0dp"
                     android:paddingHorizontal="8dp"
-                    android:text="Skip"
+                    android:text="@string/spotlight__skip"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -124,7 +124,7 @@
                     android:insetBottom="0dp"
                     android:minWidth="110dp"
                     android:paddingHorizontal="20dp"
-                    android:text="Next"
+                    android:text="@string/app_tutori_next"
                     android:textColor="@color/white"
                     android:textSize="13sp"
                     android:textStyle="bold"

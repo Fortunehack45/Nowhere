@@ -33,19 +33,7 @@ object NowhereApiClient {
         val clientPublicKey: String,
         val allowedIps: List<String>,
         val dns: List<String>,
-        val mtu: Int,
-        val isGameBoosted: Boolean = false,
-        val gameName: String? = null,
-        val estimatedPingMs: Int? = null
-    )
-
-    data class GameItem(
-        val id: String,
-        val name: String,
-        val category: String,
-        val icon: String,
-        val packetQos: String,
-        val estimatedPingMs: Int
+        val mtu: Int
     )
 
     fun getCustomBackendUrl(context: Context): String {
@@ -165,70 +153,6 @@ object NowhereApiClient {
         }
     }
 
-    /**
-     * Optimizes low-latency route for a specific game (Game Booster).
-     */
-    suspend fun optimizeGame(
-        context: Context,
-        gameId: String,
-        regionCode: String? = null,
-        clientPublicKey: String? = null
-    ): Result<TunnelResponse> = withContext(Dispatchers.IO) {
-        try {
-            val endpoint = "${getBaseUrl(context)}/api/v1/game-boost/optimize"
-            val url = URL(endpoint)
-            val conn = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                connectTimeout = 8000
-                readTimeout = 8000
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
-                setRequestProperty("X-API-Key", getApiKey(context))
-            }
-
-            val jsonBody = JSONObject().apply {
-                put("game_id", gameId)
-                if (!regionCode.isNullOrEmpty()) put("region_code", regionCode)
-                if (!clientPublicKey.isNullOrEmpty()) put("client_public_key", clientPublicKey)
-            }
-
-            OutputStreamWriter(conn.outputStream).use { it.write(jsonBody.toString()) }
-
-            val responseCode = conn.responseCode
-            if (responseCode in 200..299) {
-                val responseText = conn.inputStream.bufferedReader().use { it.readText() }
-                val json = JSONObject(responseText)
-
-                val rawEndpoint = json.optString("endpoint", "$DEFAULT_SERVER_HOST:51820")
-                val cleanEndpoint = sanitizeEndpoint(rawEndpoint)
-
-                val resp = TunnelResponse(
-                    nodeId = json.optString("node_id", "us_central_gcp"),
-                    country = json.optString("country", "US"),
-                    countryName = json.optString("country_name", "United States"),
-                    city = json.optString("city", "Google Cloud Node"),
-                    serverPubkey = json.optString("server_pubkey", ""),
-                    endpoint = cleanEndpoint,
-                    assignedIp = json.optString("assigned_ip", "10.8.0.2/32"),
-                    clientPrivateKey = if (json.has("client_private_key")) json.getString("client_private_key") else null,
-                    clientPublicKey = json.optString("client_public_key", ""),
-                    allowedIps = listOf("0.0.0.0/0"),
-                    dns = listOf("1.1.1.1"),
-                    mtu = json.optInt("mtu", 1420),
-                    isGameBoosted = true,
-                    gameName = json.optString("game_name", "Low-Latency Game Boost"),
-                    estimatedPingMs = json.optInt("estimated_ping_ms", 15)
-                )
-                Result.success(resp)
-            } else {
-                val errorMsg = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: "HTTP $responseCode"
-                Result.failure(Exception("Game boost error ($responseCode): $errorMsg"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed calling game-boost/optimize: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
 
     /**
      * Cleanly removes peer from WireGuard server upon disconnect.

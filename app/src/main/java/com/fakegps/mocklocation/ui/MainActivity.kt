@@ -169,14 +169,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var currentLanguageCode: String = ""
+
     private val vpnPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, "us_central_gcp")
-            Toast.makeText(this, "Nowhere Ghost Shield Activated", Toast.LENGTH_SHORT).show()
+            val state = viewModel.uiState.value
+            val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(state.fixedLatitude, state.fixedLongitude)
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
+            Toast.makeText(this, getString(R.string.status_shield_active), Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "VPN permission is required for Ghost Shield", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.permission_vpn_required), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -196,6 +200,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        currentLanguageCode = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
         settingsPrefs = AppSettingsPreferences(this)
         com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -400,8 +405,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale) {
+        val activeLang = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
+        if (activeLang != currentLanguageCode || com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale || com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale) {
+            com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale = false
             com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale = false
+            currentLanguageCode = activeLang
             recreate()
             return
         }
@@ -1660,6 +1668,11 @@ class MainActivity : AppCompatActivity() {
         val sessionPrefs = SessionPreferences(this)
         if (settingsPrefs.isAutoVpnSyncEnabled) {
             sessionPrefs.isIpMaskingEnabled = true
+            val prepareIntent = android.net.VpnService.prepare(this)
+            if (prepareIntent != null) {
+                vpnPermissionLauncher.launch(prepareIntent)
+                return
+            }
             if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
                 val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
                 try {

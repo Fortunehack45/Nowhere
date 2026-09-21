@@ -450,7 +450,7 @@ object ThemeColorManager {
             is ImageView -> {
                 if (view.id == R.id.ivTopBrandLogo || view.id == R.id.ivSettingsFooterLogo || view.id == R.id.ivWidgetGalleryLogo) {
                     view.setImageDrawable(getThemedLogoDrawable(context, primaryColor, darkColor))
-                } else if (view.id == R.id.ivWidgetTeleportBg || view.id == R.id.ivWidgetRoutePlayPauseBg || view.id == R.id.ivWidgetGameBoostToggleBg || view.id == R.id.ivWidgetVpnToggleBg || view.id == R.id.ivWidgetWeatherDetailsBg || view.id == R.id.ivSearchWidgetTeleportBg || view.id == R.id.ivCoordinateJumpIcon) {
+                } else if (view.id == R.id.ivWidgetTeleportBg || view.id == R.id.ivWidgetRoutePlayPauseBg || view.id == R.id.ivWidgetVpnToggleBg || view.id == R.id.ivWidgetWeatherDetailsBg || view.id == R.id.ivSearchWidgetTeleportBg || view.id == R.id.ivCoordinateJumpIcon) {
                     view.setColorFilter(primaryColor, PorterDuff.Mode.SRC_IN)
                 } else {
                     val tint = ImageViewCompat.getImageTintList(view)?.defaultColor
@@ -642,7 +642,6 @@ object ThemeColorManager {
             com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(context)
             com.fakegps.mocklocation.ui.widget.NowhereRouteWidgetProvider.updateAllRouteWidgets(context)
             com.fakegps.mocklocation.ui.widget.NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(context)
-            com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(context)
             com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(context)
             com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(context)
             com.fakegps.mocklocation.ui.widget.NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)

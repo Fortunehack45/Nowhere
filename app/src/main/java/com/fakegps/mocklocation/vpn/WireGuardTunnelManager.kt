@@ -95,6 +95,8 @@ object WireGuardTunnelManager {
                 if (dnsServer.isNotBlank()) add(dnsServer.trim())
                 add("1.1.1.1")
                 add("8.8.8.8")
+                add("9.9.9.9")
+                add("8.8.4.4")
             }
             for (dns in dnsCandidates) {
                 try {

@@ -55,7 +55,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.01"
-                    android:text="New Version Available"
+                    android:text="@string/app_update_new_version_available"
                     android:textColor="@color/text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -66,7 +66,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
                     android:letterSpacing="0.03"
-                    android:text="v1.1.0 Ready to install"
+                    android:text="@string/app_update_v110_ready_to_install"
                     android:textColor="@color/primary_bright"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -109,7 +109,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:text="What's New in this Release"
+                        android:text="@string/app_update_whats_new_in_this_release"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -127,7 +127,7 @@
                     android:layout_height="wrap_content"
                     android:lineSpacingExtra="4dp"
                     android:maxLines="8"
-                    android:text="• Enhanced location simulation accuracy\n• Speed telemetry and engine stability updates\n• Bug fixes and UI performance optimizations"
+                    android:text="@string/app_update_enhanced_location_simulation_accuracyn_speed"
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -164,7 +164,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Preparing update..."
+                        android:text="@string/app_update_preparing_update"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -195,7 +195,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Connecting securely..."
+                    android:text="@string/app_update_connecting_securely"
                     android:textColor="@color/text_muted"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -216,7 +216,7 @@
                 android:layout_height="52dp"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:text="Later"
+                android:text="@string/app_update_later"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp"
                 app:cornerRadius="14dp" />
@@ -229,7 +229,7 @@
                 android:layout_weight="2"
                 android:backgroundTint="@color/primary"
                 android:letterSpacing="0.02"
-                android:text="Update on Google Play"
+                android:text="@string/app_update_update_on_google_play"
                 android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold"

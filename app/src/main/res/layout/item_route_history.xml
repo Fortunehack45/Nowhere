@@ -48,7 +48,7 @@
                     android:layout_weight="1"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text="Route Simulation"
+                    android:text="@string/item_route_route_simulation"
                     android:textColor="@color/text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -63,7 +63,7 @@
                     android:paddingVertical="2dp"
                     android:singleLine="true"
                     android:ellipsize="end"
-                    android:text="🚗 50.0 km/h"
+                    android:text="@string/item_route_500_kmh"
                     android:textColor="@color/primary"
                     android:textSize="9sp"
                     android:textStyle="bold" />
@@ -84,7 +84,7 @@
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="1dp"
                     android:singleLine="true"
-                    android:text="14 pts"
+                    android:text="@string/item_route_14_pts"
                     android:textColor="@color/text_secondary"
                     android:textSize="9sp" />
 
@@ -108,7 +108,7 @@
                     android:layout_marginStart="6dp"
                     android:singleLine="true"
                     android:ellipsize="end"
-                    android:text="Today at 15:10"
+                    android:text="@string/item_route_today_at_1510"
                     android:textColor="@color/text_muted"
                     android:textSize="10sp" />
             </LinearLayout>
@@ -121,7 +121,7 @@
             android:layout_height="34dp"
             android:layout_marginStart="8dp"
             android:backgroundTint="@color/primary"
-            android:text="Simulate"
+            android:text="@string/item_route_simulate"
             android:textColor="@color/white"
             android:textSize="11sp"
             android:textStyle="bold"

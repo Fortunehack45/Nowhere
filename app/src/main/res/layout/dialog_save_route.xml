@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:letterSpacing="0.04"
-        android:text="SAVE ROUTE CIRCUIT"
+        android:text="@string/save_route_save_route_circuit"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold" />
@@ -24,7 +24,7 @@
         android:fontFamily="monospace"
         android:textColor="@color/primary_bright"
         android:textSize="12sp"
-        android:text="6 Waypoints • 2.4 km" />
+        android:text="@string/save_route_6_waypoints_24_km" />
 
     <EditText
         android:id="@+id/etRouteName"
@@ -32,7 +32,7 @@
         android:layout_height="48dp"
         android:layout_marginTop="16dp"
         android:background="@drawable/bg_search_bar"
-        android:hint="Route Name (e.g. City Loop Test)"
+        android:hint="@string/save_route_route_name_eg_city_loop"
         android:inputType="textCapWords"
         android:paddingHorizontal="14dp"
         android:textColor="@color/text_primary"
@@ -51,7 +51,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Cancel"
+            android:text="@string/edit_widge_cancel"
             android:textColor="@color/text_muted" />
 
         <com.google.android.material.button.MaterialButton
@@ -61,7 +61,7 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:backgroundTint="@color/primary"
-            android:text="Save Route"
+            android:text="@string/btn_save_route"
             android:textColor="@color/white"
             android:textStyle="bold"
             app:cornerRadius="10dp" />

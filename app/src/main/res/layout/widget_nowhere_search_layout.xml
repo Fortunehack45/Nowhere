@@ -29,7 +29,7 @@
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:letterSpacing="0.08"
-            android:text="QUICK SEARCH &amp; TELEPORT"
+            android:text="@string/search_lay_quick_search_teleport"
             android:textColor="@color/primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -41,7 +41,7 @@
             android:background="@drawable/bg_status_pill"
             android:paddingHorizontal="6dp"
             android:paddingVertical="2dp"
-            android:text="STANDBY"
+            android:text="@string/status_standby"
             android:textColor="@color/text_muted"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -70,7 +70,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:text="Search city, address or coordinates..."
+            android:text="@string/search_lay_search_city_address_or_coordinates"
             android:textColor="@color/text_muted"
             android:textSize="11sp" />
     </LinearLayout>
@@ -116,7 +116,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:paddingHorizontal="10dp"
-                android:text="Teleport"
+                android:text="@string/item_favor_teleport"
                 android:textColor="@color/white"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -131,7 +131,7 @@
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
             android:paddingHorizontal="10dp"
-            android:text="Stop"
+            android:text="@string/favorites__stop"
             android:textColor="@color/primary"
             android:textSize="10sp"
             android:textStyle="bold" />

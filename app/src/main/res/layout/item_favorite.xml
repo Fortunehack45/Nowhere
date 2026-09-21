@@ -88,7 +88,7 @@
             android:layout_height="34dp"
             android:layout_marginStart="8dp"
             android:backgroundTint="@color/primary"
-            android:text="Teleport"
+            android:text="@string/item_favor_teleport"
             android:textColor="@color/white"
             android:textSize="11sp"
             android:textStyle="bold"

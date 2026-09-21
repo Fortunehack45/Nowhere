@@ -33,7 +33,7 @@
                 android:fontFamily="monospace"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:text="STEP 1 OF 6"
+                android:text="@string/app_tutori_step_1_of_6"
                 android:textColor="@color/primary_bright"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -82,7 +82,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="Global Address &amp; Coordinates Search"
+            android:text="@string/app_tutori_global_address_coordinates_search"
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -97,7 +97,7 @@
             android:background="@drawable/bg_segmented_tab"
             android:paddingHorizontal="10dp"
             android:paddingVertical="3dp"
-            android:text="📍 Located at: Top Search Bar"
+            android:text="@string/app_tutori_located_at_top_search_bar"
             android:textColor="@color/text_muted"
             android:textSize="11.5sp"
             android:textStyle="bold" />
@@ -110,7 +110,7 @@
             android:layout_marginTop="12dp"
             android:gravity="center"
             android:lineSpacingMultiplier="1.25"
-            android:text="Search any city, global landmark, or raw GPS coordinates (e.g. 48.8584, 2.2945) to instantly center the map and position your target mock location."
+            android:text="@string/app_tutori_search_any_city_global_landmark"
             android:textColor="@color/text_muted"
             android:textSize="13sp" />
 
@@ -137,7 +137,7 @@
                 android:layout_height="48dp"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:text="Back"
+                android:text="@string/app_tutori_back"
                 android:textColor="@color/text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -151,7 +151,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:backgroundTint="@color/primary"
-                android:text="Next"
+                android:text="@string/app_tutori_next"
                 android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold"

@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:letterSpacing="0.16"
-            android:text="NOWHERE"
+            android:text="@string/welcome_nowhere"
             android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -106,7 +106,7 @@
             android:gravity="center"
             android:letterSpacing="0.08"
             android:paddingHorizontal="16dp"
-            android:text="SKIP"
+            android:text="@string/welcome_skip"
             android:textColor="@color/text_muted"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -124,7 +124,7 @@
             android:backgroundTint="@color/surface_card_elevated"
             android:letterSpacing="0.04"
             android:paddingHorizontal="20dp"
-            android:text="NEXT"
+            android:text="@string/welcome_next"
             android:textColor="@color/white"
             android:textSize="13sp"
             android:textStyle="bold"

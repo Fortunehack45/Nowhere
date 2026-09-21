@@ -35,7 +35,7 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:letterSpacing="0.08"
-            android:text="SIMULATION HISTORY"
+            android:text="@string/history_simulation_history"
             android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -45,7 +45,7 @@
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:text="Clear"
+            android:text="@string/main_clear"
             android:textColor="@color/badge_error_text"
             android:textSize="12sp" />
 
@@ -95,7 +95,7 @@
                 android:id="@+id/tvLocationTabText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Mock Locations"
+                android:text="@string/history_mock_locations"
                 android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -136,7 +136,7 @@
                 android:id="@+id/tvRouteTabText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Route Paths"
+                android:text="@string/history_route_paths"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -177,7 +177,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:text="No mock locations recorded yet."
+                android:text="@string/history_no_mock_locations_recorded_yet"
                 android:textColor="@color/text_muted"
                 android:textSize="13sp"
                 android:visibility="gone" />
@@ -202,7 +202,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:text="No route simulations recorded yet."
+                android:text="@string/history_no_route_simulations_recorded_yet"
                 android:textColor="@color/text_muted"
                 android:textSize="13sp"
                 android:visibility="gone" />

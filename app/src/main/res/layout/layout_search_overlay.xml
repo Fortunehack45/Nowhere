@@ -141,7 +141,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🗼 Tokyo"
+                    android:text="@string/search_ove_tokyo"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -156,7 +156,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🗽 New York"
+                    android:text="@string/main_new_york"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -171,7 +171,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🥐 Paris"
+                    android:text="@string/search_ove_paris"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -186,7 +186,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🏙️ Dubai"
+                    android:text="@string/search_ove_dubai"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -201,7 +201,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🎡 London"
+                    android:text="@string/search_ove_london"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -216,7 +216,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🦘 Sydney"
+                    android:text="@string/search_ove_sydney"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -231,7 +231,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🗼 Eiffel Tower"
+                    android:text="@string/search_ove_eiffel_tower"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -246,7 +246,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="✈️ JFK Airport"
+                    android:text="@string/search_ove_jfk_airport"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -261,7 +261,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="🏔️ Mt Everest"
+                    android:text="@string/search_ove_mt_everest"
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -307,7 +307,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Direct GPS Coordinates Detected"
+                        android:text="@string/search_ove_direct_gps_coordinates_detected"
                         android:textColor="@color/text_primary"
                         android:textSize="12.5sp"
                         android:textStyle="bold" />
@@ -332,7 +332,7 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:paddingHorizontal="10dp"
-                    android:text="Jump ➔"
+                    android:text="@string/search_ove_jump"
                     android:textColor="@color/primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -355,7 +355,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:letterSpacing="0.06"
-                android:text="RECENT SEARCHES"
+                android:text="@string/hud_recent_searches"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -367,7 +367,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="4dp"
-                android:text="Clear All"
+                android:text="@string/search_ove_clear_all"
                 android:textColor="@color/primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -418,7 +418,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:text="Search Any Destination"
+                android:text="@string/search_ove_search_any_destination"
                 android:textColor="@color/text_primary"
                 android:textSize="15.5sp"
                 android:textStyle="bold" />
@@ -429,7 +429,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="Type any city, street address, famous landmark, or GPS coordinates to jump anywhere on Earth."
+                android:text="@string/search_ove_type_any_city_street_address"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
         </LinearLayout>

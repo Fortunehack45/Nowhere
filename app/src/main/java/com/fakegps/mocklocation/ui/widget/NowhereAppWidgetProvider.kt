@@ -45,7 +45,6 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
             NowhereFavoritesWidgetProvider.updateAllFavoritesWidgets(context)
             NowhereSearchWidgetProvider.updateAllSearchWidgets(context)
             NowhereVpnWidgetProvider.updateAllVpnWidgets(context)
-            NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(context)
             NowhereWeatherWidgetProvider.updateAllWeatherWidgets(context)
             NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(context)
             com.fakegps.mocklocation.automation.widget.NowhereAutomationWidgetProvider.updateAllAutomationWidgets(context)

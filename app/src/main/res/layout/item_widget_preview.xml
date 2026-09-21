@@ -73,7 +73,7 @@
             android:layout_marginTop="12dp"
             android:backgroundTint="@color/primary"
             android:letterSpacing="0.04"
-            android:text="Add to Home Screen"
+            android:text="@string/item_widge_add_to_home_screen"
             android:textColor="@color/white"
             android:textSize="12sp"
             android:textStyle="bold"

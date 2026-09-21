@@ -11,7 +11,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="New WiFi Geofence Trigger"
+        android:text="@string/add_edit_w_new_wifi_geofence_trigger"
         android:textColor="@color/text_primary"
         android:textSize="17sp"
         android:textStyle="bold" />
@@ -30,7 +30,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="WiFi Network SSID">
+            android:hint="@string/add_edit_w_wifi_network_ssid">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etWifiSsid"
@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_marginStart="8dp"
-            android:text="Current"
+            android:text="@string/add_edit_w_current"
             android:textSize="11sp"
             android:textStyle="bold"
             app:cornerRadius="8dp" />
@@ -56,7 +56,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:text="Trigger Event"
+        android:text="@string/add_edit_w_trigger_event"
         android:textColor="@color/text_muted"
         android:textSize="12sp"
         android:textStyle="bold" />
@@ -74,7 +74,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:checked="true"
-            android:text="On Connect"
+            android:text="@string/add_edit_w_on_connect"
             android:textColor="@color/text_primary"
             android:textSize="12sp" />
 
@@ -83,7 +83,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="On Disconnect"
+            android:text="@string/add_edit_w_on_disconnect"
             android:textColor="@color/text_primary"
             android:textSize="12sp" />
     </RadioGroup>
@@ -93,7 +93,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:text="Target Destination"
+        android:text="@string/add_edit_s_target_destination"
         android:textColor="@color/text_muted"
         android:textSize="12sp"
         android:textStyle="bold" />
@@ -111,7 +111,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:checked="true"
-            android:text="Favorite Location"
+            android:text="@string/add_edit_s_favorite_location"
             android:textColor="@color/text_primary"
             android:textSize="12sp" />
 
@@ -120,7 +120,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Saved Route"
+            android:text="@string/add_edit_s_saved_route"
             android:textColor="@color/text_primary"
             android:textSize="12sp" />
     </RadioGroup>
@@ -140,7 +140,7 @@
         android:layout_width="match_parent"
         android:layout_height="46dp"
         android:layout_marginTop="18dp"
-        android:text="Save WiFi Trigger"
+        android:text="@string/add_edit_w_save_wifi_trigger"
         android:textColor="@color/white"
         android:textStyle="bold"
         app:backgroundTint="@color/primary"

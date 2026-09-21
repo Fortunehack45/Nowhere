@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:text="Automation Engine"
+            android:text="@string/automation_automation_engine"
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -54,7 +54,7 @@
             android:background="@drawable/bg_status_pill"
             android:paddingHorizontal="8dp"
             android:paddingVertical="3dp"
-            android:text="STANDBY"
+            android:text="@string/status_standby"
             android:textColor="@color/text_muted"
             android:textSize="10.5sp"
             android:textStyle="bold" />
@@ -72,7 +72,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="20dp"
-        android:text="Autonomous location triggers, scheduled sequence playback, and intelligent environmental safeguards."
+        android:text="@string/automation_autonomous_location_triggers_scheduled_sequence"
         android:textColor="@color/text_muted"
         android:textSize="12sp" />
 
@@ -96,7 +96,7 @@
             android:background="@drawable/bg_segmented_pill_item"
             android:button="@null"
             android:gravity="center"
-            android:text="Schedules"
+            android:text="@string/automation_schedules"
             android:textColor="@color/color_segmented_text"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -109,7 +109,7 @@
             android:background="@drawable/bg_segmented_pill_item"
             android:button="@null"
             android:gravity="center"
-            android:text="WiFi Geofence"
+            android:text="@string/automation_wifi_geofence"
             android:textColor="@color/color_segmented_text"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -122,7 +122,7 @@
             android:background="@drawable/bg_segmented_pill_item"
             android:button="@null"
             android:gravity="center"
-            android:text="Guardrails &amp; Logs"
+            android:text="@string/automation_guardrails_logs"
             android:textColor="@color/color_segmented_text"
             android:textSize="11.5sp"
             android:textStyle="bold" />
@@ -174,7 +174,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Enable Scheduled Automation"
+                                android:text="@string/automation_enable_scheduled_automation"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -183,7 +183,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Runs background switching via WorkManager during sleep"
+                                android:text="@string/automation_runs_background_switching_via_workmanager"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -208,7 +208,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:letterSpacing="0.06"
-                        android:text="ACTIVE SCHEDULES"
+                        android:text="@string/automation_active_schedules"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp"
                         android:textStyle="bold" />
@@ -219,7 +219,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="32dp"
                         android:paddingHorizontal="10dp"
-                        android:text="+ Add Schedule"
+                        android:text="@string/automation_add_schedule"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         app:cornerRadius="8dp" />
@@ -255,7 +255,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="No Schedules Defined"
+                        android:text="@string/automation_no_schedules_defined"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -265,7 +265,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:gravity="center"
-                        android:text="Tap '+ Add Schedule' to set up timed location transitions."
+                        android:text="@string/automation_tap_add_schedule_to_set"
                         android:textColor="@color/text_muted"
                         android:textSize="11.5sp" />
                 </LinearLayout>
@@ -305,7 +305,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Enable WiFi Triggers"
+                                android:text="@string/automation_enable_wifi_triggers"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -314,7 +314,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Automatically trigger locations on WiFi connect/disconnect"
+                                android:text="@string/automation_automatically_trigger_locations_on_wifi"
                                 android:textColor="@color/text_muted"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -357,7 +357,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_weight="1"
-                            android:text="Android 8.1+ requires Fine Location permission to identify WiFi network SSIDs in the background."
+                            android:text="@string/automation_android_81_requires_fine_location"
                             android:textColor="@color/text_muted"
                             android:textSize="11sp" />
 
@@ -366,7 +366,7 @@
                             style="@style/Widget.Material3.Button.TextButton"
                             android:layout_width="wrap_content"
                             android:layout_height="32dp"
-                            android:text="Grant"
+                            android:text="@string/settings_grant"
                             android:textColor="@color/primary"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -386,7 +386,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:letterSpacing="0.06"
-                        android:text="WIFI TRIGGERS"
+                        android:text="@string/automation_wifi_triggers"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp"
                         android:textStyle="bold" />
@@ -397,7 +397,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="32dp"
                         android:paddingHorizontal="10dp"
-                        android:text="+ Add Trigger"
+                        android:text="@string/automation_add_trigger"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         app:cornerRadius="8dp" />
@@ -433,7 +433,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="No WiFi Triggers"
+                        android:text="@string/automation_no_wifi_triggers"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -443,7 +443,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:gravity="center"
-                        android:text="Tap '+ Add Trigger' to switch mock location when connecting to specific WiFi networks."
+                        android:text="@string/automation_tap_add_trigger_to_switch"
                         android:textColor="@color/text_muted"
                         android:textSize="11.5sp" />
                 </LinearLayout>
@@ -483,7 +483,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Natural Jitter Offset"
+                                android:text="@string/automation_natural_jitter_offset"
                                 android:textColor="@color/text_primary"
                                 android:textSize="13.5sp"
                                 android:textStyle="bold" />
@@ -492,7 +492,7 @@
                                 android:id="@+id/tvJitterLabel"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="±4 min"
+                                android:text="@string/automation_4_min"
                                 android:textColor="@color/primary"
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
@@ -502,7 +502,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Adds randomized time offsets to prevent mechanical, predictable triggers."
+                            android:text="@string/automation_adds_randomized_time_offsets_to"
                             android:textColor="@color/text_muted"
                             android:textSize="11sp" />
 
@@ -550,7 +550,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Quiet Hours"
+                                    android:text="@string/automation_quiet_hours"
                                     android:textColor="@color/text_primary"
                                     android:textSize="13.5sp"
                                     android:textStyle="bold" />
@@ -559,7 +559,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="Suppresses automation triggers during nocturnal window"
+                                    android:text="@string/automation_suppresses_automation_triggers_during_nocturnal"
                                     android:textColor="@color/text_muted"
                                     android:textSize="11sp" />
                             </LinearLayout>
@@ -601,7 +601,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:paddingHorizontal="6dp"
-                                    android:text="to"
+                                    android:text="@string/automation_to"
                                     android:textColor="@color/text_muted"
                                     android:textSize="12sp" />
 
@@ -633,7 +633,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:checked="true"
-                                    android:text="Delay trigger"
+                                    android:text="@string/automation_delay_trigger"
                                     android:textColor="@color/text_primary"
                                     android:textSize="11.5sp" />
 
@@ -642,7 +642,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Skip entirely"
+                                    android:text="@string/automation_skip_entirely"
                                     android:textColor="@color/text_primary"
                                     android:textSize="11.5sp" />
                             </RadioGroup>
@@ -682,7 +682,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Battery Guardrail"
+                                    android:text="@string/automation_battery_guardrail"
                                     android:textColor="@color/text_primary"
                                     android:textSize="13.5sp"
                                     android:textStyle="bold" />
@@ -691,7 +691,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="Suppresses automation below cutoff, resumes with hysteresis"
+                                    android:text="@string/automation_suppresses_automation_below_cutoff_resumes"
                                     android:textColor="@color/text_muted"
                                     android:textSize="11sp" />
                             </LinearLayout>
@@ -720,7 +720,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Cutoff Threshold"
+                                    android:text="@string/automation_cutoff_threshold"
                                     android:textColor="@color/text_muted"
                                     android:textSize="11.5sp" />
 
@@ -753,7 +753,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Resume Threshold (Hysteresis)"
+                                    android:text="@string/automation_resume_threshold_hysteresis"
                                     android:textColor="@color/text_muted"
                                     android:textSize="11.5sp" />
 
@@ -785,7 +785,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:letterSpacing="0.06"
-                    android:text="TRIGGER HISTORY (LAST 20)"
+                    android:text="@string/automation_trigger_history_last_20"
                     android:textColor="@color/text_muted"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -811,7 +811,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="No trigger events recorded yet"
+                        android:text="@string/automation_no_trigger_events_recorded_yet"
                         android:textColor="@color/text_muted"
                         android:textSize="12sp" />
                 </LinearLayout>

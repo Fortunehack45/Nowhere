@@ -66,7 +66,7 @@
             android:letterSpacing="0.08"
             android:paddingHorizontal="14dp"
             android:paddingVertical="5dp"
-            android:text="PRECISION GPS • SUB-METER LOCK"
+            android:text="@string/item_walkt_precision_gps_submeter_lock"
             android:textColor="@color/primary_bright"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -80,7 +80,7 @@
             android:gravity="center"
             android:letterSpacing="0.01"
             android:lineSpacingExtra="2dp"
-            android:text="Teleport Anywhere on Earth"
+            android:text="@string/item_walkt_teleport_anywhere_on_earth"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -93,7 +93,7 @@
             android:layout_marginTop="8dp"
             android:gravity="center"
             android:lineSpacingExtra="4dp"
-            android:text="Simulate real-time GPS coordinates with sub-meter accuracy, custom altitude, and realistic satellite terrain."
+            android:text="@string/item_walkt_simulate_realtime_gps_coordinates_with"
             android:textColor="@color/text_secondary"
             android:textSize="13.5sp" />
 
@@ -140,7 +140,7 @@
                             android:id="@+id/tvHighlightTitle1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Sub-Meter Coordinate Precision"
+                            android:text="@string/item_walkt_submeter_coordinate_precision"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -150,7 +150,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Accurate coordinate locking down to 6 decimals (~0.1m resolution)."
+                            android:text="@string/item_walkt_accurate_coordinate_locking_down_to"
                             android:textColor="@color/text_muted"
                             android:textSize="11.5sp" />
                     </LinearLayout>
@@ -188,7 +188,7 @@
                             android:id="@+id/tvHighlightTitle2"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Worldwide Multi-Source Maps"
+                            android:text="@string/item_walkt_worldwide_multisource_maps"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -198,7 +198,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Explore with Mapnik, OpenTopo, Wikimedia, and USGS Satellite."
+                            android:text="@string/item_walkt_explore_with_mapnik_opentopo_wikimedia"
                             android:textColor="@color/text_muted"
                             android:textSize="11.5sp" />
                     </LinearLayout>
@@ -236,7 +236,7 @@
                             android:id="@+id/tvHighlightTitle3"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Instant Search &amp; Favorites"
+                            android:text="@string/item_walkt_instant_search_favorites"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -246,7 +246,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Debounced geocoding search, local history, and bookmark drawers."
+                            android:text="@string/item_walkt_debounced_geocoding_search_local_history"
                             android:textColor="@color/text_muted"
                             android:textSize="11.5sp" />
                     </LinearLayout>
@@ -301,7 +301,7 @@
                             android:id="@+id/tvDevStatusTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Developer Mock Provider"
+                            android:text="@string/item_walkt_developer_mock_provider"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -311,7 +311,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Select Nowhere in Developer Options"
+                            android:text="@string/item_walkt_select_nowhere_in_developer_options"
                             android:textColor="@color/text_muted"
                             android:textSize="11.5sp" />
                     </LinearLayout>
@@ -325,7 +325,7 @@
                         android:letterSpacing="0.02"
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="0dp"
-                        android:text="Setup"
+                        android:text="@string/item_walkt_setup"
                         android:textColor="@color/primary_bright"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -367,7 +367,7 @@
                             android:id="@+id/tvPermStatusTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="System Permissions"
+                            android:text="@string/item_walkt_system_permissions"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -377,7 +377,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Location &amp; notification access"
+                            android:text="@string/item_walkt_location_notification_access"
                             android:textColor="@color/text_muted"
                             android:textSize="11.5sp" />
                     </LinearLayout>
@@ -391,7 +391,7 @@
                         android:letterSpacing="0.02"
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="0dp"
-                        android:text="Grant"
+                        android:text="@string/settings_grant"
                         android:textColor="@color/primary_bright"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -433,7 +433,7 @@
                             android:id="@+id/tvBatteryStatusTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Background Execution"
+                            android:text="@string/item_walkt_background_execution"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -443,7 +443,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Prevent Android from sleeping GPS"
+                            android:text="@string/item_walkt_prevent_android_from_sleeping_gps"
                             android:textColor="@color/text_muted"
                             android:textSize="11.5sp" />
                     </LinearLayout>
@@ -457,7 +457,7 @@
                         android:letterSpacing="0.02"
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="0dp"
-                        android:text="Allow"
+                        android:text="@string/item_walkt_allow"
                         android:textColor="@color/primary_bright"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -490,7 +490,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:lineSpacingExtra="1dp"
-                        android:text="100% on-device OS-level GPS injection. Nowhere never tracks, collects, or transmits your coordinates."
+                        android:text="@string/item_walkt_100_ondevice_oslevel_gps_injection"
                         android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
                 </LinearLayout>

@@ -46,7 +46,7 @@
                     android:id="@+id/tvSheetTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nowhere Ghost VPN"
+                    android:text="@string/ip_changer_nowhere_ghost_vpn"
                     android:textColor="@color/text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -55,7 +55,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Enterprise Anti-Detection WireGuard Shield"
+                    android:text="@string/ip_changer_enterprise_antidetection_wireguard_shield"
                     android:textColor="@color/text_muted"
                     android:textSize="11.5sp" />
             </LinearLayout>
@@ -110,7 +110,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:text="Ghost Shield Protected"
+                        android:text="@string/ip_changer_ghost_shield_protected"
                         android:textColor="@color/text_primary"
                         android:textSize="14.5sp"
                         android:textStyle="bold" />
@@ -123,7 +123,7 @@
                         android:backgroundTint="#1A30D158"
                         android:paddingHorizontal="8dp"
                         android:paddingVertical="3dp"
-                        android:text="PROTECTED"
+                        android:text="@string/ip_changer_protected"
                         android:textColor="@color/badge_success_text"
                         android:textSize="10sp"
                         android:textStyle="bold" />
@@ -135,7 +135,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:lineSpacingMultiplier="1.2"
-                    android:text="Device network traffic is secured inside our kernel WireGuard tunnel with Google BBR congestion control and TCP MSS Clamping to prevent leak detection."
+                    android:text="@string/ip_changer_device_network_traffic_is_secured"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
 
@@ -161,7 +161,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="DOWNLOAD"
+                            android:text="@string/ip_changer_download"
                             android:textColor="@color/text_muted"
                             android:textSize="9.5sp"
                             android:textStyle="bold" />
@@ -193,7 +193,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="UPLOAD"
+                            android:text="@string/ip_changer_upload"
                             android:textColor="@color/text_muted"
                             android:textSize="9.5sp"
                             android:textStyle="bold" />
@@ -225,7 +225,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="LATENCY"
+                            android:text="@string/ip_changer_latency"
                             android:textColor="@color/text_muted"
                             android:textSize="9.5sp"
                             android:textStyle="bold" />
@@ -274,7 +274,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Sync with Mock Location"
+                        android:text="@string/ip_changer_sync_with_mock_location"
                         android:textColor="@color/text_primary"
                         android:textSize="13.5sp"
                         android:textStyle="bold" />
@@ -283,7 +283,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Engages VPN on mock start; disengages on stop"
+                        android:text="@string/ip_changer_engages_vpn_on_mock_start"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -306,7 +306,7 @@
             android:layout_height="48dp"
             android:layout_marginTop="12dp"
             android:backgroundTint="@color/primary"
-            android:text="Activate Ghost Shield Now"
+            android:text="@string/ip_changer_activate_ghost_shield_now"
             android:textColor="@color/white"
             android:textSize="13sp"
             android:textStyle="bold"
@@ -338,7 +338,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.05"
-                    android:text="ANTI-DETECTION SPECIFICATIONS"
+                    android:text="@string/ip_changer_antidetection_specifications"
                     android:textColor="@color/text_muted"
                     android:textSize="10sp"
                     android:textStyle="bold" />
@@ -363,7 +363,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Kernel WireGuard (UDP 51820): ChaCha20-Poly1305 encryption with cellular MTU 1280 to eliminate carrier fragmentation."
+                        android:text="@string/ip_changer_kernel_wireguard_udp_51820_chacha20poly1305"
                         android:textColor="@color/text_secondary"
                         android:textSize="11.5sp" />
                 </LinearLayout>
@@ -388,7 +388,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Google BBR Congestion Control: Zero-bufferbloat pacing prevents abnormal latency spikes flagged by anti-spoof systems."
+                        android:text="@string/ip_changer_google_bbr_congestion_control_zerobufferbloat"
                         android:textColor="@color/text_secondary"
                         android:textSize="11.5sp" />
                 </LinearLayout>
@@ -413,7 +413,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="TCP MSS Clamping (PMTU): Modifies SYN headers so sites and fraud detection engines cannot fingerprint tunnel packet sizes."
+                        android:text="@string/ip_changer_tcp_mss_clamping_pmtu_modifies"
                         android:textColor="@color/text_secondary"
                         android:textSize="11.5sp" />
                 </LinearLayout>
@@ -438,7 +438,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Encrypted DNS Shield: Routes 100% of DNS lookups through Cloudflare / Google (1.1.1.1, 8.8.8.8) to stop local carrier ISP leaks."
+                        android:text="@string/ip_changer_encrypted_dns_shield_routes_100"
                         android:textColor="@color/text_secondary"
                         android:textSize="11.5sp" />
                 </LinearLayout>
@@ -452,7 +452,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:gravity="center"
-            android:text="Nowhere Ghost Shield Network • WireGuard 51820"
+            android:text="@string/ip_changer_nowhere_ghost_shield_network_wireguard"
             android:textColor="@color/text_muted"
             android:textSize="11.5sp" />
 
@@ -464,7 +464,7 @@
             android:layout_marginTop="10dp"
             android:layout_marginBottom="6dp"
             android:backgroundTint="@color/surface_elevated"
-            android:text="Done"
+            android:text="@string/btn_done"
             android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:textStyle="bold"

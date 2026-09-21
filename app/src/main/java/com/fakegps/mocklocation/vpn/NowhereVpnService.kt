@@ -11,6 +11,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.VpnService
 import android.os.Build
+import android.content.pm.ServiceInfo
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -450,17 +451,12 @@ class NowhereVpnService : VpnService() {
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 3500L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 1800L)
         if (!handshakeConfirmed) {
-            Log.w(TAG, "WireGuard handshake initial check timed out for $serverEndpoint; attempting 1 quick keepalive retry...")
-            delay(500L)
-            val retryConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 1500L)
-            if (!retryConfirmed) {
-                Log.w(TAG, "WireGuard handshake failed with $serverEndpoint — preserving mobile data...")
-                WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
-                handleConnectionFailure(node, "Server handshake failed. Mobile data preserved.")
-                return
-            }
+            Log.w(TAG, "WireGuard handshake failed with $serverEndpoint — preserving mobile data...")
+            WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
+            handleConnectionFailure(node, "Server handshake failed. Mobile data preserved.")
+            return
         }
 
         isRunning = true
@@ -518,18 +514,18 @@ class NowhereVpnService : VpnService() {
 
                 // Dead Peer Detection / Blackhole Preventer:
                 // If user/apps are transmitting packets into the tunnel (txRate > 0)
-                // but ZERO return packets have been received from the server for >= 3 consecutive seconds:
+                // but ZERO return packets have been received from the server for >= 2 consecutive seconds:
                 if (txRate > 0L && totalRxBytes == lastObservedRx) {
                     deadPeerTicks++
-                    if (deadPeerTicks >= 3) {
-                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server dropped/unresponsive for 3s! Disengaging VPN to protect internet connectivity.")
-                        handleConnectionFailure(node, "VPN server unresponsive. Normal internet preserved.")
+                    if (deadPeerTicks >= 2) {
+                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server unresponsive for 2s! Disengaging VPN to protect mobile data.")
+                        handleConnectionFailure(node, "Peer inactive; restored direct carrier internet")
                         break
                     }
                 } else {
                     deadPeerTicks = 0
-                    lastObservedRx = totalRxBytes
                 }
+                lastObservedRx = totalRxBytes
 
                 val stats = VpnTrafficStats(
                     downloadBytes = totalRxBytes,
@@ -545,7 +541,6 @@ class NowhereVpnService : VpnService() {
                     notificationCounter = 0
                     updateNotification(node, stats)
                     com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this@NowhereVpnService)
-                    com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(this@NowhereVpnService)
                 }
             }
         }
@@ -590,7 +585,6 @@ class NowhereVpnService : VpnService() {
         } catch (ignored: Exception) {}
         try {
             com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this)
-            com.fakegps.mocklocation.ui.widget.NowhereGameBoostWidgetProvider.updateAllGameBoostWidgets(this)
         } catch (ignored: Exception) {}
         try {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -607,18 +601,20 @@ class NowhereVpnService : VpnService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.i(TAG, "NowhereVpnService onDestroy: cleaning up VPN resources...")
+        Log.i(TAG, "NowhereVpnService onDestroy: releasing resources cleanly.")
+        isRunning = false
+        sessionPrefs.isIpMaskingEnabled = false
         unregisterNetworkWatchdog()
-        releaseWakeLock()
         tunnelJob?.cancel()
         trafficJob?.cancel()
         serviceJob.cancel()
-        disconnectInterface()
         WireGuardTunnelManager.stopTunnelSync(this)
-        isRunning = false
-        sessionPrefs.isIpMaskingEnabled = false
+        disconnectInterface()
+        releaseWakeLock()
         _vpnState.value = VpnState.Disconnected
-        Log.i(TAG, "NowhereVpnService destroyed: native internet routing restored.")
+        try {
+            KillSwitchManager.evaluate(this)
+        } catch (ignored: Exception) {}
     }
 
     private fun createNotificationChannel() {
@@ -638,7 +634,15 @@ class NowhereVpnService : VpnService() {
 
     private fun startForegroundNotification(node: IpNode, stats: VpnTrafficStats) {
         val notification = buildNotification(node, stats)
-        startForeground(NOTIFICATION_ID, notification)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not start foreground notification for VPN: ${e.message}")
+        }
     }
 
     private fun updateNotification(node: IpNode, stats: VpnTrafficStats) {
@@ -648,14 +652,9 @@ class NowhereVpnService : VpnService() {
     }
 
     private fun buildNotification(node: IpNode, stats: VpnTrafficStats): android.app.Notification {
-        val isGameBoost = node.name.startsWith("🚀") || node.name.contains("Game Boost", ignoreCase = true)
-
         val openIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("OPEN_VPN_DIALOG", true)
-            if (isGameBoost) {
-                putExtra("INITIAL_TAB", 1)
-            }
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -675,25 +674,15 @@ class NowhereVpnService : VpnService() {
         )
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(if (isGameBoost) R.drawable.ic_launcher_monochrome else R.drawable.ic_shield_check)
+            .setSmallIcon(R.drawable.ic_shield_check)
             .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
-
-        if (isGameBoost) {
-            val gameTitle = node.name.removePrefix("Game Boost: ").removePrefix("🚀 Game Boost: ").trim()
-            builder.setContentTitle("Game Boost Active • $gameTitle")
-                .setContentText("FastPath Active • ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
-                .setStyle(NotificationCompat.BigTextStyle().bigText("Optimized Game: $gameTitle\nRoute: ${node.virtualIp} (${node.city}) • Google BBR DSCP 46 EF\nBandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
-                .addAction(R.drawable.ic_launcher_monochrome, "Switch Game", pendingIntent)
-                .addAction(R.drawable.ic_close, "Stop Boost", disconnectPendingIntent)
-        } else {
-            builder.setContentTitle("Nowhere IP Shield • ${node.country}")
-                .setContentText("↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
-                .setStyle(NotificationCompat.BigTextStyle().bigText("Masked Egress IP: ${node.virtualIp} (${node.city}, ${node.country})\nTotal Bandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
-                .addAction(R.drawable.ic_close, "Disconnect", disconnectPendingIntent)
-        }
+            .setContentTitle("Nowhere IP Shield • ${node.country}")
+            .setContentText("↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Masked Egress IP: ${node.virtualIp} (${node.city}, ${node.country})\nTotal Bandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
+            .addAction(R.drawable.ic_close, "Disconnect", disconnectPendingIntent)
 
         return builder.build()
     }

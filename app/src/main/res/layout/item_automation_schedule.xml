@@ -112,7 +112,7 @@
                 android:background="@drawable/bg_status_pill"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
-                android:text="Looping"
+                android:text="@string/item_autom_looping"
                 android:textColor="@color/text_muted"
                 android:textSize="10sp"
                 android:textStyle="bold"

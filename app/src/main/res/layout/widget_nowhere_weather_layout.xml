@@ -28,7 +28,7 @@
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:letterSpacing="0.08"
-            android:text="MOCK WEATHER RADAR"
+            android:text="@string/weather_la_mock_weather_radar"
             android:textColor="@color/primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -61,7 +61,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Locating GPS..."
+            android:text="@string/weather_la_locating_gps"
             android:textColor="@color/text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -73,7 +73,7 @@
             android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Live GPS Telemetry"
+            android:text="@string/weather_la_live_gps_telemetry"
             android:textColor="@color/text_secondary"
             android:textSize="10sp" />
     </LinearLayout>
@@ -93,7 +93,7 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Tap to sync weather radar"
+            android:text="@string/weather_la_tap_to_sync_weather_radar"
             android:textColor="@color/text_muted"
             android:textSize="10sp" />
 
@@ -117,7 +117,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:paddingHorizontal="10dp"
-                android:text="Forecast"
+                android:text="@string/weather_la_forecast"
                 android:textColor="@color/white"
                 android:textSize="10sp"
                 android:textStyle="bold" />

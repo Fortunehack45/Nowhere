@@ -49,7 +49,7 @@
                     android:layout_marginStart="6dp"
                     android:fontFamily="monospace"
                     android:letterSpacing="0.04"
-                    android:text="SESSION ACTIVE"
+                    android:text="@string/session_ex_session_active"
                     android:textColor="@color/primary_bright"
                     android:textSize="10.5sp"
                     android:textStyle="bold" />
@@ -91,7 +91,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Simulation Session Duration"
+                android:text="@string/session_ex_simulation_session_duration"
                 android:textColor="@color/text_primary"
                 android:textSize="17sp"
                 android:textStyle="bold" />
@@ -102,7 +102,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:gravity="center"
-                android:text="Extend your mock GPS connection time anytime."
+                android:text="@string/session_ex_extend_your_mock_gps_connection"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -129,7 +129,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.08"
-                    android:text="TIME REMAINING"
+                    android:text="@string/session_ex_time_remaining"
                     android:textColor="@color/text_muted"
                     android:textSize="10.5sp"
                     android:textStyle="bold" />
@@ -158,7 +158,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Total: 2h 00m"
+                        android:text="@string/session_ex_total_2h_00m"
                         android:textColor="@color/text_muted"
                         android:textSize="11.5sp" />
 
@@ -193,7 +193,7 @@
             android:layout_height="52dp"
             android:layout_marginTop="16dp"
             android:backgroundTint="@color/primary"
-            android:text="Extend +2 Hours (Watch Video)"
+            android:text="@string/session_ex_extend_2_hours_watch_video"
             android:textColor="@color/white"
             android:textSize="14.5sp"
             android:textStyle="bold"
@@ -209,7 +209,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
-            android:text="Reconnect for +20 Mins Free"
+            android:text="@string/session_ex_reconnect_for_20_mins_free"
             android:textColor="@color/text_primary"
             android:textSize="13.5sp"
             android:textStyle="bold"
@@ -226,7 +226,7 @@
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_marginTop="6dp"
-            android:text="⭐ Upgrade to Premium (Unlimited Time &amp; No Ads)"
+            android:text="@string/session_ex_upgrade_to_premium_unlimited_time"
             android:textColor="@color/primary_bright"
             android:textSize="12sp"
             android:textStyle="bold" />

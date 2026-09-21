@@ -80,7 +80,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:fontFamily="sans-serif-medium"
-                    android:text="Nowhere Pro"
+                    android:text="@string/bottom_she_nowhere_pro"
                     android:textColor="@color/text_primary"
                     android:textSize="22sp"
                     android:textStyle="bold" />
@@ -89,7 +89,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Unlimited simulation duration. 100% ad-free."
+                    android:text="@string/bottom_she_unlimited_simulation_duration_100_adfree"
                     android:textColor="@color/text_muted"
                     android:textSize="13.5sp" />
             </LinearLayout>
@@ -136,7 +136,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-medium"
-                                android:text="Annual Plan"
+                                android:text="@string/bottom_she_annual_plan"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14.5sp"
                                 android:textStyle="bold" />
@@ -149,7 +149,7 @@
                                 android:background="@drawable/bg_badge_discount_vip"
                                 android:paddingHorizontal="6dp"
                                 android:paddingVertical="2dp"
-                                android:text="SAVE 10%"
+                                android:text="@string/bottom_she_save_10"
                                 android:textColor="@color/badge_active_text"
                                 android:textSize="10.5sp"
                                 android:textStyle="bold" />
@@ -160,7 +160,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Best value • 12 months access"
+                            android:text="@string/bottom_she_best_value_12_months_access"
                             android:textColor="@color/text_muted"
                             android:textSize="12sp" />
                     </LinearLayout>
@@ -176,7 +176,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif-medium"
-                            android:text="Loading..."
+                            android:text="@string/bottom_she_loading"
                             android:textColor="@color/text_primary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -184,7 +184,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="per year"
+                            android:text="@string/bottom_she_per_year"
                             android:textColor="@color/text_muted"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -233,7 +233,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-medium"
-                                android:text="Monthly Plan"
+                                android:text="@string/bottom_she_monthly_plan"
                                 android:textColor="@color/text_primary"
                                 android:textSize="14.5sp"
                                 android:textStyle="bold" />
@@ -246,7 +246,7 @@
                                 android:background="@drawable/bg_badge_free_trial"
                                 android:paddingHorizontal="6dp"
                                 android:paddingVertical="2dp"
-                                android:text="FREE TRIAL"
+                                android:text="@string/bottom_she_free_trial"
                                 android:textColor="@color/badge_success_text"
                                 android:textSize="10.5sp"
                                 android:textStyle="bold"
@@ -258,7 +258,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Flexible monthly billing"
+                            android:text="@string/bottom_she_flexible_monthly_billing"
                             android:textColor="@color/text_muted"
                             android:textSize="12sp" />
                     </LinearLayout>
@@ -274,7 +274,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif-medium"
-                            android:text="Loading..."
+                            android:text="@string/bottom_she_loading"
                             android:textColor="@color/text_primary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -282,7 +282,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="per month"
+                            android:text="@string/bottom_she_per_month"
                             android:textColor="@color/text_muted"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -305,7 +305,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="✓ Pro Active — Unlimited Simulation"
+                    android:text="@string/bottom_she_pro_active_unlimited_simulation"
                     android:textColor="@color/badge_success_text"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -326,7 +326,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⏳ Purchase Pending — Activating soon"
+                    android:text="@string/bottom_she_purchase_pending_activating_soon"
                     android:textColor="@color/badge_warning_text"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -358,7 +358,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
-                        android:text="Unlimited session duration (No 2h limit)"
+                        android:text="@string/bottom_she_unlimited_session_duration_no_2h"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -386,7 +386,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
-                        android:text="100% ad-free (Zero banners &amp; video prompts)"
+                        android:text="@string/bottom_she_100_adfree_zero_banners_video"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -414,7 +414,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
-                        android:text="Full background simulation &amp; route navigation"
+                        android:text="@string/bottom_she_full_background_simulation_route_navigation"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -429,7 +429,7 @@
                 android:backgroundTint="@color/primary"
                 android:fontFamily="sans-serif-medium"
                 android:letterSpacing="0.02"
-                android:text="Unlock Annual Plan"
+                android:text="@string/bottom_she_unlock_annual_plan"
                 android:textColor="@color/white"
                 android:textSize="14.5sp"
                 android:textStyle="bold"
@@ -441,7 +441,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
-                android:text="Manage Subscription"
+                android:text="@string/bottom_she_manage_subscription"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp"
                 android:visibility="gone"
@@ -454,7 +454,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="36dp"
                 android:layout_marginTop="4dp"
-                android:text="Restore Purchases"
+                android:text="@string/bottom_she_restore_purchases"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
 
@@ -465,7 +465,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:gravity="center"
-                android:text="Billed via Google Play. Cancel anytime in Google Play Subscriptions."
+                android:text="@string/bottom_she_billed_via_google_play_cancel"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
 

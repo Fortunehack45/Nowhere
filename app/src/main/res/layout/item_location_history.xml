@@ -48,7 +48,7 @@
                     android:layout_weight="1"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text="San Francisco, CA"
+                    android:text="@string/item_locat_san_francisco_ca"
                     android:textColor="@color/text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -61,7 +61,7 @@
                     android:background="@drawable/bg_status_pill"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="2dp"
-                    android:text="TELEPORT"
+                    android:text="@string/mode_teleport"
                     android:textColor="@color/primary"
                     android:textSize="9sp"
                     android:textStyle="bold" />
@@ -82,7 +82,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Today at 14:32"
+                android:text="@string/item_locat_today_at_1432"
                 android:textColor="@color/text_muted"
                 android:textSize="10sp" />
         </LinearLayout>
@@ -94,7 +94,7 @@
             android:layout_height="34dp"
             android:layout_marginStart="8dp"
             android:backgroundTint="@color/primary"
-            android:text="Reuse"
+            android:text="@string/item_locat_reuse"
             android:textColor="@color/white"
             android:textSize="11sp"
             android:textStyle="bold"

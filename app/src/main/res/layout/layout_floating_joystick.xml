@@ -32,7 +32,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:text="NOWHERE"
+                android:text="@string/welcome_nowhere"
                 android:textColor="@color/primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />

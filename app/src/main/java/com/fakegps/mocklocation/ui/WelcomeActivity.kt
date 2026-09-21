@@ -97,81 +97,81 @@ class WelcomeActivity : AppCompatActivity() {
             SetupStep(
                 type = StepType.PRESENTATION_TELEPORT,
                 iconRes = R.drawable.ic_radar_target,
-                badgeText = "PRECISION GPS • SUB-METER LOCK",
-                headlineText = "Teleport Anywhere on Earth",
-                descriptionText = "Simulate real-time GPS coordinates with sub-meter accuracy, custom altitude, and realistic satellite terrain.",
+                badgeText = getString(R.string.welcome_badge_teleport),
+                headlineText = getString(R.string.welcome_headline_teleport),
+                descriptionText = getString(R.string.welcome_desc_teleport),
                 highlights = listOf(
                     HighlightItem(
                         iconRes = R.drawable.ic_location_pin,
-                        title = "Sub-Meter Coordinate Precision",
-                        desc = "Accurate coordinate locking down to 6 decimals (~0.1m resolution)."
+                        title = getString(R.string.welcome_highlight_coord_title),
+                        desc = getString(R.string.welcome_highlight_coord_desc)
                     ),
                     HighlightItem(
                         iconRes = R.drawable.ic_globe,
-                        title = "Worldwide Multi-Source Maps",
-                        desc = "Explore with Mapnik, OpenTopo, Wikimedia, and USGS Satellite."
+                        title = getString(R.string.welcome_highlight_maps_title),
+                        desc = getString(R.string.welcome_highlight_maps_desc)
                     ),
                     HighlightItem(
                         iconRes = R.drawable.ic_search,
-                        title = "Instant Search & Bookmarks",
-                        desc = "Debounced geocoding search, local history, and bookmark drawers."
+                        title = getString(R.string.welcome_highlight_search_title),
+                        desc = getString(R.string.welcome_highlight_search_desc)
                     )
                 )
             ),
             SetupStep(
                 type = StepType.PRESENTATION_ROUTES,
                 iconRes = R.drawable.ic_route,
-                badgeText = "KINEMATICS • 360° STEERING",
-                headlineText = "Dynamic Routes & Live Steering",
-                descriptionText = "Plot multi-stop circuits with natural acceleration, centrifugal turn deceleration, and 360° radar joystick.",
+                badgeText = getString(R.string.welcome_badge_routes),
+                headlineText = getString(R.string.welcome_headline_routes),
+                descriptionText = getString(R.string.welcome_desc_routes),
                 highlights = listOf(
                     HighlightItem(
                         iconRes = R.drawable.ic_route,
-                        title = "Interactive Waypoint Circuits",
-                        desc = "Tap anywhere on OpenStreetMap to plot route nodes with live metrics."
+                        title = getString(R.string.welcome_highlight_waypoints_title),
+                        desc = getString(R.string.welcome_highlight_waypoints_desc)
                     ),
                     HighlightItem(
                         iconRes = R.drawable.ic_joystick,
-                        title = "Military-Grade Radar Joystick",
-                        desc = "HUD steering with concentric distance rings, cardinal markings, and speed control."
+                        title = getString(R.string.welcome_highlight_joystick_title),
+                        desc = getString(R.string.welcome_highlight_joystick_desc)
                     ),
                     HighlightItem(
                         iconRes = R.drawable.ic_gpx,
-                        title = "GPX Import & Route Reversal",
-                        desc = "Import standard GPX tracks and 1-tap retrace your path backwards."
+                        title = getString(R.string.welcome_highlight_gpx_title),
+                        desc = getString(R.string.welcome_highlight_gpx_desc)
                     )
                 )
             ),
             SetupStep(
                 type = StepType.PRESENTATION_STEALTH,
                 iconRes = R.drawable.ic_shield_check,
-                badgeText = "STEALTH • ANTI-DETECTION",
-                headlineText = "Military-Grade Anti-Detection",
-                descriptionText = "Bypass mock location detection with realistic GPS jitter, Google Play Fused Provider spoofing, and Ghost Cloak.",
+                badgeText = getString(R.string.welcome_badge_stealth),
+                headlineText = getString(R.string.welcome_headline_stealth),
+                descriptionText = getString(R.string.welcome_desc_stealth),
                 highlights = listOf(
                     HighlightItem(
                         iconRes = R.drawable.ic_shield_check,
-                        title = "Google Play Fused Provider",
-                        desc = "Injects the 'fused' test provider for full compatibility with Google Play Services."
+                        title = getString(R.string.welcome_highlight_fused_title),
+                        desc = getString(R.string.welcome_highlight_fused_desc)
                     ),
                     HighlightItem(
                         iconRes = R.drawable.ic_bolt,
-                        title = "Antenna Drift & Jitter Randomizer",
-                        desc = "Simulates authentic satellite signal variance with configurable radius."
+                        title = getString(R.string.welcome_highlight_jitter_title),
+                        desc = getString(R.string.welcome_highlight_jitter_desc)
                     ),
                     HighlightItem(
                         iconRes = R.drawable.ic_launcher_monochrome,
-                        title = "Ghost Cloak Architecture",
-                        desc = "Conceals mock location flags from aggressive anti-cheat systems."
+                        title = getString(R.string.welcome_highlight_ghost_title),
+                        desc = getString(R.string.welcome_highlight_ghost_desc)
                     )
                 )
             ),
             SetupStep(
                 type = StepType.SETUP_HUB,
                 iconRes = R.drawable.ic_settings,
-                badgeText = "STEP 4 OF 4 • SYSTEM READINESS",
-                headlineText = "Complete Device Setup",
-                descriptionText = "Configure required Android developer settings and system permissions to unlock mock GPS simulation.",
+                badgeText = getString(R.string.welcome_badge_hub),
+                headlineText = getString(R.string.welcome_headline_hub),
+                descriptionText = getString(R.string.welcome_desc_hub),
                 highlights = emptyList()
             )
         )
@@ -228,14 +228,14 @@ class WelcomeActivity : AppCompatActivity() {
 
         if (position < 3) {
             binding.btnWalkthroughSkip.visibility = View.VISIBLE
-            binding.btnWalkthroughNext.text = "NEXT"
+            binding.btnWalkthroughNext.text = getString(R.string.welcome_btn_next)
             binding.btnWalkthroughNext.setIconResource(R.drawable.ic_chevron_right)
             binding.btnWalkthroughNext.backgroundTintList = ContextCompat.getColorStateList(this, R.color.surface_card_elevated)
             binding.btnWalkthroughNext.setTextColor(ContextCompat.getColor(this, R.color.white))
             binding.btnWalkthroughNext.iconTint = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
         } else {
             binding.btnWalkthroughSkip.visibility = View.INVISIBLE
-            binding.btnWalkthroughNext.text = "ENTER NOWHERE"
+            binding.btnWalkthroughNext.text = getString(R.string.welcome_btn_enter)
             binding.btnWalkthroughNext.setIconResource(R.drawable.ic_teleport)
             binding.btnWalkthroughNext.backgroundTintList = ColorStateList.valueOf(primaryColor)
             binding.btnWalkthroughNext.setTextColor(ContextCompat.getColor(this, R.color.white))
@@ -335,17 +335,17 @@ class WelcomeActivity : AppCompatActivity() {
                     if (isMockEnabled) {
                         ivDevStatusIcon.setImageResource(R.drawable.ic_check_circle)
                         ivDevStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
-                        tvDevStatusTitle.text = "Developer Mock Provider"
-                        tvDevStatusDetail.text = "Nowhere is active in Developer Options."
-                        btnDevAction.text = "Active"
+                        tvDevStatusTitle.text = context.getString(R.string.welcome_dev_title)
+                        tvDevStatusDetail.text = context.getString(R.string.welcome_dev_active_desc)
+                        btnDevAction.text = context.getString(R.string.settings_status_active)
                         btnDevAction.isEnabled = false
                         btnDevAction.strokeColor = ContextCompat.getColorStateList(context, R.color.badge_success_bg)
                     } else {
                         ivDevStatusIcon.setImageResource(R.drawable.ic_warning_circle)
                         ivDevStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_warning_text)
-                        tvDevStatusTitle.text = "Developer Mock Provider"
-                        tvDevStatusDetail.text = "Select Nowhere in Developer Options."
-                        btnDevAction.text = "Configure"
+                        tvDevStatusTitle.text = context.getString(R.string.welcome_dev_title)
+                        tvDevStatusDetail.text = context.getString(R.string.welcome_dev_needed_desc)
+                        btnDevAction.text = context.getString(R.string.welcome_dev_btn_configure)
                         btnDevAction.isEnabled = true
                         btnDevAction.strokeColor = ContextCompat.getColorStateList(context, R.color.stroke_subtle)
                     }
@@ -362,17 +362,17 @@ class WelcomeActivity : AppCompatActivity() {
                     if (isPermsGranted) {
                         ivPermStatusIcon.setImageResource(R.drawable.ic_check_circle)
                         ivPermStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
-                        tvPermStatusTitle.text = "System Permissions"
-                        tvPermStatusDetail.text = "Location & notification access active."
-                        btnPermAction.text = "Granted"
+                        tvPermStatusTitle.text = context.getString(R.string.welcome_perms_title)
+                        tvPermStatusDetail.text = context.getString(R.string.welcome_perms_active_desc)
+                        btnPermAction.text = context.getString(R.string.settings_status_granted)
                         btnPermAction.isEnabled = false
                         btnPermAction.strokeColor = ContextCompat.getColorStateList(context, R.color.badge_success_bg)
                     } else {
                         ivPermStatusIcon.setImageResource(R.drawable.ic_warning_circle)
                         ivPermStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_warning_text)
-                        tvPermStatusTitle.text = "System Permissions"
-                        tvPermStatusDetail.text = "Location & notification access required."
-                        btnPermAction.text = "Grant"
+                        tvPermStatusTitle.text = context.getString(R.string.welcome_perms_title)
+                        tvPermStatusDetail.text = context.getString(R.string.welcome_perms_needed_desc)
+                        btnPermAction.text = context.getString(R.string.settings_status_grant)
                         btnPermAction.isEnabled = true
                         btnPermAction.strokeColor = ContextCompat.getColorStateList(context, R.color.stroke_subtle)
                     }
@@ -385,17 +385,17 @@ class WelcomeActivity : AppCompatActivity() {
                     if (isBatteryExempt) {
                         ivBatteryStatusIcon.setImageResource(R.drawable.ic_check_circle)
                         ivBatteryStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
-                        tvBatteryStatusTitle.text = "Background Execution"
-                        tvBatteryStatusDetail.text = "Unrestricted background running enabled."
-                        btnBatteryAction.text = "Active"
+                        tvBatteryStatusTitle.text = context.getString(R.string.welcome_battery_title)
+                        tvBatteryStatusDetail.text = context.getString(R.string.welcome_battery_active_desc)
+                        btnBatteryAction.text = context.getString(R.string.settings_status_active)
                         btnBatteryAction.isEnabled = false
                         btnBatteryAction.strokeColor = ContextCompat.getColorStateList(context, R.color.badge_success_bg)
                     } else {
                         ivBatteryStatusIcon.setImageResource(R.drawable.ic_warning_circle)
                         ivBatteryStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_warning_text)
-                        tvBatteryStatusTitle.text = "Background Execution"
-                        tvBatteryStatusDetail.text = "Prevent Android from sleeping GPS."
-                        btnBatteryAction.text = "Allow"
+                        tvBatteryStatusTitle.text = context.getString(R.string.welcome_battery_title)
+                        tvBatteryStatusDetail.text = context.getString(R.string.welcome_battery_needed_desc)
+                        btnBatteryAction.text = context.getString(R.string.welcome_battery_btn_allow)
                         btnBatteryAction.isEnabled = true
                         btnBatteryAction.strokeColor = ContextCompat.getColorStateList(context, R.color.stroke_subtle)
                     }

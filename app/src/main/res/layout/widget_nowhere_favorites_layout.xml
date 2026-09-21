@@ -29,7 +29,7 @@
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:letterSpacing="0.08"
-            android:text="QUICK DESTINATIONS"
+            android:text="@string/favorites__quick_destinations"
             android:textColor="@color/primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -42,7 +42,7 @@
             android:background="@drawable/bg_status_pill"
             android:paddingHorizontal="8dp"
             android:paddingVertical="3dp"
-            android:text="STANDBY"
+            android:text="@string/status_standby"
             android:textColor="@color/text_muted"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -62,7 +62,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_widget_button_primary"
             android:gravity="center"
-            android:text="Slot 1"
+            android:text="@string/favorites__slot_1"
             android:textColor="@color/white"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -75,7 +75,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
-            android:text="Slot 2"
+            android:text="@string/favorites__slot_2"
             android:textColor="@color/text_primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -88,7 +88,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
-            android:text="Slot 3"
+            android:text="@string/favorites__slot_3"
             android:textColor="@color/text_primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -122,7 +122,7 @@
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
             android:paddingHorizontal="8dp"
-            android:text="Edit"
+            android:text="@string/settings_edit"
             android:textColor="@color/primary_bright"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -136,7 +136,7 @@
             android:background="@drawable/bg_widget_button"
             android:gravity="center"
             android:paddingHorizontal="10dp"
-            android:text="Stop"
+            android:text="@string/favorites__stop"
             android:textColor="@color/primary"
             android:textSize="10sp"
             android:textStyle="bold" />

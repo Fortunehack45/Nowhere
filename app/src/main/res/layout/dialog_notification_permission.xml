@@ -32,7 +32,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="14dp"
         android:letterSpacing="0.04"
-        android:text="NOTIFICATION PERMISSION"
+        android:text="@string/notificati_notification_permission"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold" />
@@ -43,7 +43,7 @@
         android:layout_marginTop="12dp"
         android:gravity="center_horizontal"
         android:lineSpacingExtra="4dp"
-        android:text="Nowhere requires notification access to run the background mock location service and display real-time status and simulation controls (Pause, Resume, Stop) in your status bar."
+        android:text="@string/notificati_nowhere_requires_notification_access_to"
         android:textColor="@color/text_secondary"
         android:textSize="13sp" />
 
@@ -53,7 +53,7 @@
         android:layout_height="50dp"
         android:layout_marginTop="20dp"
         android:backgroundTint="@color/primary"
-        android:text="Allow Notifications"
+        android:text="@string/notificati_allow_notifications"
         android:textColor="@color/white"
         android:textSize="14sp"
         android:textStyle="bold"
@@ -65,7 +65,7 @@
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:layout_marginTop="6dp"
-        android:text="Maybe Later"
+        android:text="@string/exact_alar_maybe_later"
         android:textColor="@color/text_muted"
         android:textSize="13sp" />
 

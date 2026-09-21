@@ -51,7 +51,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Map Layer Style"
+                    android:text="@string/bottom_she_map_layer_style"
                     android:textColor="@color/text_primary"
                     android:textSize="17sp"
                     android:textStyle="bold" />
@@ -60,7 +60,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Choose your preferred map rendering tiles"
+                    android:text="@string/bottom_she_choose_your_preferred_map_rendering"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -101,7 +101,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Standard Street Map"
+                    android:text="@string/bottom_she_standard_street_map"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -109,7 +109,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="OpenStreetMap • Fast, crisp roads &amp; transit"
+                    android:text="@string/bottom_she_openstreetmap_fast_crisp_roads_transit"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -153,7 +153,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Satellite Hybrid"
+                    android:text="@string/bottom_she_satellite_hybrid"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -161,7 +161,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="High-Res Aerial Imagery with street labels"
+                    android:text="@string/bottom_she_highres_aerial_imagery_with_street"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -205,7 +205,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="OpenTopo Terrain"
+                    android:text="@string/bottom_she_opentopo_terrain"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -213,7 +213,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Topographic contours, elevation &amp; hillshading"
+                    android:text="@string/bottom_she_topographic_contours_elevation_hillshading"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>

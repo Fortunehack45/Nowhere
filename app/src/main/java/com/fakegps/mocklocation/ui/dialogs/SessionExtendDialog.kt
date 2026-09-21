@@ -75,11 +75,11 @@ class SessionExtendDialog(
         if (isExpiredPrompt || sessionPrefs.isSessionExpired) {
             binding.layoutExtendStatusBadge.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_error_bg)
             binding.viewExtendDot.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_error_text)
-            binding.tvExtendBadgeText.text = "SESSION EXPIRED"
+            binding.tvExtendBadgeText.text = context.getString(R.string.status_expired)
             binding.tvExtendBadgeText.setTextColor(ContextCompat.getColor(context, R.color.badge_error_text))
 
-            binding.tvExtendTitle.text = "Simulation Time Expired"
-            binding.tvExtendSubtitle.text = "Watch a short video to add +2 Hours, or reconnect for +20 mins free."
+            binding.tvExtendTitle.text = context.getString(R.string.session_dialog_expired_title)
+            binding.tvExtendSubtitle.text = context.getString(R.string.session_dialog_expired_sub)
             binding.btnReconnectFallback.visibility = View.VISIBLE
         } else {
             binding.btnReconnectFallback.visibility = View.GONE
@@ -140,29 +140,29 @@ class SessionExtendDialog(
         dialogScope.launch {
             SessionTimerManager.timerState.collectLatest { state ->
                 if (state.isUnlimited) {
-                    binding.tvDialogTimeRemaining.text = "UNLIMITED"
-                    binding.tvDialogTotalAllocated.text = "Nowhere Premium Active"
+                    binding.tvDialogTimeRemaining.text = context.getString(R.string.status_unlimited)
+                    binding.tvDialogTotalAllocated.text = context.getString(R.string.settings_premium_active_title)
                     binding.tvDialogProgressPercent.text = "100%"
                     binding.progressDialogSession.progress = 100
                     binding.layoutExtendStatusBadge.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_success_bg)
                     binding.viewExtendDot.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
-                    binding.tvExtendBadgeText.text = "PREMIUM ACTIVE"
+                    binding.tvExtendBadgeText.text = context.getString(R.string.status_unlimited)
                     binding.tvExtendBadgeText.setTextColor(ContextCompat.getColor(context, R.color.badge_success_text))
                     binding.btnExtendOneHour.visibility = View.GONE
                     binding.btnReconnectFallback.visibility = View.GONE
-                    binding.btnExtendPremiumUpgrade.text = "⭐ Manage Nowhere Premium Subscription"
+                    binding.btnExtendPremiumUpgrade.text = context.getString(R.string.btn_manage)
                     return@collectLatest
                 }
 
                 binding.tvDialogTimeRemaining.text = state.formattedRemaining
-                binding.tvDialogTotalAllocated.text = "Total: ${state.formattedTotal}"
+                binding.tvDialogTotalAllocated.text = context.getString(R.string.status_total_allocated_fmt, state.formattedTotal)
                 binding.tvDialogProgressPercent.text = "${state.progressPercent}%"
                 binding.progressDialogSession.progress = state.progressPercent
 
                 if (state.isExpired) {
                     binding.layoutExtendStatusBadge.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_error_bg)
                     binding.viewExtendDot.backgroundTintList = ContextCompat.getColorStateList(context, R.color.badge_error_text)
-                    binding.tvExtendBadgeText.text = "SESSION EXPIRED"
+                    binding.tvExtendBadgeText.text = context.getString(R.string.status_expired)
                     binding.tvExtendBadgeText.setTextColor(ContextCompat.getColor(context, R.color.badge_error_text))
                     binding.btnReconnectFallback.visibility = View.VISIBLE
                 }

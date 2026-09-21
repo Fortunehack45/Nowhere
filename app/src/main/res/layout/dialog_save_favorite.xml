@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:letterSpacing="0.04"
-        android:text="SAVE DESTINATION"
+        android:text="@string/save_favor_save_destination"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold" />
@@ -31,7 +31,7 @@
         android:layout_height="48dp"
         android:layout_marginTop="16dp"
         android:background="@drawable/bg_search_bar"
-        android:hint="Destination Name (e.g. Test Station Alpha)"
+        android:hint="@string/save_favor_destination_name_eg_test_station"
         android:inputType="textCapWords"
         android:paddingHorizontal="14dp"
         android:textColor="@color/text_primary"
@@ -44,7 +44,7 @@
         android:layout_height="48dp"
         android:layout_marginTop="10dp"
         android:background="@drawable/bg_search_bar"
-        android:hint="Category Tag (e.g. Work, Field Test, Travel)"
+        android:hint="@string/save_favor_category_tag_eg_work_field"
         android:inputType="textCapWords"
         android:paddingHorizontal="14dp"
         android:textColor="@color/text_primary"
@@ -63,7 +63,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Cancel"
+            android:text="@string/edit_widge_cancel"
             android:textColor="@color/text_muted" />
 
         <com.google.android.material.button.MaterialButton
@@ -73,7 +73,7 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:backgroundTint="@color/primary"
-            android:text="Save"
+            android:text="@string/main_save"
             android:textColor="@color/white"
             android:textStyle="bold"
             app:cornerRadius="10dp" />

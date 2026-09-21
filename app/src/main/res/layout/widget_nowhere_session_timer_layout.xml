@@ -29,7 +29,7 @@
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:letterSpacing="0.08"
-            android:text="SESSION TIMER"
+            android:text="@string/session_ti_session_timer"
             android:textColor="@color/primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -41,7 +41,7 @@
             android:background="@drawable/bg_status_pill"
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
-            android:text="ACTIVE"
+            android:text="@string/status_active"
             android:textColor="@color/badge_active_text"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -63,7 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:letterSpacing="0.06"
-            android:text="TIME REMAINING"
+            android:text="@string/session_ex_time_remaining"
             android:textColor="@color/text_muted"
             android:textSize="9.5sp"
             android:textStyle="bold" />
@@ -86,7 +86,7 @@
             android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="📍 San Francisco, CA"
+            android:text="@string/session_ti_san_francisco_ca"
             android:textColor="@color/text_primary"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -96,7 +96,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="1dp"
-            android:text="Total Allocated: 2h 00m"
+            android:text="@string/settings_total_allocated_2h_00m"
             android:textColor="@color/primary"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -136,7 +136,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="+2 Hours (Ad)"
+                android:text="@string/session_ti_2_hours_ad"
                 android:textColor="@color/text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -168,7 +168,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="Open Nowhere"
+                android:text="@string/session_ti_open_nowhere"
                 android:textColor="@color/text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />

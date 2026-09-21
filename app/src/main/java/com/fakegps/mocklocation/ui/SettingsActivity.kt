@@ -40,6 +40,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var settingsPrefs: AppSettingsPreferences
     private lateinit var sessionPrefs: SessionPreferences
+    private var currentLanguageCode: String = ""
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -52,6 +53,7 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        currentLanguageCode = LocaleHelper.getSelectedLanguage(this)
         settingsPrefs = AppSettingsPreferences(this)
         sessionPrefs = SessionPreferences(this)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
@@ -89,6 +91,13 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        val activeLang = LocaleHelper.getSelectedLanguage(this)
+        if (activeLang != currentLanguageCode || LocaleHelper.isLanguageStale) {
+            LocaleHelper.isLanguageStale = false
+            currentLanguageCode = activeLang
+            recreate()
+            return
+        }
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
         val isSimRunning = isSimulationRunningCompat()
         if (isSimRunning) {
@@ -123,10 +132,10 @@ class SettingsActivity : AppCompatActivity() {
     private fun refreshNotificationPermissionUI() {
         val isGranted = PermissionHelper.hasNotificationPermission(this)
         if (isGranted) {
-            binding.tvNotificationPermissionStatus.text = "Allowed"
+            binding.tvNotificationPermissionStatus.text = getString(R.string.status_allowed)
             binding.tvNotificationPermissionStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_success_text))
         } else {
-            binding.tvNotificationPermissionStatus.text = "Permission Required"
+            binding.tvNotificationPermissionStatus.text = getString(R.string.status_permission_required)
             binding.tvNotificationPermissionStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_warning_text))
         }
     }
@@ -148,9 +157,9 @@ class SettingsActivity : AppCompatActivity() {
     ) {
         val formattedPrice = entitlement.formattedPrice ?: billingManager.getFormattedPrice()
         if (entitlement.isPremium) {
-            binding.tvSettingsPremiumTitle.text = "Nowhere Premium Active"
-            binding.tvSettingsPremiumSubtitle.text = "Unlimited session duration & zero ads enabled"
-            binding.btnSettingsPremiumAction.text = "MANAGE"
+            binding.tvSettingsPremiumTitle.text = getString(R.string.settings_premium_active_title)
+            binding.tvSettingsPremiumSubtitle.text = getString(R.string.settings_premium_active_subtitle)
+            binding.btnSettingsPremiumAction.text = getString(R.string.btn_manage)
             binding.btnSettingsPremiumAction.setIconResource(R.drawable.ic_shield_check)
             binding.btnSettingsPremiumAction.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_success_bg)
             binding.btnSettingsPremiumAction.setTextColor(ContextCompat.getColor(this, R.color.badge_success_text))
@@ -161,14 +170,14 @@ class SettingsActivity : AppCompatActivity() {
             val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this)
             val discount = com.fakegps.mocklocation.billing.PromotionManager.getYearlyDiscountPercent(this)
 
-            binding.tvSettingsPremiumTitle.text = "Nowhere Pro Engine"
+            binding.tvSettingsPremiumTitle.text = getString(R.string.settings_pro_engine)
             binding.tvSettingsPremiumSubtitle.text = when {
-                isVip -> "VIP Offer: Save $discount% on Annual Pass • Unlimited & Zero Ads"
-                entitlement.hasFreeTrial -> "Free Trial Available • Unlimited duration & zero ads"
-                formattedPrice != null -> "From $formattedPrice/mo • Unlimited duration & zero ads"
-                else -> "Unlimited session duration & 100% zero ads"
+                isVip -> getString(R.string.settings_vip_offer_fmt, discount)
+                entitlement.hasFreeTrial -> getString(R.string.settings_free_trial_fmt)
+                formattedPrice != null -> getString(R.string.settings_from_price_fmt, formattedPrice)
+                else -> getString(R.string.settings_unlimited_zero_ads)
             }
-            binding.btnSettingsPremiumAction.text = if (isVip) "SAVE $discount%" else "UPGRADE"
+            binding.btnSettingsPremiumAction.text = if (isVip) getString(R.string.btn_save_discount_fmt, discount) else getString(R.string.btn_upgrade)
             binding.btnSettingsPremiumAction.setIconResource(R.drawable.ic_bolt)
             val primaryCsl = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColorStateList(this)
             binding.btnSettingsPremiumAction.backgroundTintList = primaryCsl
@@ -190,13 +199,13 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun renderSessionTimerUI(timerState: com.fakegps.mocklocation.service.SessionTimerManager.SessionTimerState) {
         if (timerState.isUnlimited || sessionPrefs.isPremiumActive()) {
-            binding.tvSettingsSessionBadge.text = "UNLIMITED"
+            binding.tvSettingsSessionBadge.text = getString(R.string.status_unlimited)
             binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_success_text))
             binding.tvSettingsSessionBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_success_bg)
             binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.badge_success_text)
 
-            binding.tvSettingsSessionTime.text = "UNLIMITED"
-            binding.tvSettingsSessionTotal.text = "Premium Active: Unlimited Simulation"
+            binding.tvSettingsSessionTime.text = getString(R.string.status_unlimited)
+            binding.tvSettingsSessionTotal.text = getString(R.string.status_premium_active_unlimited)
             binding.pbSettingsSessionProgress.progress = 100
             return
         }
@@ -220,26 +229,26 @@ class SettingsActivity : AppCompatActivity() {
             binding.ivSettingsSessionIcon.imageTintList = primaryCsl
 
             binding.tvSettingsSessionTime.text = formattedRemaining
-            binding.tvSettingsSessionTotal.text = "Total Allocated: $formattedTotal"
+            binding.tvSettingsSessionTotal.text = getString(R.string.status_total_allocated_fmt, formattedTotal)
             binding.pbSettingsSessionProgress.progress = timerState.progressPercent
             binding.pbSettingsSessionProgress.progressTintList = primaryCsl
         } else if (timerState.isExpired || remaining <= 0L) {
-            binding.tvSettingsSessionBadge.text = "EXPIRED"
+            binding.tvSettingsSessionBadge.text = getString(R.string.status_expired)
             binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_error_text))
             binding.tvSettingsSessionBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_error_bg)
             binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.badge_error_text)
 
             binding.tvSettingsSessionTime.text = "00:00:00"
-            binding.tvSettingsSessionTotal.text = "Session expired. Tap +2 Hours to extend."
+            binding.tvSettingsSessionTotal.text = getString(R.string.status_session_expired_hint)
             binding.pbSettingsSessionProgress.progress = 0
         } else {
-            binding.tvSettingsSessionBadge.text = "STANDBY"
+            binding.tvSettingsSessionBadge.text = getString(R.string.status_standby)
             binding.tvSettingsSessionBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_standby_text))
             binding.tvSettingsSessionBadge.backgroundTintList = ContextCompat.getColorStateList(this, R.color.badge_standby_bg)
             binding.ivSettingsSessionIcon.imageTintList = ContextCompat.getColorStateList(this, R.color.badge_standby_text)
 
             binding.tvSettingsSessionTime.text = formattedRemaining
-            binding.tvSettingsSessionTotal.text = "Duration Remaining: $formattedRemaining (Ready)"
+            binding.tvSettingsSessionTotal.text = getString(R.string.status_duration_remaining_ready_fmt, formattedRemaining)
             binding.pbSettingsSessionProgress.progress = timerState.progressPercent
             binding.pbSettingsSessionProgress.progressTintList = primaryCsl
         }
@@ -251,40 +260,40 @@ class SettingsActivity : AppCompatActivity() {
         // Mock Location in Developer Options
         val isMockEnabled = PermissionHelper.isMockLocationEnabled(this)
         if (isMockEnabled) {
-            binding.tvSettingsMockStatus.text = "Nowhere is selected as mock location app"
+            binding.tvSettingsMockStatus.text = getString(R.string.settings_mock_selected)
             binding.tvSettingsMockStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
-            binding.btnSettingsDevOptions.text = "Configured"
+            binding.btnSettingsDevOptions.text = getString(R.string.settings_configured)
         } else {
-            binding.tvSettingsMockStatus.text = "Not selected as mock app in Developer Options"
+            binding.tvSettingsMockStatus.text = getString(R.string.settings_mock_not_selected)
             binding.tvSettingsMockStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_error_text))
-            binding.btnSettingsDevOptions.text = "Select Nowhere"
+            binding.btnSettingsDevOptions.text = getString(R.string.settings_select_nowhere)
         }
 
         // Battery Optimization
         val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(this)
         if (isBatteryExempt) {
-            binding.tvSettingsBatteryStatus.text = "Unrestricted background running enabled"
+            binding.tvSettingsBatteryStatus.text = getString(R.string.settings_battery_unrestricted)
             binding.tvSettingsBatteryStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
-            binding.btnSettingsBattery.text = "Active"
+            binding.btnSettingsBattery.text = getString(R.string.settings_status_active)
             binding.btnSettingsBattery.isEnabled = false
         } else {
-            binding.tvSettingsBatteryStatus.text = "Battery optimizer may sleep background GPS"
+            binding.tvSettingsBatteryStatus.text = getString(R.string.settings_battery_warning)
             binding.tvSettingsBatteryStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_warning_text))
-            binding.btnSettingsBattery.text = "Allow Unrestricted"
+            binding.btnSettingsBattery.text = getString(R.string.settings_allow_unrestricted)
             binding.btnSettingsBattery.isEnabled = true
         }
 
         // Floating Window Overlay
         val hasOverlay = PermissionHelper.canDrawOverlays(this)
         if (hasOverlay) {
-            binding.tvSettingsOverlayStatus.text = "Overlay permission granted for floating joystick"
+            binding.tvSettingsOverlayStatus.text = getString(R.string.settings_overlay_granted)
             binding.tvSettingsOverlayStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
-            binding.btnSettingsOverlay.text = "Granted"
+            binding.btnSettingsOverlay.text = getString(R.string.settings_status_granted)
             binding.btnSettingsOverlay.isEnabled = false
         } else {
-            binding.tvSettingsOverlayStatus.text = "Permission needed for floating joystick overlay"
+            binding.tvSettingsOverlayStatus.text = getString(R.string.settings_overlay_needed)
             binding.tvSettingsOverlayStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_warning_text))
-            binding.btnSettingsOverlay.text = "Grant"
+            binding.btnSettingsOverlay.text = getString(R.string.settings_status_grant)
             binding.btnSettingsOverlay.isEnabled = true
         }
     }
@@ -499,16 +508,16 @@ class SettingsActivity : AppCompatActivity() {
         binding.tvAppVersionTitle.text = "Nowhere Version v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME}"
         binding.tvSettingsFooterVersion.text = "Version ${com.fakegps.mocklocation.BuildConfig.VERSION_NAME} (Build ${com.fakegps.mocklocation.BuildConfig.VERSION_CODE}) • Release"
         binding.btnCheckAppUpdates.setOnClickListener {
-            binding.tvCheckUpdateStatus.text = "Checking Google Play..."
+            binding.tvCheckUpdateStatus.text = getString(R.string.settings_checking_updates)
             binding.btnCheckAppUpdates.isEnabled = false
             lifecycleScope.launch {
                 val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.checkForUpdates(this@SettingsActivity)
                 binding.btnCheckAppUpdates.isEnabled = true
                 if (updateInfo.isUpdateAvailable && updateInfo.appUpdateInfo != null) {
-                    binding.tvCheckUpdateStatus.text = "Update Available"
+                    binding.tvCheckUpdateStatus.text = getString(R.string.settings_update_available)
                     com.fakegps.mocklocation.util.AppUpdateManager.startPlayUpdateFlow(this@SettingsActivity, updateInfo.appUpdateInfo)
                 } else {
-                    binding.tvCheckUpdateStatus.text = "Up to date"
+                    binding.tvCheckUpdateStatus.text = getString(R.string.settings_up_to_date)
                     Toast.makeText(this@SettingsActivity, "You are running the latest version from Google Play (v${com.fakegps.mocklocation.BuildConfig.VERSION_NAME})", Toast.LENGTH_SHORT).show()
                 }
             }

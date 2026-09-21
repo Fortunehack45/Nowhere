@@ -20,7 +20,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="14dp"
         android:letterSpacing="0.04"
-        android:text="BACKGROUND RESTART IMMUNITY"
+        android:text="@string/exact_alar_background_restart_immunity"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold" />
@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:lineSpacingExtra="4dp"
-        android:text="Allow Alarms &amp; Reminders access so the app can reliably restart itself if the system kills it while running in the background without needing a home screen widget."
+        android:text="@string/exact_alar_allow_alarms_reminders_access_so"
         android:textColor="@color/text_secondary"
         android:textSize="13sp" />
 
@@ -40,7 +40,7 @@
         android:layout_height="50dp"
         android:layout_marginTop="20dp"
         android:backgroundTint="@color/primary"
-        android:text="Allow Alarms &amp; Reminders"
+        android:text="@string/exact_alar_allow_alarms_reminders"
         android:textColor="@color/white"
         android:textSize="14sp"
         android:textStyle="bold"
@@ -52,7 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:layout_marginTop="6dp"
-        android:text="Maybe Later"
+        android:text="@string/exact_alar_maybe_later"
         android:textColor="@color/text_muted"
         android:textSize="13sp" />
 
