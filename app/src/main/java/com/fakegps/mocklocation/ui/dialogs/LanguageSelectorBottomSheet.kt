@@ -47,7 +47,11 @@ class LanguageSelectorBottomSheet : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.btnLanguageClose.setOnClickListener {
-            dismiss()
+            try {
+                dismissAllowingStateLoss()
+            } catch (e: Exception) {
+                // Ignore if already dismissed
+            }
         }
 
         binding.ivLanguageHeaderIcon.imageTintList = ThemeColorManager.getPrimaryColorStateList(requireContext())
@@ -62,17 +66,24 @@ class LanguageSelectorBottomSheet : BottomSheetDialogFragment() {
             languages = LocaleHelper.TOP_10_LANGUAGES,
             selectedCode = currentCode
         ) { selectedLanguage ->
-            if (selectedLanguage.code != currentCode) {
-                LocaleHelper.applyLanguage(requireContext(), selectedLanguage.code)
-                Toast.makeText(
-                    requireContext(),
-                    "${selectedLanguage.flagEmoji} ${selectedLanguage.nativeName}",
-                    Toast.LENGTH_SHORT
-                ).show()
-                onLanguageChanged?.invoke()
-                dismiss()
-            } else {
-                dismiss()
+            val appContext = context?.applicationContext
+            try {
+                dismissAllowingStateLoss()
+            } catch (e: Exception) {
+                // Ignore if already dismissed or activity finished
+            }
+            if (selectedLanguage.code != currentCode && appContext != null) {
+                LocaleHelper.applyLanguage(appContext, selectedLanguage.code)
+                try {
+                    Toast.makeText(
+                        appContext,
+                        "${selectedLanguage.flagEmoji} ${selectedLanguage.nativeName}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } catch (ignored: Exception) {}
+                try {
+                    onLanguageChanged?.invoke()
+                } catch (ignored: Exception) {}
             }
         }
 

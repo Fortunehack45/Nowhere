@@ -2075,89 +2075,93 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun rebindLocalizedStrings() {
-        // Mode Tabs
-        binding.rbFixedMode.text = getString(R.string.tab_fixed)
-        binding.rbRouteMode.text = getString(R.string.tab_route)
-        binding.rbJoystickMode.text = getString(R.string.tab_joystick)
+        try {
+            // Mode Tabs
+            binding.rbFixedMode.text = getString(R.string.tab_fixed)
+            binding.rbRouteMode.text = getString(R.string.tab_route)
+            binding.rbJoystickMode.text = getString(R.string.tab_joystick)
 
-        // Search Bar & Presets
-        binding.etAddressSearch.hint = getString(R.string.title_search_hint)
-        binding.chipPresetNewYork.text = getString(R.string.main_new_york)
-        binding.chipPresetParis.text = getString(R.string.main_paris)
-        binding.chipPresetTokyo.text = getString(R.string.main_tokyo)
-        binding.chipPresetDubai.text = getString(R.string.main_dubai)
-        binding.chipPresetLondon.text = getString(R.string.main_london)
-        binding.chipPresetHonolulu.text = getString(R.string.main_honolulu)
+            // Search Bar & Presets
+            binding.etAddressSearch.hint = getString(R.string.title_search_hint)
+            binding.chipPresetNewYork.text = getString(R.string.main_new_york)
+            binding.chipPresetParis.text = getString(R.string.main_paris)
+            binding.chipPresetTokyo.text = getString(R.string.main_tokyo)
+            binding.chipPresetDubai.text = getString(R.string.main_dubai)
+            binding.chipPresetLondon.text = getString(R.string.main_london)
+            binding.chipPresetHonolulu.text = getString(R.string.main_honolulu)
 
-        // Mock Setup Banner
-        binding.tvBannerMockText.text = getString(R.string.warning_mock_provider_required)
-        binding.btnBannerEnable.text = getString(R.string.main_configure)
-        binding.btnBannerErrorDismiss.text = getString(R.string.btn_dismiss)
+            // Mock Setup Banner
+            binding.tvBannerMockText.text = getString(R.string.warning_mock_provider_required)
+            binding.btnBannerEnable.text = getString(R.string.main_configure)
+            binding.btnBannerErrorDismiss.text = getString(R.string.btn_dismiss)
 
-        // Slide Deck Toggle
-        val isExpanded = binding.layoutExpandableBottomControls.visibility == View.VISIBLE
-        binding.tvToggleBottomDeckLabel.text = if (isExpanded) getString(R.string.hud_slide_down_hide) else getString(R.string.hud_slide_up_show)
+            // Slide Deck Toggle
+            val isExpanded = binding.layoutExpandableBottomControls.visibility == View.VISIBLE
+            binding.tvToggleBottomDeckLabel.text = if (isExpanded) getString(R.string.hud_slide_down_hide) else getString(R.string.hud_slide_up_show)
 
-        // Static labels in Bottom Deck
-        binding.tvAutoBootLabel.text = getString(R.string.main_autoinject_on_device_boot)
-        binding.tvTerrainLockTitle.text = getString(R.string.main_realistic_terrain_lock)
-        binding.tvTerrainLockDesc.text = getString(R.string.main_prevents_mock_location_advancing_through)
-        binding.tvSearchRadiusLabel.text = getString(R.string.main_search_radius)
-        binding.tvRestrictedZoneLabel.text = getString(R.string.main_restricted_zone_avoidance)
-        binding.tvUnmappedAreasLabel.text = getString(R.string.main_allow_unmapped_areas)
-        binding.tvTransportModeLabel.text = getString(R.string.main_transport_mode)
+            // Static labels in Bottom Deck
+            binding.tvAutoBootLabel.text = getString(R.string.main_autoinject_on_device_boot)
+            binding.tvTerrainLockTitle.text = getString(R.string.main_realistic_terrain_lock)
+            binding.tvTerrainLockDesc.text = getString(R.string.main_prevents_mock_location_advancing_through)
+            binding.tvSearchRadiusLabel.text = getString(R.string.main_search_radius)
+            binding.tvRestrictedZoneLabel.text = getString(R.string.main_restricted_zone_avoidance)
+            binding.tvUnmappedAreasLabel.text = getString(R.string.main_allow_unmapped_areas)
+            binding.tvTransportModeLabel.text = getString(R.string.main_transport_mode)
 
-        // Transport Modes
-        binding.rbTransportFoot.text = getString(R.string.transport_walk)
-        binding.rbTransportVehicle.text = getString(R.string.transport_drive)
-        binding.rbTransportAircraft.text = getString(R.string.transport_fly)
-        binding.rbTransportShip.text = getString(R.string.transport_ship)
+            // Transport Modes
+            binding.rbTransportFoot.text = getString(R.string.transport_walk)
+            binding.rbTransportVehicle.text = getString(R.string.transport_drive)
+            binding.rbTransportAircraft.text = getString(R.string.transport_fly)
+            binding.rbTransportShip.text = getString(R.string.transport_ship)
 
-        // Route Controls & Actions
-        binding.btnManageWaypoints.text = getString(R.string.main_manage)
-        binding.switchLoopRoute.text = getString(R.string.main_loop)
-        binding.btnSavedRoutesDrawer.text = getString(R.string.main_routes)
-        binding.btnSaveCurrentRoute.text = getString(R.string.main_save)
-        binding.btnReverseRoute.text = getString(R.string.main_reverse)
-        binding.btnImportGpx.text = getString(R.string.btn_import_gpx)
-        binding.btnExportGpx.text = getString(R.string.main_export_gpx)
-        binding.btnClearRoute.text = getString(R.string.main_clear)
+            // Route Controls & Actions
+            binding.btnManageWaypoints.text = getString(R.string.main_manage)
+            binding.switchLoopRoute.text = getString(R.string.main_loop)
+            binding.btnSavedRoutesDrawer.text = getString(R.string.main_routes)
+            binding.btnSaveCurrentRoute.text = getString(R.string.main_save)
+            binding.btnReverseRoute.text = getString(R.string.main_reverse)
+            binding.btnImportGpx.text = getString(R.string.btn_import_gpx)
+            binding.btnExportGpx.text = getString(R.string.main_export_gpx)
+            binding.btnClearRoute.text = getString(R.string.main_clear)
 
-        // Motion Sync & Terrain
-        binding.tvMotionSyncTitle.text = getString(R.string.main_motion_sync)
-        binding.tvMotionSyncSubtitle.text = getString(R.string.main_moves_in_sync_with_physical)
-        binding.btnToggleTerrainAdvanced.text = getString(R.string.main_advanced_settings)
+            // Motion Sync & Terrain
+            binding.tvMotionSyncTitle.text = getString(R.string.main_motion_sync)
+            binding.tvMotionSyncSubtitle.text = getString(R.string.main_moves_in_sync_with_physical)
+            binding.btnToggleTerrainAdvanced.text = getString(R.string.main_advanced_settings)
 
-        // Joystick Controls
-        binding.btnFloatingOverlayToggle.text = getString(R.string.main_floating)
+            // Joystick Controls
+            binding.btnFloatingOverlayToggle.text = getString(R.string.main_floating)
 
-        // Top Badges
-        binding.tvHotspotBadge.text = getString(R.string.badge_hotspot)
-        binding.tvAutomationBadgeText.text = getString(R.string.badge_auto)
-        val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this)
-        binding.tvPremiumBadge.text = if (isVip) getString(R.string.badge_pro_discount) else getString(R.string.badge_pro)
+            // Top Badges
+            binding.tvHotspotBadge.text = getString(R.string.badge_hotspot)
+            binding.tvAutomationBadgeText.text = getString(R.string.badge_auto)
+            val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this)
+            binding.tvPremiumBadge.text = if (isVip) getString(R.string.badge_pro_discount) else getString(R.string.badge_pro)
 
-        // Search Overlay
-        val overlay = binding.includedSearchOverlay
-        overlay.etSearchOverlayInput.hint = getString(R.string.title_search_hint)
-        overlay.btnJumpDirectCoords.text = getString(R.string.search_ove_jump)
-        overlay.btnClearAllSearchHistory.text = getString(R.string.search_ove_clear_all)
-        overlay.tvSearchSectionTitle.text = getString(R.string.hud_recent_searches)
+            // Search Overlay
+            val overlay = binding.includedSearchOverlay
+            overlay.etSearchOverlayInput.hint = getString(R.string.title_search_hint)
+            overlay.btnJumpDirectCoords.text = getString(R.string.search_ove_jump)
+            overlay.btnClearAllSearchHistory.text = getString(R.string.search_ove_clear_all)
+            overlay.tvSearchSectionTitle.text = getString(R.string.hud_recent_searches)
 
-        // Search Overlay Trending Chips
-        overlay.chipTrendingTokyo.text = getString(R.string.search_ove_tokyo)
-        overlay.chipTrendingNewYork.text = getString(R.string.main_new_york)
-        overlay.chipTrendingParis.text = getString(R.string.search_ove_paris)
-        overlay.chipTrendingDubai.text = getString(R.string.search_ove_dubai)
-        overlay.chipTrendingLondon.text = getString(R.string.search_ove_london)
-        overlay.chipTrendingSydney.text = getString(R.string.search_ove_sydney)
-        overlay.chipTrendingEiffel.text = getString(R.string.search_ove_eiffel_tower)
-        overlay.chipTrendingJfk.text = getString(R.string.search_ove_jfk_airport)
-        overlay.chipTrendingEverest.text = getString(R.string.search_ove_mt_everest)
+            // Search Overlay Trending Chips
+            overlay.chipTrendingTokyo.text = getString(R.string.search_ove_tokyo)
+            overlay.chipTrendingNewYork.text = getString(R.string.main_new_york)
+            overlay.chipTrendingParis.text = getString(R.string.search_ove_paris)
+            overlay.chipTrendingDubai.text = getString(R.string.search_ove_dubai)
+            overlay.chipTrendingLondon.text = getString(R.string.search_ove_london)
+            overlay.chipTrendingSydney.text = getString(R.string.search_ove_sydney)
+            overlay.chipTrendingEiffel.text = getString(R.string.search_ove_eiffel_tower)
+            overlay.chipTrendingJfk.text = getString(R.string.search_ove_jfk_airport)
+            overlay.chipTrendingEverest.text = getString(R.string.search_ove_mt_everest)
 
-        // Badges & Action Buttons
-        renderGhostCloakBadge()
-        renderUiState(viewModel.uiState.value)
+            // Badges & Action Buttons
+            renderGhostCloakBadge()
+            renderUiState(viewModel.uiState.value)
+        } catch (e: Exception) {
+            android.util.Log.w("MainActivity", "Error rebinding localized strings", e)
+        }
     }
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {

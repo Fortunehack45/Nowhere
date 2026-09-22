@@ -61,6 +61,13 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupSystemBarInsets()
 
+        val restoreY = intent.getIntExtra("EXTRA_RESTORE_SCROLL_Y", 0)
+        if (restoreY > 0) {
+            binding.scrollViewSettings.post {
+                binding.scrollViewSettings.scrollY = restoreY
+            }
+        }
+
         loadInitialValues()
         setupListeners()
         observeSessionTimer()
@@ -72,11 +79,11 @@ class SettingsActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             com.fakegps.mocklocation.util.LocaleHelper.languageChangeFlow.collectLatest { langCode ->
-                if (langCode != currentLanguageCode) {
+                if (langCode != currentLanguageCode && !isRestartingForLanguage) {
                     currentLanguageCode = langCode
                     val locale = java.util.Locale.forLanguageTag(langCode)
                     com.fakegps.mocklocation.util.LocaleHelper.updateResources(this@SettingsActivity, locale)
-                    reloadContentViewSmoothly()
+                    restartActivityCleanly()
                 }
             }
         }
@@ -85,12 +92,12 @@ class SettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         val activeLang = LocaleHelper.getSelectedLanguage(this)
-        if (activeLang != currentLanguageCode || LocaleHelper.isLanguageStale) {
+        if ((activeLang != currentLanguageCode || LocaleHelper.isLanguageStale) && !isRestartingForLanguage) {
             LocaleHelper.isLanguageStale = false
             currentLanguageCode = activeLang
             val locale = java.util.Locale.forLanguageTag(activeLang)
             LocaleHelper.updateResources(this, locale)
-            reloadContentViewSmoothly()
+            restartActivityCleanly()
             return
         }
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
@@ -353,10 +360,12 @@ class SettingsActivity : AppCompatActivity() {
             val sheet = LanguageSelectorBottomSheet.newInstance()
             sheet.onLanguageChanged = {
                 val activeLang = LocaleHelper.getSelectedLanguage(this)
-                currentLanguageCode = activeLang
-                val locale = java.util.Locale.forLanguageTag(activeLang)
-                LocaleHelper.updateResources(this, locale)
-                reloadContentViewSmoothly()
+                if (activeLang != currentLanguageCode && !isRestartingForLanguage) {
+                    currentLanguageCode = activeLang
+                    val locale = java.util.Locale.forLanguageTag(activeLang)
+                    LocaleHelper.updateResources(this, locale)
+                    restartActivityCleanly()
+                }
             }
             sheet.show(supportFragmentManager, LanguageSelectorBottomSheet.TAG)
         }
@@ -957,33 +966,41 @@ class SettingsActivity : AppCompatActivity() {
         androidx.core.view.ViewCompat.requestApplyInsets(binding.root)
     }
 
-    private fun reloadContentViewSmoothly() {
+    private var isRestartingForLanguage = false
+
+    private fun restartActivityCleanly() {
+        if (isRestartingForLanguage || isFinishing || isDestroyed) return
+        isRestartingForLanguage = true
         val scrollY = try { binding.scrollViewSettings.scrollY } catch (e: Exception) { 0 }
-        val localizedContext = com.fakegps.mocklocation.util.LocaleHelper.wrapContext(this)
-        binding = ActivitySettingsBinding.inflate(android.view.LayoutInflater.from(localizedContext))
-        setContentView(binding.root)
-        setupSystemBarInsets()
-        loadInitialValues()
-        setupListeners()
-        observeSessionTimer()
-        observeBillingState()
-        refreshSystemStatus()
-        refreshNotificationPermissionUI()
-        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
-        if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
-            com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
+        val intent = Intent(this, SettingsActivity::class.java).apply {
+            putExtra("EXTRA_RESTORE_SCROLL_Y", scrollY)
+            addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
         }
-        binding.scrollViewSettings.post {
-            binding.scrollViewSettings.scrollY = scrollY
+        finish()
+        if (Build.VERSION.SDK_INT >= 34) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+        }
+        startActivity(intent)
+        if (Build.VERSION.SDK_INT >= 34) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, 0, 0)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
         }
     }
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
         val activeLang = LocaleHelper.getSelectedLanguage(this)
-        val locale = java.util.Locale.forLanguageTag(activeLang)
-        LocaleHelper.updateResources(this, locale)
-        reloadContentViewSmoothly()
+        if (activeLang != currentLanguageCode && !isRestartingForLanguage) {
+            currentLanguageCode = activeLang
+            val locale = java.util.Locale.forLanguageTag(activeLang)
+            LocaleHelper.updateResources(this, locale)
+            restartActivityCleanly()
+        }
     }
 
     private fun pinNowhereShortcut() {

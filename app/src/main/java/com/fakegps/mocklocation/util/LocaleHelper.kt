@@ -60,32 +60,43 @@ object LocaleHelper {
         Locale.setDefault(locale)
 
         // Modern AndroidX in-app language switching (supported from Android 13 down to API 21)
-        val appLocale = LocaleListCompat.forLanguageTags(languageCode)
-        AppCompatDelegate.setApplicationLocales(appLocale)
+        try {
+            val appLocale = LocaleListCompat.forLanguageTags(languageCode)
+            AppCompatDelegate.setApplicationLocales(appLocale)
+        } catch (e: Exception) {
+            android.util.Log.w("LocaleHelper", "Failed to setApplicationLocales", e)
+        }
 
         // Force synchronous update across active Context and ApplicationContext resources
         updateResources(context, locale)
         try {
-            updateResources(context.applicationContext, locale)
+            val appContext = context.applicationContext
+            if (appContext != null && appContext != context) {
+                updateResources(appContext, locale)
+            }
         } catch (ignored: Exception) {}
 
         _languageChangeFlow.tryEmit(languageCode)
     }
 
     fun updateResources(context: Context, locale: Locale) {
-        val res = context.resources
-        val config = Configuration(res.configuration)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            config.setLocales(LocaleList(locale))
-        } else {
+        try {
+            val res = context.resources
+            val config = Configuration(res.configuration)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                config.setLocales(LocaleList(locale))
+            } else {
+                @Suppress("DEPRECATION")
+                config.locale = locale
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                config.setLayoutDirection(locale)
+            }
             @Suppress("DEPRECATION")
-            config.locale = locale
+            res.updateConfiguration(config, res.displayMetrics)
+        } catch (e: Exception) {
+            android.util.Log.w("LocaleHelper", "Error updating resources", e)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            config.setLayoutDirection(locale)
-        }
-        @Suppress("DEPRECATION")
-        res.updateConfiguration(config, res.displayMetrics)
     }
 
     fun wrapContext(context: Context): Context {
@@ -97,6 +108,9 @@ object LocaleHelper {
         val config = Configuration(res.configuration)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             config.setLocales(LocaleList(locale))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                config.setLayoutDirection(locale)
+            }
             val newContext = context.createConfigurationContext(config)
             @Suppress("DEPRECATION")
             newContext.resources.updateConfiguration(config, newContext.resources.displayMetrics)
@@ -104,9 +118,17 @@ object LocaleHelper {
         } else {
             @Suppress("DEPRECATION")
             config.locale = locale
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                config.setLayoutDirection(locale)
+            }
             @Suppress("DEPRECATION")
             res.updateConfiguration(config, res.displayMetrics)
             return context
         }
+    }
+
+    fun getThemedLocalizedContext(context: Context): Context {
+        val wrapped = wrapContext(context)
+        return androidx.appcompat.view.ContextThemeWrapper(wrapped, com.fakegps.mocklocation.R.style.Theme_MockLocation)
     }
 }
