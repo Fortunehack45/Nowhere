@@ -61,9 +61,9 @@ class AppReviewBottomSheet : BottomSheetDialogFragment() {
                 updateStarDisplay(rating)
 
                 if (rating >= 4) {
-                    binding.btnRateOnPlayStore.text = "⭐ Rate $rating Stars on Google Play"
+                    binding.btnRateOnPlayStore.text = getString(R.string.review_rate_play_fmt, rating)
                 } else {
-                    binding.btnRateOnPlayStore.text = "⭐ Send Rating ($rating Stars)"
+                    binding.btnRateOnPlayStore.text = getString(R.string.review_send_rating_fmt, rating)
                 }
             }
         }

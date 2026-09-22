@@ -22,6 +22,7 @@ import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.updatePadding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.view.View
@@ -58,26 +59,7 @@ class SettingsActivity : AppCompatActivity() {
         sessionPrefs = SessionPreferences(this)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        // Handle edge-to-edge system bar insets (Android 15+ & targetSdk 35)
-        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
-            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
-            val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
-
-            binding.layoutSettingsHeader.updatePadding(top = statusBarInset.top)
-
-            val scrollView = binding.root.getChildAt(1) as? android.widget.ScrollView
-            val scrollChild = scrollView?.getChildAt(0) as? android.widget.LinearLayout
-            scrollChild?.setPadding(
-                scrollChild.paddingLeft,
-                scrollChild.paddingTop,
-                scrollChild.paddingRight,
-                (16 * resources.displayMetrics.density).toInt() + navBarInset.bottom
-            )
-
-            insets
-        }
+        setupSystemBarInsets()
 
         loadInitialValues()
         setupListeners()
@@ -86,6 +68,17 @@ class SettingsActivity : AppCompatActivity() {
 
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
             com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
+        }
+
+        lifecycleScope.launch {
+            com.fakegps.mocklocation.util.LocaleHelper.languageChangeFlow.collectLatest { langCode ->
+                if (langCode != currentLanguageCode) {
+                    currentLanguageCode = langCode
+                    val locale = java.util.Locale.forLanguageTag(langCode)
+                    com.fakegps.mocklocation.util.LocaleHelper.updateResources(this@SettingsActivity, locale)
+                    reloadContentViewSmoothly()
+                }
+            }
         }
     }
 
@@ -938,10 +931,38 @@ class SettingsActivity : AppCompatActivity() {
         refreshNotificationPermissionUI()
     }
 
+    private fun setupSystemBarInsets() {
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+
+            binding.layoutSettingsHeader.updatePadding(top = statusBarInset.top)
+
+            val scrollView = binding.scrollViewSettings
+            val scrollChild = scrollView.getChildAt(0) as? android.widget.LinearLayout
+            scrollChild?.setPadding(
+                scrollChild.paddingLeft,
+                scrollChild.paddingTop,
+                scrollChild.paddingRight,
+                (16 * resources.displayMetrics.density).toInt() + navBarInset.bottom
+            )
+
+            insets
+        }
+        androidx.core.view.ViewCompat.getRootWindowInsets(binding.root)?.let { insets ->
+            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            binding.layoutSettingsHeader.updatePadding(top = statusBarInset.top)
+        }
+        androidx.core.view.ViewCompat.requestApplyInsets(binding.root)
+    }
+
     private fun reloadContentViewSmoothly() {
         val scrollY = try { binding.scrollViewSettings.scrollY } catch (e: Exception) { 0 }
-        binding = ActivitySettingsBinding.inflate(layoutInflater)
+        val localizedContext = com.fakegps.mocklocation.util.LocaleHelper.wrapContext(this)
+        binding = ActivitySettingsBinding.inflate(android.view.LayoutInflater.from(localizedContext))
         setContentView(binding.root)
+        setupSystemBarInsets()
         loadInitialValues()
         setupListeners()
         observeSessionTimer()

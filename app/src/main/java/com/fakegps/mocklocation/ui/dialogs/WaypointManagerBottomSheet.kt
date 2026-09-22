@@ -122,7 +122,7 @@ class WaypointManagerBottomSheet : BottomSheetDialogFragment() {
                 binding.tvEmptyWaypoints.visibility = if (waypoints.isEmpty()) View.VISIBLE else View.GONE
                 binding.rvWaypoints.visibility = if (waypoints.isEmpty()) View.GONE else View.VISIBLE
 
-                binding.tvWaypointManagerTitle.text = "Route Waypoints (${waypoints.size})"
+                binding.tvWaypointManagerTitle.text = getString(R.string.waypoint_route_title_fmt, waypoints.size)
 
                 binding.btnSheetUndo.isEnabled = state.canUndoRoute
                 binding.btnSheetUndo.alpha = if (state.canUndoRoute) 1.0f else 0.4f
@@ -217,11 +217,11 @@ class WaypointManageAdapter(
             binding.tvWaypointCoords.text = String.format(Locale.US, "%.5f, %.5f", point.latitude, point.longitude)
 
             if (point.stopDurationSeconds > 0) {
-                binding.tvDwellStatus.text = "⏱️ Stop for ${point.stopDurationSeconds}s"
-                binding.btnSetDwell.text = "${point.stopDurationSeconds}s"
+                binding.tvDwellStatus.text = itemView.context.getString(R.string.waypoint_stop_duration_fmt, point.stopDurationSeconds)
+                binding.btnSetDwell.text = itemView.context.getString(R.string.waypoint_stop_duration_short_fmt, point.stopDurationSeconds)
             } else {
-                binding.tvDwellStatus.text = "Pass-through (0s)"
-                binding.btnSetDwell.text = "Stop: 0s"
+                binding.tvDwellStatus.text = itemView.context.getString(R.string.waypoint_passthrough)
+                binding.btnSetDwell.text = itemView.context.getString(R.string.waypoint_stop_zero)
             }
 
             binding.ivDragHandle.setOnTouchListener { _, event ->

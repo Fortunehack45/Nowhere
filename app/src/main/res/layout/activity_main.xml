@@ -1077,6 +1077,7 @@
                 android:paddingHorizontal="4dp">
 
                 <TextView
+                    android:id="@+id/tvAutoBootLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -1175,6 +1176,7 @@
                             android:orientation="horizontal">
 
                             <TextView
+                                android:id="@+id/tvTerrainLockTitle"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -1191,6 +1193,7 @@
                         </LinearLayout>
 
                         <TextView
+                            android:id="@+id/tvTerrainLockDesc"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/main_prevents_mock_location_advancing_through"
@@ -1224,6 +1227,7 @@
                                 android:orientation="horizontal">
 
                                 <TextView
+                                    android:id="@+id/tvSearchRadiusLabel"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
@@ -1258,6 +1262,7 @@
                                 android:orientation="horizontal">
 
                                 <TextView
+                                    android:id="@+id/tvRestrictedZoneLabel"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
@@ -1280,6 +1285,7 @@
                                 android:orientation="horizontal">
 
                                 <TextView
+                                    android:id="@+id/tvUnmappedAreasLabel"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
@@ -1442,6 +1448,7 @@
 
             <!-- Transport Mode Selector (Foot, Vehicle, Aircraft, Ship) -->
             <TextView
+                android:id="@+id/tvTransportModeLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"

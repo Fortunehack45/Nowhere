@@ -172,7 +172,7 @@ class SpotlightTourOverlayView @JvmOverloads constructor(
         currentStepIndex = index
         val step = steps[index]
 
-        tvStepBadge.text = "STEP ${step.stepNumber} OF ${step.totalSteps}"
+        tvStepBadge.text = context.getString(R.string.tour_step_counter_fmt, step.stepNumber, step.totalSteps)
         ivStepIcon.setImageResource(step.iconRes)
         tvStepTitle.text = step.title
         tvStepDescription.text = step.description

@@ -126,7 +126,7 @@ class AppTutorialDialog(
     private fun renderStep(index: Int) {
         val step = steps[index]
 
-        binding.tvTutorialStepBadge.text = "STEP ${step.stepNumber} OF ${step.totalSteps}"
+        binding.tvTutorialStepBadge.text = context.getString(R.string.tour_step_counter_fmt, step.stepNumber, step.totalSteps)
         binding.tvTutorialTitle.text = step.title
         binding.tvTutorialLocationBadge.text = step.locationBadge
         binding.tvTutorialDescription.text = step.description

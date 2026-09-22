@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.databinding.LayoutDialogWeatherBinding
 import com.fakegps.mocklocation.weather.LocationWeatherReport
@@ -100,7 +101,7 @@ class WeatherBottomSheet @JvmOverloads constructor(
 
         binding.tvWeatherEmoji.text = cur.conditionEmoji
         binding.tvLocationTitle.text = report.locationName
-        binding.tvWeatherCondition.text = "${cur.conditionName} • Live Location Weather"
+        binding.tvWeatherCondition.text = getString(R.string.weather_live_header_fmt, cur.conditionName)
 
         if (useImperial) {
             binding.tvMainTemperature.text = String.format("%.0f°F", cur.temperatureF)
@@ -112,7 +113,7 @@ class WeatherBottomSheet @JvmOverloads constructor(
             binding.tvWindSpeed.text = String.format("Wind: %.1f km/h", cur.windSpeedKmh)
         }
 
-        binding.tvHumidity.text = "Humidity: ${cur.humidityPercent}%"
+        binding.tvHumidity.text = getString(R.string.weather_humidity_fmt, cur.humidityPercent)
 
         val adapter = ForecastAdapter(report.forecast, useFahrenheit = useImperial)
         binding.rvForecastDays.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)

@@ -69,7 +69,6 @@ class SessionExtendDialog(
     }
 
     private fun setupUI() {
-        val settingsPrefs = AppSettingsPreferences(context)
         val sessionPrefs = SessionPreferences(context)
 
         if (isExpiredPrompt || sessionPrefs.isSessionExpired) {

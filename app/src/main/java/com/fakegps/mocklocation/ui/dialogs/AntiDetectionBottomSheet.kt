@@ -94,11 +94,11 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         if (masterEnabled) {
             val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(requireContext())
             val lightTintColor = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintColor(requireContext())
-            binding.tvGhostCloakBadge.text = "CLOAKED"
+            binding.tvGhostCloakBadge.text = getString(R.string.anti_detect_cloaked)
             binding.tvGhostCloakBadge.setTextColor(primaryColor)
             binding.tvGhostCloakBadge.backgroundTintList = ColorStateList.valueOf(lightTintColor)
         } else {
-            binding.tvGhostCloakBadge.text = "RAW PASS-THROUGH"
+            binding.tvGhostCloakBadge.text = getString(R.string.anti_detect_raw_pass)
             binding.tvGhostCloakBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.badge_warning_text))
             binding.tvGhostCloakBadge.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.badge_warning_bg)
         }
@@ -187,9 +187,9 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         // Clock Drift
         val uncertaintyNs = (18.0 + Math.random() * 15.0).toFloat()
         binding.tvDiagClock.text = if (isMaster && isClock) {
-            String.format(java.util.Locale.US, "Nanosecond Clock Uncertainty: Synchronized (~%.1f ns)", uncertaintyNs)
+            getString(R.string.anti_detect_clock_drift_sync_fmt, uncertaintyNs)
         } else {
-            "Nanosecond Uncertainty: Static (0.0 ns)"
+            getString(R.string.anti_detect_clock_drift_static)
         }
         binding.ivDiagClockIcon.imageTintList = if (isMaster && isClock) primaryCsl else ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
 
@@ -200,32 +200,32 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
 
         if (isMaster && isNmea) {
             val nmeaSentences = ghostCloakEngine.generateNmeaStream(lat, lon, 15.0, speed, 45.0f)
-            binding.tvDiagNmea.text = "NMEA-0183 Sentence Stream: 18 Tracked Satellites"
+            binding.tvDiagNmea.text = getString(R.string.anti_detect_nmea_active)
             binding.ivDiagNmeaIcon.imageTintList = primaryCsl
             binding.tvLiveNmeaBox.text = nmeaSentences.take(3).joinToString("\n")
         } else {
-            binding.tvDiagNmea.text = "NMEA-0183 Synthesizer: Inactive"
+            binding.tvDiagNmea.text = getString(R.string.anti_detect_nmea_inactive)
             binding.ivDiagNmeaIcon.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
-            binding.tvLiveNmeaBox.text = "NMEA Stream Disabled. Enable Hardware Synthesizer above."
+            binding.tvLiveNmeaBox.text = getString(R.string.anti_detect_nmea_disabled_hint)
         }
         binding.tvLiveNmeaBox.setTextColor(primaryColor)
 
         // Wi-Fi Hardware Scanning Shield
         val isWifiScanningOn = PermissionHelper.isWifiScanningEnabled(ctx)
         if (isWifiScanningOn) {
-            binding.tvDiagWifiScan.text = "Wi-Fi Scanning: Detected On (May cause location jumps) • Tap to turn off"
+            binding.tvDiagWifiScan.text = getString(R.string.anti_detect_wifi_scan_detected)
             binding.ivDiagWifiScanIcon.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
             binding.layoutWifiScanNotice.setOnClickListener {
                 PermissionHelper.openLocationScanningSettings(ctx)
             }
         } else {
-            binding.tvDiagWifiScan.text = "Wi-Fi Scanning: Disabled (Zero-Rubberbanding Lock Active)"
+            binding.tvDiagWifiScan.text = getString(R.string.anti_detect_wifi_scan_disabled)
             binding.ivDiagWifiScanIcon.imageTintList = primaryCsl
             binding.layoutWifiScanNotice.setOnClickListener(null)
         }
 
         // Root Stealth Button Text
-        binding.btnRootStealthGrant.text = if (isRooted) "1-Tap Root Stealth (Root Detected)" else "Universal Cloak Active"
+        binding.btnRootStealthGrant.text = if (isRooted) getString(R.string.anti_detect_root_detected) else getString(R.string.anti_detect_root_universal)
     }
 
     override fun onDestroyView() {

@@ -31,11 +31,13 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="14dp"
-        android:letterSpacing="0.04"
+        android:letterSpacing="0.01"
         android:text="@string/notificati_notification_permission"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:hyphenationFrequency="none"
+        android:breakStrategy="simple" />
 
     <TextView
         android:layout_width="match_parent"

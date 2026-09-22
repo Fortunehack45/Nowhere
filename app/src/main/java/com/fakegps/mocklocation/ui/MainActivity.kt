@@ -253,6 +253,28 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        androidx.core.view.ViewCompat.getRootWindowInsets(binding.root)?.let { insets ->
+            val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+
+            val baseTopPadding = (16 * resources.displayMetrics.density).toInt()
+            binding.layoutTopHeader.setPadding(
+                binding.layoutTopHeader.paddingLeft,
+                baseTopPadding + statusBarInset.top,
+                binding.layoutTopHeader.paddingRight,
+                binding.layoutTopHeader.paddingBottom
+            )
+
+            val baseBottomPadding = (16 * resources.displayMetrics.density).toInt()
+            binding.layoutBottomContainer.setPadding(
+                binding.layoutBottomContainer.paddingLeft,
+                binding.layoutBottomContainer.paddingTop,
+                binding.layoutBottomContainer.paddingRight,
+                baseBottomPadding + navBarInset.bottom
+            )
+        }
+        androidx.core.view.ViewCompat.requestApplyInsets(binding.root)
+
         applyHudFrostedGlass()
 
         binding.btnHeaderLanguage.setOnClickListener {
@@ -2076,13 +2098,24 @@ class MainActivity : AppCompatActivity() {
         val isExpanded = binding.layoutExpandableBottomControls.visibility == View.VISIBLE
         binding.tvToggleBottomDeckLabel.text = if (isExpanded) getString(R.string.hud_slide_down_hide) else getString(R.string.hud_slide_up_show)
 
+        // Static labels in Bottom Deck
+        binding.tvAutoBootLabel.text = getString(R.string.main_autoinject_on_device_boot)
+        binding.tvTerrainLockTitle.text = getString(R.string.main_realistic_terrain_lock)
+        binding.tvTerrainLockDesc.text = getString(R.string.main_prevents_mock_location_advancing_through)
+        binding.tvSearchRadiusLabel.text = getString(R.string.main_search_radius)
+        binding.tvRestrictedZoneLabel.text = getString(R.string.main_restricted_zone_avoidance)
+        binding.tvUnmappedAreasLabel.text = getString(R.string.main_allow_unmapped_areas)
+        binding.tvTransportModeLabel.text = getString(R.string.main_transport_mode)
+
         // Transport Modes
         binding.rbTransportFoot.text = getString(R.string.transport_walk)
         binding.rbTransportVehicle.text = getString(R.string.transport_drive)
         binding.rbTransportAircraft.text = getString(R.string.transport_fly)
         binding.rbTransportShip.text = getString(R.string.transport_ship)
 
-        // Route Toolbar
+        // Route Controls & Actions
+        binding.btnManageWaypoints.text = getString(R.string.main_manage)
+        binding.switchLoopRoute.text = getString(R.string.main_loop)
         binding.btnSavedRoutesDrawer.text = getString(R.string.main_routes)
         binding.btnSaveCurrentRoute.text = getString(R.string.main_save)
         binding.btnReverseRoute.text = getString(R.string.main_reverse)
@@ -2095,11 +2128,32 @@ class MainActivity : AppCompatActivity() {
         binding.tvMotionSyncSubtitle.text = getString(R.string.main_moves_in_sync_with_physical)
         binding.btnToggleTerrainAdvanced.text = getString(R.string.main_advanced_settings)
 
+        // Joystick Controls
+        binding.btnFloatingOverlayToggle.text = getString(R.string.main_floating)
+
+        // Top Badges
+        binding.tvHotspotBadge.text = getString(R.string.badge_hotspot)
+        binding.tvAutomationBadgeText.text = getString(R.string.badge_auto)
+        val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this)
+        binding.tvPremiumBadge.text = if (isVip) getString(R.string.badge_pro_discount) else getString(R.string.badge_pro)
+
         // Search Overlay
         val overlay = binding.includedSearchOverlay
         overlay.etSearchOverlayInput.hint = getString(R.string.title_search_hint)
         overlay.btnJumpDirectCoords.text = getString(R.string.search_ove_jump)
         overlay.btnClearAllSearchHistory.text = getString(R.string.search_ove_clear_all)
+        overlay.tvSearchSectionTitle.text = getString(R.string.hud_recent_searches)
+
+        // Search Overlay Trending Chips
+        overlay.chipTrendingTokyo.text = getString(R.string.search_ove_tokyo)
+        overlay.chipTrendingNewYork.text = getString(R.string.main_new_york)
+        overlay.chipTrendingParis.text = getString(R.string.search_ove_paris)
+        overlay.chipTrendingDubai.text = getString(R.string.search_ove_dubai)
+        overlay.chipTrendingLondon.text = getString(R.string.search_ove_london)
+        overlay.chipTrendingSydney.text = getString(R.string.search_ove_sydney)
+        overlay.chipTrendingEiffel.text = getString(R.string.search_ove_eiffel_tower)
+        overlay.chipTrendingJfk.text = getString(R.string.search_ove_jfk_airport)
+        overlay.chipTrendingEverest.text = getString(R.string.search_ove_mt_everest)
 
         // Badges & Action Buttons
         renderGhostCloakBadge()
@@ -2111,6 +2165,7 @@ class MainActivity : AppCompatActivity() {
         val activeLang = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
         val locale = java.util.Locale.forLanguageTag(activeLang)
         com.fakegps.mocklocation.util.LocaleHelper.updateResources(this, locale)
+        androidx.core.view.ViewCompat.requestApplyInsets(binding.root)
         applyDynamicThemeAccent()
         rebindLocalizedStrings()
         binding.mapView.invalidate()
@@ -2219,12 +2274,12 @@ class MainActivity : AppCompatActivity() {
             binding.layoutLiveStatusBadge.visibility = View.VISIBLE
             val modeText = when (val s = state.serviceState) {
                 is ServiceState.Running -> when (s.mode) {
-                    is SimulationMode.Fixed -> if (binding.switchMotionSync.isChecked) "MOTION SYNC" else "LIVE GPS"
-                    is SimulationMode.Route -> "LIVE ROUTE"
-                    is SimulationMode.Joystick -> "JOYSTICK"
-                    else -> "LIVE GPS"
+                    is SimulationMode.Fixed -> if (binding.switchMotionSync.isChecked) getString(R.string.hud_motion_sync_mode) else getString(R.string.hud_live_gps_mode)
+                    is SimulationMode.Route -> getString(R.string.hud_live_route_mode)
+                    is SimulationMode.Joystick -> getString(R.string.hud_joystick_mode)
+                    else -> getString(R.string.hud_live_gps_mode)
                 }
-                else -> "LIVE GPS"
+                else -> getString(R.string.hud_live_gps_mode)
             }
             binding.tvLiveStatusText.text = modeText
             startLivePulseAnimation()
@@ -2291,7 +2346,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } else {
-            binding.tvTelemetryMeta.text = String.format("READY • ±%.1fm • 18 SAT", settingsPrefs.baseAccuracy)
+            binding.tvTelemetryMeta.text = String.format("%s • ±%.1fm • 18 SAT", getString(R.string.status_standby), settingsPrefs.baseAccuracy)
         }
 
         // Fixed Controls State
@@ -2320,7 +2375,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         val formattedDist = settingsPrefs.formatDistance(totalRouteDist)
-        binding.tvWaypointsCount.text = "${state.routeWaypoints.size} Waypoints ($formattedDist)"
+        binding.tvWaypointsCount.text = getString(R.string.route_waypoints_count_fmt, state.routeWaypoints.size, formattedDist)
         binding.btnRouteUndo.isEnabled = state.canUndoRoute
         binding.btnRouteUndo.alpha = if (state.canUndoRoute) 1.0f else 0.35f
         binding.btnRouteRedo.isEnabled = state.canRedoRoute
@@ -2379,14 +2434,14 @@ class MainActivity : AppCompatActivity() {
                         String.format(Locale.US, "ETA: %02dm %02ds", minutes, seconds)
                     }
                 } else if (remainingMeters <= 5.0 && runningState.totalDistanceMeters > 0) {
-                    "ETA: Arrived"
+                    getString(R.string.eta_arrived)
                 } else {
                     "ETA: --"
                 }
 
-                binding.tvRouteDistanceCovered.text = "Covered: $covered / $total"
+                binding.tvRouteDistanceCovered.text = getString(R.string.route_covered_fmt, covered, total)
                 binding.tvRouteEta.text = etaText
-                binding.tvRouteDistanceRemaining.text = "$remaining left ($progress%)"
+                binding.tvRouteDistanceRemaining.text = getString(R.string.route_left_fmt, remaining, progress)
                 binding.pbRouteLiveProgress.progress = progress
             }
         } else {
@@ -2418,9 +2473,9 @@ class MainActivity : AppCompatActivity() {
                     String.format(Locale.US, "Est: %dm", mins.coerceAtLeast(1))
                 }
 
-                binding.tvRouteDistanceCovered.text = "Route: $totalFormatted"
+                binding.tvRouteDistanceCovered.text = getString(R.string.route_summary_fmt, totalFormatted)
                 binding.tvRouteEta.text = estTime
-                binding.tvRouteDistanceRemaining.text = "${effectiveWaypoints.size} pts"
+                binding.tvRouteDistanceRemaining.text = getString(R.string.route_waypoints_pts_fmt, effectiveWaypoints.size)
                 binding.pbRouteLiveProgress.progress = 0
             } else {
                 binding.layoutRouteTelemetry.visibility = View.GONE
@@ -2428,7 +2483,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Joystick Controls State
-        binding.tvJoystickSpeedLabel.text = "MAX: " + settingsPrefs.formatSpeed(state.joystickSpeedKmh)
+        binding.tvJoystickSpeedLabel.text = getString(R.string.speed_max_fmt, settingsPrefs.formatSpeed(state.joystickSpeedKmh))
         binding.sliderJoystickSpeed.value = state.joystickSpeedKmh.coerceIn(2.0f, 60.0f)
         binding.joystickOverlay.visibility = if (state.selectedTab == SelectedModeTab.JOYSTICK) View.VISIBLE else View.GONE
 

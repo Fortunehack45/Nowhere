@@ -165,7 +165,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                         binding.tvVpnBadge.text = getString(R.string.vpn_badge_protected)
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_success_text))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_bg)
-                        binding.tvVpnDescription.text = "Kernel WireGuard tunnel active with BBR congestion control and TCP MSS Clamping. Zero packet inspection leaks."
+                        binding.tvVpnDescription.text = getString(R.string.vpn_desc_connected)
 
                         binding.btnToggleVpnManual.isEnabled = true
                         binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_deactivate)
@@ -173,7 +173,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.text_primary)
                         binding.layoutVpnTelemetry.visibility = View.VISIBLE
-                        binding.tvServerNodeInfo.text = "Nowhere Ghost Shield Network • Connected"
+                        binding.tvServerNodeInfo.text = getString(R.string.vpn_node_connected)
                     }
                     is NowhereVpnService.VpnState.Connecting -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
@@ -182,11 +182,11 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                         binding.tvVpnBadge.text = getString(R.string.vpn_badge_connecting)
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_warning_text))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_bg)
-                        binding.tvVpnDescription.text = "Negotiating ChaCha20-Poly1305 WireGuard cryptographic handshake on port 51820..."
+                        binding.tvVpnDescription.text = getString(R.string.vpn_desc_connecting)
 
                         binding.btnToggleVpnManual.isEnabled = false
                         binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_connecting)
-                        binding.tvServerNodeInfo.text = "Nowhere Ghost Shield Network • Connecting"
+                        binding.tvServerNodeInfo.text = getString(R.string.vpn_node_connecting)
                     }
                     is NowhereVpnService.VpnState.Error -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
@@ -195,30 +195,30 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                         binding.tvVpnBadge.text = getString(R.string.vpn_badge_offline)
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_error_text))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_bg)
-                        binding.tvVpnDescription.text = "Could not complete handshake. Mobile data and Wi-Fi remain safely preserved."
+                        binding.tvVpnDescription.text = getString(R.string.vpn_desc_error)
 
                         binding.btnToggleVpnManual.isEnabled = true
                         binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_retry)
                         binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
-                        binding.tvServerNodeInfo.text = "Nowhere Ghost Shield Network • Offline"
+                        binding.tvServerNodeInfo.text = getString(R.string.vpn_node_offline)
                     }
                     is NowhereVpnService.VpnState.Disconnected -> {
                         binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
                         binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.text_muted)
                         binding.tvVpnStateTitle.text = getString(R.string.vpn_state_inactive)
-                        binding.tvVpnBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) "SYNCED" else getString(R.string.vpn_badge_inactive)
+                        binding.tvVpnBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) getString(R.string.vpn_badge_synced) else getString(R.string.vpn_badge_inactive)
                         binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
                         binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
-                        binding.tvVpnDescription.text = "Connects automatically when mock GPS starts. Tap Activate below to engage protection anytime."
+                        binding.tvVpnDescription.text = getString(R.string.vpn_desc_disconnected)
 
                         binding.btnToggleVpnManual.isEnabled = true
                         binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_activate)
                         binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
                         binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
                         binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
-                        binding.tvServerNodeInfo.text = "Nowhere Ghost Shield Network • WireGuard 51820"
+                        binding.tvServerNodeInfo.text = getString(R.string.vpn_node_default)
                     }
                 }
             }

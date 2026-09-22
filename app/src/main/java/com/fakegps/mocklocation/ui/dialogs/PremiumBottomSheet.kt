@@ -71,7 +71,6 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
     private fun renderPlanSelectionUI() {
         val context = context ?: return
         val isYearly = selectedPlan == PremiumEntitlement.PlanType.YEARLY
-        val isVip = PromotionManager.isEligibleForVipDiscount(context)
         val discountPercent = PromotionManager.getYearlyDiscountPercent(context)
         val entitlement = BillingManager.getInstance(context).entitlementState.value
 
@@ -94,9 +93,9 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
 
             val yearlyPrice = entitlement.yearlyPrice
             if (yearlyPrice != null) {
-                binding.btnUpgradePremium.text = "Unlock Annual Plan (Save $discountPercent%)"
+                binding.btnUpgradePremium.text = getString(R.string.premium_unlock_annual_discount_fmt, discountPercent)
             } else {
-                binding.btnUpgradePremium.text = "Unlock Annual Plan"
+                binding.btnUpgradePremium.text = getString(R.string.premium_unlock_annual)
             }
         } else {
             binding.cardPlanMonthly.background = com.fakegps.mocklocation.util.ThemeColorManager.createSelectedPlanCardDrawable(primaryColor, context)
@@ -109,11 +108,11 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
 
             val trialDesc = entitlement.freeTrialDescription
             if (entitlement.hasFreeTrial && !trialDesc.isNullOrBlank()) {
-                binding.btnUpgradePremium.text = "Start $trialDesc & Subscribe"
+                binding.btnUpgradePremium.text = getString(R.string.premium_start_trial_fmt, trialDesc)
             } else if (entitlement.monthlyPrice != null) {
-                binding.btnUpgradePremium.text = "Subscribe Monthly — ${entitlement.monthlyPrice}"
+                binding.btnUpgradePremium.text = getString(R.string.premium_subscribe_monthly_fmt, entitlement.monthlyPrice)
             } else {
-                binding.btnUpgradePremium.text = "Subscribe Monthly"
+                binding.btnUpgradePremium.text = getString(R.string.premium_subscribe_monthly)
             }
         }
         binding.btnUpgradePremium.backgroundTintList = primaryCsl
@@ -139,7 +138,7 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
 
         binding.btnRestorePurchases.setOnClickListener {
             billingManager.queryActivePurchases()
-            Toast.makeText(requireContext(), "Reconciling purchases with Google Play...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.premium_reconciling_purchases), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -174,19 +173,19 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         if (yearlyPrice != null) {
             binding.tvYearlyTotalPrice.text = yearlyPrice
             if (monthlyEquiv != null) {
-                binding.tvYearlyMonthlyBreakdown.text = "Just $monthlyEquiv • Billed annually"
+                binding.tvYearlyMonthlyBreakdown.text = getString(R.string.premium_yearly_breakdown_fmt, monthlyEquiv)
             } else {
-                binding.tvYearlyMonthlyBreakdown.text = "Best value • 12 months full access"
+                binding.tvYearlyMonthlyBreakdown.text = getString(R.string.premium_yearly_value_fmt)
             }
         } else {
-            binding.tvYearlyTotalPrice.text = "Annual Plan"
-            binding.tvYearlyMonthlyBreakdown.text = "Best value • 10% - 15% discount"
+            binding.tvYearlyTotalPrice.text = getString(R.string.premium_plan_annual)
+            binding.tvYearlyMonthlyBreakdown.text = getString(R.string.premium_yearly_discount_fmt)
         }
 
         if (monthlyPrice != null) {
             binding.tvMonthlyPrice.text = monthlyPrice
         } else {
-            binding.tvMonthlyPrice.text = "Monthly Plan"
+            binding.tvMonthlyPrice.text = getString(R.string.premium_plan_monthly)
         }
 
         // 3. Free Trial Indicator
@@ -194,10 +193,10 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         if (entitlement.hasFreeTrial && !trialDesc.isNullOrBlank()) {
             binding.tvMonthlyTrialBadge.visibility = View.VISIBLE
             binding.tvMonthlyTrialBadge.text = trialDesc.uppercase()
-            binding.tvMonthlySubtitle.text = "Free trial included • Cancel anytime"
+            binding.tvMonthlySubtitle.text = getString(R.string.premium_free_trial_subtitle)
         } else {
             binding.tvMonthlyTrialBadge.visibility = View.GONE
-            binding.tvMonthlySubtitle.text = "Flexible monthly billing"
+            binding.tvMonthlySubtitle.text = getString(R.string.premium_monthly_flexible_subtitle)
         }
 
         // 4. Subscribed / Pending states

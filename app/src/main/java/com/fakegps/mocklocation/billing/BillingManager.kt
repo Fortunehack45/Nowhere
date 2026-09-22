@@ -16,6 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.fakegps.mocklocation.R
 import java.util.Locale
 
 /**
@@ -183,7 +184,15 @@ class BillingManager private constructor(private val context: Context) : Purchas
                 val yearlyPrice = getFormattedPrice(yearlyDetails) ?: getYearlyPriceFromMonthlyDetails(monthlyDetails)
                 val trialInfo = checkFreeTrial(monthlyDetails)
 
-                val monthlyEquivalent = calculateMonthlyEquivalent(yearlyPrice)
+                val yearlyOffer = yearlyDetails?.subscriptionOfferDetails?.firstOrNull()
+                    ?: monthlyDetails?.subscriptionOfferDetails?.firstOrNull {
+                        it.basePlanId.contains("year", ignoreCase = true) || it.offerId?.contains("year", ignoreCase = true) == true
+                    }
+                val yearlyPhase = yearlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
+                val yearlyMicros = yearlyPhase?.priceAmountMicros
+                val currencyCode = yearlyPhase?.priceCurrencyCode
+
+                val monthlyEquivalent = calculateMonthlyEquivalent(yearlyPrice, yearlyMicros, currencyCode)
 
                 _entitlementState.value = _entitlementState.value.copy(
                     formattedPrice = monthlyPrice,
@@ -240,7 +249,11 @@ class BillingManager private constructor(private val context: Context) : Purchas
             BillingClient.BillingResponseCode.OK -> {
                 if (!purchases.isNullOrEmpty()) {
                     processPurchases(purchases)
-                    _purchaseMessage.value = "Nowhere Premium activated! Enjoy unlimited duration and zero ads."
+                    _purchaseMessage.value = try {
+                        context.getString(R.string.premium_purchase_success)
+                    } catch (e: Exception) {
+                        "Nowhere Premium activated! Enjoy unlimited duration and zero ads."
+                    }
                 }
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> {
@@ -250,12 +263,20 @@ class BillingManager private constructor(private val context: Context) : Purchas
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
                 Log.d(TAG, "Item already owned. Reconciling active purchases.")
                 queryActivePurchases()
-                _purchaseMessage.value = "Subscription restored! Welcome back to Nowhere Premium."
+                _purchaseMessage.value = try {
+                    context.getString(R.string.premium_purchase_restored)
+                } catch (e: Exception) {
+                    "Subscription restored! Welcome back to Nowhere Premium."
+                }
             }
             BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
             BillingClient.BillingResponseCode.NETWORK_ERROR -> {
                 Log.w(TAG, "Network/Service error during purchase: ${billingResult.debugMessage}")
-                _purchaseMessage.value = "Unable to connect to Google Play. Please check your internet connection."
+                _purchaseMessage.value = try {
+                    context.getString(R.string.premium_network_error)
+                } catch (e: Exception) {
+                    "Unable to connect to Google Play. Please check your internet connection."
+                }
             }
             else -> {
                 Log.w(TAG, "Purchase failed: ${billingResult.responseCode} - ${billingResult.debugMessage}")
@@ -387,7 +408,12 @@ class BillingManager private constructor(private val context: Context) : Purchas
 
         if (targetProductDetails == null || offerToken == null) {
             queryProductDetails()
-            Toast.makeText(activity, "Loading subscription pricing from Google Play. Please try again in a moment.", Toast.LENGTH_SHORT).show()
+            val msg = try {
+                context.getString(R.string.premium_loading_pricing)
+            } catch (e: Exception) {
+                "Loading subscription pricing from Google Play. Please try again in a moment."
+            }
+            Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
             return null
         }
 
@@ -460,9 +486,35 @@ class BillingManager private constructor(private val context: Context) : Purchas
         }
     }
 
-    private fun calculateMonthlyEquivalent(yearlyFormattedPrice: String?): String? {
+    private fun calculateMonthlyEquivalent(
+        yearlyFormattedPrice: String?,
+        yearlyMicros: Long? = null,
+        currencyCode: String? = null
+    ): String? {
+        if (yearlyMicros != null && yearlyMicros > 0L && !currencyCode.isNullOrBlank()) {
+            try {
+                val monthlyMicros = yearlyMicros / 12.0
+                val currency = java.util.Currency.getInstance(currencyCode)
+                val format = java.text.NumberFormat.getCurrencyInstance().apply {
+                    this.currency = currency
+                    maximumFractionDigits = if (currency.defaultFractionDigits == 0) 0 else 2
+                }
+                val formatted = format.format(monthlyMicros / 1_000_000.0)
+                return "$formatted / mo"
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to format currency by code: ${e.message}")
+            }
+        }
+
         if (yearlyFormattedPrice == null) return null
-        val digits = yearlyFormattedPrice.replace(Regex("[^0-9.]"), "")
+        val cleaned = yearlyFormattedPrice.trim()
+        val hasCommaDecimal = cleaned.matches(Regex(".*,\\d{2}([^0-9]*)?$"))
+        val normalized = if (hasCommaDecimal) {
+            cleaned.replace(".", "").replace(",", ".")
+        } else {
+            cleaned.replace(",", "")
+        }
+        val digits = normalized.replace(Regex("[^0-9.]"), "")
         val priceVal = digits.toDoubleOrNull() ?: return null
         val perMonth = priceVal / 12.0
 

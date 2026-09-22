@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
+import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.DialogBatteryOptimizationBinding
 import com.fakegps.mocklocation.util.OEMDetector
@@ -22,7 +23,7 @@ class BatteryOptimizationDialog(
             .create()
 
         val oem = OEMDetector.getDeviceOEM()
-        binding.tvOemTitle.text = "Device Optimization (${oem.name})"
+        binding.tvOemTitle.text = activity.getString(R.string.battery_device_opt_fmt, oem.name)
         binding.tvOemDescription.text = OEMDetector.getOEMGuidanceMessage()
 
         val sessionPrefs = SessionPreferences(activity)
@@ -45,8 +46,8 @@ class BatteryOptimizationDialog(
                 else -> oem.name
             }
             binding.layoutOemWidgetNudge.visibility = View.VISIBLE
-            binding.tvWidgetNudgeTitle.text = "RECOMMENDED FOR $oemDisplayName"
-            binding.tvWidgetNudgeDescription.text = "Add the Nowhere Quick Actions or Icon widget to your home screen — active widgets prevent $oemDisplayName battery managers from freezing or killing background location spoofing."
+            binding.tvWidgetNudgeTitle.text = activity.getString(R.string.battery_recommended_for_fmt, oemDisplayName)
+            binding.tvWidgetNudgeDescription.text = activity.getString(R.string.battery_widget_hint_fmt, oemDisplayName)
 
             binding.btnDismissWidgetNudge.setOnClickListener {
                 sessionPrefs.hasPromptedOemWidgetNudge = true

@@ -498,11 +498,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:letterSpacing="0.04"
+                android:letterSpacing="0.01"
                 android:text="@string/settings_system_permissions_access"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:hyphenationFrequency="none"
+                android:breakStrategy="simple" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -578,10 +580,14 @@
                                 style="@style/Widget.Material3.Button.TonalButton"
                                 android:layout_width="wrap_content"
                                 android:layout_height="36dp"
+                                android:maxLines="1"
+                                android:ellipsize="end"
                                 android:backgroundTint="@color/surface_card_elevated"
                                 android:text="@string/main_configure"
                                 android:textColor="@color/primary_bright"
                                 android:textSize="11sp"
+                                android:hyphenationFrequency="none"
+                                android:breakStrategy="simple"
                                 app:cornerRadius="8dp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -628,10 +634,14 @@
                             style="@style/Widget.Material3.Button.TonalButton"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
                             android:backgroundTint="@color/surface_card_elevated"
                             android:text="@string/settings_exempt"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
+                            android:hyphenationFrequency="none"
+                            android:breakStrategy="simple"
                             app:cornerRadius="8dp" />
                     </LinearLayout>
 
@@ -722,10 +732,14 @@
                             style="@style/Widget.Material3.Button.TonalButton"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
                             android:backgroundTint="@color/surface_card_elevated"
                             android:text="@string/settings_grant"
                             android:textColor="@color/primary_bright"
                             android:textSize="11sp"
+                            android:hyphenationFrequency="none"
+                            android:breakStrategy="simple"
                             app:cornerRadius="8dp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -2167,10 +2181,15 @@
                             android:id="@+id/tvNotificationPermissionStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
                             android:text="@string/settings_allowed"
                             android:textColor="@color/badge_success_text"
                             android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:hyphenationFrequency="none"
+                            android:breakStrategy="simple" />
                     </LinearLayout>
 
                     <!-- Rate on Google Play Item -->

@@ -97,7 +97,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
             }.start()
             val origText = btn.text.toString()
             val origIcon = btn.icon
-            btn.text = "Copied!"
+            btn.text = getString(R.string.tethering_copied)
             btn.setIconResource(R.drawable.ic_check_circle)
             viewLifecycleOwner.lifecycleScope.launch {
                 delay(1800L)
@@ -213,13 +213,13 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
             performHapticFeedback()
             if (HotspotLocationClient.isSyncing()) {
                 HotspotLocationClient.stopSync()
-                binding.btnToggleClientSync.text = "Start Syncing Location"
+                binding.btnToggleClientSync.text = getString(R.string.tethering_btn_start_sync)
                 binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
                 Toast.makeText(requireContext(), "Stopped GPS Sync from Host", Toast.LENGTH_SHORT).show()
             } else {
                 val hostUrl = binding.etHostPhoneUrl.text?.toString()?.trim() ?: "http://192.168.43.1:8088"
                 HotspotLocationClient.startSync(requireContext(), hostUrl)
-                binding.btnToggleClientSync.text = "Disconnect / Stop Sync"
+                binding.btnToggleClientSync.text = getString(R.string.tethering_btn_stop_sync)
                 binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.surface_card_elevated))
                 Toast.makeText(requireContext(), "Connecting to Host Phone ($hostUrl)...", Toast.LENGTH_SHORT).show()
             }
@@ -291,10 +291,10 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
             HotspotLocationServer.isServerRunning.collectLatest { isRunning ->
                 binding.switchHotspotServer.isChecked = isRunning
                 if (isRunning) {
-                    binding.tvHotspotStatusTitle.text = "GPS Broadcasting Active (BETA)"
+                    binding.tvHotspotStatusTitle.text = getString(R.string.tethering_broadcast_active)
                     binding.tvHotspotStatusTitle.setTextColor(requireContext().getColor(R.color.text_primary))
                 } else {
-                    binding.tvHotspotStatusTitle.text = "GPS Broadcasting Stopped"
+                    binding.tvHotspotStatusTitle.text = getString(R.string.tethering_broadcast_stopped)
                     binding.tvHotspotStatusTitle.setTextColor(requireContext().getColor(R.color.text_muted))
                 }
             }
@@ -302,7 +302,7 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             HotspotLocationServer.connectedClientsCount.collectLatest { count ->
-                binding.tvHotspotClientCount.text = "$count connected client(s)"
+                binding.tvHotspotClientCount.text = getString(R.string.tethering_clients_count_fmt, count)
             }
         }
     }
@@ -317,9 +317,9 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                 when (state) {
                     is HotspotLocationClient.SyncState.Idle -> {
                         binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.text_muted))
-                        binding.tvClientSyncStatusTitle.text = "Not Syncing"
-                        binding.tvClientSyncCoordinates.text = "Waiting for Host GPS stream..."
-                        binding.btnToggleClientSync.text = "Start Syncing Location"
+                        binding.tvClientSyncStatusTitle.text = getString(R.string.tethering_not_syncing)
+                        binding.tvClientSyncCoordinates.text = getString(R.string.tethering_waiting_host)
+                        binding.btnToggleClientSync.text = getString(R.string.tethering_btn_start_sync)
                         binding.btnToggleClientSync.setIconResource(R.drawable.ic_bolt)
                         binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(primaryColor)
                         binding.btnToggleClientSync.setTextColor(android.graphics.Color.WHITE)
@@ -328,9 +328,9 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                     }
                     is HotspotLocationClient.SyncState.Connecting -> {
                         binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(primaryColor)
-                        binding.tvClientSyncStatusTitle.text = "Connecting to Host..."
+                        binding.tvClientSyncStatusTitle.text = getString(R.string.tethering_connecting_host)
                         binding.tvClientSyncCoordinates.text = state.url
-                        binding.btnToggleClientSync.text = "Cancel Connection"
+                        binding.btnToggleClientSync.text = getString(R.string.tethering_btn_cancel_conn)
                         binding.btnToggleClientSync.setIconResource(R.drawable.ic_close)
                         binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(lightTintColor)
                         binding.btnToggleClientSync.setTextColor(darkColor)
@@ -339,13 +339,13 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                     }
                     is HotspotLocationClient.SyncState.Synced -> {
                         binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.badge_success_text))
-                        binding.tvClientSyncStatusTitle.text = "LIVE SYNCED WITH HOST PHONE"
+                        binding.tvClientSyncStatusTitle.text = getString(R.string.tethering_live_synced)
                         binding.tvClientSyncCoordinates.text = String.format(
                             Locale.US,
                             "Lat: %.6f\nLon: %.6f\nAlt: %.1f m • Speed: %.1f km/h",
                             state.latitude, state.longitude, state.altitude, state.speedKmh
                         )
-                        binding.btnToggleClientSync.text = "Disconnect / Stop Sync"
+                        binding.btnToggleClientSync.text = getString(R.string.tethering_btn_stop_sync)
                         binding.btnToggleClientSync.setIconResource(R.drawable.ic_stop)
                         binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(lightTintColor)
                         binding.btnToggleClientSync.setTextColor(darkColor)
@@ -354,9 +354,9 @@ class HotspotTetheringBottomSheet : BottomSheetDialogFragment() {
                     }
                     is HotspotLocationClient.SyncState.Error -> {
                         binding.dotClientSyncStatus.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.badge_warning_text))
-                        binding.tvClientSyncStatusTitle.text = "Sync Status"
+                        binding.tvClientSyncStatusTitle.text = getString(R.string.hotspot_te_hotspot_gps_sync)
                         binding.tvClientSyncCoordinates.text = state.message
-                        binding.btnToggleClientSync.text = "Start Syncing Location"
+                        binding.btnToggleClientSync.text = getString(R.string.tethering_btn_start_sync)
                         binding.btnToggleClientSync.setIconResource(R.drawable.ic_bolt)
                         binding.btnToggleClientSync.backgroundTintList = ColorStateList.valueOf(primaryColor)
                         binding.btnToggleClientSync.setTextColor(android.graphics.Color.WHITE)

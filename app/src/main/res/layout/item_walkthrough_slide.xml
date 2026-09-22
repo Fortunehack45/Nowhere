@@ -370,7 +370,9 @@
                             android:text="@string/item_walkt_system_permissions"
                             android:textColor="@color/text_primary"
                             android:textSize="13sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:hyphenationFrequency="none"
+                            android:breakStrategy="simple" />
 
                         <TextView
                             android:id="@+id/tvPermStatusDetail"
@@ -379,7 +381,9 @@
                             android:layout_marginTop="2dp"
                             android:text="@string/item_walkt_location_notification_access"
                             android:textColor="@color/text_muted"
-                            android:textSize="11.5sp" />
+                            android:textSize="11.5sp"
+                            android:hyphenationFrequency="none"
+                            android:breakStrategy="simple" />
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
