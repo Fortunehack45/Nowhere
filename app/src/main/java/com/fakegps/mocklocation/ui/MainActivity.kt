@@ -1666,11 +1666,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
         val sessionPrefs = SessionPreferences(this)
-        if (settingsPrefs.isAutoVpnSyncEnabled) {
-            sessionPrefs.isIpMaskingEnabled = true
+        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled) {
             val prepareIntent = android.net.VpnService.prepare(this)
             if (prepareIntent != null) {
-                vpnPermissionLauncher.launch(prepareIntent)
                 return
             }
             if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {

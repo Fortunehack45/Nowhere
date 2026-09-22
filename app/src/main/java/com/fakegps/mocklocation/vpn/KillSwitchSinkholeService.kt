@@ -40,6 +40,13 @@ class KillSwitchSinkholeService : VpnService() {
     private var sinkholeJob: Job? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val prefs = SessionPreferences(this)
+        if (!prefs.isKillSwitchEnabled || prefs.isKillSwitchBypassed) {
+            Log.i(TAG, "Kill Switch is disabled or bypassed; halting sinkhole immediately.")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         if (intent?.action == ACTION_BYPASS) {
             Log.i(TAG, "Emergency bypass triggered via notification action.")
             KillSwitchManager.setBypassed(this, true)
@@ -50,7 +57,7 @@ class KillSwitchSinkholeService : VpnService() {
         val reason = intent?.getStringExtra("EXTRA_REASON") ?: "Mock GPS is inactive"
         startForegroundNotification(reason)
         activateSinkhole()
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun activateSinkhole() {

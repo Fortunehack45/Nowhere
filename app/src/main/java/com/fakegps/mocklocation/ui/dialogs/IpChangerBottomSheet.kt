@@ -107,7 +107,10 @@ class IpChangerBottomSheet @JvmOverloads constructor(
             buttonView.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
             settingsPrefs.isAutoVpnSyncEnabled = isChecked
             sessionPrefs.isIpMaskingEnabled = isChecked
-            val statusMsg = if (isChecked) "VPN Auto-Sync Enabled" else "VPN Auto-Sync Disabled"
+            if (!isChecked && NowhereVpnService.isRunning) {
+                NowhereVpnService.stop(ctx)
+            }
+            val statusMsg = if (isChecked) "VPN Auto-Sync Enabled" else "Direct Carrier Internet Active ⚡"
             Toast.makeText(ctx, statusMsg, Toast.LENGTH_SHORT).show()
             onShieldStateChanged?.invoke()
         }

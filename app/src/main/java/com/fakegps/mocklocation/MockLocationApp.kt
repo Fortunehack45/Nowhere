@@ -44,13 +44,15 @@ class MockLocationApp : Application() {
         // Initialize Google AdMob App Open Ads Manager
         appOpenAdManager = AppOpenAdManager(this)
 
-        // Auto-VPN Coordination: VPN connects on location start, disconnects on stop.
-        val vpnCoordinationInitialized = sharedPrefs.getBoolean("key_vpn_coordination_v1", false)
+        // Direct Carrier Internet: Mock Location operates directly on carrier network / Wi-Fi by default.
+        // VPN remains purely an optional, user-activated feature to ensure mobile data is never degraded.
+        val vpnCoordinationInitialized = sharedPrefs.getBoolean("key_vpn_coordination_v2", false)
         if (!vpnCoordinationInitialized) {
             val sessionPrefs = SessionPreferences(this)
-            settingsPrefs.isAutoVpnSyncEnabled = true
-            sessionPrefs.isIpMaskingEnabled = true
-            sharedPrefs.edit().putBoolean("key_vpn_coordination_v1", true).apply()
+            settingsPrefs.isAutoVpnSyncEnabled = false
+            sessionPrefs.isIpMaskingEnabled = false
+            sessionPrefs.isKillSwitchEnabled = false
+            sharedPrefs.edit().putBoolean("key_vpn_coordination_v2", true).apply()
         }
     }
 }

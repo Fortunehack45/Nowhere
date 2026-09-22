@@ -307,21 +307,11 @@ class NowhereVpnService : VpnService() {
                                 setUnderlyingNetworks(arrayOf(network))
                             } catch (ignored: Exception) {}
                         }
-                        if (!WireGuardTunnelManager.isTunnelActive(this@NowhereVpnService)) {
-                            serviceScope.launch {
-                                delay(300L)
-                                if (isRunning && !WireGuardTunnelManager.isTunnelActive(this@NowhereVpnService)) {
-                                    connectVpn(sessionPrefs.activeIpNodeId)
-                                }
-                            }
-                        }
                     }
                 }
 
                 override fun onLost(network: Network) {
-                    Log.i(TAG, "Offline / Airplane mode detected: Privacy Shield remains 100% active & locked to mock GPS.")
-                    val node = IpManager.getNodeById(sessionPrefs.activeIpNodeId)
-                    _vpnState.value = VpnState.Connected(node)
+                    Log.i(TAG, "Underlying network disconnected.")
                 }
             }
 
@@ -434,6 +424,21 @@ class NowhereVpnService : VpnService() {
     ) {
         val cleanAssignedIp = if (assignedTunnelIp.contains("/")) assignedTunnelIp.substringBefore("/") else assignedTunnelIp
         Log.i(TAG, "Starting WireGuard GoBackend for ${node.name} [Endpoint: $serverEndpoint, IP: $cleanAssignedIp, DNS: $tunnelDns]")
+
+        // Pre-flight check: ensure endpoint can be resolved before touching default routes
+        val canResolve = withContext(Dispatchers.IO) {
+            try {
+                val host = serverEndpoint.substringBefore(":")
+                InetAddress.getByName(host) != null
+            } catch (e: Exception) {
+                Log.w(TAG, "Pre-flight endpoint resolution failed for $serverEndpoint: ${e.message}")
+                false
+            }
+        }
+        if (!canResolve) {
+            handleConnectionFailure(node, "Server address unresolved. Direct mobile data preserved.")
+            return
+        }
 
         val wgStartResult = WireGuardTunnelManager.startTunnel(
             context = this@NowhereVpnService,
@@ -581,9 +586,6 @@ class NowhereVpnService : VpnService() {
         _vpnState.value = VpnState.Disconnected
         _trafficStats.value = VpnTrafficStats()
         try {
-            KillSwitchManager.evaluate(this)
-        } catch (ignored: Exception) {}
-        try {
             com.fakegps.mocklocation.ui.widget.NowhereVpnWidgetProvider.updateAllVpnWidgets(this)
         } catch (ignored: Exception) {}
         try {
@@ -612,9 +614,6 @@ class NowhereVpnService : VpnService() {
         disconnectInterface()
         releaseWakeLock()
         _vpnState.value = VpnState.Disconnected
-        try {
-            KillSwitchManager.evaluate(this)
-        } catch (ignored: Exception) {}
     }
 
     private fun createNotificationChannel() {
