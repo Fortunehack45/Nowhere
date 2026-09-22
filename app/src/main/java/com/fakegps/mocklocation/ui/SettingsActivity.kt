@@ -95,7 +95,9 @@ class SettingsActivity : AppCompatActivity() {
         if (activeLang != currentLanguageCode || LocaleHelper.isLanguageStale) {
             LocaleHelper.isLanguageStale = false
             currentLanguageCode = activeLang
-            recreate()
+            val locale = java.util.Locale.forLanguageTag(activeLang)
+            LocaleHelper.updateResources(this, locale)
+            reloadContentViewSmoothly()
             return
         }
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this).onResume()
@@ -357,8 +359,11 @@ class SettingsActivity : AppCompatActivity() {
         binding.layoutSettingsLanguage.setOnClickListener {
             val sheet = LanguageSelectorBottomSheet.newInstance()
             sheet.onLanguageChanged = {
-                val updated = LocaleHelper.getSelectedLanguageItem(this)
-                binding.tvSettingsLanguageCurrent.text = "${updated.nativeName} ${updated.flagEmoji}"
+                val activeLang = LocaleHelper.getSelectedLanguage(this)
+                currentLanguageCode = activeLang
+                val locale = java.util.Locale.forLanguageTag(activeLang)
+                LocaleHelper.updateResources(this, locale)
+                reloadContentViewSmoothly()
             }
             sheet.show(supportFragmentManager, LanguageSelectorBottomSheet.TAG)
         }
@@ -687,7 +692,10 @@ class SettingsActivity : AppCompatActivity() {
             com.fakegps.mocklocation.util.ThemeColorManager.updateAllAppWidgets(this)
             Toast.makeText(this, "App Theme Updated to ${chosenTheme.displayName}!", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
-            recreate()
+            refreshThemeColorUI()
+            refreshSystemStatus()
+            refreshWidgetSlotsUI()
+            com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
         }
 
         dialog.show()
@@ -901,7 +909,7 @@ class SettingsActivity : AppCompatActivity() {
         settingsPrefs.isNmeaSynthesisEnabled = true
         settingsPrefs.isClockDriftEmulationEnabled = true
         settingsPrefs.isSensorKinematicsEnabled = true
-        settingsPrefs.isAutoVpnSyncEnabled = false
+        settingsPrefs.isAutoVpnSyncEnabled = true
         settingsPrefs.isRecentsShieldEnabled = false
 
         sessionPrefs.isPersistentBootInjectionEnabled = true
@@ -926,15 +934,35 @@ class SettingsActivity : AppCompatActivity() {
         com.fakegps.mocklocation.util.ThemeColorManager.updateAllAppWidgets(this)
 
         loadInitialValues()
+        refreshSystemStatus()
+        refreshNotificationPermissionUI()
+    }
 
-        // Restart activity cleanly without savedInstanceState so all views reset
-        val restartIntent = Intent(this, SettingsActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+    private fun reloadContentViewSmoothly() {
+        val scrollY = try { binding.scrollViewSettings.scrollY } catch (e: Exception) { 0 }
+        binding = ActivitySettingsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        loadInitialValues()
+        setupListeners()
+        observeSessionTimer()
+        observeBillingState()
+        refreshSystemStatus()
+        refreshNotificationPermissionUI()
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, this)
+        if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
+            com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
         }
-        finish()
-        overridePendingTransition(0, 0)
-        startActivity(restartIntent)
-        overridePendingTransition(0, 0)
+        binding.scrollViewSettings.post {
+            binding.scrollViewSettings.scrollY = scrollY
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val activeLang = LocaleHelper.getSelectedLanguage(this)
+        val locale = java.util.Locale.forLanguageTag(activeLang)
+        LocaleHelper.updateResources(this, locale)
+        reloadContentViewSmoothly()
     }
 
     private fun pinNowhereShortcut() {

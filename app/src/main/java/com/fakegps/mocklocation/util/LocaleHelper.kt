@@ -7,6 +7,7 @@ import android.os.LocaleList
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.preference.PreferenceManager
+import kotlinx.coroutines.flow.asSharedFlow
 import java.util.Locale
 
 data class SupportedLanguage(
@@ -36,6 +37,9 @@ object LocaleHelper {
 
     var isLanguageStale: Boolean = false
 
+    private val _languageChangeFlow = kotlinx.coroutines.flow.MutableSharedFlow<String>(replay = 1)
+    val languageChangeFlow: kotlinx.coroutines.flow.SharedFlow<String> = _languageChangeFlow.asSharedFlow()
+
     fun getSelectedLanguage(context: Context): String {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         return prefs.getString(KEY_APP_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
@@ -64,9 +68,11 @@ object LocaleHelper {
         try {
             updateResources(context.applicationContext, locale)
         } catch (ignored: Exception) {}
+
+        _languageChangeFlow.tryEmit(languageCode)
     }
 
-    private fun updateResources(context: Context, locale: Locale) {
+    fun updateResources(context: Context, locale: Locale) {
         val res = context.resources
         val config = Configuration(res.configuration)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -74,6 +80,9 @@ object LocaleHelper {
         } else {
             @Suppress("DEPRECATION")
             config.locale = locale
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            config.setLayoutDirection(locale)
         }
         @Suppress("DEPRECATION")
         res.updateConfiguration(config, res.displayMetrics)

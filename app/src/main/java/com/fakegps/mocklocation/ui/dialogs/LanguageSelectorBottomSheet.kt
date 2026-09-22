@@ -71,7 +71,6 @@ class LanguageSelectorBottomSheet : BottomSheetDialogFragment() {
                 ).show()
                 onLanguageChanged?.invoke()
                 dismiss()
-                activity?.recreate()
             } else {
                 dismiss()
             }

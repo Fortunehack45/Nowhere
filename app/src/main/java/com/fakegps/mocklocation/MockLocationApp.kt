@@ -44,15 +44,14 @@ class MockLocationApp : Application() {
         // Initialize Google AdMob App Open Ads Manager
         appOpenAdManager = AppOpenAdManager(this)
 
-        // Direct Carrier Internet: Mock Location operates directly on carrier network / Wi-Fi by default.
-        // VPN remains purely an optional, user-activated feature to ensure mobile data is never degraded.
-        val vpnCoordinationInitialized = sharedPrefs.getBoolean("key_vpn_coordination_v2", false)
+        // VPN Auto-Sync: Synchronizes WireGuard IP shield with mock location by default.
+        // Users can toggle this off in IP Shield settings for direct carrier mobile data.
+        val vpnCoordinationInitialized = sharedPrefs.getBoolean("key_vpn_coordination_v3", false)
         if (!vpnCoordinationInitialized) {
             val sessionPrefs = SessionPreferences(this)
-            settingsPrefs.isAutoVpnSyncEnabled = false
-            sessionPrefs.isIpMaskingEnabled = false
+            settingsPrefs.isAutoVpnSyncEnabled = true
             sessionPrefs.isKillSwitchEnabled = false
-            sharedPrefs.edit().putBoolean("key_vpn_coordination_v2", true).apply()
+            sharedPrefs.edit().putBoolean("key_vpn_coordination_v3", true).apply()
         }
     }
 }

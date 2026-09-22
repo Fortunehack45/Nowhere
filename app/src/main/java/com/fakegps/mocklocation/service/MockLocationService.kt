@@ -288,10 +288,11 @@ class MockLocationService : Service() {
         )
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Sync WireGuard VPN Shield ONLY if user explicitly enabled auto-VPN sync and IP masking
-        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Sync WireGuard VPN Shield if user enabled auto-VPN sync
+        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(initialLat, initialLon)
             try {
+                sessionPrefs.isIpMaskingEnabled = true
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
             } catch (e: Exception) {
                 Log.w(TAG, "VPN auto-sync start on motion sync failed (non-fatal): ${e.message}")
@@ -754,10 +755,11 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Sync WireGuard VPN Shield ONLY if user explicitly enabled auto-VPN sync and IP masking
-        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Sync WireGuard VPN Shield if user enabled auto-VPN sync
+        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(latitude, longitude)
             try {
+                sessionPrefs.isIpMaskingEnabled = true
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
             } catch (e: Exception) {
                 Log.w(TAG, "VPN auto-sync start failed (non-fatal): ${e.message}")
@@ -924,10 +926,11 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Sync WireGuard VPN Shield ONLY if user explicitly enabled auto-VPN sync and IP masking
-        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Sync WireGuard VPN Shield if user enabled auto-VPN sync
+        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(firstPt.latitude, firstPt.longitude)
             try {
+                sessionPrefs.isIpMaskingEnabled = true
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
             } catch (e: Exception) {
                 Log.w(TAG, "VPN auto-sync start on route failed (non-fatal): ${e.message}")
@@ -1209,10 +1212,11 @@ class MockLocationService : Service() {
 
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
-        // Sync WireGuard VPN Shield ONLY if user explicitly enabled auto-VPN sync and IP masking
-        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+        // Sync WireGuard VPN Shield if user enabled auto-VPN sync
+        if (settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
             val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(startLat, startLon)
             try {
+                sessionPrefs.isIpMaskingEnabled = true
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
             } catch (e: Exception) {
                 Log.w(TAG, "VPN auto-sync start on joystick failed (non-fatal): ${e.message}")

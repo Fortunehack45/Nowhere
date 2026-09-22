@@ -256,8 +256,15 @@ class MainActivity : AppCompatActivity() {
         applyHudFrostedGlass()
 
         binding.btnHeaderLanguage.setOnClickListener {
-            com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet.newInstance()
-                .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet.TAG)
+            val sheet = com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet.newInstance()
+            sheet.onLanguageChanged = {
+                val activeLang = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
+                currentLanguageCode = activeLang
+                val locale = java.util.Locale.forLanguageTag(activeLang)
+                com.fakegps.mocklocation.util.LocaleHelper.updateResources(this, locale)
+                rebindLocalizedStrings()
+            }
+            sheet.show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet.TAG)
         }
 
         binding.btnHeaderWidgets.setOnClickListener {
@@ -406,12 +413,21 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         val activeLang = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
-        if (activeLang != currentLanguageCode || com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale || com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale) {
+        var needsRebind = false
+        if (activeLang != currentLanguageCode || com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale) {
             com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale = false
-            com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale = false
             currentLanguageCode = activeLang
-            recreate()
-            return
+            val locale = java.util.Locale.forLanguageTag(activeLang)
+            com.fakegps.mocklocation.util.LocaleHelper.updateResources(this, locale)
+            needsRebind = true
+        }
+        if (com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale) {
+            com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale = false
+            applyDynamicThemeAccent()
+            binding.mapView.invalidate()
+        }
+        if (needsRebind) {
+            rebindLocalizedStrings()
         }
         binding.mapView.onResume()
         binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
@@ -1666,14 +1682,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
         val sessionPrefs = SessionPreferences(this)
-        if (settingsPrefs.isAutoVpnSyncEnabled && sessionPrefs.isIpMaskingEnabled) {
+        if (settingsPrefs.isAutoVpnSyncEnabled) {
             val prepareIntent = android.net.VpnService.prepare(this)
             if (prepareIntent != null) {
+                vpnPermissionLauncher.launch(prepareIntent)
                 return
             }
             if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
                 val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
                 try {
+                    sessionPrefs.isIpMaskingEnabled = true
                     com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
                 } catch (e: Exception) {
                     android.util.Log.w("MainActivity", "Failed to auto-engage VPN: ${e.message}")
@@ -1907,8 +1925,7 @@ class MainActivity : AppCompatActivity() {
                         binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
                         binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_muted)
                         binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_muted))
-                        val sessionPrefs = SessionPreferences(this@MainActivity)
-                        binding.tvIpShieldBadge.text = if (sessionPrefs.isIpMaskingEnabled && settingsPrefs.isAutoVpnSyncEnabled) getString(R.string.vpn_shield_synced) else getString(R.string.vpn_shield_off)
+                        binding.tvIpShieldBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) getString(R.string.vpn_shield_synced) else getString(R.string.vpn_shield_off)
                     }
                 }
             }
@@ -2035,12 +2052,84 @@ class MainActivity : AppCompatActivity() {
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(searchOverlay.layoutSearchOverlayRoot, this)
     }
 
+    private fun rebindLocalizedStrings() {
+        // Mode Tabs
+        binding.rbFixedMode.text = getString(R.string.tab_fixed)
+        binding.rbRouteMode.text = getString(R.string.tab_route)
+        binding.rbJoystickMode.text = getString(R.string.tab_joystick)
+
+        // Search Bar & Presets
+        binding.etAddressSearch.hint = getString(R.string.title_search_hint)
+        binding.chipPresetNewYork.text = getString(R.string.main_new_york)
+        binding.chipPresetParis.text = getString(R.string.main_paris)
+        binding.chipPresetTokyo.text = getString(R.string.main_tokyo)
+        binding.chipPresetDubai.text = getString(R.string.main_dubai)
+        binding.chipPresetLondon.text = getString(R.string.main_london)
+        binding.chipPresetHonolulu.text = getString(R.string.main_honolulu)
+
+        // Mock Setup Banner
+        binding.tvBannerMockText.text = getString(R.string.warning_mock_provider_required)
+        binding.btnBannerEnable.text = getString(R.string.main_configure)
+        binding.btnBannerErrorDismiss.text = getString(R.string.btn_dismiss)
+
+        // Slide Deck Toggle
+        val isExpanded = binding.layoutExpandableBottomControls.visibility == View.VISIBLE
+        binding.tvToggleBottomDeckLabel.text = if (isExpanded) getString(R.string.hud_slide_down_hide) else getString(R.string.hud_slide_up_show)
+
+        // Transport Modes
+        binding.rbTransportFoot.text = getString(R.string.transport_walk)
+        binding.rbTransportVehicle.text = getString(R.string.transport_drive)
+        binding.rbTransportAircraft.text = getString(R.string.transport_fly)
+        binding.rbTransportShip.text = getString(R.string.transport_ship)
+
+        // Route Toolbar
+        binding.btnSavedRoutesDrawer.text = getString(R.string.main_routes)
+        binding.btnSaveCurrentRoute.text = getString(R.string.main_save)
+        binding.btnReverseRoute.text = getString(R.string.main_reverse)
+        binding.btnImportGpx.text = getString(R.string.btn_import_gpx)
+        binding.btnExportGpx.text = getString(R.string.main_export_gpx)
+        binding.btnClearRoute.text = getString(R.string.main_clear)
+
+        // Motion Sync & Terrain
+        binding.tvMotionSyncTitle.text = getString(R.string.main_motion_sync)
+        binding.tvMotionSyncSubtitle.text = getString(R.string.main_moves_in_sync_with_physical)
+        binding.btnToggleTerrainAdvanced.text = getString(R.string.main_advanced_settings)
+
+        // Search Overlay
+        val overlay = binding.includedSearchOverlay
+        overlay.etSearchOverlayInput.hint = getString(R.string.title_search_hint)
+        overlay.btnJumpDirectCoords.text = getString(R.string.search_ove_jump)
+        overlay.btnClearAllSearchHistory.text = getString(R.string.search_ove_clear_all)
+
+        // Badges & Action Buttons
+        renderGhostCloakBadge()
+        renderUiState(viewModel.uiState.value)
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val activeLang = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
+        val locale = java.util.Locale.forLanguageTag(activeLang)
+        com.fakegps.mocklocation.util.LocaleHelper.updateResources(this, locale)
+        applyDynamicThemeAccent()
+        rebindLocalizedStrings()
+        binding.mapView.invalidate()
+    }
+
     private fun observeUiState() {
         lifecycleScope.launch {
             com.fakegps.mocklocation.util.ThemeColorManager.themeChangeFlow.collectLatest {
                 applyDynamicThemeAccent()
                 renderUiState(viewModel.uiState.value)
                 binding.mapView.invalidate()
+            }
+        }
+
+        lifecycleScope.launch {
+            com.fakegps.mocklocation.util.LocaleHelper.languageChangeFlow.collectLatest { langCode ->
+                val locale = java.util.Locale.forLanguageTag(langCode)
+                com.fakegps.mocklocation.util.LocaleHelper.updateResources(this@MainActivity, locale)
+                rebindLocalizedStrings()
             }
         }
 

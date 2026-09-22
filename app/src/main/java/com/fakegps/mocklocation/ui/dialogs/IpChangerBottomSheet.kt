@@ -109,8 +109,19 @@ class IpChangerBottomSheet @JvmOverloads constructor(
             sessionPrefs.isIpMaskingEnabled = isChecked
             if (!isChecked && NowhereVpnService.isRunning) {
                 NowhereVpnService.stop(ctx)
+            } else if (isChecked && !NowhereVpnService.isRunning && com.fakegps.mocklocation.service.MockLocationService.isSimulationRunning()) {
+                val liveState = com.fakegps.mocklocation.service.MockLocationService.activeInstance?.serviceState?.value
+                val lat = if (liveState is com.fakegps.mocklocation.service.ServiceState.Running) liveState.latitude else sessionPrefs.lastLatitude
+                val lon = if (liveState is com.fakegps.mocklocation.service.ServiceState.Running) liveState.longitude else sessionPrefs.lastLongitude
+                val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
+                val prepareIntent = VpnService.prepare(ctx)
+                if (prepareIntent != null) {
+                    vpnPrepareLauncher.launch(prepareIntent)
+                } else {
+                    NowhereVpnService.start(ctx, node.id)
+                }
             }
-            val statusMsg = if (isChecked) "VPN Auto-Sync Enabled" else "Direct Carrier Internet Active ⚡"
+            val statusMsg = if (isChecked) "Sync with Mock Location Enabled" else "Direct Carrier Internet Active ⚡"
             Toast.makeText(ctx, statusMsg, Toast.LENGTH_SHORT).show()
             onShieldStateChanged?.invoke()
         }
