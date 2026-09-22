@@ -90,8 +90,7 @@ object FrostedGlassManager {
         val alphaFraction = clampedPercent / 100f
         val alphaInt = (alphaFraction * 255f).toInt().coerceIn(0, 255)
 
-        val isNight = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val isNight = ThemeColorManager.isDarkMode(context)
 
         val cardBgColor = if (isNight) {
             // Apple Dark Ash: blend #1C1C1E to #2C2C2E based on alpha

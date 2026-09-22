@@ -61,7 +61,8 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupSystemBarInsets()
 
-        val restoreY = intent.getIntExtra("EXTRA_RESTORE_SCROLL_Y", 0)
+        val restoreY = savedInstanceState?.getInt("EXTRA_RESTORE_SCROLL_Y", 0)
+            ?: intent.getIntExtra("EXTRA_RESTORE_SCROLL_Y", 0)
         if (restoreY > 0) {
             binding.scrollViewSettings.post {
                 binding.scrollViewSettings.scrollY = restoreY
@@ -942,6 +943,11 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupSystemBarInsets() {
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isDarkMode(this)
+        insetsController.isAppearanceLightStatusBars = !isDark
+        insetsController.isAppearanceLightNavigationBars = !isDark
+
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
             val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
@@ -964,6 +970,13 @@ class SettingsActivity : AppCompatActivity() {
             binding.layoutSettingsHeader.updatePadding(top = statusBarInset.top)
         }
         androidx.core.view.ViewCompat.requestApplyInsets(binding.root)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        try {
+            outState.putInt("EXTRA_RESTORE_SCROLL_Y", binding.scrollViewSettings.scrollY)
+        } catch (ignored: Exception) {}
     }
 
     private var isRestartingForLanguage = false

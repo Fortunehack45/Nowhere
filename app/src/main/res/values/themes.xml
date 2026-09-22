@@ -10,8 +10,8 @@
         <item name="android:windowBackground">@color/surface_dark</item>
         <item name="android:statusBarColor">@color/surface_dark</item>
         <item name="android:navigationBarColor">@color/surface_dark</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
         <item name="sliderStyle">@style/Widget.Nowhere.Slider</item>
         <item name="materialSwitchStyle">@style/Widget.Nowhere.Switch</item>
         <item name="bottomSheetDialogTheme">@style/Theme.Nowhere.BottomSheetDialog</item>

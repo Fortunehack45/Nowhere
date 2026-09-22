@@ -170,6 +170,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var currentLanguageCode: String = ""
+    private var currentThemeMode: String = ""
 
     private val vpnPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -202,6 +203,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         currentLanguageCode = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
         settingsPrefs = AppSettingsPreferences(this)
+        currentThemeMode = settingsPrefs.appTheme
         com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -223,6 +225,10 @@ class MainActivity : AppCompatActivity() {
 
         // Handle edge-to-edge system bar insets (Android 15+ & targetSdk 35)
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isDarkMode(this)
+        insetsController.isAppearanceLightStatusBars = !isDark
+        insetsController.isAppearanceLightNavigationBars = !isDark
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             val statusBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
             val navBarInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
@@ -434,6 +440,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (currentThemeMode.isNotEmpty() && currentThemeMode != settingsPrefs.appTheme) {
+            currentThemeMode = settingsPrefs.appTheme
+            recreate()
+            return
+        }
+        val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+        val isDark = com.fakegps.mocklocation.util.ThemeColorManager.isDarkMode(this)
+        insetsController.isAppearanceLightStatusBars = !isDark
+        insetsController.isAppearanceLightNavigationBars = !isDark
+
         val activeLang = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
         var needsRebind = false
         if (activeLang != currentLanguageCode || com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale) {
