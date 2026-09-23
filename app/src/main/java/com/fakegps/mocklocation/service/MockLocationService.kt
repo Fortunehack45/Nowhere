@@ -1376,7 +1376,9 @@ class MockLocationService : Service() {
         _serviceState.value = ServiceState.Idle
         try { updateAllWidgets() } catch (e: Exception) { Log.w(TAG, "widget update on stop (non-fatal): ${e.message}") }
         try { FloatingJoystickService.stop(this) } catch (e: Exception) {}
-        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
+        if (settingsPrefs.isAutoVpnSyncEnabled) {
+            try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
+        }
         try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS stopped by user") } catch (e: Exception) {}
         try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (e: Exception) {}
         try {
@@ -1468,7 +1470,9 @@ class MockLocationService : Service() {
         try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
         try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
         try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
-        try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
+        if (settingsPrefs.isAutoVpnSyncEnabled) {
+            try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
+        }
         try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
         try { engine.stop() } catch (e: Exception) {}
         serviceJob.cancel()

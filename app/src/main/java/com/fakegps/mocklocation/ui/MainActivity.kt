@@ -287,10 +287,14 @@ class MainActivity : AppCompatActivity() {
             val sheet = com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet.newInstance()
             sheet.onLanguageChanged = {
                 val activeLang = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
-                currentLanguageCode = activeLang
-                val locale = java.util.Locale.forLanguageTag(activeLang)
-                com.fakegps.mocklocation.util.LocaleHelper.updateResources(this, locale)
-                rebindLocalizedStrings()
+                if (activeLang != currentLanguageCode) {
+                    currentLanguageCode = activeLang
+                    val locale = java.util.Locale.forLanguageTag(activeLang)
+                    com.fakegps.mocklocation.util.LocaleHelper.updateResources(this, locale)
+                    recreate()
+                } else {
+                    rebindLocalizedStrings()
+                }
             }
             sheet.show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.LanguageSelectorBottomSheet.TAG)
         }
@@ -451,21 +455,18 @@ class MainActivity : AppCompatActivity() {
         insetsController.isAppearanceLightNavigationBars = !isDark
 
         val activeLang = com.fakegps.mocklocation.util.LocaleHelper.getSelectedLanguage(this)
-        var needsRebind = false
-        if (activeLang != currentLanguageCode || com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale) {
+        if (currentLanguageCode.isNotEmpty() && (activeLang != currentLanguageCode || com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale)) {
             com.fakegps.mocklocation.util.LocaleHelper.isLanguageStale = false
             currentLanguageCode = activeLang
             val locale = java.util.Locale.forLanguageTag(activeLang)
             com.fakegps.mocklocation.util.LocaleHelper.updateResources(this, locale)
-            needsRebind = true
+            recreate()
+            return
         }
         if (com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale) {
             com.fakegps.mocklocation.util.ThemeColorManager.isThemeStale = false
             applyDynamicThemeAccent()
             binding.mapView.invalidate()
-        }
-        if (needsRebind) {
-            rebindLocalizedStrings()
         }
         binding.mapView.onResume()
         binding.mapView.setTileSource(settingsPrefs.getOsmTileSource())
@@ -1895,9 +1896,11 @@ class MainActivity : AppCompatActivity() {
         try {
             com.fakegps.mocklocation.service.FloatingJoystickService.stop(this)
         } catch (ignored: Exception) {}
-        try {
-            com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this)
-        } catch (ignored: Exception) {}
+        if (settingsPrefs.isAutoVpnSyncEnabled) {
+            try {
+                com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this)
+            } catch (ignored: Exception) {}
+        }
         viewModel.onServiceStateUpdated(ServiceState.Idle)
         com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Simulation stopped")
         com.fakegps.mocklocation.ads.AdManager.showInterstitialIfReady(this)
@@ -1926,6 +1929,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun renderIpShieldBadge() {
+        if (isFinishing || isDestroyed) return
+        val vpnState = com.fakegps.mocklocation.vpn.NowhereVpnService.vpnState.value
+        when (vpnState) {
+            is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connected -> {
+                binding.layoutIpShieldBadge.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this@MainActivity)
+                binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
+                binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
+                binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
+                binding.tvIpShieldBadge.text = getString(R.string.vpn_ghost_shield)
+            }
+            is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connecting -> {
+                binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
+                binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
+                binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_warning_text)
+                binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_warning_text))
+                binding.tvIpShieldBadge.text = getString(R.string.vpn_connecting)
+            }
+            is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Error -> {
+                binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)
+                binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
+                binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.white)
+                binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
+                binding.tvIpShieldBadge.text = getString(R.string.vpn_error)
+            }
+            is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Disconnected -> {
+                binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
+                binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
+                binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_muted)
+                binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_muted))
+                binding.tvIpShieldBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) getString(R.string.vpn_shield_synced) else getString(R.string.vpn_shield_off)
+            }
+        }
+    }
+
     private fun setupIpShield() {
         binding.layoutIpShieldBadge.setOnClickListener {
             val bottomSheet = com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet.newInstance(
@@ -1935,38 +1973,11 @@ class MainActivity : AppCompatActivity() {
             bottomSheet.show(supportFragmentManager, "IpChangerBottomSheet")
         }
 
+        renderIpShieldBadge()
+
         lifecycleScope.launch {
-            com.fakegps.mocklocation.vpn.NowhereVpnService.vpnState.collectLatest { vpnState ->
-                when (vpnState) {
-                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connected -> {
-                        binding.layoutIpShieldBadge.backgroundTintList = com.fakegps.mocklocation.util.ThemeColorManager.getLightTintStateList(this@MainActivity)
-                        binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
-                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
-                        binding.tvIpShieldBadge.text = getString(R.string.vpn_ghost_shield)
-                    }
-                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Connecting -> {
-                        binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
-                        binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_warning_text)
-                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_warning_text))
-                        binding.tvIpShieldBadge.text = getString(R.string.vpn_connecting)
-                    }
-                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Error -> {
-                        binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_bg)
-                        binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.white)
-                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
-                        binding.tvIpShieldBadge.text = getString(R.string.vpn_error)
-                    }
-                    is com.fakegps.mocklocation.vpn.NowhereVpnService.VpnState.Disconnected -> {
-                        binding.layoutIpShieldBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.surface_elevated)
-                        binding.ivShieldIcon.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivShieldIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.text_muted)
-                        binding.tvIpShieldBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_muted))
-                        binding.tvIpShieldBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) getString(R.string.vpn_shield_synced) else getString(R.string.vpn_shield_off)
-                    }
-                }
+            com.fakegps.mocklocation.vpn.NowhereVpnService.vpnState.collectLatest {
+                renderIpShieldBadge()
             }
         }
     }
@@ -2175,6 +2186,7 @@ class MainActivity : AppCompatActivity() {
 
             // Badges & Action Buttons
             renderGhostCloakBadge()
+            renderIpShieldBadge()
             renderUiState(viewModel.uiState.value)
         } catch (e: Exception) {
             android.util.Log.w("MainActivity", "Error rebinding localized strings", e)
@@ -2203,9 +2215,14 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             com.fakegps.mocklocation.util.LocaleHelper.languageChangeFlow.collectLatest { langCode ->
-                val locale = java.util.Locale.forLanguageTag(langCode)
-                com.fakegps.mocklocation.util.LocaleHelper.updateResources(this@MainActivity, locale)
-                rebindLocalizedStrings()
+                if (langCode != currentLanguageCode && !isFinishing && !isDestroyed) {
+                    currentLanguageCode = langCode
+                    val locale = java.util.Locale.forLanguageTag(langCode)
+                    com.fakegps.mocklocation.util.LocaleHelper.updateResources(this@MainActivity, locale)
+                    recreate()
+                } else {
+                    rebindLocalizedStrings()
+                }
             }
         }
 

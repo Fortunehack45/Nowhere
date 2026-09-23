@@ -18,7 +18,7 @@ object FrostedGlassManager {
     /**
      * Applies hardware-accelerated GPU window blur behind dialogs, bottom sheets, and floating windows.
      */
-    fun applyWindowBlur(dialog: Dialog?, radiusDp: Int = 35) {
+    fun applyWindowBlur(dialog: Dialog?, radiusDp: Int = 25) {
         val window = dialog?.window ?: return
         applyWindowBlur(window, radiusDp)
     }
@@ -26,11 +26,11 @@ object FrostedGlassManager {
     /**
      * Configures a Window to blur the underlying activity/map background on Android 12+.
      */
-    fun applyWindowBlur(window: Window, radiusDp: Int = 35, dimAmount: Float = 0.18f) {
+    fun applyWindowBlur(window: Window, radiusDp: Int = 25) {
         try {
-            // Set light dim amount (0.18f) instead of heavy 0.60f dark blanket,
+            // Set light dim amount (0.15f) instead of default heavy 0.60f dark blanket,
             // allowing the underlying blurred map colors and content to shine through the frosted glass!
-            window.setDimAmount(dimAmount)
+            window.setDimAmount(0.15f)
             window.setBackgroundDrawableResource(android.R.color.transparent)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -45,18 +45,6 @@ object FrostedGlassManager {
         } catch (ignored: Exception) {
             // Non-fatal if device vendor restricted window blur in battery-saver mode
         }
-    }
-
-    /**
-     * Applies hardware-accelerated GPU window blur to a BottomSheetDialogFragment
-     * and clears the default opaque container background.
-     */
-    fun applyBottomSheetBlur(sheet: com.google.android.material.bottomsheet.BottomSheetDialogFragment, radiusDp: Int = 35) {
-        val dlg = sheet.dialog ?: return
-        applyWindowBlur(dlg, radiusDp)
-        try {
-            dlg.window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundResource(android.R.color.transparent)
-        } catch (ignored: Exception) {}
     }
 
     /**
@@ -104,41 +92,35 @@ object FrostedGlassManager {
 
         val isNight = ThemeColorManager.isDarkMode(context)
 
-        // Apple Translucent Acrylic: 85-92% opacity gives rich depth while letting map texture bleed through
         val cardBgColor = if (isNight) {
-            val darkAlpha = (alphaInt * 0.90f).toInt().coerceIn(160, 240)
-            android.graphics.Color.argb(darkAlpha, 26, 26, 32)
+            // Apple Dark Ash: blend #1C1C1E to #2C2C2E based on alpha
+            android.graphics.Color.argb(alphaInt, 36, 36, 40)
         } else {
-            val lightAlpha = (alphaInt * 0.88f).toInt().coerceIn(170, 245)
-            android.graphics.Color.argb(lightAlpha, 255, 255, 255)
+            // Apple Frosted Light: blend white with alpha
+            android.graphics.Color.argb(alphaInt, 255, 255, 255)
         }
 
-        // Clean subtle border without any glowing effect
         val strokeColor = if (isNight) {
-            android.graphics.Color.parseColor("#38383A")
+            // Specular hairline border
+            android.graphics.Color.argb(
+                (alphaInt * 0.45f).toInt().coerceIn(40, 120),
+                255, 255, 255
+            )
         } else {
-            android.graphics.Color.parseColor("#E5E5EA")
+            android.graphics.Color.argb(
+                (alphaInt * 0.20f).toInt().coerceIn(25, 60),
+                0, 0, 0
+            )
         }
 
         cards.forEach { card ->
             card.setCardBackgroundColor(cardBgColor)
             card.strokeColor = strokeColor
-            card.strokeWidth = (1f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+            card.strokeWidth = (1.2f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
         }
 
         edgeBlurViews.forEach { view ->
             view.alpha = (alphaFraction * 1.05f).coerceIn(0.4f, 1.0f)
-        }
-
-        // On Android 12+ (API 31+), apply hardware-accelerated RenderEffect blur directly onto the edge overlays
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val blurPx = (alphaFraction * 32f).coerceIn(12f, 40f)
-            val effect = RenderEffect.createBlurEffect(blurPx, blurPx, Shader.TileMode.CLAMP)
-            edgeBlurViews.forEach { view ->
-                try {
-                    view.setRenderEffect(effect)
-                } catch (ignored: Exception) {}
-            }
         }
     }
 }

@@ -194,6 +194,10 @@ class NowhereVpnService : VpnService() {
         }
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(com.fakegps.mocklocation.util.LocaleHelper.wrapContext(newBase))
+    }
+
     private fun releaseWakeLock() {
         try {
             if (wakeLock?.isHeld == true) {
@@ -226,11 +230,17 @@ class NowhereVpnService : VpnService() {
                 disconnectVpn()
             }
             else -> {
-                Log.d(TAG, "NowhereVpnService received unexpected intent or null action; stopping to preserve mobile data")
-                stopSelf()
+                if (intent == null && (isRunning || sessionPrefs.isIpMaskingEnabled)) {
+                    Log.i(TAG, "NowhereVpnService restarted by system; resuming active tunnel...")
+                    val nodeId = sessionPrefs.activeIpNodeId
+                    connectVpn(nodeId)
+                } else {
+                    Log.d(TAG, "NowhereVpnService received unexpected intent or null action; stopping to preserve mobile data")
+                    stopSelf()
+                }
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -456,12 +466,9 @@ class NowhereVpnService : VpnService() {
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 1800L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 6000L)
         if (!handshakeConfirmed) {
-            Log.w(TAG, "WireGuard handshake failed with $serverEndpoint — preserving mobile data...")
-            WireGuardTunnelManager.stopTunnelSync(this@NowhereVpnService)
-            handleConnectionFailure(node, "Server handshake failed. Mobile data preserved.")
-            return
+            Log.w(TAG, "WireGuard handshake pending or high latency with $serverEndpoint — maintaining active tunnel for background retry")
         }
 
         isRunning = true
@@ -496,8 +503,6 @@ class NowhereVpnService : VpnService() {
             var prevRx = totalRxBytes
             var prevTx = totalTxBytes
             var notificationCounter = 0
-            var deadPeerTicks = 0
-            var lastObservedRx = totalRxBytes
 
             while (isActive && isRunning) {
                 delay(1000L)
@@ -516,21 +521,6 @@ class NowhereVpnService : VpnService() {
                 val txRate = (totalTxBytes - prevTx).coerceAtLeast(0L)
                 prevRx = totalRxBytes
                 prevTx = totalTxBytes
-
-                // Dead Peer Detection / Blackhole Preventer:
-                // If user/apps are transmitting packets into the tunnel (txRate > 0)
-                // but ZERO return packets have been received from the server for >= 2 consecutive seconds:
-                if (txRate > 0L && totalRxBytes == lastObservedRx) {
-                    deadPeerTicks++
-                    if (deadPeerTicks >= 2) {
-                        Log.w(TAG, "⚠️ Dead Peer Detected: WireGuard server unresponsive for 2s! Disengaging VPN to protect mobile data.")
-                        handleConnectionFailure(node, "Peer inactive; restored direct carrier internet")
-                        break
-                    }
-                } else {
-                    deadPeerTicks = 0
-                }
-                lastObservedRx = totalRxBytes
 
                 val stats = VpnTrafficStats(
                     downloadBytes = totalRxBytes,
@@ -672,16 +662,27 @@ class NowhereVpnService : VpnService() {
             PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
         )
 
+        val disconnectTitle = try {
+            getString(R.string.vpn_btn_deactivate)
+        } catch (e: Exception) {
+            "Disconnect"
+        }
+        val shieldTitle = try {
+            getString(R.string.vpn_ghost_shield)
+        } catch (e: Exception) {
+            "Nowhere IP Shield"
+        }
+
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_shield_check)
             .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
-            .setContentTitle("Nowhere IP Shield • ${node.country}")
+            .setContentTitle("$shieldTitle • ${node.country}")
             .setContentText("↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})")
             .setStyle(NotificationCompat.BigTextStyle().bigText("Masked Egress IP: ${node.virtualIp} (${node.city}, ${node.country})\nTotal Bandwidth: ↓ ${stats.formatDownload()}  ↑ ${stats.formatUpload()} (${stats.formatDuration()})"))
-            .addAction(R.drawable.ic_close, "Disconnect", disconnectPendingIntent)
+            .addAction(R.drawable.ic_close, disconnectTitle, disconnectPendingIntent)
 
         return builder.build()
     }

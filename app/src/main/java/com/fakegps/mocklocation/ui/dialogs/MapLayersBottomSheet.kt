@@ -17,6 +17,12 @@ class MapLayersBottomSheet(
     private val binding get() = _binding!!
     private lateinit var settingsPrefs: AppSettingsPreferences
 
+    override fun onGetLayoutInflater(savedInstanceState: Bundle?): LayoutInflater {
+        val inflater = super.onGetLayoutInflater(savedInstanceState)
+        val context = com.fakegps.mocklocation.util.LocaleHelper.wrapContext(inflater.context)
+        return inflater.cloneInContext(context)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -42,16 +48,6 @@ class MapLayersBottomSheet(
 
         binding.btnLayerTopo.setOnClickListener {
             selectLayer("TOPO")
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        dialog?.let { dlg ->
-            com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dlg, radiusDp = 35)
-            try {
-                dlg.window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundResource(android.R.color.transparent)
-            } catch (ignored: Exception) {}
         }
     }
 

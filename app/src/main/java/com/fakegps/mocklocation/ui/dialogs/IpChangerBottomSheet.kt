@@ -76,6 +76,12 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         }
     }
 
+    override fun onGetLayoutInflater(savedInstanceState: Bundle?): LayoutInflater {
+        val inflater = super.onGetLayoutInflater(savedInstanceState)
+        val context = com.fakegps.mocklocation.util.LocaleHelper.wrapContext(inflater.context)
+        return inflater.cloneInContext(context)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -94,8 +100,36 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, ctx)
 
         setupControls()
+        rebindTexts()
         observeVpnState()
         observeTrafficStats()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            com.fakegps.mocklocation.util.LocaleHelper.languageChangeFlow.collectLatest {
+                rebindTexts()
+                context?.let { currentCtx ->
+                    renderVpnState(NowhereVpnService.vpnState.value, currentCtx)
+                }
+            }
+        }
+    }
+
+    private fun rebindTexts() {
+        if (_binding == null) return
+        val ctx = context ?: return
+        binding.tvSheetTitle.text = ctx.getString(R.string.ip_changer_nowhere_ghost_vpn)
+        binding.tvSheetSubtitle.text = ctx.getString(R.string.ip_changer_enterprise_antidetection_wireguard_shield)
+        binding.tvLabelDownload.text = ctx.getString(R.string.ip_changer_download)
+        binding.tvLabelUpload.text = ctx.getString(R.string.ip_changer_upload)
+        binding.tvLabelLatency.text = ctx.getString(R.string.ip_changer_latency)
+        binding.tvSyncTitle.text = ctx.getString(R.string.ip_changer_sync_with_mock_location)
+        binding.tvSyncDesc.text = ctx.getString(R.string.ip_changer_engages_vpn_on_mock_start)
+        binding.tvSpecsHeader.text = ctx.getString(R.string.ip_changer_antidetection_specifications)
+        binding.tvSpecWireguard.text = ctx.getString(R.string.ip_changer_kernel_wireguard_udp_51820_chacha20poly1305)
+        binding.tvSpecBbr.text = ctx.getString(R.string.ip_changer_google_bbr_congestion_control_zerobufferbloat)
+        binding.tvSpecTcpMss.text = ctx.getString(R.string.ip_changer_tcp_mss_clamping_pmtu_modifies)
+        binding.tvSpecEncryptedDns.text = ctx.getString(R.string.ip_changer_encrypted_dns_shield_routes_100)
+        binding.btnDone.text = ctx.getString(R.string.btn_done)
     }
 
     private fun setupControls() {
@@ -152,75 +186,79 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         }
     }
 
+    private fun renderVpnState(state: NowhereVpnService.VpnState, ctx: Context) {
+        if (_binding == null) return
+        when (state) {
+            is NowhereVpnService.VpnState.Connected -> {
+                binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
+                binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_text)
+                binding.tvVpnStateTitle.text = ctx.getString(R.string.vpn_state_protected)
+                binding.tvVpnBadge.text = ctx.getString(R.string.vpn_badge_protected)
+                binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_success_text))
+                binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_bg)
+                binding.tvVpnDescription.text = ctx.getString(R.string.vpn_desc_connected)
+
+                binding.btnToggleVpnManual.isEnabled = true
+                binding.btnToggleVpnManual.text = ctx.getString(R.string.vpn_btn_deactivate)
+                binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
+                binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+                binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.text_primary)
+                binding.layoutVpnTelemetry.visibility = View.VISIBLE
+                binding.tvServerNodeInfo.text = ctx.getString(R.string.vpn_node_connected)
+            }
+            is NowhereVpnService.VpnState.Connecting -> {
+                binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
+                binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
+                binding.tvVpnStateTitle.text = ctx.getString(R.string.vpn_state_connecting)
+                binding.tvVpnBadge.text = ctx.getString(R.string.vpn_badge_connecting)
+                binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_warning_text))
+                binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_bg)
+                binding.tvVpnDescription.text = ctx.getString(R.string.vpn_desc_connecting)
+
+                binding.btnToggleVpnManual.isEnabled = false
+                binding.btnToggleVpnManual.text = ctx.getString(R.string.vpn_btn_connecting)
+                binding.tvServerNodeInfo.text = ctx.getString(R.string.vpn_node_connecting)
+            }
+            is NowhereVpnService.VpnState.Error -> {
+                binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
+                binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_text)
+                binding.tvVpnStateTitle.text = ctx.getString(R.string.vpn_state_offline)
+                binding.tvVpnBadge.text = ctx.getString(R.string.vpn_badge_offline)
+                binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_error_text))
+                binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_bg)
+                binding.tvVpnDescription.text = ctx.getString(R.string.vpn_desc_error)
+
+                binding.btnToggleVpnManual.isEnabled = true
+                binding.btnToggleVpnManual.text = ctx.getString(R.string.vpn_btn_retry)
+                binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
+                binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
+                binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
+                binding.tvServerNodeInfo.text = ctx.getString(R.string.vpn_node_offline)
+            }
+            is NowhereVpnService.VpnState.Disconnected -> {
+                binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
+                binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.text_muted)
+                binding.tvVpnStateTitle.text = ctx.getString(R.string.vpn_state_inactive)
+                binding.tvVpnBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) ctx.getString(R.string.vpn_badge_synced) else ctx.getString(R.string.vpn_badge_inactive)
+                binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
+                binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
+                binding.tvVpnDescription.text = ctx.getString(R.string.vpn_desc_disconnected)
+
+                binding.btnToggleVpnManual.isEnabled = true
+                binding.btnToggleVpnManual.text = ctx.getString(R.string.vpn_btn_activate)
+                binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
+                binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
+                binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
+                binding.tvServerNodeInfo.text = ctx.getString(R.string.vpn_node_default)
+            }
+        }
+    }
+
     private fun observeVpnState() {
         viewLifecycleOwner.lifecycleScope.launch {
             NowhereVpnService.vpnState.collectLatest { state ->
                 val ctx = context ?: return@collectLatest
-
-                when (state) {
-                    is NowhereVpnService.VpnState.Connected -> {
-                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_text)
-                        binding.tvVpnStateTitle.text = getString(R.string.vpn_state_protected)
-                        binding.tvVpnBadge.text = getString(R.string.vpn_badge_protected)
-                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_success_text))
-                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_success_bg)
-                        binding.tvVpnDescription.text = getString(R.string.vpn_desc_connected)
-
-                        binding.btnToggleVpnManual.isEnabled = true
-                        binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_deactivate)
-                        binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
-                        binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
-                        binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.text_primary)
-                        binding.layoutVpnTelemetry.visibility = View.VISIBLE
-                        binding.tvServerNodeInfo.text = getString(R.string.vpn_node_connected)
-                    }
-                    is NowhereVpnService.VpnState.Connecting -> {
-                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
-                        binding.tvVpnStateTitle.text = getString(R.string.vpn_state_connecting)
-                        binding.tvVpnBadge.text = getString(R.string.vpn_badge_connecting)
-                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_warning_text))
-                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_bg)
-                        binding.tvVpnDescription.text = getString(R.string.vpn_desc_connecting)
-
-                        binding.btnToggleVpnManual.isEnabled = false
-                        binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_connecting)
-                        binding.tvServerNodeInfo.text = getString(R.string.vpn_node_connecting)
-                    }
-                    is NowhereVpnService.VpnState.Error -> {
-                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_text)
-                        binding.tvVpnStateTitle.text = getString(R.string.vpn_state_offline)
-                        binding.tvVpnBadge.text = getString(R.string.vpn_badge_offline)
-                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.badge_error_text))
-                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.badge_error_bg)
-                        binding.tvVpnDescription.text = getString(R.string.vpn_desc_error)
-
-                        binding.btnToggleVpnManual.isEnabled = true
-                        binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_retry)
-                        binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
-                        binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
-                        binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
-                        binding.tvServerNodeInfo.text = getString(R.string.vpn_node_offline)
-                    }
-                    is NowhereVpnService.VpnState.Disconnected -> {
-                        binding.ivVpnShield.setImageResource(R.drawable.ic_shield_check)
-                        binding.ivVpnShield.imageTintList = ContextCompat.getColorStateList(ctx, R.color.text_muted)
-                        binding.tvVpnStateTitle.text = getString(R.string.vpn_state_inactive)
-                        binding.tvVpnBadge.text = if (settingsPrefs.isAutoVpnSyncEnabled) getString(R.string.vpn_badge_synced) else getString(R.string.vpn_badge_inactive)
-                        binding.tvVpnBadge.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
-                        binding.tvVpnBadge.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
-                        binding.tvVpnDescription.text = getString(R.string.vpn_desc_disconnected)
-
-                        binding.btnToggleVpnManual.isEnabled = true
-                        binding.btnToggleVpnManual.text = getString(R.string.vpn_btn_activate)
-                        binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
-                        binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
-                        binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
-                        binding.tvServerNodeInfo.text = getString(R.string.vpn_node_default)
-                    }
-                }
+                renderVpnState(state, ctx)
             }
         }
     }

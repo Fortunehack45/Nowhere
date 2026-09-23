@@ -6,11 +6,11 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="12dp"
     android:layout_marginBottom="16dp"
-    app:cardBackgroundColor="@color/surface_glass_sheet"
-    app:cardCornerRadius="24dp"
+    app:cardBackgroundColor="@color/surface_dark"
+    app:cardCornerRadius="20dp"
     app:cardElevation="8dp"
     app:strokeColor="@color/stroke_glass_specular"
-    app:strokeWidth="1.2dp">
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"

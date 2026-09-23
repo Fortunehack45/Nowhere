@@ -49,6 +49,12 @@ class WeatherBottomSheet @JvmOverloads constructor(
         }
     }
 
+    override fun onGetLayoutInflater(savedInstanceState: Bundle?): LayoutInflater {
+        val inflater = super.onGetLayoutInflater(savedInstanceState)
+        val context = com.fakegps.mocklocation.util.LocaleHelper.wrapContext(inflater.context)
+        return inflater.cloneInContext(context)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -56,16 +62,6 @@ class WeatherBottomSheet @JvmOverloads constructor(
     ): View {
         _binding = LayoutDialogWeatherBinding.inflate(inflater, container, false)
         return binding.root
-    }
-
-    override fun onStart() {
-        super.onStart()
-        dialog?.let { dlg ->
-            com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dlg, radiusDp = 35)
-            try {
-                dlg.window?.findViewById<android.view.View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundResource(android.R.color.transparent)
-            } catch (ignored: Exception) {}
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

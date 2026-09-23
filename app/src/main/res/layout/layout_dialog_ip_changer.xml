@@ -52,6 +52,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvSheetSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
@@ -159,6 +160,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvLabelDownload"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/ip_changer_download"
@@ -191,6 +193,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvLabelUpload"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/ip_changer_upload"
@@ -223,6 +226,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvLabelLatency"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/ip_changer_latency"
@@ -272,6 +276,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvSyncTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/ip_changer_sync_with_mock_location"
@@ -280,6 +285,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvSyncDesc"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -335,6 +341,7 @@
                 android:padding="14dp">
 
                 <TextView
+                    android:id="@+id/tvSpecsHeader"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.05"
@@ -359,6 +366,7 @@
                         tools:ignore="ContentDescription" />
 
                     <TextView
+                        android:id="@+id/tvSpecWireguard"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
@@ -384,6 +392,7 @@
                         tools:ignore="ContentDescription" />
 
                     <TextView
+                        android:id="@+id/tvSpecBbr"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
@@ -409,6 +418,7 @@
                         tools:ignore="ContentDescription" />
 
                     <TextView
+                        android:id="@+id/tvSpecTcpMss"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
@@ -434,6 +444,7 @@
                         tools:ignore="ContentDescription" />
 
                     <TextView
+                        android:id="@+id/tvSpecEncryptedDns"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"

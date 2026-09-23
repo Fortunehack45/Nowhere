@@ -36,6 +36,12 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
 
     private var selectedPlan: PremiumEntitlement.PlanType = PremiumEntitlement.PlanType.YEARLY
 
+    override fun onGetLayoutInflater(savedInstanceState: Bundle?): LayoutInflater {
+        val inflater = super.onGetLayoutInflater(savedInstanceState)
+        val context = com.fakegps.mocklocation.util.LocaleHelper.wrapContext(inflater.context)
+        return inflater.cloneInContext(context)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = LayoutBottomSheetPremiumBinding.inflate(inflater, container, false)
         return binding.root
@@ -48,16 +54,6 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         setupPlanSelection()
         setupListeners(billingManager)
         observeBillingState(billingManager)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        dialog?.let { dlg ->
-            com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dlg, radiusDp = 35)
-            try {
-                dlg.window?.findViewById<android.view.View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundResource(android.R.color.transparent)
-            } catch (ignored: Exception) {}
-        }
     }
 
     private fun setupPlanSelection() {

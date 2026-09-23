@@ -22,9 +22,9 @@
     <color name="surface_search">#2C2C2E</color>
     <color name="card_dark">#2C2C2E</color>
 
-    <!-- Frosted Glass & Sheet Tokens (Dark Mode - Clean Translucent Glass, No Glow, No Gradients) -->
-    <color name="surface_glass_sheet">#E61C1C20</color>
-    <color name="surface_glass_card">#D926262E</color>
+    <!-- Frosted Glass & Sheet Tokens (Dark Mode - Solid Ash for sheets, Frosted for HUD) -->
+    <color name="surface_glass_sheet">#1C1C1E</color>
+    <color name="surface_glass_card">#2C2C2E</color>
     <color name="surface_glass_inner">#3A3A3C</color>
     <color name="glass_frosted_start">#E624242A</color>
     <color name="glass_frosted_end">#F016161C</color>
