@@ -45,6 +45,16 @@ class MapLayersBottomSheet(
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        dialog?.let { dlg ->
+            com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dlg, radiusDp = 35)
+            try {
+                dlg.window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundResource(android.R.color.transparent)
+            } catch (ignored: Exception) {}
+        }
+    }
+
     private fun selectLayer(sourceKey: String) {
         settingsPrefs.mapTileSource = sourceKey
         updateSelectionUi(sourceKey)

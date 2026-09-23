@@ -50,6 +50,16 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         observeBillingState(billingManager)
     }
 
+    override fun onStart() {
+        super.onStart()
+        dialog?.let { dlg ->
+            com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dlg, radiusDp = 35)
+            try {
+                dlg.window?.findViewById<android.view.View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundResource(android.R.color.transparent)
+            } catch (ignored: Exception) {}
+        }
+    }
+
     private fun setupPlanSelection() {
         binding.cardPlanYearly.setOnClickListener {
             if (selectedPlan != PremiumEntitlement.PlanType.YEARLY) {

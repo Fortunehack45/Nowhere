@@ -22,7 +22,7 @@
     <color name="surface_search">#F0E5E5EA</color>
     <color name="card_dark">#F0FFFFFF</color>
 
-    <!-- Frosted Glass Tokens (Light Mode - Apple Frosted Ice Glass - 88% to 95% Opacity/Blur) -->
+    <!-- Frosted Glass Tokens (Light Mode - Clean Translucent Glass, No Glow, No Gradients) -->
     <color name="surface_glass_sheet">#F2F6F6F9</color>
     <color name="surface_glass_card">#EDFFFFFF</color>
     <color name="surface_glass_inner">#20000000</color>
@@ -30,7 +30,7 @@
     <color name="glass_frosted_end">#F0EBF0F6</color>
     <color name="glass_chip_start">#E6FFFFFF</color>
     <color name="glass_chip_end">#EFE8EEF5</color>
-    <color name="stroke_glass_specular">#80FFFFFF</color>
+    <color name="stroke_glass_specular">#E5E5EA</color>
 
     <!-- Edge Blur Depth Gradient Scrims -->
     <color name="edge_blur_top_start">#E6F2F2F7</color>

@@ -570,11 +570,22 @@ object AdManager {
         }
     }
 
+    /**
+     * Proactively preloads all ad formats using an active Activity context.
+     * Call this in onResume() of key activities (e.g. MainActivity).
+     */
+    fun preloadAdsForActivity(activity: Activity) {
+        if (isPremium(activity)) return
+        preloadInterstitial(activity)
+        preloadRewardedAd(activity)
+        preloadRewardedInterstitialAd(activity)
+    }
+
     // --- Unified Reward Video Flow with Instant Loading Dialog ---
 
     /**
      * Unified reward video presenter that guarantees a reward ad pops up when the user wants to add duration.
-     * Prefers Rewarded Interstitial (Interstellar), falls back to Rewarded Ad, or loads on-the-fly with a clean dialog.
+     * Prefers standard Rewarded Ad, falls back to Google Test unit, then Rewarded Interstitial.
      */
     fun showRewardVideoWithProgress(
         activity: Activity,
@@ -589,17 +600,7 @@ object AdManager {
             return
         }
 
-        // 1. If Rewarded Interstitial is preloaded and ready, show immediately!
-        if (isRewardedInterstitialAdReady()) {
-            showRewardedInterstitialAd(
-                activity,
-                onUserEarnedReward = { onUserEarnedReward() },
-                onAdClosed = { onAdClosed?.invoke() }
-            )
-            return
-        }
-
-        // 2. If standard Rewarded ad is preloaded and ready, show immediately!
+        // 1. If standard Rewarded ad is preloaded and ready, show immediately!
         if (isRewardedAdReady()) {
             showRewardedAd(
                 activity,
@@ -609,7 +610,17 @@ object AdManager {
             return
         }
 
-        // 3. Neither is preloaded yet -> Display loading dialog and load with priority
+        // 2. If Rewarded Interstitial is preloaded and ready, show immediately!
+        if (isRewardedInterstitialAdReady()) {
+            showRewardedInterstitialAd(
+                activity,
+                onUserEarnedReward = { onUserEarnedReward() },
+                onAdClosed = { onAdClosed?.invoke() }
+            )
+            return
+        }
+
+        // 3. Neither is preloaded yet -> Display loading dialog and load with multi-tier priority
         val loadingDialog = createLoadingDialog(activity, "Loading reward video...")
         try {
             loadingDialog.show()
@@ -633,90 +644,155 @@ object AdManager {
             if (!isHandled) {
                 isHandled = true
                 dismissLoading()
-                Toast.makeText(activity, "Reward video is loading in background. Please tap again in a moment.", Toast.LENGTH_SHORT).show()
-                preloadRewardedInterstitialAd(activity)
+                Toast.makeText(activity, "Reward video is taking longer to load. Retrying in background...", Toast.LENGTH_SHORT).show()
                 preloadRewardedAd(activity)
+                preloadRewardedInterstitialAd(activity)
             }
         }
-        handler.postDelayed(timeoutRunnable, 8000L)
+        handler.postDelayed(timeoutRunnable, 12000L)
 
-        // Attempt priority load of Rewarded Interstitial first
-        val interstitialUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
+        fun presentRewardedAd(ad: RewardedAd) {
+            if (isHandled) return
+            isHandled = true
+            handler.removeCallbacks(timeoutRunnable)
+            dismissLoading()
+
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedAd = null
+                    preloadRewardedAd(activity)
+                    preloadRewardedInterstitialAd(activity)
+                    onAdClosed?.invoke()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    rewardedAd = null
+                    preloadRewardedAd(activity)
+                    preloadRewardedInterstitialAd(activity)
+                    onAdClosed?.invoke()
+                }
+            }
+
+            ad.show(activity) { _ ->
+                onUserEarnedReward()
+            }
+        }
+
+        fun presentRewardedInterstitialAd(ad: RewardedInterstitialAd) {
+            if (isHandled) return
+            isHandled = true
+            handler.removeCallbacks(timeoutRunnable)
+            dismissLoading()
+
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedInterstitialAd = null
+                    preloadRewardedInterstitialAd(activity)
+                    preloadRewardedAd(activity)
+                    onAdClosed?.invoke()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    rewardedInterstitialAd = null
+                    preloadRewardedInterstitialAd(activity)
+                    preloadRewardedAd(activity)
+                    onAdClosed?.invoke()
+                }
+            }
+
+            ad.show(activity) { _ ->
+                onUserEarnedReward()
+            }
+        }
+
+        val primaryRewardedUnit = if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else PROD_REWARDED_AD_UNIT_ID
         val adRequest = AdRequest.Builder().build()
 
-        RewardedInterstitialAd.load(
+        // Step 1: Load standard Rewarded Ad first
+        RewardedAd.load(
             activity,
-            interstitialUnit,
+            primaryRewardedUnit,
             adRequest,
-            object : RewardedInterstitialAdLoadCallback() {
-                override fun onAdLoaded(ad: RewardedInterstitialAd) {
-                    if (isHandled) return
-                    isHandled = true
-                    handler.removeCallbacks(timeoutRunnable)
-                    dismissLoading()
-
-                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() {
-                            rewardedInterstitialAd = null
-                            preloadRewardedInterstitialAd(activity)
-                            preloadRewardedAd(activity)
-                            onAdClosed?.invoke()
-                        }
-
-                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            rewardedInterstitialAd = null
-                            preloadRewardedInterstitialAd(activity)
-                            preloadRewardedAd(activity)
-                            onAdClosed?.invoke()
-                        }
-                    }
-
-                    ad.show(activity) { rewardItem ->
-                        onUserEarnedReward()
-                    }
+            object : RewardedAdLoadCallback() {
+                override fun onAdLoaded(ad: RewardedAd) {
+                    presentRewardedAd(ad)
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    Log.w(TAG, "Priority Rewarded Interstitial failed ($interstitialUnit): ${loadAdError.message}, trying regular rewarded...")
-                    val rewardedUnit = if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else PROD_REWARDED_AD_UNIT_ID
-                    RewardedAd.load(
-                        activity,
-                        rewardedUnit,
-                        adRequest,
-                        object : RewardedAdLoadCallback() {
-                            override fun onAdLoaded(ad: RewardedAd) {
-                                if (isHandled) return
-                                isHandled = true
-                                handler.removeCallbacks(timeoutRunnable)
-                                dismissLoading()
+                    Log.w(TAG, "Primary Rewarded Ad failed ($primaryRewardedUnit): ${loadAdError.message}")
+                    if (isHandled) return
 
-                                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                                    override fun onAdDismissedFullScreenContent() {
-                                        rewardedAd = null
-                                        preloadRewardedAd(activity)
-                                        preloadRewardedInterstitialAd(activity)
-                                        onAdClosed?.invoke()
-                                    }
-
-                                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                                        rewardedAd = null
-                                        preloadRewardedAd(activity)
-                                        preloadRewardedInterstitialAd(activity)
-                                        onAdClosed?.invoke()
-                                    }
+                    // Step 2: Fallback to Google Test Rewarded Ad Unit if primary was prod
+                    if (primaryRewardedUnit != TEST_REWARDED_AD_UNIT_ID) {
+                        Log.d(TAG, "Attempting fallback to Test Rewarded Ad Unit ($TEST_REWARDED_AD_UNIT_ID)...")
+                        RewardedAd.load(
+                            activity,
+                            TEST_REWARDED_AD_UNIT_ID,
+                            adRequest,
+                            object : RewardedAdLoadCallback() {
+                                override fun onAdLoaded(fallbackAd: RewardedAd) {
+                                    presentRewardedAd(fallbackAd)
                                 }
 
-                                ad.show(activity) { rewardItem ->
-                                    onUserEarnedReward()
+                                override fun onAdFailedToLoad(fallbackError: LoadAdError) {
+                                    Log.w(TAG, "Test Rewarded Ad fallback failed: ${fallbackError.message}")
+                                    tryRewardedInterstitialFallback()
                                 }
                             }
+                        )
+                    } else {
+                        tryRewardedInterstitialFallback()
+                    }
+                }
 
-                            override fun onAdFailedToLoad(rewardedError: LoadAdError) {
-                                if (isHandled) return
-                                isHandled = true
-                                handler.removeCallbacks(timeoutRunnable)
-                                dismissLoading()
-                                Toast.makeText(activity, "Unable to load reward video. Please check your internet connection.", Toast.LENGTH_SHORT).show()
+                private fun tryRewardedInterstitialFallback() {
+                    if (isHandled) return
+                    val interstitialUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
+                    RewardedInterstitialAd.load(
+                        activity,
+                        interstitialUnit,
+                        adRequest,
+                        object : RewardedInterstitialAdLoadCallback() {
+                            override fun onAdLoaded(interstitialAd: RewardedInterstitialAd) {
+                                presentRewardedInterstitialAd(interstitialAd)
+                            }
+
+                            override fun onAdFailedToLoad(interstitialError: LoadAdError) {
+                                Log.w(TAG, "Rewarded Interstitial failed: ${interstitialError.message}")
+                                if (interstitialUnit != TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID && !isHandled) {
+                                    RewardedInterstitialAd.load(
+                                        activity,
+                                        TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID,
+                                        adRequest,
+                                        object : RewardedInterstitialAdLoadCallback() {
+                                            override fun onAdLoaded(fallbackInterstitial: RewardedInterstitialAd) {
+                                                presentRewardedInterstitialAd(fallbackInterstitial)
+                                            }
+
+                                            override fun onAdFailedToLoad(finalError: LoadAdError) {
+                                                if (isHandled) return
+                                                isHandled = true
+                                                handler.removeCallbacks(timeoutRunnable)
+                                                dismissLoading()
+                                                Toast.makeText(
+                                                    activity,
+                                                    "Ad inventory is temporarily unavailable. Please check your internet or try again in a moment.",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    if (isHandled) return
+                                    isHandled = true
+                                    handler.removeCallbacks(timeoutRunnable)
+                                    dismissLoading()
+                                    Toast.makeText(
+                                        activity,
+                                        "Ad inventory is temporarily unavailable. Please check your internet or try again in a moment.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             }
                         }
                     )

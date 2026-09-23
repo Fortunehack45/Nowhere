@@ -488,6 +488,7 @@ class MainActivity : AppCompatActivity() {
             if (binding.adBannerContainer.childCount == 0) {
                 com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
             }
+            com.fakegps.mocklocation.ads.AdManager.preloadAdsForActivity(this)
         } else {
             com.fakegps.mocklocation.ads.AdManager.clearBanner(binding.adBannerContainer)
         }

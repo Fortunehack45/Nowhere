@@ -58,6 +58,16 @@ class WeatherBottomSheet @JvmOverloads constructor(
         return binding.root
     }
 
+    override fun onStart() {
+        super.onStart()
+        dialog?.let { dlg ->
+            com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(dlg, radiusDp = 35)
+            try {
+                dlg.window?.findViewById<android.view.View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundResource(android.R.color.transparent)
+            } catch (ignored: Exception) {}
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         settingsPrefs = AppSettingsPreferences(requireContext())

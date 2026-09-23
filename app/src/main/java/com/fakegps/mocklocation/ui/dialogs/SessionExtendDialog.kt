@@ -45,6 +45,12 @@ class SessionExtendDialog(
         )
         setCancelable(true)
 
+        // Apple-grade hardware-accelerated GPU frosted glass window blur behind dialog
+        com.fakegps.mocklocation.util.FrostedGlassManager.applyWindowBlur(this, radiusDp = 35)
+
+        // Warm up Rewarded Ad immediately upon opening dialog so it's ready when tapped
+        AdManager.preloadRewardedAd(activity)
+
         setupUI()
         setupListeners()
         observeTimer()
