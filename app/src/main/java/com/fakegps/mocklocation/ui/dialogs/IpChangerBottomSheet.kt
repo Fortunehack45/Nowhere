@@ -76,11 +76,6 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         }
     }
 
-    override fun onGetLayoutInflater(savedInstanceState: Bundle?): LayoutInflater {
-        val inflater = super.onGetLayoutInflater(savedInstanceState)
-        val context = com.fakegps.mocklocation.util.LocaleHelper.wrapContext(inflater.context)
-        return inflater.cloneInContext(context)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,

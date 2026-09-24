@@ -69,35 +69,39 @@ class AppOpenAdManager(private val application: Application) :
             return
         }
         isLoadingAd = true
-        val request = AdRequest.Builder().build()
+        try {
+            val request = AdRequest.Builder().build()
+            AppOpenAd.load(
+                context,
+                adUnitId,
+                request,
+                object : AppOpenAd.AppOpenAdLoadCallback() {
+                    override fun onAdLoaded(ad: AppOpenAd) {
+                        if (isPremium()) {
+                            isLoadingAd = false
+                            appOpenAd = null
+                            return
+                        }
+                        appOpenAd = ad
+                        isLoadingAd = false
+                        loadTime = Date().time
+                        Log.d(TAG, "App Open Ad loaded successfully ($adUnitId).")
+                    }
 
-        AppOpenAd.load(
-            context,
-            adUnitId,
-            request,
-            object : AppOpenAd.AppOpenAdLoadCallback() {
-                override fun onAdLoaded(ad: AppOpenAd) {
-                    if (isPremium()) {
+                    override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                         isLoadingAd = false
                         appOpenAd = null
-                        return
-                    }
-                    appOpenAd = ad
-                    isLoadingAd = false
-                    loadTime = Date().time
-                    Log.d(TAG, "App Open Ad loaded successfully ($adUnitId).")
-                }
-
-                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    isLoadingAd = false
-                    appOpenAd = null
-                    Log.w(TAG, "App Open Ad failed to load ($adUnitId): ${loadAdError.message}")
-                    if (fallbackUnitId != null && fallbackUnitId != adUnitId && !isPremium()) {
-                        loadAdInternal(context, fallbackUnitId, null)
+                        Log.w(TAG, "App Open Ad failed to load ($adUnitId): ${loadAdError.message}")
+                        if (fallbackUnitId != null && fallbackUnitId != adUnitId && !isPremium()) {
+                            loadAdInternal(context, fallbackUnitId, null)
+                        }
                     }
                 }
-            }
-        )
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception calling AppOpenAd.load: ${e.message}")
+            isLoadingAd = false
+        }
     }
 
     /**
@@ -134,30 +138,43 @@ class AppOpenAdManager(private val application: Application) :
             return
         }
 
-        appOpenAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() {
-                appOpenAd = null
-                isShowingAd = false
-                Log.d(TAG, "App Open Ad dismissed.")
-                onShowAdCompleteListener?.onShowAdComplete()
-                loadAd(activity)
-            }
-
-            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                appOpenAd = null
-                isShowingAd = false
-                Log.w(TAG, "App Open Ad failed to show: ${adError.message}")
-                onShowAdCompleteListener?.onShowAdComplete()
-                loadAd(activity)
-            }
-
-            override fun onAdShowedFullScreenContent() {
-                isShowingAd = true
-                Log.d(TAG, "App Open Ad showing.")
-            }
+        if (activity.isFinishing || activity.isDestroyed) {
+            Log.w(TAG, "Activity is finishing or destroyed, skipping app open ad.")
+            onShowAdCompleteListener?.onShowAdComplete()
+            return
         }
 
-        appOpenAd?.show(activity)
+        try {
+            appOpenAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    appOpenAd = null
+                    isShowingAd = false
+                    Log.d(TAG, "App Open Ad dismissed.")
+                    onShowAdCompleteListener?.onShowAdComplete()
+                    loadAd(activity)
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    appOpenAd = null
+                    isShowingAd = false
+                    Log.w(TAG, "App Open Ad failed to show: ${adError.message}")
+                    onShowAdCompleteListener?.onShowAdComplete()
+                    loadAd(activity)
+                }
+
+                override fun onAdShowedFullScreenContent() {
+                    isShowingAd = true
+                    Log.d(TAG, "App Open Ad showing.")
+                }
+            }
+
+            appOpenAd?.show(activity)
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception showing AppOpenAd: ${e.message}")
+            appOpenAd = null
+            isShowingAd = false
+            onShowAdCompleteListener?.onShowAdComplete()
+        }
     }
 
     /**

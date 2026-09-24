@@ -36,11 +36,6 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
 
     private var selectedPlan: PremiumEntitlement.PlanType = PremiumEntitlement.PlanType.YEARLY
 
-    override fun onGetLayoutInflater(savedInstanceState: Bundle?): LayoutInflater {
-        val inflater = super.onGetLayoutInflater(savedInstanceState)
-        val context = com.fakegps.mocklocation.util.LocaleHelper.wrapContext(inflater.context)
-        return inflater.cloneInContext(context)
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = LayoutBottomSheetPremiumBinding.inflate(inflater, container, false)

@@ -1,11 +1,14 @@
 package com.fakegps.mocklocation.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.Color
+import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import java.util.Locale
 import android.os.Build
@@ -26,6 +29,9 @@ import com.fakegps.mocklocation.ui.tour.SpotlightStep
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.db.SearchHistoryItem
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
@@ -118,9 +124,12 @@ class MainActivity : AppCompatActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (!fineGranted) {
             Toast.makeText(this, "Location permission is required for accurate simulation.", Toast.LENGTH_LONG).show()
+        } else {
+            fetchAndCenterOnRealLocation(userInitiated = false)
         }
         viewModel.refreshPermissionStates()
     }
@@ -209,6 +218,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupTouchIsolation()
         setupMap()
+        if (PermissionHelper.hasLocationPermission(this)) {
+            fetchAndCenterOnRealLocation(userInitiated = false)
+        }
         setupSearch()
         setupModeTabs()
         setupControls()
@@ -525,6 +537,135 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("MissingPermission")
+    private fun fetchAndCenterOnRealLocation(userInitiated: Boolean = false) {
+        if (!PermissionHelper.hasLocationPermission(this)) {
+            if (userInitiated) {
+                requestInitialPermissions()
+            }
+            return
+        }
+
+        val sessionPrefs = SessionPreferences(this)
+        // Auto-centering on launch only applies if the user hasn't explicitly chosen a target location
+        // and no mock session is currently active.
+        if (!userInitiated && (sessionPrefs.hasUserSelectedLocation || sessionPrefs.isSessionActive)) {
+            return
+        }
+
+        try {
+            val fusedClient = LocationServices.getFusedLocationProviderClient(this)
+            fusedClient.lastLocation.addOnSuccessListener { loc ->
+                if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
+                    applyRealLocation(loc.latitude, loc.longitude, userInitiated)
+                } else {
+                    requestFreshLocation(userInitiated)
+                }
+            }.addOnFailureListener {
+                requestFreshLocation(userInitiated)
+            }
+        } catch (e: Exception) {
+            fallbackLocationManager(userInitiated)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun requestFreshLocation(userInitiated: Boolean) {
+        try {
+            val fusedClient = LocationServices.getFusedLocationProviderClient(this)
+            val tokenSource = CancellationTokenSource()
+            fusedClient.getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                tokenSource.token
+            ).addOnSuccessListener { freshLoc ->
+                if (freshLoc != null && (freshLoc.latitude != 0.0 || freshLoc.longitude != 0.0)) {
+                    applyRealLocation(freshLoc.latitude, freshLoc.longitude, userInitiated)
+                } else {
+                    fallbackLocationManager(userInitiated)
+                }
+            }.addOnFailureListener {
+                fallbackLocationManager(userInitiated)
+            }
+        } catch (e: Exception) {
+            fallbackLocationManager(userInitiated)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun fallbackLocationManager(userInitiated: Boolean) {
+        try {
+            val locManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return
+            val providers = listOf(
+                LocationManager.GPS_PROVIDER,
+                LocationManager.NETWORK_PROVIDER,
+                LocationManager.PASSIVE_PROVIDER
+            )
+            var bestLoc: Location? = null
+            for (p in providers) {
+                try {
+                    if (locManager.isProviderEnabled(p)) {
+                        val l = locManager.getLastKnownLocation(p)
+                        if (l != null && (bestLoc == null || l.time > bestLoc.time)) {
+                            bestLoc = l
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+
+            if (bestLoc != null && (bestLoc.latitude != 0.0 || bestLoc.longitude != 0.0)) {
+                applyRealLocation(bestLoc.latitude, bestLoc.longitude, userInitiated)
+            } else if (userInitiated) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val p = if (locManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                        LocationManager.NETWORK_PROVIDER
+                    } else {
+                        LocationManager.GPS_PROVIDER
+                    }
+                    locManager.getCurrentLocation(p, null, mainExecutor) { singleLoc ->
+                        if (singleLoc != null) {
+                            applyRealLocation(singleLoc.latitude, singleLoc.longitude, true)
+                        } else {
+                            Toast.makeText(this, "Unable to get current location fix", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(this, "Unable to get current location fix", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("MainActivity", "Fallback location manager error: ${e.message}")
+        }
+    }
+
+    private fun applyRealLocation(lat: Double, lon: Double, userInitiated: Boolean) {
+        if (isFinishing || isDestroyed) return
+        val sessionPrefs = SessionPreferences(this)
+        if (!userInitiated && (sessionPrefs.hasUserSelectedLocation || sessionPrefs.isSessionActive)) {
+            return
+        }
+
+        viewModel.setFixedCoordinates(lat, lon)
+        updateFixedPinMarker(lat, lon)
+        val geoPoint = GeoPoint(lat, lon)
+        binding.mapView.controller.setZoom(16.5)
+        if (settingsPrefs.enableMapAnimations) {
+            binding.mapView.controller.animateTo(geoPoint)
+        } else {
+            binding.mapView.controller.setCenter(geoPoint)
+        }
+
+        com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this, lat, lon) { name ->
+            sessionPrefs.lastLocationName = name
+            com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this)
+            com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this)
+        }
+
+        if (userInitiated) {
+            sessionPrefs.hasUserSelectedLocation = true
+            Toast.makeText(this, "Centered on your current location", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun requestInitialPermissions() {
         val permissions = mutableListOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -771,6 +912,7 @@ class MainActivity : AppCompatActivity() {
                 viewModel.setFixedCoordinates(latitude, longitude)
                 updateFixedPinMarker(latitude, longitude)
                 val sessionPrefs = SessionPreferences(this@MainActivity)
+                sessionPrefs.hasUserSelectedLocation = true
                 sessionPrefs.lastLatitude = latitude
                 sessionPrefs.lastLongitude = longitude
                 com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this@MainActivity, latitude, longitude) { resolvedName ->
@@ -818,6 +960,9 @@ class MainActivity : AppCompatActivity() {
         )
 
         val sessionPrefs = SessionPreferences(this@MainActivity)
+        sessionPrefs.hasUserSelectedLocation = true
+        sessionPrefs.lastLatitude = lat
+        sessionPrefs.lastLongitude = lon
         sessionPrefs.lastLocationName = title
         com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.updateAllWidgets(this@MainActivity)
         com.fakegps.mocklocation.ui.widget.NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(this@MainActivity)
@@ -1137,6 +1282,9 @@ class MainActivity : AppCompatActivity() {
         updateFixedPinMarker(lat, lon)
 
         val sessionPrefs = SessionPreferences(this)
+        sessionPrefs.hasUserSelectedLocation = true
+        sessionPrefs.lastLatitude = lat
+        sessionPrefs.lastLongitude = lon
         sessionPrefs.lastLocationName = name
         binding.etAddressSearch.setText("")
         binding.btnClearSearch.visibility = View.GONE
@@ -1579,29 +1727,29 @@ class MainActivity : AppCompatActivity() {
 
         binding.fabMyLocation.setOnClickListener {
             val state = viewModel.uiState.value
-            val centerLat = if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
-                state.serviceState.latitude
-            } else {
-                state.fixedLatitude
-            }
-            val centerLon = if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
-                state.serviceState.longitude
-            } else {
-                state.fixedLongitude
-            }
-            val geoPoint = GeoPoint(centerLat, centerLon)
-            val currentZoom = binding.mapView.zoomLevelDouble
-            if (currentZoom < 16.0) {
-                // If zoomed out, smoothly animate position AND zoom in to street level (16.5) just like Google Maps
-                binding.mapView.controller.animateTo(geoPoint, 16.5, 850L)
-            } else {
-                if (settingsPrefs.enableMapAnimations) {
-                    binding.mapView.controller.animateTo(geoPoint)
+            if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
+                val centerLat = state.serviceState.latitude
+                val centerLon = state.serviceState.longitude
+                val geoPoint = GeoPoint(centerLat, centerLon)
+                val currentZoom = binding.mapView.zoomLevelDouble
+                if (currentZoom < 16.0) {
+                    binding.mapView.controller.animateTo(geoPoint, 16.5, 850L)
                 } else {
-                    binding.mapView.controller.setCenter(geoPoint)
+                    if (settingsPrefs.enableMapAnimations) {
+                        binding.mapView.controller.animateTo(geoPoint)
+                    } else {
+                        binding.mapView.controller.setCenter(geoPoint)
+                    }
                 }
+                Toast.makeText(this, "Target centered", Toast.LENGTH_SHORT).show()
+            } else {
+                fetchAndCenterOnRealLocation(userInitiated = true)
             }
-            Toast.makeText(this, "Target centered", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.fabMyLocation.setOnLongClickListener {
+            fetchAndCenterOnRealLocation(userInitiated = true)
+            true
         }
 
         binding.fabSaveFavorite.setOnClickListener {
@@ -1615,6 +1763,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.fabOpenFavorites.setOnClickListener {
             FavoritesBottomSheet { favorite ->
+                val sessionPrefs = SessionPreferences(this)
+                sessionPrefs.hasUserSelectedLocation = true
                 viewModel.setFixedCoordinates(favorite.latitude, favorite.longitude)
                 updateFixedPinMarker(favorite.latitude, favorite.longitude)
                 val geoPoint = GeoPoint(favorite.latitude, favorite.longitude)
@@ -1630,6 +1780,8 @@ class MainActivity : AppCompatActivity() {
         binding.fabOpenHistory.setOnClickListener {
             HistoryBottomSheet(
                 onReuseLocation = { lat, lon, name ->
+                    val sessionPrefs = SessionPreferences(this)
+                    sessionPrefs.hasUserSelectedLocation = true
                     viewModel.setFixedCoordinates(lat, lon)
                     updateFixedPinMarker(lat, lon)
                     val geoPoint = GeoPoint(lat, lon)
@@ -1758,6 +1910,7 @@ class MainActivity : AppCompatActivity() {
         if (!ensureActiveSessionOrPrompt { startFixedSpoofing() }) return
         checkNotificationPermissionBeforeSimulation {
             performHapticFeedbackIfEnabled()
+            SessionPreferences(this).hasUserSelectedLocation = true
 
             val state = viewModel.uiState.value
             viewModel.recordLocationHistory(state.fixedLatitude, state.fixedLongitude, mode = "TELEPORT")
@@ -1779,6 +1932,7 @@ class MainActivity : AppCompatActivity() {
         if (!ensureActiveSessionOrPrompt { startRouteSpoofing() }) return
         checkNotificationPermissionBeforeSimulation {
             performHapticFeedbackIfEnabled()
+            SessionPreferences(this).hasUserSelectedLocation = true
 
             val state = viewModel.uiState.value
             val effectiveWaypoints = if (state.routeWaypoints.size >= 2) state.routeWaypoints else state.userKeypoints

@@ -26,7 +26,15 @@ class SessionPreferences(private val context: Context) {
         private const val KEY_WAYPOINTS_JSON = "key_waypoints_json"
         private const val KEY_BATTERY_PROMPTED = "key_battery_prompted"
         private const val KEY_OEM_WIDGET_NUDGE_PROMPTED = "key_oem_widget_nudge_prompted"
+        private const val KEY_HAS_USER_SELECTED_LOCATION = "key_has_user_selected_location"
     }
+
+    val hasCustomLocation: Boolean
+        get() = prefs.contains(KEY_LAST_LATITUDE) && prefs.contains(KEY_LAST_LONGITUDE)
+
+    var hasUserSelectedLocation: Boolean
+        get() = prefs.getBoolean(KEY_HAS_USER_SELECTED_LOCATION, false)
+        set(value) = prefs.edit().putBoolean(KEY_HAS_USER_SELECTED_LOCATION, value).apply()
 
     var isSessionActive: Boolean
         get() = prefs.getBoolean(KEY_IS_SESSION_ACTIVE, false)
@@ -37,7 +45,7 @@ class SessionPreferences(private val context: Context) {
         set(value) = prefs.edit().putString(KEY_ACTIVE_MODE, value).apply()
 
     var lastLatitude: Double
-        get() = Double.fromBits(prefs.getLong(KEY_LAST_LATITUDE, 37.7749.toBits())) // Default San Francisco
+        get() = Double.fromBits(prefs.getLong(KEY_LAST_LATITUDE, 37.7749.toBits())) // Fallback San Francisco if no GPS fix
         set(value) = prefs.edit().putLong(KEY_LAST_LATITUDE, value.toBits()).apply()
 
     var lastLongitude: Double

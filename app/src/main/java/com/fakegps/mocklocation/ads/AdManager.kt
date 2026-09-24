@@ -140,6 +140,10 @@ object AdManager {
         }
 
         activity.runOnUiThread {
+            if (activity.isFinishing || activity.isDestroyed || isPremium(activity)) {
+                clearBanner(container)
+                return@runOnUiThread
+            }
             try {
                 container.visibility = View.VISIBLE
                 val adView = AdView(activity).apply {
@@ -377,7 +381,19 @@ object AdManager {
                     onDismissed()
                 }
             }
-            ad.show(activity)
+            if (activity.isFinishing || activity.isDestroyed) {
+                interstitialAd = null
+                onDismissed()
+                return
+            }
+            try {
+                ad.show(activity)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error displaying interstitial ad: ${e.message}")
+                interstitialAd = null
+                preloadInterstitial(activity)
+                onDismissed()
+            }
         } ?: run {
             preloadInterstitial(activity)
             onDismissed()
@@ -410,7 +426,17 @@ object AdManager {
                     preloadInterstitial(activity)
                 }
             }
-            ad.show(activity)
+            if (activity.isFinishing || activity.isDestroyed) {
+                interstitialAd = null
+                return
+            }
+            try {
+                ad.show(activity)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error displaying interstitial ad: ${e.message}")
+                interstitialAd = null
+                preloadInterstitial(activity)
+            }
         } ?: run {
             preloadInterstitial(activity)
         }
@@ -484,8 +510,21 @@ object AdManager {
                 }
             }
 
-            ad.show(activity) { rewardItem ->
-                onUserEarnedReward(rewardItem)
+            if (activity.isFinishing || activity.isDestroyed) {
+                rewardedAd = null
+                onAdClosed()
+                return
+            }
+
+            try {
+                ad.show(activity) { rewardItem ->
+                    onUserEarnedReward(rewardItem)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error displaying rewarded ad: ${e.message}")
+                rewardedAd = null
+                preloadRewardedAd(activity)
+                onAdClosed()
             }
         } ?: run {
             preloadRewardedAd(activity)
@@ -561,8 +600,21 @@ object AdManager {
                 }
             }
 
-            ad.show(activity) { rewardItem ->
-                onUserEarnedReward(rewardItem)
+            if (activity.isFinishing || activity.isDestroyed) {
+                rewardedInterstitialAd = null
+                onAdClosed()
+                return
+            }
+
+            try {
+                ad.show(activity) { rewardItem ->
+                    onUserEarnedReward(rewardItem)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error displaying rewarded interstitial ad: ${e.message}")
+                rewardedInterstitialAd = null
+                preloadRewardedInterstitialAd(activity)
+                onAdClosed()
             }
         } ?: run {
             preloadRewardedInterstitialAd(activity)
@@ -673,8 +725,20 @@ object AdManager {
                 }
             }
 
-            ad.show(activity) { _ ->
-                onUserEarnedReward()
+            if (activity.isFinishing || activity.isDestroyed) {
+                rewardedAd = null
+                onAdClosed?.invoke()
+                return
+            }
+
+            try {
+                ad.show(activity) { _ ->
+                    onUserEarnedReward()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error displaying rewarded ad: ${e.message}")
+                rewardedAd = null
+                onAdClosed?.invoke()
             }
         }
 
@@ -700,8 +764,20 @@ object AdManager {
                 }
             }
 
-            ad.show(activity) { _ ->
-                onUserEarnedReward()
+            if (activity.isFinishing || activity.isDestroyed) {
+                rewardedInterstitialAd = null
+                onAdClosed?.invoke()
+                return
+            }
+
+            try {
+                ad.show(activity) { _ ->
+                    onUserEarnedReward()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error displaying rewarded interstitial ad: ${e.message}")
+                rewardedInterstitialAd = null
+                onAdClosed?.invoke()
             }
         }
 
