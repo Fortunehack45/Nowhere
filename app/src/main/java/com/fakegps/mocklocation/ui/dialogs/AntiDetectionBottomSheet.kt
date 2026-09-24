@@ -16,6 +16,7 @@ import com.fakegps.mocklocation.engine.GhostCloakEngine
 import com.fakegps.mocklocation.util.PermissionHelper
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
@@ -71,7 +72,32 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
         loadInitialValues()
         setupListeners()
         startLiveDiagnostics()
-        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, requireContext())
+        applyTheme(ctx)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            com.fakegps.mocklocation.util.ThemeColorManager.themeChangeFlow.collectLatest {
+                context?.let { currentCtx ->
+                    applyTheme(currentCtx)
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        context?.let { ctx ->
+            applyTheme(ctx)
+        }
+    }
+
+    private fun applyTheme(ctx: android.content.Context) {
+        if (_binding == null) return
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(ctx)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+        binding.btnCloseSheet.backgroundTintList = primaryCsl
+        binding.tvLiveNmeaBox.setTextColor(primaryColor)
+        com.fakegps.mocklocation.util.ThemeColorManager.applyThemeRecursively(binding.root, ctx)
+        updateSubSwitchesState(settingsPrefs.isGhostCloakEnabled)
     }
 
     private fun loadInitialValues() {

@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import android.content.res.ColorStateList
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -16,6 +17,7 @@ import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.LayoutDialogIpChangerBinding
+import com.fakegps.mocklocation.util.ThemeColorManager
 import com.fakegps.mocklocation.vpn.NowhereVpnService
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.collectLatest
@@ -107,6 +109,23 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 }
             }
         }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            ThemeColorManager.themeChangeFlow.collectLatest {
+                context?.let { currentCtx ->
+                    ThemeColorManager.applyThemeRecursively(binding.root, currentCtx)
+                    renderVpnState(NowhereVpnService.vpnState.value, currentCtx)
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        context?.let { ctx ->
+            ThemeColorManager.applyThemeRecursively(binding.root, ctx)
+            renderVpnState(NowhereVpnService.vpnState.value, ctx)
+        }
     }
 
     private fun rebindTexts() {
@@ -195,9 +214,9 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
                 binding.btnToggleVpnManual.isEnabled = true
                 binding.btnToggleVpnManual.text = ctx.getString(R.string.vpn_btn_deactivate)
-                binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.surface_elevated)
-                binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
-                binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.text_primary)
+                binding.btnToggleVpnManual.backgroundTintList = ThemeColorManager.getLightTintStateList(ctx)
+                binding.btnToggleVpnManual.setTextColor(ThemeColorManager.getDarkColor(ctx))
+                binding.btnToggleVpnManual.iconTint = ColorStateList.valueOf(ThemeColorManager.getDarkColor(ctx))
                 binding.layoutVpnTelemetry.visibility = View.VISIBLE
                 binding.tvServerNodeInfo.text = ctx.getString(R.string.vpn_node_connected)
             }
@@ -212,6 +231,9 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
                 binding.btnToggleVpnManual.isEnabled = false
                 binding.btnToggleVpnManual.text = ctx.getString(R.string.vpn_btn_connecting)
+                binding.btnToggleVpnManual.backgroundTintList = ThemeColorManager.getLightTintStateList(ctx)
+                binding.btnToggleVpnManual.setTextColor(ThemeColorManager.getDarkColor(ctx))
+                binding.btnToggleVpnManual.iconTint = ColorStateList.valueOf(ThemeColorManager.getDarkColor(ctx))
                 binding.tvServerNodeInfo.text = ctx.getString(R.string.vpn_node_connecting)
             }
             is NowhereVpnService.VpnState.Error -> {
@@ -225,7 +247,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
                 binding.btnToggleVpnManual.isEnabled = true
                 binding.btnToggleVpnManual.text = ctx.getString(R.string.vpn_btn_retry)
-                binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
+                binding.btnToggleVpnManual.backgroundTintList = ThemeColorManager.getPrimaryColorStateList(ctx)
                 binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
                 binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
                 binding.tvServerNodeInfo.text = ctx.getString(R.string.vpn_node_offline)
@@ -241,7 +263,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
                 binding.btnToggleVpnManual.isEnabled = true
                 binding.btnToggleVpnManual.text = ctx.getString(R.string.vpn_btn_activate)
-                binding.btnToggleVpnManual.backgroundTintList = ContextCompat.getColorStateList(ctx, R.color.primary)
+                binding.btnToggleVpnManual.backgroundTintList = ThemeColorManager.getPrimaryColorStateList(ctx)
                 binding.btnToggleVpnManual.setTextColor(ContextCompat.getColor(ctx, R.color.white))
                 binding.btnToggleVpnManual.iconTint = ContextCompat.getColorStateList(ctx, R.color.white)
                 binding.tvServerNodeInfo.text = ctx.getString(R.string.vpn_node_default)
