@@ -39,6 +39,7 @@ class BillingManager private constructor(private val context: Context) : Purchas
         private const val KEY_CACHED_PRICE = "key_cached_price"
         private const val KEY_CACHED_YEARLY_PRICE = "key_cached_yearly_price"
         private const val KEY_CACHED_TIMESTAMP = "key_cached_timestamp"
+        private const val KEY_CACHED_SIGNATURE = "key_cached_signature"
         private const val MAX_RECONNECT_ATTEMPTS = 5
 
         @Volatile
@@ -530,8 +531,15 @@ class BillingManager private constructor(private val context: Context) : Purchas
         _purchaseMessage.value = null
     }
 
+    private fun generateCacheSignature(productId: String?, token: String?, purchaseTime: Long): String {
+        val raw = "${context.packageName}:${productId.orEmpty()}:${token.orEmpty()}:$purchaseTime:NowhereProSecuredEntitlement"
+        return java.security.MessageDigest.getInstance("SHA-256")
+            .digest(raw.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+    }
+
     private fun loadCachedEntitlement(): PremiumEntitlement {
-        val isPrem = prefs.getBoolean(KEY_CACHED_IS_PREMIUM, false)
+        val isPremRaw = prefs.getBoolean(KEY_CACHED_IS_PREMIUM, false)
         val prodId = prefs.getString(KEY_CACHED_PRODUCT_ID, null)
         val token = prefs.getString(KEY_CACHED_TOKEN, null)
         val orderId = prefs.getString(KEY_CACHED_ORDER_ID, null)
@@ -540,6 +548,17 @@ class BillingManager private constructor(private val context: Context) : Purchas
         val price = prefs.getString(KEY_CACHED_PRICE, null)
         val yearlyPrice = prefs.getString(KEY_CACHED_YEARLY_PRICE, null)
         val ts = prefs.getLong(KEY_CACHED_TIMESTAMP, 0L)
+        val cachedSig = prefs.getString(KEY_CACHED_SIGNATURE, null)
+
+        // Cryptographic tamper verification: protect against unauthorized XML edits on rooted devices
+        val isValidSignature = if (isPremRaw) {
+            !token.isNullOrBlank() && (prodId == PremiumEntitlement.PRODUCT_ID_PREMIUM || prodId == PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY) &&
+            cachedSig != null && cachedSig == generateCacheSignature(prodId, token, pTime)
+        } else {
+            false
+        }
+
+        val isPrem = isPremRaw && isValidSignature
 
         return PremiumEntitlement(
             isPremium = isPrem,
@@ -558,7 +577,7 @@ class BillingManager private constructor(private val context: Context) : Purchas
     }
 
     private fun saveCachedEntitlement(entitlement: PremiumEntitlement) {
-        prefs.edit()
+        val editor = prefs.edit()
             .putBoolean(KEY_CACHED_IS_PREMIUM, entitlement.isPremium)
             .putString(KEY_CACHED_PRODUCT_ID, entitlement.productId)
             .putString(KEY_CACHED_TOKEN, entitlement.purchaseToken)
@@ -568,7 +587,15 @@ class BillingManager private constructor(private val context: Context) : Purchas
             .putString(KEY_CACHED_PRICE, entitlement.formattedPrice)
             .putString(KEY_CACHED_YEARLY_PRICE, entitlement.yearlyPrice)
             .putLong(KEY_CACHED_TIMESTAMP, entitlement.lastVerifiedTimestamp)
-            .apply()
+
+        if (entitlement.isPremium && !entitlement.purchaseToken.isNullOrBlank()) {
+            val sig = generateCacheSignature(entitlement.productId, entitlement.purchaseToken, entitlement.purchaseTime)
+            editor.putString(KEY_CACHED_SIGNATURE, sig)
+        } else {
+            editor.remove(KEY_CACHED_SIGNATURE)
+        }
+
+        editor.apply()
     }
 
     private fun saveCachedPricing(monthlyPrice: String?, yearlyPrice: String?) {

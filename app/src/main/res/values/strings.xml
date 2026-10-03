@@ -358,6 +358,8 @@
     <string name="bottom_she_unlimited_session_duration_no_2h">Unlimited session duration (No 2h limit)</string>
     <string name="bottom_she_100_adfree_zero_banners_video">100% ad-free (Zero banners &amp; video prompts)</string>
     <string name="bottom_she_full_background_simulation_route_navigation">Full background simulation &amp; route navigation</string>
+    <string name="bottom_she_motion_sync_hardware_sensor">Hardware Motion Sync &amp; dynamic sensor walking</string>
+    <string name="bottom_she_ghost_shield_vpn">Nowhere Ghost Shield VPN (WireGuard Anti-Detection)</string>
     <string name="bottom_she_unlock_annual_plan">Unlock Annual Plan</string>
     <string name="bottom_she_manage_subscription">Manage Subscription</string>
     <string name="bottom_she_restore_purchases">Restore Purchases</string>

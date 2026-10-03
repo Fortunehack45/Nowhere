@@ -418,6 +418,62 @@
                         android:textColor="@color/text_primary"
                         android:textSize="13sp" />
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.8dp"
+                    android:layout_marginVertical="9dp"
+                    android:background="@color/stroke_subtle" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_shield_check"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/bottom_she_motion_sync_hardware_sensor"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.8dp"
+                    android:layout_marginVertical="9dp"
+                    android:background="@color/stroke_subtle" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_shield_check"
+                        app:tint="@color/primary"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/bottom_she_ghost_shield_vpn"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- Minimalist Action CTA Button -->

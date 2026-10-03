@@ -1372,10 +1372,19 @@ class MainActivity : AppCompatActivity() {
             AutomationBottomSheet.newInstance().show(supportFragmentManager, AutomationBottomSheet.TAG)
         }
 
-        // Motion Sync Switch
+        // Motion Sync Switch (Locked for non-premium users)
         binding.switchMotionSync.setOnCheckedChangeListener { buttonView, isChecked ->
             if (!buttonView.isPressed) return@setOnCheckedChangeListener
             if (isChecked) {
+                val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
+                if (!isPremium) {
+                    buttonView.isChecked = false
+                    Toast.makeText(this, "Motion Sync is a Premium feature. Upgrade to Nowhere Pro to unlock.", Toast.LENGTH_SHORT).show()
+                    com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance()
+                        .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
+                    return@setOnCheckedChangeListener
+                }
+
                 val state = viewModel.uiState.value
                 val isRouteActive = state.isServiceRunning && (state.serviceState as? ServiceState.Running)?.mode is SimulationMode.Route
                 if (isRouteActive) {
@@ -1438,8 +1447,10 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             AppDatabase.getInstance(this@MainActivity).automationSettingsDao().getSettingsFlow().collectLatest { settings ->
                 if (settings != null && !isFinishing && !isDestroyed) {
-                    binding.switchMotionSync.isChecked = settings.motionSyncEnabled
-                    binding.layoutTerrainLockSubDeck.visibility = if (settings.motionSyncEnabled) View.VISIBLE else View.GONE
+                    val isPremiumUser = com.fakegps.mocklocation.billing.BillingManager.getInstance(this@MainActivity).isPremium.value
+                    val isMotionSyncActive = settings.motionSyncEnabled && isPremiumUser
+                    binding.switchMotionSync.isChecked = isMotionSyncActive
+                    binding.layoutTerrainLockSubDeck.visibility = if (isMotionSyncActive) View.VISIBLE else View.GONE
                     binding.switchTerrainLock.isChecked = settings.terrainLockEnabled
                     binding.sliderTerrainRadius.value = settings.terrainSearchRadiusMeters.coerceIn(10f, 50f)
                     binding.tvTerrainRadiusLabel.text = "${settings.terrainSearchRadiusMeters.toInt()}m"
@@ -1873,6 +1884,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
+        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
+        if (!isPremium) return
         val sessionPrefs = SessionPreferences(this)
         if (settingsPrefs.isAutoVpnSyncEnabled) {
             val prepareIntent = android.net.VpnService.prepare(this)
@@ -2409,6 +2422,7 @@ class MainActivity : AppCompatActivity() {
                         binding.tvPremiumBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_success_text))
                         binding.ivPremiumBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_text)
                         binding.layoutPremiumBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_success_bg)
+                        binding.badgeMotionSyncPro.visibility = View.GONE
                         com.fakegps.mocklocation.ads.AdManager.clearBanner(binding.adBannerContainer)
                     } else {
                         val isVip = com.fakegps.mocklocation.billing.PromotionManager.isEligibleForVipDiscount(this@MainActivity)
@@ -2416,6 +2430,14 @@ class MainActivity : AppCompatActivity() {
                         binding.tvPremiumBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.primary_bright))
                         binding.ivPremiumBadgeIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.primary_bright)
                         binding.layoutPremiumBadge.backgroundTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_active_bg)
+                        binding.badgeMotionSyncPro.visibility = View.VISIBLE
+                        if (binding.switchMotionSync.isChecked) {
+                            binding.switchMotionSync.isChecked = false
+                            disableMotionSync()
+                        }
+                        if (com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+                            com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this@MainActivity)
+                        }
                         if (binding.adBannerContainer.childCount == 0) {
                             com.fakegps.mocklocation.ads.AdManager.loadBanner(this@MainActivity, binding.adBannerContainer, isHomeBanner = true)
                         }

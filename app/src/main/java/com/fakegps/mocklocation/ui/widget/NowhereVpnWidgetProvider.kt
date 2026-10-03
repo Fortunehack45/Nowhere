@@ -164,6 +164,16 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (intent.action) {
             ACTION_VPN_WIDGET_TOGGLE -> {
+                val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
+                if (!isPremium) {
+                    Toast.makeText(context, "Ghost Shield VPN requires Nowhere Pro", Toast.LENGTH_SHORT).show()
+                    val openAppIntent = Intent(context, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        putExtra("OPEN_PREMIUM_DIALOG", true)
+                    }
+                    context.startActivity(openAppIntent)
+                    return
+                }
                 val sessionPrefs = SessionPreferences(context)
                 if (sessionPrefs.isKillSwitchEnabled) {
                     if (KillSwitchSinkholeService.isSinkholeActive && !sessionPrefs.isKillSwitchBypassed) {

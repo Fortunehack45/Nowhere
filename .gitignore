@@ -21,6 +21,7 @@ app/robolectric-deps/
 *credentials*.json
 .env
 .env.*
+!.env.example
 secrets/
 **/secrets/
 deploy/secrets/

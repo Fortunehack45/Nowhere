@@ -46,3 +46,7 @@
 -keep class com.fakegps.mocklocation.weather.** { *; }
 -keep class com.fakegps.mocklocation.util.AppUpdateManager$** { *; }
 
+# Google Play Billing Client
+-keep class com.android.billingclient.api.** { *; }
+-dontwarn com.android.billingclient.api.**
+

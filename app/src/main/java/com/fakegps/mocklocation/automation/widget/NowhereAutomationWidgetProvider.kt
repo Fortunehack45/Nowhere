@@ -212,6 +212,14 @@ class NowhereAutomationWidgetProvider : AppWidgetProvider() {
             }
             ACTION_WIDGET_TOGGLE_MOTION -> {
                 CoroutineScope(Dispatchers.IO).launch {
+                    val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
+                    if (!isPremium) {
+                        launch(Dispatchers.Main) {
+                            android.widget.Toast.makeText(context, "Motion Sync requires Nowhere Pro", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                        updateAllAutomationWidgets(context)
+                        return@launch
+                    }
                     val db = AppDatabase.getInstance(context)
                     val settings = db.automationSettingsDao().getSettings() ?: AutomationSettingsEntity()
                     val newEnabled = !settings.motionSyncEnabled

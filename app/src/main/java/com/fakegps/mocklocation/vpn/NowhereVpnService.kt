@@ -56,6 +56,11 @@ class NowhereVpnService : VpnService() {
         val vpnState: StateFlow<VpnState> = _vpnState.asStateFlow()
 
         fun start(context: Context, nodeId: String) {
+            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
+            if (!isPremium) {
+                Log.w(TAG, "Cannot start NowhereVpnService: VPN requires Nowhere Pro subscription.")
+                return
+            }
             val intent = Intent(context, NowhereVpnService::class.java).apply {
                 action = ACTION_CONNECT
                 putExtra(EXTRA_NODE_ID, nodeId)
@@ -72,6 +77,11 @@ class NowhereVpnService : VpnService() {
         }
 
         fun startWithTunnelResponse(context: Context, response: NowhereApiClient.TunnelResponse, customName: String? = null) {
+            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
+            if (!isPremium) {
+                Log.w(TAG, "Cannot start NowhereVpnService: VPN requires Nowhere Pro subscription.")
+                return
+            }
             val intent = Intent(context, NowhereVpnService::class.java).apply {
                 action = ACTION_CONNECT_TUNNEL_CONFIG
                 putExtra(EXTRA_NODE_ID, response.nodeId)
@@ -209,6 +219,13 @@ class NowhereVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         acquireWakeLock()
+        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
+        if (!isPremium && intent?.action != ACTION_DISCONNECT) {
+            Log.w(TAG, "NowhereVpnService: Non-premium user cannot start VPN. Aborting.")
+            disconnectVpn()
+            stopSelf()
+            return START_NOT_STICKY
+        }
         when (intent?.action) {
             ACTION_CONNECT -> {
                 isExplicitlyDisconnecting.set(false)
