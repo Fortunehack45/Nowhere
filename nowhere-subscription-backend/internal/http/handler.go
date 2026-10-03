@@ -51,6 +51,9 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 		"status":  "online",
 		"health":  "/health",
 		"verify":  "/api/v1/google-play/verify",
+		"path":    r.URL.Path,
+		"uri":     r.RequestURI,
+		"query":   r.URL.RawQuery,
 	})
 }
 
