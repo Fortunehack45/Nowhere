@@ -64,6 +64,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("X-Debug-Orig-Path", r.URL.Path)
+	w.Header().Set("X-Debug-Orig-URI", r.RequestURI)
+	w.Header().Set("X-Debug-Orig-Query", r.URL.RawQuery)
+
 	// In Vercel rewrites, r.URL.Path is rewritten to the destination file ("/api/index.go").
 	// Restore the real client request path from __path query param, x-matched-path, or x-forwarded-uri.
 	if queryPath := r.URL.Query().Get("__path"); queryPath != "" {
