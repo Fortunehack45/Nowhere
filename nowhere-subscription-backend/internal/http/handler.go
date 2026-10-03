@@ -40,7 +40,7 @@ func NewHandler(
 
 // Root handles GET / with service status and endpoint discovery.
 func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+	if r.URL.Path != "/" && r.URL.Path != "/api/index.go" && r.URL.Path != "/api" && r.URL.Path != "/api/index" {
 		http.NotFound(w, r)
 		return
 	}

@@ -27,9 +27,12 @@ func NewRouter(
 	// Root Service Info (status check)
 	mux.HandleFunc("/", handler.Root)
 	mux.HandleFunc("/api/index.go", handler.Root)
+	mux.HandleFunc("/api", handler.Root)
+	mux.HandleFunc("/api/index", handler.Root)
 
 	// Public Health Check (unthrottled for Cloud Run and Vercel probes)
 	mux.HandleFunc("/health", handler.Health)
+	mux.HandleFunc("/api/health", handler.Health)
 
 	// Protected Verification API endpoint
 	mux.HandleFunc("/api/v1/google-play/verify", handler.Verify)

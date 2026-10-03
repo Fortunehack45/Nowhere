@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -64,15 +65,26 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// In Vercel rewrites, r.URL.Path is rewritten to the destination file ("/api/index.go").
-	// Restore the real client request path from Vercel's x-matched-path or x-forwarded-uri headers.
-	if matchedPath := r.Header.Get("x-matched-path"); matchedPath != "" {
+	// Restore the real client request path from __path query param, x-matched-path, or x-forwarded-uri.
+	if queryPath := r.URL.Query().Get("__path"); queryPath != "" {
+		if !strings.HasPrefix(queryPath, "/") {
+			queryPath = "/" + queryPath
+		}
+		for strings.HasPrefix(queryPath, "//") {
+			queryPath = strings.TrimPrefix(queryPath, "/")
+			if !strings.HasPrefix(queryPath, "/") {
+				queryPath = "/" + queryPath
+			}
+		}
+		r.URL.Path = queryPath
+	} else if matchedPath := r.Header.Get("x-matched-path"); matchedPath != "" {
 		r.URL.Path = matchedPath
 	} else if origURI := r.Header.Get("x-forwarded-uri"); origURI != "" {
 		r.URL.Path = origURI
 	}
 
-	// If path is still /api/index.go, treat it as root /
-	if r.URL.Path == "/api/index.go" || r.URL.Path == "" {
+	// If path is still /api/index.go, /api, or empty, treat it as root /
+	if r.URL.Path == "/api/index.go" || r.URL.Path == "/api" || r.URL.Path == "/api/index" || r.URL.Path == "" {
 		r.URL.Path = "/"
 	}
 
