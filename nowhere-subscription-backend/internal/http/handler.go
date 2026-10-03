@@ -38,6 +38,22 @@ func NewHandler(
 	}
 }
 
+// Root handles GET / with service status and endpoint discovery.
+func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"service": "Nowhere Subscription Verification Backend",
+		"status":  "online",
+		"health":  "/health",
+		"verify":  "/api/v1/google-play/verify",
+	})
+}
+
 // Health handles GET /health.
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {

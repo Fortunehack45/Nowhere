@@ -24,7 +24,11 @@ func NewRouter(
 
 	mux := http.NewServeMux()
 
-	// Public Health Check (unthrottled for Cloud Run probes)
+	// Root Service Info (status check)
+	mux.HandleFunc("/", handler.Root)
+	mux.HandleFunc("/api/index.go", handler.Root)
+
+	// Public Health Check (unthrottled for Cloud Run and Vercel probes)
 	mux.HandleFunc("/health", handler.Health)
 
 	// Protected Verification API endpoint
