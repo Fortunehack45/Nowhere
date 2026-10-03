@@ -3,6 +3,7 @@ package http
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"nowhere-subscription-backend/internal/config"
 	"nowhere-subscription-backend/internal/entitlement"
@@ -40,16 +41,47 @@ func NewRouter(
 	// Apply Middleware pipeline from outermost to innermost:
 	// 1. Recoverer (catches any panic across entire chain)
 	// 2. RequestID (assigns X-Request-ID early)
-	// 3. SecurityHeaders (nosniff, DENY, no-cache, CSP)
-	// 4. RateLimiter (throttles abuse per client IP)
-	// 5. StructuredLogger (logs completion with timing and request ID)
+	// 3. NormalizePath (restores client path from Vercel/proxy rewrites)
+	// 4. SecurityHeaders (nosniff, DENY, no-cache, CSP)
+	// 5. RateLimiter (throttles abuse per client IP)
+	// 6. StructuredLogger (logs completion with timing, normalized path, and request ID)
 	var finalHandler http.Handler = mux
 
 	finalHandler = middleware.StructuredLogger(logger)(finalHandler)
 	finalHandler = middleware.RateLimiter(limiter, logger)(finalHandler)
 	finalHandler = middleware.SecurityHeaders(finalHandler)
+	finalHandler = NormalizePath(finalHandler)
 	finalHandler = middleware.RequestIDMiddleware(finalHandler)
 	finalHandler = middleware.Recoverer(logger)(finalHandler)
 
 	return finalHandler
+}
+
+// NormalizePath ensures requests rewritten by reverse proxies, Vercel, or custom gateways
+// are restored to their intended route path.
+func NormalizePath(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if queryPath := r.URL.Query().Get("__path"); queryPath != "" {
+			if !strings.HasPrefix(queryPath, "/") {
+				queryPath = "/" + queryPath
+			}
+			for strings.HasPrefix(queryPath, "//") {
+				queryPath = strings.TrimPrefix(queryPath, "/")
+				if !strings.HasPrefix(queryPath, "/") {
+					queryPath = "/" + queryPath
+				}
+			}
+			r.URL.Path = queryPath
+		} else if matchedPath := r.Header.Get("x-matched-path"); matchedPath != "" {
+			r.URL.Path = matchedPath
+		} else if origURI := r.Header.Get("x-forwarded-uri"); origURI != "" {
+			r.URL.Path = origURI
+		}
+
+		if r.URL.Path == "/api/index.go" || r.URL.Path == "/api" || r.URL.Path == "/api/index" || r.URL.Path == "" {
+			r.URL.Path = "/"
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
