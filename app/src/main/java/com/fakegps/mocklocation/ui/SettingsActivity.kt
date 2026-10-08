@@ -546,15 +546,9 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.switchSettingsAutoVpnSync.setOnCheckedChangeListener { _, isChecked ->
-            val vpnIntent = android.net.VpnService.prepare(this)
-            if (isChecked && vpnIntent != null) {
-                com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet.newInstance()
-                    .show(supportFragmentManager, com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet.TAG)
-            } else {
-                com.fakegps.mocklocation.vpn.KillSwitchManager.setEnabled(this, isChecked)
-                val msg = if (isChecked) "Kill Switch Armed: Leak Protection ON" else "Kill Switch: Disabled"
-                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-            }
+            com.fakegps.mocklocation.vpn.KillSwitchManager.setEnabled(this, isChecked)
+            val msg = if (isChecked) "Hardware Telemetry Shield Armed: Leak Protection ON" else "Hardware Shield: Disabled"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
         binding.btnSettingsGhostCloakManage.setOnClickListener {

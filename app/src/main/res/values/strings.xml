@@ -359,7 +359,7 @@
     <string name="bottom_she_100_adfree_zero_banners_video">100% ad-free (Zero banners &amp; video prompts)</string>
     <string name="bottom_she_full_background_simulation_route_navigation">Full background simulation &amp; route navigation</string>
     <string name="bottom_she_motion_sync_hardware_sensor">Hardware Motion Sync &amp; dynamic sensor walking</string>
-    <string name="bottom_she_ghost_shield_vpn">Nowhere Ghost Shield VPN (WireGuard Anti-Detection)</string>
+    <string name="bottom_she_ghost_shield_vpn">Ghost Cloak &amp; Anti-Detection Shield (Hardware Telemetry)</string>
     <string name="bottom_she_unlock_annual_plan">Unlock Annual Plan</string>
     <string name="bottom_she_manage_subscription">Manage Subscription</string>
     <string name="bottom_she_restore_purchases">Restore Purchases</string>
@@ -634,13 +634,30 @@
     <string name="welcome_dev_active_desc">Nowhere is active in Developer Options.</string>
     <string name="welcome_dev_needed_desc">Select Nowhere in Developer Options.</string>
     <string name="welcome_dev_btn_configure">Configure</string>
-    <string name="welcome_perms_title">System Permissions</string>
-    <string name="welcome_perms_active_desc">Location &amp; notification access active.</string>
-    <string name="welcome_perms_needed_desc">Location &amp; notification access required.</string>
+    <string name="welcome_perms_title">Location Access</string>
+    <string name="welcome_perms_active_desc">Device location access granted.</string>
+    <string name="welcome_perms_needed_desc">Required to display map &amp; calibrate simulation.</string>
+    <string name="welcome_notif_title">Simulation Notifications</string>
+    <string name="welcome_notif_active_desc">Foreground status notifications enabled.</string>
+    <string name="welcome_notif_needed_desc">Allows background joystick &amp; simulation controls.</string>
+    <string name="welcome_notif_btn_allow">Allow</string>
     <string name="welcome_battery_title">Background Execution</string>
     <string name="welcome_battery_active_desc">Unrestricted background running enabled.</string>
     <string name="welcome_battery_needed_desc">Prevent Android from sleeping GPS.</string>
     <string name="welcome_battery_btn_allow">Allow</string>
+
+    <!-- Prominent Location Disclosure & Consent Dialog -->
+    <string name="disclosure_badge">PROMINENT DISCLOSURE</string>
+    <string name="disclosure_title">Location Access &amp; Data Usage</string>
+    <string name="disclosure_data_accessed_title">Location Data Accessed</string>
+    <string name="disclosure_data_accessed_desc">Nowhere accesses your device\'s precise (GPS) and approximate network location coordinates.</string>
+    <string name="disclosure_usage_title">How Your Location Data Is Used</string>
+    <string name="disclosure_usage_points">• Map Centering: Positions the map canvas on your real-world coordinates.\n• Simulation Calibration: Calibrates initial coordinates and crosshairs for simulated teleportation.\n• Route Simulation: Generates realistic mock routes, bearings, and kinematic speeds from your location.</string>
+    <string name="disclosure_privacy_title">100% On-Device &amp; Zero Data Collection</string>
+    <string name="disclosure_privacy_desc">All location data is processed strictly in real-time on your device. Nowhere NEVER tracks, logs, stores on servers, sells, or transmits your actual location or personal data to any external server or third party.</string>
+    <string name="disclosure_btn_agree">Agree &amp; Continue</string>
+    <string name="disclosure_btn_deny">Not Now</string>
+    <string name="disclosure_denied_warning">Location permission was not granted. Map will remain at default position.</string>
     <string name="vpn_state_protected">Ghost Shield Protected</string>
     <string name="vpn_badge_protected">PROTECTED</string>
     <string name="vpn_btn_deactivate">Deactivate Ghost Shield</string>

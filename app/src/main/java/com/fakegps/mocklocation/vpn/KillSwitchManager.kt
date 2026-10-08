@@ -121,25 +121,11 @@ object KillSwitchManager {
     }
 
     private fun startSinkhole(context: Context, reason: String) {
-        try {
-            val intent = Intent(context, KillSwitchSinkholeService::class.java).apply {
-                putExtra("EXTRA_REASON", reason)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not start KillSwitchSinkholeService: ${e.message}")
-        }
+        Log.i(TAG, "VPN sinkhole service disabled to comply with Google Play VpnService policy.")
     }
 
     private fun stopSinkhole(context: Context) {
-        try {
-            val intent = Intent(context, KillSwitchSinkholeService::class.java)
-            context.stopService(intent)
-        } catch (ignored: Exception) {}
+        Log.i(TAG, "VPN sinkhole service disabled to comply with Google Play VpnService policy.")
     }
 
     private fun showKillSwitchNotification(context: Context, reason: String) {

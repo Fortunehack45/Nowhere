@@ -40,6 +40,14 @@ class WelcomeActivity : AppCompatActivity() {
         }
     }
 
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        if (::walkthroughAdapter.isInitialized) {
+            walkthroughAdapter.notifyItemChanged(3)
+        }
+    }
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(com.fakegps.mocklocation.util.LocaleHelper.wrapContext(newBase))
     }
@@ -265,15 +273,30 @@ class WelcomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun requestEssentialPermissions() {
-        val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+    private fun requestLocationPermissionWithDisclosure() {
+        if (PermissionHelper.hasFineLocationPermission(this)) {
+            walkthroughAdapter.notifyItemChanged(3)
+            return
         }
-        permissionLauncher.launch(permissions.toTypedArray())
+        com.fakegps.mocklocation.ui.dialogs.LocationDisclosureDialog(
+            context = this,
+            onConsentGranted = {
+                val permissions = arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+                permissionLauncher.launch(permissions)
+            },
+            onConsentDenied = {
+                // User denied; do not request system permissions
+            }
+        ).show()
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     enum class StepType {
@@ -355,11 +378,9 @@ class WelcomeActivity : AppCompatActivity() {
                         }.show()
                     }
 
-                    // 2. System Permissions Status
+                    // 2. Location Permission Status (Unbundled with Prominent Disclosure)
                     val hasLoc = PermissionHelper.hasFineLocationPermission(context)
-                    val hasNotif = PermissionHelper.hasNotificationPermission(context)
-                    val isPermsGranted = hasLoc && hasNotif
-                    if (isPermsGranted) {
+                    if (hasLoc) {
                         ivPermStatusIcon.setImageResource(R.drawable.ic_check_circle)
                         ivPermStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
                         tvPermStatusTitle.text = context.getString(R.string.welcome_perms_title)
@@ -377,10 +398,33 @@ class WelcomeActivity : AppCompatActivity() {
                         btnPermAction.strokeColor = ContextCompat.getColorStateList(context, R.color.stroke_subtle)
                     }
                     btnPermAction.setOnClickListener {
-                        requestEssentialPermissions()
+                        requestLocationPermissionWithDisclosure()
                     }
 
-                    // 3. Battery Optimization Status
+                    // 3. Notification Permission Status (Unbundled)
+                    val hasNotif = PermissionHelper.hasNotificationPermission(context)
+                    if (hasNotif) {
+                        ivNotifStatusIcon.setImageResource(R.drawable.ic_check_circle)
+                        ivNotifStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_success_text)
+                        tvNotifStatusTitle.text = context.getString(R.string.welcome_notif_title)
+                        tvNotifStatusDetail.text = context.getString(R.string.welcome_notif_active_desc)
+                        btnNotifAction.text = context.getString(R.string.settings_status_active)
+                        btnNotifAction.isEnabled = false
+                        btnNotifAction.strokeColor = ContextCompat.getColorStateList(context, R.color.badge_success_bg)
+                    } else {
+                        ivNotifStatusIcon.setImageResource(R.drawable.ic_warning_circle)
+                        ivNotifStatusIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.badge_warning_text)
+                        tvNotifStatusTitle.text = context.getString(R.string.welcome_notif_title)
+                        tvNotifStatusDetail.text = context.getString(R.string.welcome_notif_needed_desc)
+                        btnNotifAction.text = context.getString(R.string.welcome_notif_btn_allow)
+                        btnNotifAction.isEnabled = true
+                        btnNotifAction.strokeColor = ContextCompat.getColorStateList(context, R.color.stroke_subtle)
+                    }
+                    btnNotifAction.setOnClickListener {
+                        requestNotificationPermission()
+                    }
+
+                    // 4. Battery Optimization Status
                     val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(context)
                     if (isBatteryExempt) {
                         ivBatteryStatusIcon.setImageResource(R.drawable.ic_check_circle)

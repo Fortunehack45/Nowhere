@@ -121,17 +121,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var pendingLocationPermissionAction: (() -> Unit)? = null
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                 permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (!fineGranted) {
-            Toast.makeText(this, "Location permission is required for accurate simulation.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.disclosure_denied_warning), Toast.LENGTH_LONG).show()
         } else {
-            fetchAndCenterOnRealLocation(userInitiated = false)
+            val pendingAction = pendingLocationPermissionAction
+            pendingLocationPermissionAction = null
+            if (pendingAction != null) {
+                pendingAction.invoke()
+            } else {
+                fetchAndCenterOnRealLocation(userInitiated = false)
+            }
         }
         viewModel.refreshPermissionStates()
+    }
+
+    fun requestLocationPermissionWithDisclosure(onGranted: (() -> Unit)? = null) {
+        if (PermissionHelper.hasLocationPermission(this)) {
+            onGranted?.invoke()
+            return
+        }
+        pendingLocationPermissionAction = onGranted
+        com.fakegps.mocklocation.ui.dialogs.LocationDisclosureDialog(
+            context = this,
+            onConsentGranted = {
+                permissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            },
+            onConsentDenied = {
+                pendingLocationPermissionAction = null
+                Toast.makeText(this, getString(R.string.disclosure_denied_warning), Toast.LENGTH_SHORT).show()
+            }
+        ).show()
     }
 
     private var pendingSimulationAction: (() -> Unit)? = null
@@ -181,29 +212,6 @@ class MainActivity : AppCompatActivity() {
     private var currentLanguageCode: String = ""
     private var currentThemeMode: String = ""
 
-    private val vpnPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val state = viewModel.uiState.value
-            val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(state.fixedLatitude, state.fixedLongitude)
-            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
-            Toast.makeText(this, getString(R.string.status_shield_active), Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, getString(R.string.permission_vpn_required), Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun prepareVpnPermissionIfRequired(): Boolean {
-        val prepareIntent = android.net.VpnService.prepare(this)
-        return if (prepareIntent != null) {
-            vpnPermissionLauncher.launch(prepareIntent)
-            false
-        } else {
-            true
-        }
-    }
-
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(com.fakegps.mocklocation.util.LocaleHelper.wrapContext(newBase))
     }
@@ -231,7 +239,6 @@ class MainActivity : AppCompatActivity() {
         setupFloatingButtons()
         setupIpShield()
         setupGhostCloak()
-        requestInitialPermissions()
         observeUiState()
         com.fakegps.mocklocation.util.AppReviewManager.incrementLaunchCount(this)
 
@@ -541,7 +548,9 @@ class MainActivity : AppCompatActivity() {
     private fun fetchAndCenterOnRealLocation(userInitiated: Boolean = false) {
         if (!PermissionHelper.hasLocationPermission(this)) {
             if (userInitiated) {
-                requestInitialPermissions()
+                requestLocationPermissionWithDisclosure {
+                    fetchAndCenterOnRealLocation(userInitiated = true)
+                }
             }
             return
         }
@@ -664,17 +673,6 @@ class MainActivity : AppCompatActivity() {
             sessionPrefs.hasUserSelectedLocation = true
             Toast.makeText(this, "Centered on your current location", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun requestInitialPermissions() {
-        val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-        permissionLauncher.launch(permissions.toTypedArray())
     }
 
     private fun setupTouchIsolation() {
@@ -1884,25 +1882,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
-        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
-        if (!isPremium) return
-        val sessionPrefs = SessionPreferences(this)
-        if (settingsPrefs.isAutoVpnSyncEnabled) {
-            val prepareIntent = android.net.VpnService.prepare(this)
-            if (prepareIntent != null) {
-                vpnPermissionLauncher.launch(prepareIntent)
-                return
-            }
-            if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
-                val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
-                try {
-                    sessionPrefs.isIpMaskingEnabled = true
-                    com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
-                } catch (e: Exception) {
-                    android.util.Log.w("MainActivity", "Failed to auto-engage VPN: ${e.message}")
-                }
-            }
-        }
+        // VpnService removed to comply with Google Play Store policy.
     }
 
     private fun ensureActiveSessionOrPrompt(onActive: () -> Unit): Boolean {

@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.VpnService
 import android.os.Build
 import android.util.Log
 import android.widget.RemoteViews
@@ -184,18 +183,8 @@ class NowhereVpnWidgetProvider : AppWidgetProvider() {
                         Toast.makeText(context, "Kill Switch: Disabled", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    val vpnIntent = VpnService.prepare(context)
-                    if (vpnIntent != null) {
-                        val openAppIntent = Intent(context, MainActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                            putExtra("OPEN_VPN_DIALOG", true)
-                        }
-                        context.startActivity(openAppIntent)
-                        Toast.makeText(context, "Please grant VPN permission in Nowhere", Toast.LENGTH_SHORT).show()
-                    } else {
-                        KillSwitchManager.setEnabled(context, true)
-                        Toast.makeText(context, "Kill Switch: Armed & Active", Toast.LENGTH_SHORT).show()
-                    }
+                    KillSwitchManager.setEnabled(context, true)
+                    Toast.makeText(context, "Kill Switch: Armed & Active", Toast.LENGTH_SHORT).show()
                 }
                 updateAllVpnWidgets(context)
             }

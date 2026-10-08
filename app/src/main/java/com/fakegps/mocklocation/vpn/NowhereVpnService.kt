@@ -56,20 +56,8 @@ class NowhereVpnService : VpnService() {
         val vpnState: StateFlow<VpnState> = _vpnState.asStateFlow()
 
         fun start(context: Context, nodeId: String) {
-            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
-            if (!isPremium) {
-                Log.w(TAG, "Cannot start NowhereVpnService: VPN requires Nowhere Pro subscription.")
-                return
-            }
-            val intent = Intent(context, NowhereVpnService::class.java).apply {
-                action = ACTION_CONNECT
-                putExtra(EXTRA_NODE_ID, nodeId)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            Log.i(TAG, "VPN service is retired to comply with Google Play VpnService policy.")
+            _vpnState.value = VpnState.Disconnected
         }
 
         fun startVpn(context: Context, node: IpNode) {
@@ -77,32 +65,13 @@ class NowhereVpnService : VpnService() {
         }
 
         fun startWithTunnelResponse(context: Context, response: NowhereApiClient.TunnelResponse, customName: String? = null) {
-            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
-            if (!isPremium) {
-                Log.w(TAG, "Cannot start NowhereVpnService: VPN requires Nowhere Pro subscription.")
-                return
-            }
-            val intent = Intent(context, NowhereVpnService::class.java).apply {
-                action = ACTION_CONNECT_TUNNEL_CONFIG
-                putExtra(EXTRA_NODE_ID, response.nodeId)
-                putExtra(EXTRA_ENDPOINT, response.endpoint)
-                putExtra(EXTRA_SERVER_PUBKEY, response.serverPubkey)
-                putExtra(EXTRA_ASSIGNED_IP, response.assignedIp)
-                putExtra(EXTRA_DNS, response.dns.firstOrNull() ?: "1.1.1.1")
-                putExtra(EXTRA_CUSTOM_NAME, customName ?: response.countryName)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            Log.i(TAG, "VPN service is retired to comply with Google Play VpnService policy.")
+            _vpnState.value = VpnState.Disconnected
         }
 
         fun stop(context: Context) {
-            val intent = Intent(context, NowhereVpnService::class.java).apply {
-                action = ACTION_DISCONNECT
-            }
-            context.startService(intent)
+            isRunning = false
+            _vpnState.value = VpnState.Disconnected
         }
 
         fun stopVpn(context: Context) {
@@ -525,14 +494,8 @@ class NowhereVpnService : VpnService() {
                 delay(1000L)
                 val durationSec = if (sessionStartTimeMs > 0L) (System.currentTimeMillis() - sessionStartTimeMs) / 1000L else 0L
 
-                // Read live stats from WireGuard GoBackend
+                // WireGuard stats retired
                 val wgStats = WireGuardTunnelManager.getStatistics(this@NowhereVpnService)
-                if (wgStats != null) {
-                    val realRx = wgStats.totalRx()
-                    val realTx = wgStats.totalTx()
-                    if (realRx > 0L) totalRxBytes = realRx
-                    if (realTx > 0L) totalTxBytes = realTx
-                }
 
                 val rxRate = (totalRxBytes - prevRx).coerceAtLeast(0L)
                 val txRate = (totalTxBytes - prevTx).coerceAtLeast(0L)

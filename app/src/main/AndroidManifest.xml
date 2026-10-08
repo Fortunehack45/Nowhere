@@ -6,7 +6,6 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" tools:ignore="MockLocation,ProtectedPermissions" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <!-- Foreground Service & Notifications -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -85,35 +84,7 @@
             android:stopWithTask="false"
             android:exported="false" />
 
-        <service
-            android:name=".vpn.NowhereVpnService"
-            android:enabled="true"
-            android:exported="false"
-            android:stopWithTask="false"
-            android:foregroundServiceType="specialUse"
-            android:permission="android.permission.BIND_VPN_SERVICE">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Virtual IP privacy tunnel" />
-        </service>
 
-        <service
-            android:name=".vpn.KillSwitchSinkholeService"
-            android:enabled="true"
-            android:exported="false"
-            android:stopWithTask="false"
-            android:foregroundServiceType="specialUse"
-            android:permission="android.permission.BIND_VPN_SERVICE">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Emergency Kill Switch Network Sinkhole" />
-        </service>
 
         <!-- AndroidX Per-App Language Metadata Holder Service (Android 12 and below) -->
         <service
@@ -215,19 +186,7 @@
         </receiver>
 
 
-        <!-- Home Screen App Widget: IP Privacy Shield Widget -->
-        <receiver
-            android:name=".ui.widget.NowhereVpnWidgetProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.fakegps.mocklocation.ACTION_UPDATE_VPN_WIDGET" />
-                <action android:name="com.fakegps.mocklocation.ACTION_VPN_WIDGET_TOGGLE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_nowhere_vpn_info" />
-        </receiver>
+
 
 
         <!-- Home Screen App Widget: Location Weather Radar Widget -->
