@@ -24,7 +24,7 @@ fun getDynamicBuildNumber(): Int {
     }.getOrNull() ?: 58
 
     val envRunNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
-    return 1400 + gitCommitCount + envRunNumber
+    return 1800 + gitCommitCount + envRunNumber
 }
 
 val computedVersionCode = getDynamicBuildNumber()
