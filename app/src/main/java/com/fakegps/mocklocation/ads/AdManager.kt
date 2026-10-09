@@ -7,6 +7,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -128,6 +129,28 @@ object AdManager {
         loadBannerInternal(activity, container, primaryAdUnit, fallbackAdUnit)
     }
 
+    private fun getAdaptiveBannerAdSize(activity: Activity, container: FrameLayout): AdSize {
+        val displayMetrics = activity.resources.displayMetrics
+        val density = displayMetrics.density
+        val adWidthPixels = if (container.width > 0) {
+            container.width.toFloat()
+        } else {
+            val windowMetrics = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                activity.windowManager.currentWindowMetrics
+            } else null
+            if (windowMetrics != null) {
+                val insets = windowMetrics.windowInsets.getInsetsIgnoringVisibility(
+                    android.view.WindowInsets.Type.systemBars()
+                )
+                (windowMetrics.bounds.width() - insets.left - insets.right).toFloat()
+            } else {
+                displayMetrics.widthPixels.toFloat()
+            }
+        }
+        val adWidth = (adWidthPixels / density).toInt().coerceAtLeast(320)
+        return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, adWidth)
+    }
+
     private fun loadBannerInternal(
         activity: Activity,
         container: FrameLayout,
@@ -145,14 +168,25 @@ object AdManager {
                 return@runOnUiThread
             }
             try {
-                container.visibility = View.VISIBLE
+                val adSize = try {
+                    getAdaptiveBannerAdSize(activity, container)
+                } catch (e: Exception) {
+                    AdSize.BANNER
+                }
+
                 val adView = AdView(activity).apply {
                     this.adUnitId = adUnitId
-                    setAdSize(AdSize.BANNER)
+                    setAdSize(adSize)
                 }
 
                 adView.adListener = object : AdListener() {
                     override fun onAdLoaded() {
+                        if (activity.isFinishing || activity.isDestroyed || isPremium(activity)) {
+                            clearBanner(container)
+                            return
+                        }
+                        container.removeAllViews()
+                        container.addView(adView)
                         container.visibility = View.VISIBLE
                         Log.d(TAG, "Banner ad loaded successfully ($adUnitId)")
                     }
@@ -161,20 +195,26 @@ object AdManager {
                         Log.w(TAG, "Banner failed to load ($adUnitId): ${error.message} (code: ${error.code})")
                         if (fallbackAdUnitId != null && fallbackAdUnitId != adUnitId) {
                             Log.d(TAG, "Retrying banner with fallback ad unit ($fallbackAdUnitId)")
-                            loadBannerInternal(activity, container, fallbackAdUnitId, TEST_BANNER_AD_UNIT_ID)
+                            loadBannerInternal(
+                                activity,
+                                container,
+                                fallbackAdUnitId,
+                                if (fallbackAdUnitId != TEST_BANNER_AD_UNIT_ID) TEST_BANNER_AD_UNIT_ID else null
+                            )
                         } else if (adUnitId != TEST_BANNER_AD_UNIT_ID) {
                             Log.d(TAG, "Retrying banner with test ad unit ($TEST_BANNER_AD_UNIT_ID)")
                             loadBannerInternal(activity, container, TEST_BANNER_AD_UNIT_ID, null)
+                        } else {
+                            clearBanner(container)
                         }
                     }
                 }
 
-                container.removeAllViews()
-                container.addView(adView)
                 val adRequest = AdRequest.Builder().build()
                 adView.loadAd(adRequest)
             } catch (e: Exception) {
                 Log.w(TAG, "Could not load banner: ${e.message}")
+                clearBanner(container)
             }
         }
     }
@@ -696,12 +736,15 @@ object AdManager {
             if (!isHandled) {
                 isHandled = true
                 dismissLoading()
-                Toast.makeText(activity, "Reward video is taking longer to load. Retrying in background...", Toast.LENGTH_SHORT).show()
+                Log.w(TAG, "Reward video took longer than expected. Granting session extension.")
+                Toast.makeText(activity, "✅ +2 Hours Added! Simulation extended.", Toast.LENGTH_SHORT).show()
+                onUserEarnedReward()
+                onAdClosed?.invoke()
                 preloadRewardedAd(activity)
                 preloadRewardedInterstitialAd(activity)
             }
         }
-        handler.postDelayed(timeoutRunnable, 12000L)
+        handler.postDelayed(timeoutRunnable, 6000L)
 
         fun presentRewardedAd(ad: RewardedAd) {
             if (isHandled) return
@@ -850,11 +893,10 @@ object AdManager {
                                                 isHandled = true
                                                 handler.removeCallbacks(timeoutRunnable)
                                                 dismissLoading()
-                                                Toast.makeText(
-                                                    activity,
-                                                    "Ad inventory is temporarily unavailable. Please check your internet or try again in a moment.",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
+                                                Log.w(TAG, "All rewarded ad options returned no fill: ${finalError.message}. Granting courtesy extension.")
+                                                Toast.makeText(activity, "✅ +2 Hours Added! Simulation extended.", Toast.LENGTH_SHORT).show()
+                                                onUserEarnedReward()
+                                                onAdClosed?.invoke()
                                             }
                                         }
                                     )
@@ -863,11 +905,10 @@ object AdManager {
                                     isHandled = true
                                     handler.removeCallbacks(timeoutRunnable)
                                     dismissLoading()
-                                    Toast.makeText(
-                                        activity,
-                                        "Ad inventory is temporarily unavailable. Please check your internet or try again in a moment.",
-                                        Toast.LENGTH_LONG
-                                    ).show()
+                                    Log.w(TAG, "Rewarded interstitial unavailable. Granting courtesy extension.")
+                                    Toast.makeText(activity, "✅ +2 Hours Added! Simulation extended.", Toast.LENGTH_SHORT).show()
+                                    onUserEarnedReward()
+                                    onAdClosed?.invoke()
                                 }
                             }
                         }

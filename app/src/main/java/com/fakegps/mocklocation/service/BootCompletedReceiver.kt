@@ -15,23 +15,28 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        if (action == Intent.ACTION_BOOT_COMPLETED || action == "android.intent.action.QUICKBOOT_POWERON" || action == Intent.ACTION_MY_PACKAGE_REPLACED || action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
-            Log.d(TAG, "Boot completed event received ($action). Checking previous session state...")
+        if (action == Intent.ACTION_BOOT_COMPLETED || action == "android.intent.action.QUICKBOOT_POWERON" || action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
+            Log.d(TAG, "Boot event received ($action). Checking session persistence preferences...")
             val sessionPrefs = SessionPreferences(context)
 
-            if (sessionPrefs.isSessionActive && sessionPrefs.isPersistentBootInjectionEnabled) {
-                Log.d(TAG, "Restoring active mock location session for mode: ${sessionPrefs.activeMode}")
+            // Strictly require that the user explicitly enabled persistent boot injection in settings
+            if (sessionPrefs.isPersistentBootInjectionEnabled && sessionPrefs.isSessionActive) {
+                Log.d(TAG, "User explicitly configured persistent boot mock location. Restoring mode: ${sessionPrefs.activeMode}")
                 val serviceIntent = Intent(context, MockLocationService::class.java).apply {
                     this.action = MockLocationService.ACTION_RESTORE_SESSION
                 }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(serviceIntent)
-                } else {
-                    context.startService(serviceIntent)
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent)
+                    } else {
+                        context.startService(serviceIntent)
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Could not start service on boot: ${e.message}")
                 }
             } else {
-                Log.d(TAG, "No active session before reboot; taking no action.")
+                Log.d(TAG, "Persistent boot injection is disabled or no active session; taking no action.")
             }
         }
     }

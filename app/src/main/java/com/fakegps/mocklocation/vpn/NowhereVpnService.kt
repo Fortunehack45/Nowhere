@@ -9,7 +9,8 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.net.VpnService
+import android.app.Service
+import android.os.IBinder
 import android.os.Build
 import android.content.pm.ServiceInfo
 import android.os.ParcelFileDescriptor
@@ -32,7 +33,9 @@ import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.URL
 
-class NowhereVpnService : VpnService() {
+class NowhereVpnService : Service() {
+
+    override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
         private const val TAG = "NowhereVpnService"
@@ -297,12 +300,7 @@ class NowhereVpnService : VpnService() {
             networkCallback = object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     if (isRunning && sessionPrefs.isIpMaskingEnabled) {
-                        Log.i(TAG, "Network available: syncing underlying network to VPN tunnel...")
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                            try {
-                                setUnderlyingNetworks(arrayOf(network))
-                            } catch (ignored: Exception) {}
-                        }
+                        Log.i(TAG, "Network available: underlying network active.")
                     }
                 }
 

@@ -505,7 +505,7 @@ class MainActivity : AppCompatActivity() {
         }
         com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
-            if (binding.adBannerContainer.childCount == 0) {
+            if (binding.adBannerContainer.visibility != android.view.View.VISIBLE || binding.adBannerContainer.childCount == 0) {
                 com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
             }
             com.fakegps.mocklocation.ads.AdManager.preloadAdsForActivity(this)

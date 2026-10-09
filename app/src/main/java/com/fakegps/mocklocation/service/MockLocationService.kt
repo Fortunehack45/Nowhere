@@ -248,9 +248,7 @@ class MockLocationService : Service() {
                 stopMotionSync()
             }
             else -> {
-                if (sessionPrefs.isSessionActive) {
-                    restoreActiveSession()
-                }
+                Log.d(TAG, "onStartCommand: Unrecognized or null action (${intent?.action}). Skipping auto-restore.")
             }
         }
         return START_NOT_STICKY

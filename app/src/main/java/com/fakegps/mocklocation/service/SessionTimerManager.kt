@@ -232,6 +232,7 @@ object SessionTimerManager {
                     if (remainingMillis <= 0L) {
                         sessionPrefs.isSessionExpired = true
                         sessionPrefs.isSessionRunning = false
+                        sessionPrefs.isSessionActive = false
                         val state = SessionTimerState(
                             isRunning = false,
                             isExpired = true,
@@ -250,10 +251,15 @@ object SessionTimerManager {
                             com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(appContext, "Session quota expired")
                             // Trigger service expiration pause/stop
                             withContext(Dispatchers.Main) {
-                                val stopIntent = Intent(appContext, MockLocationService::class.java).apply {
-                                    action = MockLocationService.ACTION_STOP
+                                try {
+                                    val stopIntent = Intent(appContext, MockLocationService::class.java).apply {
+                                        action = MockLocationService.ACTION_STOP
+                                    }
+                                    appContext.startService(stopIntent)
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "Could not send stopService intent: ${e.message}")
+                                    MockLocationService.activeInstance?.stopSpoofing()
                                 }
-                                appContext.startService(stopIntent)
                             }
                         }
                         NowhereAppWidgetProvider.updateAllWidgets(appContext)

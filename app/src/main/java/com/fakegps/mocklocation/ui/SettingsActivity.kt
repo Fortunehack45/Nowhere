@@ -109,7 +109,7 @@ class SettingsActivity : AppCompatActivity() {
             com.fakegps.mocklocation.service.SessionTimerManager.updateStaticState(this)
         }
         if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
-            if (binding.adBannerContainer.childCount == 0) {
+            if (binding.adBannerContainer.visibility != android.view.View.VISIBLE || binding.adBannerContainer.childCount == 0) {
                 com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = false)
             }
         } else {
