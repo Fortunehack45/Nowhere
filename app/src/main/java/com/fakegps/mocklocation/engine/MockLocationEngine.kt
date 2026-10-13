@@ -275,24 +275,7 @@ class MockLocationEngine(
                     }
                 }
                 fusedLocationClient.setMockLocation(gmsFix)
-                    .addOnFailureListener {
-                        try {
-                            fusedLocationClient.setMockMode(true).addOnSuccessListener {
-                                fusedLocationClient.setMockLocation(gmsFix)
-                            }
-                        } catch (ignored: Exception) {}
-                    }
-
-                // Also inject as FUSED provider for GMS subscribers like Google Maps
-                try {
-                    val fusedFix = Location(gmsFix).apply { provider = FUSED_PROVIDER_NAME }
-                    fusedLocationClient.setMockLocation(fusedFix)
-                } catch (ignored: Exception) {}
-            } catch (ignored: Exception) {
-                try {
-                    fusedLocationClient.setMockMode(true)
-                } catch (ignored: Exception) {}
-            }
+            } catch (ignored: Throwable) {}
             return Result.success(lastSuccessfulLocation)
         } else {
             isInitialized = false
