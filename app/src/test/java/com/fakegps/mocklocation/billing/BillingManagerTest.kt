@@ -25,7 +25,20 @@ class BillingManagerTest {
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_PREMIUM))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_HYPHEN))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_SANDBOX))
+    }
+
+    @Test
+    fun testBillingManager_diagnosticInfo() {
+        val billingManager = BillingManager.getInstance(context)
+        val diag = billingManager.getDiagnosticInfo()
+        assertNotNull(diag)
+        assertTrue(diag.testedCandidateIds.isNotEmpty())
+        assertTrue(diag.testedCandidateIds.contains("nowhere_premium"))
+        assertTrue(diag.testedCandidateIds.contains("nowhere-pro"))
     }
 
     @Test

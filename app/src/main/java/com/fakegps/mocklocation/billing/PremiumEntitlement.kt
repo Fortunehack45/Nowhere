@@ -29,6 +29,15 @@ data class PremiumEntitlement(
         const val PRODUCT_ID_PREMIUM = "nowhere_premium"
         const val PRODUCT_ID_PREMIUM_YEARLY = "nowhere_premium_yearly"
         const val PRODUCT_ID_NOWHERE_PRO = "nowhere_pro"
+        const val PRODUCT_ID_NOWHERE_PRO_HYPHEN = "nowhere-pro"
+        const val PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN = "nowhere-premium"
+        const val PRODUCT_ID_NOWHERE_SUBSCRIPTION = "nowhere_subscription"
+        const val PRODUCT_ID_NOWHERE_SUBSCRIPTION_HYPHEN = "nowhere-subscription"
+        const val PRODUCT_ID_NOWHERE_PRO_YEARLY = "nowhere_pro_yearly"
+        const val PRODUCT_ID_PRO = "pro"
+        const val PRODUCT_ID_PREMIUM_SHORT = "premium"
+        const val PRODUCT_ID_VIP = "vip"
+        const val PRODUCT_ID_NOWHERE_VIP = "nowhere_vip"
         const val PRODUCT_ID_SANDBOX = "nowhere_premium_sandbox"
 
         const val BASE_PLAN_MONTHLY = "premium-monthly"
@@ -38,6 +47,15 @@ data class PremiumEntitlement(
             PRODUCT_ID_PREMIUM,
             PRODUCT_ID_PREMIUM_YEARLY,
             PRODUCT_ID_NOWHERE_PRO,
+            PRODUCT_ID_NOWHERE_PRO_HYPHEN,
+            PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN,
+            PRODUCT_ID_NOWHERE_SUBSCRIPTION,
+            PRODUCT_ID_NOWHERE_SUBSCRIPTION_HYPHEN,
+            PRODUCT_ID_NOWHERE_PRO_YEARLY,
+            PRODUCT_ID_PRO,
+            PRODUCT_ID_PREMIUM_SHORT,
+            PRODUCT_ID_VIP,
+            PRODUCT_ID_NOWHERE_VIP,
             PRODUCT_ID_SANDBOX
         )
 

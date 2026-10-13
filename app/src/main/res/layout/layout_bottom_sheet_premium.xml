@@ -34,10 +34,20 @@
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_sheet_handle" />
 
-            <!-- Header Row with Close Button -->
+            <!-- Header Row with Diagnostics Help & Close Button -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnBillingHelp"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="start|top"
+                    android:contentDescription="Billing Diagnostics"
+                    app:icon="@drawable/ic_help"
+                    app:iconTint="@color/text_muted" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnPremiumClose"

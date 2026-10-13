@@ -101,6 +101,20 @@ class BillingManager private constructor(private val context: Context) : Purchas
     private val _billingError = MutableStateFlow<String?>(null)
     val billingError: StateFlow<String?> = _billingError.asStateFlow()
 
+    var lastResponseCode: Int = BillingClient.BillingResponseCode.OK
+        private set
+    var lastDebugMessage: String? = null
+        private set
+
+    private val _diagnosticEvent = MutableStateFlow<String?>(null)
+    val diagnosticEvent: StateFlow<String?> = _diagnosticEvent.asStateFlow()
+
+    fun clearDiagnosticEvent() {
+        _diagnosticEvent.value = null
+    }
+
+    private var pendingPurchaseWatchdog: Runnable? = null
+
     private var billingClient: BillingClient = buildBillingClient()
     private var reconnectAttempts = 0
 
@@ -113,6 +127,34 @@ class BillingManager private constructor(private val context: Context) : Purchas
 
     init {
         startConnection()
+    }
+
+    private fun schedulePurchaseWatchdog() {
+        pendingPurchaseWatchdog?.let { mainHandler.removeCallbacks(it) }
+        val watchdog = Runnable {
+            if (pendingPurchasePlan != null) {
+                val err = _billingError.value ?: "Connection to Google Play timed out after 5s."
+                cancelPendingPurchase("Timed out waiting for Google Play Store. $err")
+            }
+        }
+        pendingPurchaseWatchdog = watchdog
+        mainHandler.postDelayed(watchdog, 5000L)
+    }
+
+    fun cancelPendingPurchase(reason: String) {
+        pendingPurchaseWatchdog?.let { mainHandler.removeCallbacks(it) }
+        pendingPurchaseWatchdog = null
+
+        val wasPending = pendingPurchasePlan != null
+        pendingPurchasePlan = null
+        pendingActivityRef = null
+        _isLoadingProducts.value = false
+
+        if (wasPending) {
+            Log.w(TAG, "Pending purchase cancelled: $reason")
+            _billingError.value = reason
+            _diagnosticEvent.value = reason
+        }
     }
 
     private fun buildBillingClient(): BillingClient {
@@ -166,10 +208,13 @@ class BillingManager private constructor(private val context: Context) : Purchas
             _billingStatus.value = BillingStatus.ERROR
             _isLoadingProducts.value = false
             _billingError.value = e.message
+            cancelPendingPurchase(e.message ?: "Failed to start Google Play connection")
         }
     }
 
     override fun onBillingSetupFinished(billingResult: BillingResult) {
+        lastResponseCode = billingResult.responseCode
+        lastDebugMessage = billingResult.debugMessage
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
             Log.d(TAG, "BillingClient connected successfully.")
             _billingStatus.value = BillingStatus.READY
@@ -184,6 +229,7 @@ class BillingManager private constructor(private val context: Context) : Purchas
             _billingStatus.value = BillingStatus.ERROR
             _isLoadingProducts.value = false
             _billingError.value = errMsg
+            cancelPendingPurchase(errMsg)
             retryConnectionWithBackoff()
         }
     }
@@ -191,6 +237,7 @@ class BillingManager private constructor(private val context: Context) : Purchas
     override fun onBillingServiceDisconnected() {
         Log.w(TAG, "Billing service disconnected.")
         _billingStatus.value = BillingStatus.DISCONNECTED
+        cancelPendingPurchase("Google Play Billing service disconnected.")
         retryConnectionWithBackoff()
     }
 
@@ -255,7 +302,16 @@ class BillingManager private constructor(private val context: Context) : Purchas
         val candidateSubscriptionIds = listOf(
             PremiumEntitlement.PRODUCT_ID_PREMIUM,
             PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_HYPHEN,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION_HYPHEN,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_YEARLY,
+            PremiumEntitlement.PRODUCT_ID_PRO,
+            PremiumEntitlement.PRODUCT_ID_PREMIUM_SHORT,
+            PremiumEntitlement.PRODUCT_ID_VIP,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_VIP
         )
 
         val retrievedProductDetails = mutableListOf<ProductDetails>()
@@ -291,9 +347,13 @@ class BillingManager private constructor(private val context: Context) : Purchas
             billingClient.queryProductDetailsAsync(params) { billingResult, queryResult ->
                 mainHandler.post {
                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                        retrievedProductDetails.addAll(queryResult.productDetailsList)
-                        Log.d(TAG, "QueryProductDetails for $prodId found: ${queryResult.productDetailsList.size} items")
+                        if (queryResult.productDetailsList.isNotEmpty()) {
+                            retrievedProductDetails.addAll(queryResult.productDetailsList)
+                            Log.d(TAG, "QueryProductDetails for $prodId found: ${queryResult.productDetailsList.size} items")
+                        }
                     } else {
+                        lastResponseCode = billingResult.responseCode
+                        lastDebugMessage = billingResult.debugMessage
                         Log.d(TAG, "QueryProductDetails for $prodId returned code ${billingResult.responseCode}: ${billingResult.debugMessage}")
                     }
                     completedQueries++
@@ -307,31 +367,59 @@ class BillingManager private constructor(private val context: Context) : Purchas
      * Fallback query for in-app products (in case user configured one-time purchase in Play Console).
      */
     private fun queryInAppProductDetails(candidateIds: List<String>, onComplete: (() -> Unit)? = null) {
-        val inAppParams = QueryProductDetailsParams.newBuilder()
-            .setProductList(
-                candidateIds.map { prodId ->
-                    QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(prodId)
-                        .setProductType(BillingClient.ProductType.INAPP)
-                        .build()
-                }
-            )
-            .build()
+        val inAppResults = mutableListOf<ProductDetails>()
+        var inAppCompleted = 0
+        val totalInApp = candidateIds.size
 
-        billingClient.queryProductDetailsAsync(inAppParams) { billingResult, queryResult ->
-            mainHandler.post {
+        fun finishInApp() {
+            if (inAppCompleted >= totalInApp) {
                 _isLoadingProducts.value = false
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && queryResult.productDetailsList.isNotEmpty()) {
-                    Log.d(TAG, "QueryProductDetails (INAPP) found: ${queryResult.productDetailsList.size} items")
-                    processLoadedProductDetails(queryResult.productDetailsList)
+                if (inAppResults.isNotEmpty()) {
+                    Log.d(TAG, "QueryProductDetails (INAPP) found: ${inAppResults.size} items")
+                    processLoadedProductDetails(inAppResults)
                     executePendingPurchaseIfReady()
                 } else {
-                    Log.w(TAG, "No Google Play products found. Response: ${billingResult.responseCode} - ${billingResult.debugMessage}")
-                    if (_monthlyProductDetails.value == null && _yearlyProductDetails.value == null) {
-                        _billingError.value = "No Nowhere Pro products returned from Google Play Store (${billingResult.responseCode})"
+                    val notFoundMsg = buildString {
+                        append("Google Play returned 0 products for [${candidateIds.take(4).joinToString(", ")}...].")
+                        if (lastResponseCode != BillingClient.BillingResponseCode.OK) {
+                            append(" (Response code $lastResponseCode: ${lastDebugMessage.orEmpty()})")
+                        }
                     }
+                    Log.w(TAG, notFoundMsg)
+                    if (_monthlyProductDetails.value == null && _yearlyProductDetails.value == null) {
+                        _billingError.value = notFoundMsg
+                    }
+                    cancelPendingPurchase(notFoundMsg)
                 }
                 onComplete?.invoke()
+            }
+        }
+
+        for (prodId in candidateIds) {
+            val inAppParams = QueryProductDetailsParams.newBuilder()
+                .setProductList(
+                    listOf(
+                        QueryProductDetailsParams.Product.newBuilder()
+                            .setProductId(prodId)
+                            .setProductType(BillingClient.ProductType.INAPP)
+                            .build()
+                    )
+                )
+                .build()
+
+            billingClient.queryProductDetailsAsync(inAppParams) { billingResult, queryResult ->
+                mainHandler.post {
+                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                        if (queryResult.productDetailsList.isNotEmpty()) {
+                            inAppResults.addAll(queryResult.productDetailsList)
+                        }
+                    } else {
+                        lastResponseCode = billingResult.responseCode
+                        lastDebugMessage = billingResult.debugMessage
+                    }
+                    inAppCompleted++
+                    finishInApp()
+                }
             }
         }
     }
@@ -757,6 +845,7 @@ class BillingManager private constructor(private val context: Context) : Purchas
             Log.d(TAG, "Plan offer not ready yet. Scheduling pending purchase for plan: $planType")
             pendingPurchasePlan = planType
             pendingActivityRef = WeakReference(activity)
+            schedulePurchaseWatchdog()
 
             val loadingMsg = try {
                 context.getString(R.string.premium_connecting_google_play)
@@ -769,6 +858,8 @@ class BillingManager private constructor(private val context: Context) : Purchas
             return null
         }
 
+        pendingPurchaseWatchdog?.let { mainHandler.removeCallbacks(it) }
+        pendingPurchaseWatchdog = null
         pendingPurchasePlan = null
         pendingActivityRef = null
 
@@ -793,10 +884,55 @@ class BillingManager private constructor(private val context: Context) : Purchas
         val planOffer = resolvePlanOffer(plan)
         if (planOffer != null) {
             Log.d(TAG, "Auto-launching queued purchase flow now that products are ready!")
+            pendingPurchaseWatchdog?.let { mainHandler.removeCallbacks(it) }
+            pendingPurchaseWatchdog = null
             pendingPurchasePlan = null
             pendingActivityRef = null
             launchPurchaseFlow(targetAct, plan)
         }
+    }
+
+    data class BillingDiagnosticInfo(
+        val billingStatus: BillingStatus,
+        val isReady: Boolean,
+        val connectionState: Int,
+        val lastResponseCode: Int,
+        val lastDebugMessage: String?,
+        val monthlyDetailsFound: Boolean,
+        val yearlyDetailsFound: Boolean,
+        val productsCount: Int,
+        val testedCandidateIds: List<String>,
+        val lastError: String?
+    )
+
+    fun getDiagnosticInfo(): BillingDiagnosticInfo {
+        val prods = listOfNotNull(_monthlyProductDetails.value, _yearlyProductDetails.value).distinctBy { it.productId }
+        val candidateSubscriptionIds = listOf(
+            PremiumEntitlement.PRODUCT_ID_PREMIUM,
+            PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_HYPHEN,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION_HYPHEN,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_YEARLY,
+            PremiumEntitlement.PRODUCT_ID_PRO,
+            PremiumEntitlement.PRODUCT_ID_PREMIUM_SHORT,
+            PremiumEntitlement.PRODUCT_ID_VIP,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_VIP
+        )
+        return BillingDiagnosticInfo(
+            billingStatus = _billingStatus.value,
+            isReady = billingClient.isReady,
+            connectionState = billingClient.connectionState,
+            lastResponseCode = lastResponseCode,
+            lastDebugMessage = lastDebugMessage,
+            monthlyDetailsFound = _monthlyProductDetails.value != null,
+            yearlyDetailsFound = _yearlyProductDetails.value != null,
+            productsCount = prods.size,
+            testedCandidateIds = candidateSubscriptionIds,
+            lastError = _billingError.value
+        )
     }
 
     /**

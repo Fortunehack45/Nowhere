@@ -135,6 +135,10 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
             dismiss()
         }
 
+        binding.btnBillingHelp.setOnClickListener {
+            showBillingDiagnosticsDialog(billingManager)
+        }
+
         binding.btnUpgradePremium.setOnClickListener {
             activity?.let { act ->
                 val result = billingManager.launchPurchaseFlow(act, selectedPlan)
@@ -180,6 +184,16 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
+            billingManager.diagnosticEvent.collectLatest { event ->
+                if (!event.isNullOrBlank()) {
+                    renderPlanSelectionUI() // Always reset button text so it never stays stuck
+                    showBillingDiagnosticsDialog(billingManager, event)
+                    billingManager.clearDiagnosticEvent()
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
             billingManager.purchaseMessage.collectLatest { msg ->
                 if (!msg.isNullOrBlank()) {
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
@@ -187,6 +201,53 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
                 }
             }
         }
+    }
+
+    private fun showBillingDiagnosticsDialog(billingManager: BillingManager, promptReason: String? = null) {
+        val ctx = context ?: return
+        val diag = billingManager.getDiagnosticInfo()
+        val isReady = diag.isReady
+        val statusText = when {
+            isReady && diag.productsCount > 0 -> "Connected (${diag.productsCount} products available)"
+            isReady && diag.productsCount == 0 -> "Connected to Play Store, but 0 products returned"
+            diag.billingStatus == BillingManager.BillingStatus.CONNECTING -> "Connecting in progress..."
+            else -> "Disconnected / Error (${diag.billingStatus})"
+        }
+
+        val details = buildString {
+            if (!promptReason.isNullOrBlank()) {
+                append("Notice: ").append(promptReason).append("\n\n")
+            }
+            append("• Google Play Status: ").append(statusText).append("\n")
+            if (diag.lastResponseCode != 0) {
+                append("• Google Play Code: ").append(diag.lastResponseCode)
+                if (!diag.lastDebugMessage.isNullOrBlank()) {
+                    append(" (").append(diag.lastDebugMessage).append(")")
+                }
+                append("\n")
+            }
+            append("• Tested Product IDs: ").append(diag.testedCandidateIds.take(4).joinToString(", ")).append("...\n\n")
+
+            append("Play Console Troubleshooting Checklist:\n")
+            append("1. Subscriptions ➔ Base Plans: Ensure status is 'Active' (not Draft).\n")
+            append("2. Settings ➔ License Testing: Add your device's Google account.\n")
+            append("3. Device: Make sure Google Play Store is logged in.\n\n")
+            append("Instant Test Option: Tap below to activate Nowhere Pro locally in Sandbox mode.")
+        }
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+            .setTitle("Google Play Connection Status")
+            .setMessage(details)
+            .setPositiveButton("Activate Test Pro (Sandbox)") { _, _ ->
+                billingManager.toggleDebugSandboxPremium(true)
+                Toast.makeText(ctx, "Sandbox Nowhere Pro Activated!", Toast.LENGTH_SHORT).show()
+            }
+            .setNeutralButton("Retry Connection") { _, _ ->
+                billingManager.refreshProductDetails()
+                Toast.makeText(ctx, "Reconnecting to Google Play...", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Close", null)
+            .show()
     }
 
     private fun renderEntitlement(entitlement: PremiumEntitlement, billingManager: BillingManager) {
