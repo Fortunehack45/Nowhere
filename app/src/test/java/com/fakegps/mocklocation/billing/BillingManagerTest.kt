@@ -24,8 +24,15 @@ class BillingManagerTest {
     fun testPremiumEntitlement_candidateProductIdsContainsExpectedIds() {
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_PREMIUM))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_PREMIUM_MONTHLY))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_HYPHEN))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_MONTHLY))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_YEARLY))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_MONTHLY))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_YEARLY))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_MONTHLY))
+        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_YEARLY))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_SANDBOX))
@@ -39,6 +46,19 @@ class BillingManagerTest {
         assertTrue(diag.testedCandidateIds.isNotEmpty())
         assertTrue(diag.testedCandidateIds.contains("nowhere_premium"))
         assertTrue(diag.testedCandidateIds.contains("nowhere-pro"))
+        assertTrue(diag.testedCandidateIds.contains("nowhere_pro_monthly"))
+        assertTrue(diag.testedCandidateIds.contains("nowhere_monthly"))
+        assertTrue(diag.testedCandidateIds.contains("nowhere_premium_monthly"))
+    }
+
+    @Test
+    fun testBillingManager_offerSeparationDefaults() {
+        val billingManager = BillingManager.getInstance(context)
+        // With no active Play Store connection in mock unit test, offers should be gracefully null/false
+        assertFalse(billingManager.hasMonthlyOffer())
+        assertFalse(billingManager.hasYearlyOffer())
+        assertNull(billingManager.resolvePlanOffer(PremiumEntitlement.PlanType.MONTHLY))
+        assertNull(billingManager.resolvePlanOffer(PremiumEntitlement.PlanType.YEARLY))
     }
 
     @Test

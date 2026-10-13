@@ -688,6 +688,7 @@
     <string name="premium_plan_monthly">Monthly Plan</string>
     <string name="premium_free_trial_subtitle">Free trial included • Cancel anytime</string>
     <string name="premium_monthly_flexible_subtitle">Flexible monthly billing</string>
+    <string name="monthly_plan_setup_title">Monthly Plan on Google Play</string>
     <string name="route_covered_fmt">Covered: %1$s / %2$s</string>
     <string name="route_left_fmt">%1$s left (%2$d%%)</string>
     <string name="route_summary_fmt">Route: %s</string>

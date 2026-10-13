@@ -141,6 +141,15 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
 
         binding.btnUpgradePremium.setOnClickListener {
             activity?.let { act ->
+                if (selectedPlan == PremiumEntitlement.PlanType.MONTHLY && !billingManager.hasMonthlyOffer()) {
+                    if (billingManager.hasYearlyOffer()) {
+                        showMonthlyOfferUnavailableDialog(billingManager)
+                    } else {
+                        showBillingDiagnosticsDialog(billingManager, getString(R.string.premium_products_unavailable))
+                    }
+                    return@setOnClickListener
+                }
+
                 val result = billingManager.launchPurchaseFlow(act, selectedPlan)
                 if (result == null) {
                     binding.btnUpgradePremium.text = getString(R.string.premium_connecting_google_play)
@@ -203,6 +212,33 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    private fun showMonthlyOfferUnavailableDialog(billingManager: BillingManager) {
+        val ctx = context ?: return
+        val yearlyPrice = billingManager.getYearlyFormattedPrice() ?: getString(R.string.premium_plan_annual)
+        val discount = PromotionManager.getYearlyDiscountPercent(ctx)
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+            .setTitle(getString(R.string.monthly_plan_setup_title))
+            .setMessage(
+                "Google Play Store currently has only the Annual plan active on this device ($yearlyPrice).\n\n" +
+                "To subscribe monthly, ensure a Monthly base plan (e.g., 'monthly' or 'p1m') or subscription ID ('nowhere_pro_monthly') is set to 'Active' in Google Play Console.\n\n" +
+                "Would you like to unlock the Annual plan now (Save $discount%) or activate Sandbox Pro for testing?"
+            )
+            .setPositiveButton("Unlock Annual ($discount% OFF)") { _, _ ->
+                selectedPlan = PremiumEntitlement.PlanType.YEARLY
+                renderPlanSelectionUI()
+                activity?.let { act ->
+                    billingManager.launchPurchaseFlow(act, PremiumEntitlement.PlanType.YEARLY)
+                }
+            }
+            .setNeutralButton("Activate Sandbox Pro") { _, _ ->
+                billingManager.toggleDebugSandboxPremium(true)
+                Toast.makeText(ctx, "Sandbox Nowhere Pro Activated!", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun showBillingDiagnosticsDialog(billingManager: BillingManager, promptReason: String? = null) {
         val ctx = context ?: return
         val diag = billingManager.getDiagnosticInfo()
@@ -219,6 +255,8 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
                 append("Notice: ").append(promptReason).append("\n\n")
             }
             append("• Google Play Status: ").append(statusText).append("\n")
+            append("• Monthly Plan: ").append(if (diag.hasMonthlyOffer) "Available (${diag.monthlyPrice ?: "Ready"})" else "Not active on Play Store").append("\n")
+            append("• Annual Plan: ").append(if (diag.hasYearlyOffer) "Available (${diag.yearlyPrice ?: "Ready"})" else "Not active on Play Store").append("\n")
             if (diag.lastResponseCode != 0) {
                 append("• Google Play Code: ").append(diag.lastResponseCode)
                 if (!diag.lastDebugMessage.isNullOrBlank()) {
@@ -257,8 +295,8 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         binding.tvYearlyDiscountBadge.text = PromotionManager.getYearlyDiscountBadgeText(context)
 
         // 2. Prices & Equivalents
-        val monthlyPrice = entitlement.monthlyPrice ?: billingManager.getFormattedPrice()
-        val yearlyPrice = entitlement.yearlyPrice
+        val monthlyPrice = entitlement.monthlyPrice ?: billingManager.getMonthlyFormattedPrice()
+        val yearlyPrice = entitlement.yearlyPrice ?: billingManager.getYearlyFormattedPrice()
         val monthlyEquiv = entitlement.yearlyMonthlyEquivalent
 
         if (yearlyPrice != null) {

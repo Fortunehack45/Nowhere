@@ -83,11 +83,19 @@ class BillingManager private constructor(private val context: Context) : Purchas
     private val _isPremium = MutableStateFlow(_entitlementState.value.isPremium)
     val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
 
+    private val allProductDetailsList = mutableListOf<ProductDetails>()
+
     private val _monthlyProductDetails = MutableStateFlow<ProductDetails?>(null)
     val monthlyProductDetails: StateFlow<ProductDetails?> = _monthlyProductDetails.asStateFlow()
 
     private val _yearlyProductDetails = MutableStateFlow<ProductDetails?>(null)
     val yearlyProductDetails: StateFlow<ProductDetails?> = _yearlyProductDetails.asStateFlow()
+
+    private val _monthlyOffer = MutableStateFlow<ProductDetails.SubscriptionOfferDetails?>(null)
+    val monthlyOffer: StateFlow<ProductDetails.SubscriptionOfferDetails?> = _monthlyOffer.asStateFlow()
+
+    private val _yearlyOffer = MutableStateFlow<ProductDetails.SubscriptionOfferDetails?>(null)
+    val yearlyOffer: StateFlow<ProductDetails.SubscriptionOfferDetails?> = _yearlyOffer.asStateFlow()
 
     private val _billingStatus = MutableStateFlow(BillingStatus.CONNECTING)
     val billingStatus: StateFlow<BillingStatus> = _billingStatus.asStateFlow()
@@ -299,20 +307,8 @@ class BillingManager private constructor(private val context: Context) : Purchas
         _isLoadingProducts.value = true
         _billingError.value = null
 
-        val candidateSubscriptionIds = listOf(
-            PremiumEntitlement.PRODUCT_ID_PREMIUM,
-            PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_HYPHEN,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION_HYPHEN,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_YEARLY,
-            PremiumEntitlement.PRODUCT_ID_PRO,
-            PremiumEntitlement.PRODUCT_ID_PREMIUM_SHORT,
-            PremiumEntitlement.PRODUCT_ID_VIP,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_VIP
-        )
+        val candidateSubscriptionIds = PremiumEntitlement.ALL_PRODUCT_IDS
+            .filter { it != PremiumEntitlement.PRODUCT_ID_SANDBOX }
 
         val retrievedProductDetails = mutableListOf<ProductDetails>()
         val totalQueries = candidateSubscriptionIds.size
@@ -427,11 +423,85 @@ class BillingManager private constructor(private val context: Context) : Purchas
     /**
      * Analyzes and maps returned ProductDetails into monthly & yearly plans with base plans & offer tokens.
      */
+    private fun getRecurringPhase(offer: ProductDetails.SubscriptionOfferDetails): ProductDetails.PricingPhase? {
+        val phases = offer.pricingPhases.pricingPhaseList
+        return phases.firstOrNull { it.recurrenceMode == ProductDetails.RecurrenceMode.INFINITE_RECURRING }
+            ?: phases.lastOrNull()
+    }
+
+    private fun getPaidPhase(offer: ProductDetails.SubscriptionOfferDetails): ProductDetails.PricingPhase? {
+        val phases = offer.pricingPhases.pricingPhaseList
+        return phases.firstOrNull { it.recurrenceMode == ProductDetails.RecurrenceMode.INFINITE_RECURRING && it.priceAmountMicros > 0L }
+            ?: phases.firstOrNull { it.priceAmountMicros > 0L }
+            ?: phases.lastOrNull()
+    }
+
+    private fun isOfferYearly(offer: ProductDetails.SubscriptionOfferDetails, productId: String = ""): Boolean {
+        val recurringPhase = getRecurringPhase(offer)
+        val period = recurringPhase?.billingPeriod?.uppercase(Locale.ROOT).orEmpty()
+        if (period.contains("Y") || period == "P1Y" || period == "P12M") {
+            return true
+        }
+
+        val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
+        val offerId = offer.offerId?.lowercase(Locale.ROOT).orEmpty()
+        val prodId = productId.lowercase(Locale.ROOT)
+
+        val yearlyKeywords = listOf("year", "annual", "annually", "12m", "p1y")
+        if (yearlyKeywords.any { basePlan.contains(it) || offerId.contains(it) || prodId.contains(it) }) {
+            return true
+        }
+
+        if (offer.offerTags.any { tag -> yearlyKeywords.any { tag.lowercase(Locale.ROOT).contains(it) } }) {
+            return true
+        }
+
+        return false
+    }
+
+    private fun isOfferMonthly(offer: ProductDetails.SubscriptionOfferDetails, productId: String = ""): Boolean {
+        // A yearly offer must NEVER be considered monthly under any circumstances!
+        if (isOfferYearly(offer, productId)) {
+            return false
+        }
+
+        val recurringPhase = getRecurringPhase(offer)
+        val period = recurringPhase?.billingPeriod?.uppercase(Locale.ROOT).orEmpty()
+        if (period == "P1M" || period == "P30D" || period == "P4W" || (period.contains("M") && !period.contains("Y") && period != "P12M")) {
+            return true
+        }
+
+        val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
+        val offerId = offer.offerId?.lowercase(Locale.ROOT).orEmpty()
+        val prodId = productId.lowercase(Locale.ROOT)
+
+        val monthlyKeywords = listOf("month", "monthly", "1m", "p1m")
+        if (monthlyKeywords.any { basePlan.contains(it) || offerId.contains(it) || prodId.contains(it) }) {
+            return true
+        }
+
+        if (offer.offerTags.any { tag -> monthlyKeywords.any { tag.lowercase(Locale.ROOT).contains(it) } }) {
+            return true
+        }
+
+        return false
+    }
+
+    /**
+     * Analyzes and maps returned ProductDetails into distinct monthly & yearly plans with base plans & offer tokens.
+     */
     private fun processLoadedProductDetails(detailsList: List<ProductDetails>) {
         if (detailsList.isEmpty()) return
 
+        synchronized(allProductDetailsList) {
+            allProductDetailsList.clear()
+            allProductDetailsList.addAll(detailsList)
+        }
+
         var foundMonthlyDetails: ProductDetails? = null
+        var foundMonthlyOffer: ProductDetails.SubscriptionOfferDetails? = null
         var foundYearlyDetails: ProductDetails? = null
+        var foundYearlyOffer: ProductDetails.SubscriptionOfferDetails? = null
 
         var bestMonthlyPrice: String? = null
         var bestYearlyPrice: String? = null
@@ -443,55 +513,102 @@ class BillingManager private constructor(private val context: Context) : Purchas
             val offers = details.subscriptionOfferDetails
             if (!offers.isNullOrEmpty()) {
                 for (offer in offers) {
-                    val isYearly = isOfferYearly(offer)
-                    val isMonthly = isOfferMonthly(offer)
-                    val paidPhase = offer.pricingPhases.pricingPhaseList.firstOrNull { it.priceAmountMicros > 0L }
-                        ?: offer.pricingPhases.pricingPhaseList.firstOrNull()
-
+                    val isYear = isOfferYearly(offer, details.productId)
+                    val isMonth = isOfferMonthly(offer, details.productId)
+                    val paidPhase = getPaidPhase(offer)
                     val trial = checkFreeTrial(offer)
-                    if (trial.first) {
-                        bestTrialInfo = trial
-                    }
 
-                    if (isYearly) {
-                        foundYearlyDetails = details
-                        if (bestYearlyPrice == null && paidPhase != null) {
-                            bestYearlyPrice = paidPhase.formattedPrice
-                            bestYearlyMicros = paidPhase.priceAmountMicros
-                            bestYearlyCurrency = paidPhase.priceCurrencyCode
+                    if (isYear) {
+                        if (foundYearlyOffer == null || (bestYearlyPrice == null && paidPhase != null)) {
+                            foundYearlyDetails = details
+                            foundYearlyOffer = offer
+                            if (paidPhase != null) {
+                                bestYearlyPrice = paidPhase.formattedPrice
+                                bestYearlyMicros = paidPhase.priceAmountMicros
+                                bestYearlyCurrency = paidPhase.priceCurrencyCode
+                            }
                         }
-                    }
-
-                    if (isMonthly || (!isYearly && foundMonthlyDetails == null)) {
-                        foundMonthlyDetails = details
-                        if (bestMonthlyPrice == null && paidPhase != null) {
-                            bestMonthlyPrice = paidPhase.formattedPrice
+                    } else if (isMonth) {
+                        if (foundMonthlyOffer == null || (bestMonthlyPrice == null && paidPhase != null)) {
+                            foundMonthlyDetails = details
+                            foundMonthlyOffer = offer
+                            if (paidPhase != null) {
+                                bestMonthlyPrice = paidPhase.formattedPrice
+                            }
+                            if (trial.first) {
+                                bestTrialInfo = trial
+                            }
                         }
                     }
                 }
             } else if (details.oneTimePurchaseOfferDetails != null) {
                 // INAPP One-Time Purchase
-                foundMonthlyDetails = details
-                foundYearlyDetails = details
-                bestMonthlyPrice = details.oneTimePurchaseOfferDetails?.formattedPrice
-                bestYearlyPrice = details.oneTimePurchaseOfferDetails?.formattedPrice
+                val otp = details.oneTimePurchaseOfferDetails
+                val prodId = details.productId.lowercase(Locale.ROOT)
+                val isYear = prodId.contains("year") || prodId.contains("annual")
+                val isMonth = prodId.contains("month")
+
+                if (isYear) {
+                    foundYearlyDetails = details
+                    bestYearlyPrice = otp?.formattedPrice
+                    bestYearlyMicros = otp?.priceAmountMicros
+                    bestYearlyCurrency = otp?.priceCurrencyCode
+                } else if (isMonth) {
+                    foundMonthlyDetails = details
+                    bestMonthlyPrice = otp?.formattedPrice
+                } else {
+                    if (foundYearlyDetails == null) {
+                        foundYearlyDetails = details
+                        bestYearlyPrice = otp?.formattedPrice
+                        bestYearlyMicros = otp?.priceAmountMicros
+                        bestYearlyCurrency = otp?.priceCurrencyCode
+                    }
+                }
             }
         }
 
-        // If dedicated yearly product was not found, check if monthly details contains yearly offer
-        if (foundYearlyDetails == null) {
-            foundYearlyDetails = foundMonthlyDetails
-        }
-        if (foundMonthlyDetails == null) {
-            foundMonthlyDetails = foundYearlyDetails
+        // Secondary pass: if one is still null, look for unassigned offers
+        if (foundMonthlyOffer == null && foundYearlyOffer != null) {
+            for (details in detailsList) {
+                val offers = details.subscriptionOfferDetails ?: continue
+                val candidate = offers.firstOrNull { it != foundYearlyOffer && !isOfferYearly(it, details.productId) }
+                if (candidate != null) {
+                    val paid = getPaidPhase(candidate)
+                    foundMonthlyDetails = details
+                    foundMonthlyOffer = candidate
+                    bestMonthlyPrice = paid?.formattedPrice
+                    val trial = checkFreeTrial(candidate)
+                    if (trial.first) bestTrialInfo = trial
+                    break
+                }
+            }
+        } else if (foundYearlyOffer == null && foundMonthlyOffer != null) {
+            for (details in detailsList) {
+                val offers = details.subscriptionOfferDetails ?: continue
+                val candidate = offers.firstOrNull { it != foundMonthlyOffer && isOfferYearly(it, details.productId) }
+                if (candidate != null) {
+                    val paid = getPaidPhase(candidate)
+                    foundYearlyDetails = details
+                    foundYearlyOffer = candidate
+                    bestYearlyPrice = paid?.formattedPrice
+                    bestYearlyMicros = paid?.priceAmountMicros
+                    bestYearlyCurrency = paid?.priceCurrencyCode
+                    break
+                }
+            }
         }
 
         _monthlyProductDetails.value = foundMonthlyDetails
         _yearlyProductDetails.value = foundYearlyDetails
+        _monthlyOffer.value = foundMonthlyOffer
+        _yearlyOffer.value = foundYearlyOffer
 
-        val monthlyPrice = bestMonthlyPrice ?: getFormattedPrice(foundMonthlyDetails)
-        val yearlyPrice = bestYearlyPrice ?: getFormattedPrice(foundYearlyDetails) ?: getYearlyPriceFromMonthlyDetails(foundMonthlyDetails)
+        val yearlyPrice = bestYearlyPrice
         val monthlyEquivalent = calculateMonthlyEquivalent(yearlyPrice, bestYearlyMicros, bestYearlyCurrency)
+        val estimatedMonthly = calculateEstimatedMonthlyPrice(yearlyPrice, bestYearlyMicros, bestYearlyCurrency)
+
+        // Strict isolation: NEVER assign yearlyPrice to monthlyPrice!
+        val monthlyPrice = bestMonthlyPrice ?: estimatedMonthly
 
         _entitlementState.value = _entitlementState.value.copy(
             formattedPrice = monthlyPrice ?: yearlyPrice,
@@ -503,101 +620,74 @@ class BillingManager private constructor(private val context: Context) : Purchas
         )
 
         saveCachedPricing(monthlyPrice, yearlyPrice)
-        Log.d(TAG, "Processed Google Play plans: Monthly=$monthlyPrice, Yearly=$yearlyPrice, Equiv=$monthlyEquivalent")
-    }
-
-    private fun isOfferYearly(offer: ProductDetails.SubscriptionOfferDetails): Boolean {
-        val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
-        val offerId = offer.offerId?.lowercase(Locale.ROOT).orEmpty()
-
-        if (basePlan.contains("year") || basePlan.contains("annual") || basePlan.contains("12m") || basePlan.contains("p1y") || basePlan.contains("annually")) {
-            return true
-        }
-        if (offerId.contains("year") || offerId.contains("annual") || offerId.contains("annually")) {
-            return true
-        }
-        val phases = offer.pricingPhases.pricingPhaseList
-        return phases.any { it.billingPeriod.contains("Y", ignoreCase = true) || it.billingPeriod.contains("P1Y", ignoreCase = true) }
-    }
-
-    private fun isOfferMonthly(offer: ProductDetails.SubscriptionOfferDetails): Boolean {
-        val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
-        val offerId = offer.offerId?.lowercase(Locale.ROOT).orEmpty()
-
-        if (basePlan.contains("month") || basePlan.contains("1m") || basePlan.contains("p1m") || basePlan.contains("monthly")) {
-            return true
-        }
-        if (offerId.contains("month") || offerId.contains("monthly")) {
-            return true
-        }
-        val phases = offer.pricingPhases.pricingPhaseList
-        if (phases.any { it.billingPeriod.contains("M", ignoreCase = true) || it.billingPeriod.contains("P1M", ignoreCase = true) }) {
-            return true
-        }
-        return !isOfferYearly(offer)
+        Log.d(TAG, "Processed Google Play plans: Monthly=$monthlyPrice (playProvided=${bestMonthlyPrice != null}), Yearly=$yearlyPrice, Equiv=$monthlyEquivalent")
     }
 
     /**
      * Resolves the best available ProductDetails and offerToken for a plan type.
+     * Strictly enforces that Monthly plans ONLY resolve to Monthly offers, and Yearly plans to Yearly offers.
      */
     fun resolvePlanOffer(planType: PremiumEntitlement.PlanType): ResolvedPlanOffer? {
         val isYearly = planType == PremiumEntitlement.PlanType.YEARLY
 
         if (isYearly) {
+            val yearlyOffer = _yearlyOffer.value
             val yearlyDetails = _yearlyProductDetails.value
-            val yearlyOffers = yearlyDetails?.subscriptionOfferDetails
-            if (!yearlyOffers.isNullOrEmpty()) {
-                val yearlyOffer = yearlyOffers.firstOrNull { isOfferYearly(it) } ?: yearlyOffers.firstOrNull()
-                val paidPhase = yearlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
-                    ?: yearlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull()
+            if (yearlyDetails != null && yearlyOffer != null) {
+                val paidPhase = getPaidPhase(yearlyOffer)
                 return ResolvedPlanOffer(
                     productDetails = yearlyDetails,
-                    offerToken = yearlyOffer?.offerToken,
+                    offerToken = yearlyOffer.offerToken,
                     formattedPrice = paidPhase?.formattedPrice,
                     priceAmountMicros = paidPhase?.priceAmountMicros,
                     currencyCode = paidPhase?.priceCurrencyCode,
-                    isYearly = true
-                )
-            } else if (yearlyDetails?.oneTimePurchaseOfferDetails != null) {
-                val otp = yearlyDetails.oneTimePurchaseOfferDetails
-                return ResolvedPlanOffer(
-                    productDetails = yearlyDetails,
-                    offerToken = null,
-                    formattedPrice = otp?.formattedPrice,
-                    priceAmountMicros = otp?.priceAmountMicros,
-                    currencyCode = otp?.priceCurrencyCode,
                     isYearly = true
                 )
             }
 
-            // Fallback: check if monthly details has a yearly offer
-            val monthlyDetails = _monthlyProductDetails.value
-            val monthlyOffers = monthlyDetails?.subscriptionOfferDetails
-            val yearlyInMonthly = monthlyOffers?.firstOrNull { isOfferYearly(it) }
-            if (yearlyInMonthly != null && monthlyDetails != null) {
-                val paidPhase = yearlyInMonthly.pricingPhases.pricingPhaseList.firstOrNull { it.priceAmountMicros > 0L }
-                    ?: yearlyInMonthly.pricingPhases.pricingPhaseList.firstOrNull()
-                return ResolvedPlanOffer(
-                    productDetails = monthlyDetails,
-                    offerToken = yearlyInMonthly.offerToken,
-                    formattedPrice = paidPhase?.formattedPrice,
-                    priceAmountMicros = paidPhase?.priceAmountMicros,
-                    currencyCode = paidPhase?.priceCurrencyCode,
-                    isYearly = true
-                )
+            val detailsList = synchronized(allProductDetailsList) { ArrayList(allProductDetailsList) }
+            for (details in detailsList) {
+                val offers = details.subscriptionOfferDetails ?: continue
+                val match = offers.firstOrNull { isOfferYearly(it, details.productId) }
+                if (match != null) {
+                    val paidPhase = getPaidPhase(match)
+                    return ResolvedPlanOffer(
+                        productDetails = details,
+                        offerToken = match.offerToken,
+                        formattedPrice = paidPhase?.formattedPrice,
+                        priceAmountMicros = paidPhase?.priceAmountMicros,
+                        currencyCode = paidPhase?.priceCurrencyCode,
+                        isYearly = true
+                    )
+                }
             }
+
+            for (details in detailsList) {
+                val otp = details.oneTimePurchaseOfferDetails ?: continue
+                val pid = details.productId.lowercase(Locale.ROOT)
+                if (pid.contains("year") || pid.contains("annual") || !pid.contains("month")) {
+                    return ResolvedPlanOffer(
+                        productDetails = details,
+                        offerToken = null,
+                        formattedPrice = otp.formattedPrice,
+                        priceAmountMicros = otp.priceAmountMicros,
+                        currencyCode = otp.priceCurrencyCode,
+                        isYearly = true
+                    )
+                }
+            }
+
+            return null
         } else {
-            // Monthly Plan
+            // Monthly Plan: Strictly resolve a monthly offer, NEVER a yearly offer
+            val monthlyOffer = _monthlyOffer.value
             val monthlyDetails = _monthlyProductDetails.value
-            val monthlyOffers = monthlyDetails?.subscriptionOfferDetails
-            if (!monthlyOffers.isNullOrEmpty()) {
-                val monthlyOffer = monthlyOffers.firstOrNull { isOfferMonthly(it) } ?: monthlyOffers.firstOrNull()
-                val paidPhase = monthlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
-                    ?: monthlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull()
-                val trial = monthlyOffer?.let { checkFreeTrial(it) } ?: Pair(false, null)
+            if (monthlyDetails != null && monthlyOffer != null) {
+                val paidPhase = getPaidPhase(monthlyOffer)
+                val trial = checkFreeTrial(monthlyOffer)
                 return ResolvedPlanOffer(
                     productDetails = monthlyDetails,
-                    offerToken = monthlyOffer?.offerToken,
+                    offerToken = monthlyOffer.offerToken,
                     formattedPrice = paidPhase?.formattedPrice,
                     priceAmountMicros = paidPhase?.priceAmountMicros,
                     currencyCode = paidPhase?.priceCurrencyCode,
@@ -605,38 +695,50 @@ class BillingManager private constructor(private val context: Context) : Purchas
                     hasFreeTrial = trial.first,
                     freeTrialDescription = trial.second
                 )
-            } else if (monthlyDetails?.oneTimePurchaseOfferDetails != null) {
-                val otp = monthlyDetails.oneTimePurchaseOfferDetails
-                return ResolvedPlanOffer(
-                    productDetails = monthlyDetails,
-                    offerToken = null,
-                    formattedPrice = otp?.formattedPrice,
-                    priceAmountMicros = otp?.priceAmountMicros,
-                    currencyCode = otp?.priceCurrencyCode,
-                    isYearly = false
-                )
             }
-        }
 
-        // Generic fallback: if either product details is available, grab its first valid offer
-        val fallbackDetails = if (isYearly) _yearlyProductDetails.value ?: _monthlyProductDetails.value else _monthlyProductDetails.value ?: _yearlyProductDetails.value
-        val fallbackOffers = fallbackDetails?.subscriptionOfferDetails
-        if (fallbackDetails != null && !fallbackOffers.isNullOrEmpty()) {
-            val firstOffer = fallbackOffers.first()
-            val paidPhase = firstOffer.pricingPhases.pricingPhaseList.firstOrNull { it.priceAmountMicros > 0L }
-                ?: firstOffer.pricingPhases.pricingPhaseList.firstOrNull()
-            return ResolvedPlanOffer(
-                productDetails = fallbackDetails,
-                offerToken = firstOffer.offerToken,
-                formattedPrice = paidPhase?.formattedPrice,
-                priceAmountMicros = paidPhase?.priceAmountMicros,
-                currencyCode = paidPhase?.priceCurrencyCode,
-                isYearly = isYearly
-            )
-        }
+            val detailsList = synchronized(allProductDetailsList) { ArrayList(allProductDetailsList) }
+            for (details in detailsList) {
+                val offers = details.subscriptionOfferDetails ?: continue
+                val match = offers.firstOrNull { isOfferMonthly(it, details.productId) }
+                if (match != null) {
+                    val paidPhase = getPaidPhase(match)
+                    val trial = checkFreeTrial(match)
+                    return ResolvedPlanOffer(
+                        productDetails = details,
+                        offerToken = match.offerToken,
+                        formattedPrice = paidPhase?.formattedPrice,
+                        priceAmountMicros = paidPhase?.priceAmountMicros,
+                        currencyCode = paidPhase?.priceCurrencyCode,
+                        isYearly = false,
+                        hasFreeTrial = trial.first,
+                        freeTrialDescription = trial.second
+                    )
+                }
+            }
 
-        return null
+            for (details in detailsList) {
+                val otp = details.oneTimePurchaseOfferDetails ?: continue
+                val pid = details.productId.lowercase(Locale.ROOT)
+                if (pid.contains("month")) {
+                    return ResolvedPlanOffer(
+                        productDetails = details,
+                        offerToken = null,
+                        formattedPrice = otp.formattedPrice,
+                        priceAmountMicros = otp.priceAmountMicros,
+                        currencyCode = otp.priceCurrencyCode,
+                        isYearly = false
+                    )
+                }
+            }
+
+            return null
+        }
     }
+
+    fun hasMonthlyOffer(): Boolean = resolvePlanOffer(PremiumEntitlement.PlanType.MONTHLY) != null
+
+    fun hasYearlyOffer(): Boolean = resolvePlanOffer(PremiumEntitlement.PlanType.YEARLY) != null
 
     /**
      * Query Active Subscriptions and One-Time Purchases on Google Play.
@@ -900,27 +1002,21 @@ class BillingManager private constructor(private val context: Context) : Purchas
         val lastDebugMessage: String?,
         val monthlyDetailsFound: Boolean,
         val yearlyDetailsFound: Boolean,
+        val hasMonthlyOffer: Boolean,
+        val hasYearlyOffer: Boolean,
+        val monthlyPrice: String?,
+        val yearlyPrice: String?,
         val productsCount: Int,
         val testedCandidateIds: List<String>,
         val lastError: String?
     )
 
     fun getDiagnosticInfo(): BillingDiagnosticInfo {
-        val prods = listOfNotNull(_monthlyProductDetails.value, _yearlyProductDetails.value).distinctBy { it.productId }
-        val candidateSubscriptionIds = listOf(
-            PremiumEntitlement.PRODUCT_ID_PREMIUM,
-            PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_HYPHEN,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION_HYPHEN,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_YEARLY,
-            PremiumEntitlement.PRODUCT_ID_PRO,
-            PremiumEntitlement.PRODUCT_ID_PREMIUM_SHORT,
-            PremiumEntitlement.PRODUCT_ID_VIP,
-            PremiumEntitlement.PRODUCT_ID_NOWHERE_VIP
-        )
+        val prods = synchronized(allProductDetailsList) {
+            allProductDetailsList.distinctBy { it.productId }
+        }
+        val candidateSubscriptionIds = PremiumEntitlement.ALL_PRODUCT_IDS
+            .filter { it != PremiumEntitlement.PRODUCT_ID_SANDBOX }
         return BillingDiagnosticInfo(
             billingStatus = _billingStatus.value,
             isReady = billingClient.isReady,
@@ -929,6 +1025,10 @@ class BillingManager private constructor(private val context: Context) : Purchas
             lastDebugMessage = lastDebugMessage,
             monthlyDetailsFound = _monthlyProductDetails.value != null,
             yearlyDetailsFound = _yearlyProductDetails.value != null,
+            hasMonthlyOffer = hasMonthlyOffer(),
+            hasYearlyOffer = hasYearlyOffer(),
+            monthlyPrice = _entitlementState.value.monthlyPrice,
+            yearlyPrice = _entitlementState.value.yearlyPrice,
             productsCount = prods.size,
             testedCandidateIds = candidateSubscriptionIds,
             lastError = _billingError.value
@@ -1000,9 +1100,27 @@ class BillingManager private constructor(private val context: Context) : Purchas
         return details?.oneTimePurchaseOfferDetails?.formattedPrice
     }
 
+    fun getMonthlyFormattedPrice(): String? {
+        return _entitlementState.value.monthlyPrice
+            ?: _monthlyOffer.value?.let { getPaidPhase(it)?.formattedPrice }
+            ?: _monthlyProductDetails.value?.let { details ->
+                val match = details.subscriptionOfferDetails?.firstOrNull { isOfferMonthly(it, details.productId) }
+                match?.let { getPaidPhase(it)?.formattedPrice }
+            }
+    }
+
+    fun getYearlyFormattedPrice(): String? {
+        return _entitlementState.value.yearlyPrice
+            ?: _yearlyOffer.value?.let { getPaidPhase(it)?.formattedPrice }
+            ?: _yearlyProductDetails.value?.let { details ->
+                val match = details.subscriptionOfferDetails?.firstOrNull { isOfferYearly(it, details.productId) }
+                match?.let { getPaidPhase(it)?.formattedPrice }
+            }
+    }
+
     private fun getYearlyPriceFromMonthlyDetails(details: ProductDetails?): String? {
-        val yearlyOffer = details?.subscriptionOfferDetails?.firstOrNull { isOfferYearly(it) }
-        val paidPhase = yearlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
+        val yearlyOffer = details?.subscriptionOfferDetails?.firstOrNull { isOfferYearly(it, details.productId) }
+        val paidPhase = yearlyOffer?.let { getPaidPhase(it) }
         return paidPhase?.formattedPrice
     }
 
@@ -1019,6 +1137,46 @@ class BillingManager private constructor(private val context: Context) : Purchas
             Pair(true, desc)
         } else {
             Pair(false, null)
+        }
+    }
+
+    private fun calculateEstimatedMonthlyPrice(
+        yearlyFormattedPrice: String?,
+        yearlyMicros: Long? = null,
+        currencyCode: String? = null
+    ): String? {
+        if (yearlyFormattedPrice.isNullOrBlank()) return null
+
+        if (yearlyMicros != null && yearlyMicros > 0L && !currencyCode.isNullOrBlank()) {
+            try {
+                val estMonthlyMicros = yearlyMicros / 10.2
+                val currency = java.util.Currency.getInstance(currencyCode)
+                val format = java.text.NumberFormat.getCurrencyInstance().apply {
+                    this.currency = currency
+                    maximumFractionDigits = if (currency.defaultFractionDigits == 0) 0 else 2
+                }
+                return format.format(estMonthlyMicros / 1_000_000.0)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error calculating estimated monthly from micros: ${e.message}")
+            }
+        }
+
+        val cleaned = yearlyFormattedPrice.trim()
+        val hasCommaDecimal = cleaned.matches(Regex(".*,\\d{2}([^0-9]*)?$"))
+        val normalized = if (hasCommaDecimal) {
+            cleaned.replace(".", "").replace(",", ".")
+        } else {
+            cleaned.replace(",", "")
+        }
+        val digits = normalized.replace(Regex("[^0-9.]"), "")
+        val priceVal = digits.toDoubleOrNull() ?: return null
+        val estMonthlyVal = priceVal / 10.2
+
+        val currencySymbol = yearlyFormattedPrice.replace(Regex("[0-9.,\\s]"), "")
+        return if (currencySymbol.isNotEmpty()) {
+            String.format(Locale.US, "%s%.2f", currencySymbol, estMonthlyVal)
+        } else {
+            String.format(Locale.US, "%.2f", estMonthlyVal)
         }
     }
 
