@@ -19,7 +19,8 @@ import kotlinx.coroutines.launch
 /**
  * Luxury Nowhere Pro HUD Paywall Bottom Sheet.
  * Features dual plan selection (Monthly with Free Trial vs Annual with 10% / 15% VIP discount),
- * real-time localized pricing, Google Play Billing 7.x checkout, and subscription management.
+ * real-time localized pricing, Google Play Billing 8.x checkout, lifecycle resilience,
+ * and seamless fallback diagnostics.
  */
 class PremiumBottomSheet : BottomSheetDialogFragment() {
 
@@ -36,7 +37,6 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
 
     private var selectedPlan: PremiumEntitlement.PlanType = PremiumEntitlement.PlanType.YEARLY
 
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = LayoutBottomSheetPremiumBinding.inflate(inflater, container, false)
         return binding.root
@@ -49,6 +49,16 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         setupPlanSelection()
         setupListeners(billingManager)
         observeBillingState(billingManager)
+
+        // Ensure products are proactively refreshed from Google Play upon sheet entry
+        billingManager.refreshProductDetails()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        context?.let { ctx ->
+            BillingManager.getInstance(ctx).refreshProductDetails()
+        }
     }
 
     private fun setupPlanSelection() {
@@ -127,8 +137,19 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
 
         binding.btnUpgradePremium.setOnClickListener {
             activity?.let { act ->
-                billingManager.launchPurchaseFlow(act, selectedPlan)
+                val result = billingManager.launchPurchaseFlow(act, selectedPlan)
+                if (result == null) {
+                    binding.btnUpgradePremium.text = getString(R.string.premium_connecting_google_play)
+                }
             }
+        }
+
+        // Developer test harness shortcut: long-press the sparkle icon to toggle test entitlement
+        binding.btnSparkleHeader.setOnLongClickListener {
+            val isNowPro = billingManager.toggleDebugSandboxPremium()
+            val msg = if (isNowPro) "Sandbox Nowhere Pro Activated!" else "Sandbox Nowhere Pro Deactivated."
+            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+            true
         }
 
         binding.btnManageSubscription.setOnClickListener {
@@ -138,7 +159,7 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.btnRestorePurchases.setOnClickListener {
-            billingManager.queryActivePurchases()
+            billingManager.refreshProductDetails()
             Toast.makeText(requireContext(), getString(R.string.premium_reconciling_purchases), Toast.LENGTH_SHORT).show()
         }
     }
@@ -147,6 +168,14 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             billingManager.entitlementState.collectLatest { entitlement ->
                 renderEntitlement(entitlement, billingManager)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            billingManager.isLoadingProducts.collectLatest { isLoading ->
+                if (!isLoading) {
+                    renderPlanSelectionUI()
+                }
             }
         }
 

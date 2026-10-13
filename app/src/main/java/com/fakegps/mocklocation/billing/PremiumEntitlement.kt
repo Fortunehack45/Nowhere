@@ -28,9 +28,18 @@ data class PremiumEntitlement(
     companion object {
         const val PRODUCT_ID_PREMIUM = "nowhere_premium"
         const val PRODUCT_ID_PREMIUM_YEARLY = "nowhere_premium_yearly"
+        const val PRODUCT_ID_NOWHERE_PRO = "nowhere_pro"
+        const val PRODUCT_ID_SANDBOX = "nowhere_premium_sandbox"
 
         const val BASE_PLAN_MONTHLY = "premium-monthly"
         const val BASE_PLAN_YEARLY = "premium-yearly"
+
+        val ALL_PRODUCT_IDS = listOf(
+            PRODUCT_ID_PREMIUM,
+            PRODUCT_ID_PREMIUM_YEARLY,
+            PRODUCT_ID_NOWHERE_PRO,
+            PRODUCT_ID_SANDBOX
+        )
 
         val FREE = PremiumEntitlement(
             isPremium = false,

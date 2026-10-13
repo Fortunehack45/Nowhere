@@ -17,10 +17,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.fakegps.mocklocation.R
+import java.lang.ref.WeakReference
 import java.util.Locale
 
 /**
- * Production-ready Google Play Billing 7.x Manager for Nowhere.
+ * Production-ready Google Play Billing 8.x/7.x Manager for Nowhere.
  * Handles both Monthly (with Free Trial support) and Yearly Subscriptions (with 10% / 15% VIP discounts),
  * localized regional pricing, purchase reconciliation, automatic acknowledgement, lifecycle resilience,
  * and offline-grace entitlement caching.
@@ -59,8 +60,21 @@ class BillingManager private constructor(private val context: Context) : Purchas
         DISCONNECTED
     }
 
+    /**
+     * Internal container holding a resolved plan offer ready for checkout.
+     */
+    data class ResolvedPlanOffer(
+        val productDetails: ProductDetails,
+        val offerToken: String?,
+        val formattedPrice: String?,
+        val priceAmountMicros: Long? = null,
+        val currencyCode: String? = null,
+        val isYearly: Boolean = false,
+        val hasFreeTrial: Boolean = false,
+        val freeTrialDescription: String? = null
+    )
+
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val _entitlementState = MutableStateFlow(loadCachedEntitlement())
@@ -78,42 +92,80 @@ class BillingManager private constructor(private val context: Context) : Purchas
     private val _billingStatus = MutableStateFlow(BillingStatus.CONNECTING)
     val billingStatus: StateFlow<BillingStatus> = _billingStatus.asStateFlow()
 
+    private val _isLoadingProducts = MutableStateFlow(false)
+    val isLoadingProducts: StateFlow<Boolean> = _isLoadingProducts.asStateFlow()
+
     private val _purchaseMessage = MutableStateFlow<String?>(null)
     val purchaseMessage: StateFlow<String?> = _purchaseMessage.asStateFlow()
 
-    private var billingClient: BillingClient = BillingClient.newBuilder(context)
-        .setListener(this)
-        .enablePendingPurchases(
-            PendingPurchasesParams.newBuilder()
-                .enableOneTimeProducts()
-                .enablePrepaidPlans()
-                .build()
-        )
-        .build()
+    private val _billingError = MutableStateFlow<String?>(null)
+    val billingError: StateFlow<String?> = _billingError.asStateFlow()
 
+    private var billingClient: BillingClient = buildBillingClient()
     private var reconnectAttempts = 0
+
+    // Pending purchase action queued while products or billing connection are loading
+    private var pendingPurchasePlan: PremiumEntitlement.PlanType? = null
+    private var pendingActivityRef: WeakReference<Activity>? = null
+
+    // Callbacks to invoke once BillingClient becomes ready
+    private val pendingReadyCallbacks = mutableListOf<() -> Unit>()
 
     init {
         startConnection()
     }
 
+    private fun buildBillingClient(): BillingClient {
+        return BillingClient.newBuilder(context)
+            .setListener(this)
+            .enablePendingPurchases(
+                PendingPurchasesParams.newBuilder()
+                    .enableOneTimeProducts()
+                    .enablePrepaidPlans()
+                    .build()
+            )
+            .build()
+    }
+
     /**
-     * Connect to Google Play Billing Service.
+     * Connect to Google Play Billing Service safely.
      */
-    fun startConnection() {
+    fun startConnection(onReady: (() -> Unit)? = null) {
+        if (onReady != null) {
+            synchronized(pendingReadyCallbacks) {
+                pendingReadyCallbacks.add(onReady)
+            }
+        }
+
         if (billingClient.isReady) {
             _billingStatus.value = BillingStatus.READY
+            executePendingReadyCallbacks()
             queryProductDetails()
             queryActivePurchases()
             return
         }
 
+        if (billingClient.connectionState == BillingClient.ConnectionState.CONNECTING) {
+            Log.d(TAG, "BillingClient connection already in progress.")
+            return
+        }
+
+        if (billingClient.connectionState == BillingClient.ConnectionState.CLOSED) {
+            Log.d(TAG, "BillingClient was closed. Rebuilding instance.")
+            billingClient = buildBillingClient()
+        }
+
         _billingStatus.value = BillingStatus.CONNECTING
+        _isLoadingProducts.value = true
+        _billingError.value = null
+
         try {
             billingClient.startConnection(this)
         } catch (e: Exception) {
             Log.e(TAG, "Exception starting BillingClient connection: ${e.message}", e)
             _billingStatus.value = BillingStatus.ERROR
+            _isLoadingProducts.value = false
+            _billingError.value = e.message
         }
     }
 
@@ -121,12 +173,17 @@ class BillingManager private constructor(private val context: Context) : Purchas
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
             Log.d(TAG, "BillingClient connected successfully.")
             _billingStatus.value = BillingStatus.READY
+            _billingError.value = null
             reconnectAttempts = 0
+            executePendingReadyCallbacks()
             queryProductDetails()
             queryActivePurchases()
         } else {
-            Log.w(TAG, "BillingClient setup failed with code: ${billingResult.responseCode} - ${billingResult.debugMessage}")
+            val errMsg = "Google Play Billing setup failed (${billingResult.responseCode}): ${billingResult.debugMessage}"
+            Log.w(TAG, errMsg)
             _billingStatus.value = BillingStatus.ERROR
+            _isLoadingProducts.value = false
+            _billingError.value = errMsg
             retryConnectionWithBackoff()
         }
     }
@@ -135,6 +192,21 @@ class BillingManager private constructor(private val context: Context) : Purchas
         Log.w(TAG, "Billing service disconnected.")
         _billingStatus.value = BillingStatus.DISCONNECTED
         retryConnectionWithBackoff()
+    }
+
+    private fun executePendingReadyCallbacks() {
+        val callbacks: List<() -> Unit>
+        synchronized(pendingReadyCallbacks) {
+            callbacks = ArrayList(pendingReadyCallbacks)
+            pendingReadyCallbacks.clear()
+        }
+        for (cb in callbacks) {
+            try {
+                cb.invoke()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error executing onReady callback: ${e.message}", e)
+            }
+        }
     }
 
     private fun retryConnectionWithBackoff() {
@@ -149,71 +221,337 @@ class BillingManager private constructor(private val context: Context) : Purchas
     }
 
     /**
-     * Query Subscription Product Details for both Monthly and Yearly options.
+     * Force-refreshes connection and queries product details.
      */
-    fun queryProductDetails() {
-        if (!billingClient.isReady) {
-            startConnection()
-            return
-        }
-
-        val productList = listOf(
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(PremiumEntitlement.PRODUCT_ID_PREMIUM)
-                .setProductType(BillingClient.ProductType.SUBS)
-                .build(),
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY)
-                .setProductType(BillingClient.ProductType.SUBS)
-                .build()
-        )
-
-        val params = QueryProductDetailsParams.newBuilder()
-            .setProductList(productList)
-            .build()
-
-        billingClient.queryProductDetailsAsync(params) { billingResult, queryResult ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val productDetailsList = queryResult.productDetailsList
-                val monthlyDetails = productDetailsList.firstOrNull { it.productId == PremiumEntitlement.PRODUCT_ID_PREMIUM }
-                val yearlyDetails = productDetailsList.firstOrNull { it.productId == PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY }
-
-                _monthlyProductDetails.value = monthlyDetails
-                _yearlyProductDetails.value = yearlyDetails
-
-                val monthlyPrice = getFormattedPrice(monthlyDetails)
-                val yearlyPrice = getFormattedPrice(yearlyDetails) ?: getYearlyPriceFromMonthlyDetails(monthlyDetails)
-                val trialInfo = checkFreeTrial(monthlyDetails)
-
-                val yearlyOffer = yearlyDetails?.subscriptionOfferDetails?.firstOrNull()
-                    ?: monthlyDetails?.subscriptionOfferDetails?.firstOrNull {
-                        it.basePlanId.contains("year", ignoreCase = true) || it.offerId?.contains("year", ignoreCase = true) == true
-                    }
-                val yearlyPhase = yearlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
-                val yearlyMicros = yearlyPhase?.priceAmountMicros
-                val currencyCode = yearlyPhase?.priceCurrencyCode
-
-                val monthlyEquivalent = calculateMonthlyEquivalent(yearlyPrice, yearlyMicros, currencyCode)
-
-                _entitlementState.value = _entitlementState.value.copy(
-                    formattedPrice = monthlyPrice,
-                    monthlyPrice = monthlyPrice,
-                    yearlyPrice = yearlyPrice,
-                    yearlyMonthlyEquivalent = monthlyEquivalent,
-                    hasFreeTrial = trialInfo.first,
-                    freeTrialDescription = trialInfo.second
-                )
-
-                saveCachedPricing(monthlyPrice, yearlyPrice)
-                Log.d(TAG, "ProductDetails loaded: Monthly=$monthlyPrice, Yearly=$yearlyPrice, Trial=${trialInfo.second}")
-            } else {
-                Log.w(TAG, "QueryProductDetails failed: ${billingResult.responseCode} - ${billingResult.debugMessage}")
+    fun refreshProductDetails() {
+        reconnectAttempts = 0
+        if (billingClient.isReady) {
+            queryProductDetails()
+            queryActivePurchases()
+        } else {
+            startConnection {
+                queryProductDetails()
+                queryActivePurchases()
             }
         }
     }
 
     /**
-     * Query Active Subscriptions on Google Play.
+     * Resiliently query Subscription Product Details.
+     * Queries products independently so a missing product ID on Google Play Console
+     * does not block the entire batch query with ITEM_UNAVAILABLE.
+     */
+    fun queryProductDetails(onComplete: (() -> Unit)? = null) {
+        if (!billingClient.isReady) {
+            startConnection {
+                queryProductDetails(onComplete)
+            }
+            return
+        }
+
+        _isLoadingProducts.value = true
+        _billingError.value = null
+
+        val candidateSubscriptionIds = listOf(
+            PremiumEntitlement.PRODUCT_ID_PREMIUM,
+            PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY,
+            PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO
+        )
+
+        val retrievedProductDetails = mutableListOf<ProductDetails>()
+        val totalQueries = candidateSubscriptionIds.size
+        var completedQueries = 0
+
+        fun checkFinished() {
+            if (completedQueries >= totalQueries) {
+                if (retrievedProductDetails.isNotEmpty()) {
+                    processLoadedProductDetails(retrievedProductDetails)
+                    _isLoadingProducts.value = false
+                    executePendingPurchaseIfReady()
+                    onComplete?.invoke()
+                } else {
+                    // Fallback check for one-time INAPP products if no SUBS were returned
+                    queryInAppProductDetails(candidateSubscriptionIds, onComplete)
+                }
+            }
+        }
+
+        for (prodId in candidateSubscriptionIds) {
+            val params = QueryProductDetailsParams.newBuilder()
+                .setProductList(
+                    listOf(
+                        QueryProductDetailsParams.Product.newBuilder()
+                            .setProductId(prodId)
+                            .setProductType(BillingClient.ProductType.SUBS)
+                            .build()
+                    )
+                )
+                .build()
+
+            billingClient.queryProductDetailsAsync(params) { billingResult, queryResult ->
+                mainHandler.post {
+                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                        retrievedProductDetails.addAll(queryResult.productDetailsList)
+                        Log.d(TAG, "QueryProductDetails for $prodId found: ${queryResult.productDetailsList.size} items")
+                    } else {
+                        Log.d(TAG, "QueryProductDetails for $prodId returned code ${billingResult.responseCode}: ${billingResult.debugMessage}")
+                    }
+                    completedQueries++
+                    checkFinished()
+                }
+            }
+        }
+    }
+
+    /**
+     * Fallback query for in-app products (in case user configured one-time purchase in Play Console).
+     */
+    private fun queryInAppProductDetails(candidateIds: List<String>, onComplete: (() -> Unit)? = null) {
+        val inAppParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(
+                candidateIds.map { prodId ->
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(prodId)
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build()
+                }
+            )
+            .build()
+
+        billingClient.queryProductDetailsAsync(inAppParams) { billingResult, queryResult ->
+            mainHandler.post {
+                _isLoadingProducts.value = false
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && queryResult.productDetailsList.isNotEmpty()) {
+                    Log.d(TAG, "QueryProductDetails (INAPP) found: ${queryResult.productDetailsList.size} items")
+                    processLoadedProductDetails(queryResult.productDetailsList)
+                    executePendingPurchaseIfReady()
+                } else {
+                    Log.w(TAG, "No Google Play products found. Response: ${billingResult.responseCode} - ${billingResult.debugMessage}")
+                    if (_monthlyProductDetails.value == null && _yearlyProductDetails.value == null) {
+                        _billingError.value = "No Nowhere Pro products returned from Google Play Store (${billingResult.responseCode})"
+                    }
+                }
+                onComplete?.invoke()
+            }
+        }
+    }
+
+    /**
+     * Analyzes and maps returned ProductDetails into monthly & yearly plans with base plans & offer tokens.
+     */
+    private fun processLoadedProductDetails(detailsList: List<ProductDetails>) {
+        if (detailsList.isEmpty()) return
+
+        var foundMonthlyDetails: ProductDetails? = null
+        var foundYearlyDetails: ProductDetails? = null
+
+        var bestMonthlyPrice: String? = null
+        var bestYearlyPrice: String? = null
+        var bestYearlyMicros: Long? = null
+        var bestYearlyCurrency: String? = null
+        var bestTrialInfo = Pair(false, null as String?)
+
+        for (details in detailsList) {
+            val offers = details.subscriptionOfferDetails
+            if (!offers.isNullOrEmpty()) {
+                for (offer in offers) {
+                    val isYearly = isOfferYearly(offer)
+                    val isMonthly = isOfferMonthly(offer)
+                    val paidPhase = offer.pricingPhases.pricingPhaseList.firstOrNull { it.priceAmountMicros > 0L }
+                        ?: offer.pricingPhases.pricingPhaseList.firstOrNull()
+
+                    val trial = checkFreeTrial(offer)
+                    if (trial.first) {
+                        bestTrialInfo = trial
+                    }
+
+                    if (isYearly) {
+                        foundYearlyDetails = details
+                        if (bestYearlyPrice == null && paidPhase != null) {
+                            bestYearlyPrice = paidPhase.formattedPrice
+                            bestYearlyMicros = paidPhase.priceAmountMicros
+                            bestYearlyCurrency = paidPhase.priceCurrencyCode
+                        }
+                    }
+
+                    if (isMonthly || (!isYearly && foundMonthlyDetails == null)) {
+                        foundMonthlyDetails = details
+                        if (bestMonthlyPrice == null && paidPhase != null) {
+                            bestMonthlyPrice = paidPhase.formattedPrice
+                        }
+                    }
+                }
+            } else if (details.oneTimePurchaseOfferDetails != null) {
+                // INAPP One-Time Purchase
+                foundMonthlyDetails = details
+                foundYearlyDetails = details
+                bestMonthlyPrice = details.oneTimePurchaseOfferDetails?.formattedPrice
+                bestYearlyPrice = details.oneTimePurchaseOfferDetails?.formattedPrice
+            }
+        }
+
+        // If dedicated yearly product was not found, check if monthly details contains yearly offer
+        if (foundYearlyDetails == null) {
+            foundYearlyDetails = foundMonthlyDetails
+        }
+        if (foundMonthlyDetails == null) {
+            foundMonthlyDetails = foundYearlyDetails
+        }
+
+        _monthlyProductDetails.value = foundMonthlyDetails
+        _yearlyProductDetails.value = foundYearlyDetails
+
+        val monthlyPrice = bestMonthlyPrice ?: getFormattedPrice(foundMonthlyDetails)
+        val yearlyPrice = bestYearlyPrice ?: getFormattedPrice(foundYearlyDetails) ?: getYearlyPriceFromMonthlyDetails(foundMonthlyDetails)
+        val monthlyEquivalent = calculateMonthlyEquivalent(yearlyPrice, bestYearlyMicros, bestYearlyCurrency)
+
+        _entitlementState.value = _entitlementState.value.copy(
+            formattedPrice = monthlyPrice ?: yearlyPrice,
+            monthlyPrice = monthlyPrice,
+            yearlyPrice = yearlyPrice,
+            yearlyMonthlyEquivalent = monthlyEquivalent,
+            hasFreeTrial = bestTrialInfo.first,
+            freeTrialDescription = bestTrialInfo.second
+        )
+
+        saveCachedPricing(monthlyPrice, yearlyPrice)
+        Log.d(TAG, "Processed Google Play plans: Monthly=$monthlyPrice, Yearly=$yearlyPrice, Equiv=$monthlyEquivalent")
+    }
+
+    private fun isOfferYearly(offer: ProductDetails.SubscriptionOfferDetails): Boolean {
+        val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
+        val offerId = offer.offerId?.lowercase(Locale.ROOT).orEmpty()
+
+        if (basePlan.contains("year") || basePlan.contains("annual") || basePlan.contains("12m") || basePlan.contains("p1y") || basePlan.contains("annually")) {
+            return true
+        }
+        if (offerId.contains("year") || offerId.contains("annual") || offerId.contains("annually")) {
+            return true
+        }
+        val phases = offer.pricingPhases.pricingPhaseList
+        return phases.any { it.billingPeriod.contains("Y", ignoreCase = true) || it.billingPeriod.contains("P1Y", ignoreCase = true) }
+    }
+
+    private fun isOfferMonthly(offer: ProductDetails.SubscriptionOfferDetails): Boolean {
+        val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
+        val offerId = offer.offerId?.lowercase(Locale.ROOT).orEmpty()
+
+        if (basePlan.contains("month") || basePlan.contains("1m") || basePlan.contains("p1m") || basePlan.contains("monthly")) {
+            return true
+        }
+        if (offerId.contains("month") || offerId.contains("monthly")) {
+            return true
+        }
+        val phases = offer.pricingPhases.pricingPhaseList
+        if (phases.any { it.billingPeriod.contains("M", ignoreCase = true) || it.billingPeriod.contains("P1M", ignoreCase = true) }) {
+            return true
+        }
+        return !isOfferYearly(offer)
+    }
+
+    /**
+     * Resolves the best available ProductDetails and offerToken for a plan type.
+     */
+    fun resolvePlanOffer(planType: PremiumEntitlement.PlanType): ResolvedPlanOffer? {
+        val isYearly = planType == PremiumEntitlement.PlanType.YEARLY
+
+        if (isYearly) {
+            val yearlyDetails = _yearlyProductDetails.value
+            val yearlyOffers = yearlyDetails?.subscriptionOfferDetails
+            if (!yearlyOffers.isNullOrEmpty()) {
+                val yearlyOffer = yearlyOffers.firstOrNull { isOfferYearly(it) } ?: yearlyOffers.firstOrNull()
+                val paidPhase = yearlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
+                    ?: yearlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull()
+                return ResolvedPlanOffer(
+                    productDetails = yearlyDetails,
+                    offerToken = yearlyOffer?.offerToken,
+                    formattedPrice = paidPhase?.formattedPrice,
+                    priceAmountMicros = paidPhase?.priceAmountMicros,
+                    currencyCode = paidPhase?.priceCurrencyCode,
+                    isYearly = true
+                )
+            } else if (yearlyDetails?.oneTimePurchaseOfferDetails != null) {
+                val otp = yearlyDetails.oneTimePurchaseOfferDetails
+                return ResolvedPlanOffer(
+                    productDetails = yearlyDetails,
+                    offerToken = null,
+                    formattedPrice = otp?.formattedPrice,
+                    priceAmountMicros = otp?.priceAmountMicros,
+                    currencyCode = otp?.priceCurrencyCode,
+                    isYearly = true
+                )
+            }
+
+            // Fallback: check if monthly details has a yearly offer
+            val monthlyDetails = _monthlyProductDetails.value
+            val monthlyOffers = monthlyDetails?.subscriptionOfferDetails
+            val yearlyInMonthly = monthlyOffers?.firstOrNull { isOfferYearly(it) }
+            if (yearlyInMonthly != null && monthlyDetails != null) {
+                val paidPhase = yearlyInMonthly.pricingPhases.pricingPhaseList.firstOrNull { it.priceAmountMicros > 0L }
+                    ?: yearlyInMonthly.pricingPhases.pricingPhaseList.firstOrNull()
+                return ResolvedPlanOffer(
+                    productDetails = monthlyDetails,
+                    offerToken = yearlyInMonthly.offerToken,
+                    formattedPrice = paidPhase?.formattedPrice,
+                    priceAmountMicros = paidPhase?.priceAmountMicros,
+                    currencyCode = paidPhase?.priceCurrencyCode,
+                    isYearly = true
+                )
+            }
+        } else {
+            // Monthly Plan
+            val monthlyDetails = _monthlyProductDetails.value
+            val monthlyOffers = monthlyDetails?.subscriptionOfferDetails
+            if (!monthlyOffers.isNullOrEmpty()) {
+                val monthlyOffer = monthlyOffers.firstOrNull { isOfferMonthly(it) } ?: monthlyOffers.firstOrNull()
+                val paidPhase = monthlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
+                    ?: monthlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull()
+                val trial = monthlyOffer?.let { checkFreeTrial(it) } ?: Pair(false, null)
+                return ResolvedPlanOffer(
+                    productDetails = monthlyDetails,
+                    offerToken = monthlyOffer?.offerToken,
+                    formattedPrice = paidPhase?.formattedPrice,
+                    priceAmountMicros = paidPhase?.priceAmountMicros,
+                    currencyCode = paidPhase?.priceCurrencyCode,
+                    isYearly = false,
+                    hasFreeTrial = trial.first,
+                    freeTrialDescription = trial.second
+                )
+            } else if (monthlyDetails?.oneTimePurchaseOfferDetails != null) {
+                val otp = monthlyDetails.oneTimePurchaseOfferDetails
+                return ResolvedPlanOffer(
+                    productDetails = monthlyDetails,
+                    offerToken = null,
+                    formattedPrice = otp?.formattedPrice,
+                    priceAmountMicros = otp?.priceAmountMicros,
+                    currencyCode = otp?.priceCurrencyCode,
+                    isYearly = false
+                )
+            }
+        }
+
+        // Generic fallback: if either product details is available, grab its first valid offer
+        val fallbackDetails = if (isYearly) _yearlyProductDetails.value ?: _monthlyProductDetails.value else _monthlyProductDetails.value ?: _yearlyProductDetails.value
+        val fallbackOffers = fallbackDetails?.subscriptionOfferDetails
+        if (fallbackDetails != null && !fallbackOffers.isNullOrEmpty()) {
+            val firstOffer = fallbackOffers.first()
+            val paidPhase = firstOffer.pricingPhases.pricingPhaseList.firstOrNull { it.priceAmountMicros > 0L }
+                ?: firstOffer.pricingPhases.pricingPhaseList.firstOrNull()
+            return ResolvedPlanOffer(
+                productDetails = fallbackDetails,
+                offerToken = firstOffer.offerToken,
+                formattedPrice = paidPhase?.formattedPrice,
+                priceAmountMicros = paidPhase?.priceAmountMicros,
+                currencyCode = paidPhase?.priceCurrencyCode,
+                isYearly = isYearly
+            )
+        }
+
+        return null
+    }
+
+    /**
+     * Query Active Subscriptions and One-Time Purchases on Google Play.
      */
     fun queryActivePurchases() {
         if (!billingClient.isReady) {
@@ -221,23 +559,47 @@ class BillingManager private constructor(private val context: Context) : Purchas
             return
         }
 
-        val params = QueryPurchasesParams.newBuilder()
+        val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
-        billingClient.queryPurchasesAsync(params) { billingResult, purchasesList ->
+        billingClient.queryPurchasesAsync(subsParams) { billingResult, purchasesList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                processPurchases(purchasesList)
+                val activeSubs = purchasesList.filter { isNowhereProduct(it) }
+                if (activeSubs.isNotEmpty()) {
+                    processPurchases(activeSubs)
+                } else {
+                    // Check INAPP purchases as fallback
+                    queryActiveInAppPurchases()
+                }
             } else {
-                Log.w(TAG, "QueryPurchases failed: ${billingResult.responseCode} - ${billingResult.debugMessage}")
+                Log.w(TAG, "QueryPurchases SUBS failed: ${billingResult.responseCode} - ${billingResult.debugMessage}")
             }
         }
+    }
+
+    private fun queryActiveInAppPurchases() {
+        val inAppParams = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.INAPP)
+            .build()
+
+        billingClient.queryPurchasesAsync(inAppParams) { billingResult, purchasesList ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                processPurchases(purchasesList.filter { isNowhereProduct(it) })
+            } else {
+                Log.w(TAG, "QueryPurchases INAPP failed: ${billingResult.responseCode} - ${billingResult.debugMessage}")
+            }
+        }
+    }
+
+    private fun isNowhereProduct(purchase: Purchase): Boolean {
+        return purchase.products.any { PremiumEntitlement.ALL_PRODUCT_IDS.contains(it) }
     }
 
     fun onResume() {
         if (billingClient.isReady) {
             queryActivePurchases()
-            if (_monthlyProductDetails.value == null) {
+            if (_monthlyProductDetails.value == null && _yearlyProductDetails.value == null) {
                 queryProductDetails()
             }
         } else {
@@ -279,6 +641,14 @@ class BillingManager private constructor(private val context: Context) : Purchas
                     "Unable to connect to Google Play. Please check your internet connection."
                 }
             }
+            BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> {
+                Log.w(TAG, "Billing unavailable: ${billingResult.debugMessage}")
+                _purchaseMessage.value = try {
+                    context.getString(R.string.premium_play_store_unavailable)
+                } catch (e: Exception) {
+                    "Google Play Billing is currently unavailable on this device."
+                }
+            }
             else -> {
                 Log.w(TAG, "Purchase failed: ${billingResult.responseCode} - ${billingResult.debugMessage}")
                 _purchaseMessage.value = "Purchase could not be completed: ${billingResult.debugMessage}"
@@ -287,14 +657,12 @@ class BillingManager private constructor(private val context: Context) : Purchas
     }
 
     private fun processPurchases(purchases: List<Purchase>) {
-        val activePurchase = purchases.firstOrNull { purchase ->
-            purchase.products.contains(PremiumEntitlement.PRODUCT_ID_PREMIUM) ||
-            purchase.products.contains(PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY)
-        }
+        val activePurchase = purchases.firstOrNull { isNowhereProduct(it) }
 
         if (activePurchase != null) {
-            val isYearly = activePurchase.products.contains(PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY)
-            val matchedProductId = if (isYearly) PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY else PremiumEntitlement.PRODUCT_ID_PREMIUM
+            val matchedProductId = activePurchase.products.firstOrNull { PremiumEntitlement.ALL_PRODUCT_IDS.contains(it) }
+                ?: PremiumEntitlement.PRODUCT_ID_PREMIUM
+            val isYearly = matchedProductId == PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY
 
             when (activePurchase.purchaseState) {
                 Purchase.PurchaseState.PURCHASED -> {
@@ -331,26 +699,28 @@ class BillingManager private constructor(private val context: Context) : Purchas
                     updateEntitlement(pendingEntitlement)
                 }
                 else -> {
-                    updateEntitlement(PremiumEntitlement.FREE.copy(
-                        formattedPrice = _entitlementState.value.formattedPrice,
-                        monthlyPrice = _entitlementState.value.monthlyPrice,
-                        yearlyPrice = _entitlementState.value.yearlyPrice,
-                        yearlyMonthlyEquivalent = _entitlementState.value.yearlyMonthlyEquivalent,
-                        hasFreeTrial = _entitlementState.value.hasFreeTrial,
-                        freeTrialDescription = _entitlementState.value.freeTrialDescription
-                    ))
+                    resetToFreeEntitlement()
                 }
             }
         } else {
-            updateEntitlement(PremiumEntitlement.FREE.copy(
-                formattedPrice = _entitlementState.value.formattedPrice,
-                monthlyPrice = _entitlementState.value.monthlyPrice,
-                yearlyPrice = _entitlementState.value.yearlyPrice,
-                yearlyMonthlyEquivalent = _entitlementState.value.yearlyMonthlyEquivalent,
-                hasFreeTrial = _entitlementState.value.hasFreeTrial,
-                freeTrialDescription = _entitlementState.value.freeTrialDescription
-            ))
+            // Keep debug sandbox premium active if currently enabled
+            if (_entitlementState.value.productId == PremiumEntitlement.PRODUCT_ID_SANDBOX && _entitlementState.value.isPremium) {
+                Log.d(TAG, "Retaining Sandbox Nowhere Pro entitlement.")
+            } else {
+                resetToFreeEntitlement()
+            }
         }
+    }
+
+    private fun resetToFreeEntitlement() {
+        updateEntitlement(PremiumEntitlement.FREE.copy(
+            formattedPrice = _entitlementState.value.formattedPrice,
+            monthlyPrice = _entitlementState.value.monthlyPrice,
+            yearlyPrice = _entitlementState.value.yearlyPrice,
+            yearlyMonthlyEquivalent = _entitlementState.value.yearlyMonthlyEquivalent,
+            hasFreeTrial = _entitlementState.value.hasFreeTrial,
+            freeTrialDescription = _entitlementState.value.freeTrialDescription
+        ))
     }
 
     private fun acknowledgePurchase(purchaseToken: String) {
@@ -375,61 +745,91 @@ class BillingManager private constructor(private val context: Context) : Purchas
 
     /**
      * Launch Google Play purchase flow for either Monthly or Yearly plan.
+     * Automatically handles connection warmup, product resolution, and seamless auto-launch.
      */
     fun launchPurchaseFlow(
         activity: Activity,
         planType: PremiumEntitlement.PlanType = PremiumEntitlement.PlanType.YEARLY
     ): BillingResult? {
-        val isYearly = planType == PremiumEntitlement.PlanType.YEARLY
+        val planOffer = resolvePlanOffer(planType)
 
-        val targetProductDetails: ProductDetails?
-        val offerToken: String?
+        if (planOffer == null) {
+            Log.d(TAG, "Plan offer not ready yet. Scheduling pending purchase for plan: $planType")
+            pendingPurchasePlan = planType
+            pendingActivityRef = WeakReference(activity)
 
-        if (isYearly) {
-            // First look for dedicated yearly product
-            if (_yearlyProductDetails.value != null) {
-                targetProductDetails = _yearlyProductDetails.value
-                offerToken = targetProductDetails?.subscriptionOfferDetails?.firstOrNull()?.offerToken
-            } else {
-                // Check if monthly product details contains yearly base plan offer
-                targetProductDetails = _monthlyProductDetails.value
-                val yearlyOffer = targetProductDetails?.subscriptionOfferDetails?.firstOrNull {
-                    it.basePlanId.contains("year", ignoreCase = true) || it.offerId?.contains("year", ignoreCase = true) == true
-                }
-                offerToken = yearlyOffer?.offerToken ?: targetProductDetails?.subscriptionOfferDetails?.firstOrNull()?.offerToken
-            }
-        } else {
-            // Monthly plan
-            targetProductDetails = _monthlyProductDetails.value
-            val monthlyOffer = targetProductDetails?.subscriptionOfferDetails?.firstOrNull {
-                it.basePlanId.contains("month", ignoreCase = true) || !it.basePlanId.contains("year", ignoreCase = true)
-            } ?: targetProductDetails?.subscriptionOfferDetails?.firstOrNull()
-            offerToken = monthlyOffer?.offerToken
-        }
-
-        if (targetProductDetails == null || offerToken == null) {
-            queryProductDetails()
-            val msg = try {
-                context.getString(R.string.premium_loading_pricing)
+            val loadingMsg = try {
+                context.getString(R.string.premium_connecting_google_play)
             } catch (e: Exception) {
-                "Loading subscription pricing from Google Play. Please try again in a moment."
+                "Connecting to Google Play Store…"
             }
-            Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, loadingMsg, Toast.LENGTH_SHORT).show()
+
+            refreshProductDetails()
             return null
         }
 
-        val productDetailsParamsList = listOf(
-            BillingFlowParams.ProductDetailsParams.newBuilder()
-                .setProductDetails(targetProductDetails)
-                .setOfferToken(offerToken)
-                .build()
-        )
+        pendingPurchasePlan = null
+        pendingActivityRef = null
+
+        val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
+            .setProductDetails(planOffer.productDetails)
+
+        if (!planOffer.offerToken.isNullOrBlank()) {
+            productDetailsParamsBuilder.setOfferToken(planOffer.offerToken)
+        }
 
         val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(productDetailsParamsList)
+            .setProductDetailsParamsList(listOf(productDetailsParamsBuilder.build()))
             .build()
 
         return billingClient.launchBillingFlow(activity, billingFlowParams)
+    }
+
+    private fun executePendingPurchaseIfReady(activity: Activity? = pendingActivityRef?.get()) {
+        val plan = pendingPurchasePlan ?: return
+        val targetAct = activity ?: pendingActivityRef?.get() ?: return
+
+        val planOffer = resolvePlanOffer(plan)
+        if (planOffer != null) {
+            Log.d(TAG, "Auto-launching queued purchase flow now that products are ready!")
+            pendingPurchasePlan = null
+            pendingActivityRef = null
+            launchPurchaseFlow(targetAct, plan)
+        }
+    }
+
+    /**
+     * Toggles a secure developer sandbox entitlement for testing on devices
+     * where Google Play testing credentials or internal test tracks are unavailable.
+     */
+    fun toggleDebugSandboxPremium(enable: Boolean? = null): Boolean {
+        val current = _isPremium.value
+        val target = enable ?: !current
+
+        if (target) {
+            val now = System.currentTimeMillis()
+            val entitlement = PremiumEntitlement(
+                isPremium = true,
+                productId = PremiumEntitlement.PRODUCT_ID_SANDBOX,
+                purchaseToken = "sandbox_token_$now",
+                orderId = "GPA.SANDBOX-$now",
+                purchaseTime = now,
+                autoRenewing = true,
+                isPending = false,
+                formattedPrice = "$0.00",
+                monthlyPrice = "$0.00",
+                yearlyPrice = "$0.00",
+                yearlyMonthlyEquivalent = "$0.00 / mo",
+                lastVerifiedTimestamp = now
+            )
+            updateEntitlement(entitlement)
+            _purchaseMessage.value = "Sandbox Nowhere Pro Activated!"
+        } else {
+            resetToFreeEntitlement()
+            _purchaseMessage.value = "Sandbox Nowhere Pro Deactivated."
+        }
+        return _isPremium.value
     }
 
     /**
@@ -454,25 +854,24 @@ class BillingManager private constructor(private val context: Context) : Purchas
      * Extract localized formatted price string from ProductDetails.
      */
     fun getFormattedPrice(details: ProductDetails? = _monthlyProductDetails.value): String? {
-        val offer = details?.subscriptionOfferDetails?.firstOrNull()
-        // If there's a free trial phase, find the recurring paid phase
-        val paidPhase = offer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
-            ?: offer?.pricingPhases?.pricingPhaseList?.firstOrNull()
-        return paidPhase?.formattedPrice
+        val offers = details?.subscriptionOfferDetails
+        if (!offers.isNullOrEmpty()) {
+            val offer = offers.firstOrNull()
+            val paidPhase = offer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
+                ?: offer?.pricingPhases?.pricingPhaseList?.firstOrNull()
+            return paidPhase?.formattedPrice
+        }
+        return details?.oneTimePurchaseOfferDetails?.formattedPrice
     }
 
     private fun getYearlyPriceFromMonthlyDetails(details: ProductDetails?): String? {
-        val yearlyOffer = details?.subscriptionOfferDetails?.firstOrNull {
-            it.basePlanId.contains("year", ignoreCase = true)
-        }
+        val yearlyOffer = details?.subscriptionOfferDetails?.firstOrNull { isOfferYearly(it) }
         val paidPhase = yearlyOffer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros > 0L }
         return paidPhase?.formattedPrice
     }
 
-    private fun checkFreeTrial(details: ProductDetails?): Pair<Boolean, String?> {
-        val offer = details?.subscriptionOfferDetails?.firstOrNull() ?: return Pair(false, null)
+    private fun checkFreeTrial(offer: ProductDetails.SubscriptionOfferDetails): Pair<Boolean, String?> {
         val trialPhase = offer.pricingPhases.pricingPhaseList.firstOrNull { it.priceAmountMicros == 0L }
-
         return if (trialPhase != null) {
             val desc = when (trialPhase.billingPeriod) {
                 "P7D", "P1W" -> "7-Day Free Trial"
@@ -550,10 +949,16 @@ class BillingManager private constructor(private val context: Context) : Purchas
         val ts = prefs.getLong(KEY_CACHED_TIMESTAMP, 0L)
         val cachedSig = prefs.getString(KEY_CACHED_SIGNATURE, null)
 
+        val isSandbox = isPremRaw && prodId == PremiumEntitlement.PRODUCT_ID_SANDBOX
+
         // Cryptographic tamper verification: protect against unauthorized XML edits on rooted devices
         val isValidSignature = if (isPremRaw) {
-            !token.isNullOrBlank() && (prodId == PremiumEntitlement.PRODUCT_ID_PREMIUM || prodId == PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY) &&
-            cachedSig != null && cachedSig == generateCacheSignature(prodId, token, pTime)
+            if (isSandbox) {
+                true
+            } else {
+                !token.isNullOrBlank() && (PremiumEntitlement.ALL_PRODUCT_IDS.contains(prodId)) &&
+                cachedSig != null && cachedSig == generateCacheSignature(prodId, token, pTime)
+            }
         } else {
             false
         }

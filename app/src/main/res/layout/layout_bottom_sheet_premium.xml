@@ -58,8 +58,11 @@
                 android:orientation="vertical">
 
                 <FrameLayout
+                    android:id="@+id/btnSparkleHeader"
                     android:layout_width="48dp"
-                    android:layout_height="48dp">
+                    android:layout_height="48dp"
+                    android:clickable="true"
+                    android:focusable="true">
 
                     <View
                         android:layout_width="48dp"

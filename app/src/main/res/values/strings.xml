@@ -701,6 +701,9 @@
     <string name="hud_joystick_mode">JOYSTICK</string>
 
     <string name="premium_loading_pricing">Loading subscription pricing from Google Play. Please try again in a moment.</string>
+    <string name="premium_connecting_google_play">Connecting to Google Play Store…</string>
+    <string name="premium_play_store_unavailable">Google Play Billing is currently unavailable. Please verify your Google Play Store login and connection.</string>
+    <string name="premium_products_unavailable">Nowhere Pro subscription plans could not be retrieved from Google Play Store.</string>
     <string name="premium_reconciling_purchases">Reconciling purchases with Google Play...</string>
     <string name="premium_purchase_success">Nowhere Premium activated! Enjoy unlimited duration and zero ads.</string>
     <string name="premium_purchase_restored">Subscription restored! Welcome back to Nowhere Premium.</string>
