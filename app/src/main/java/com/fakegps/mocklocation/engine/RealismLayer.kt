@@ -62,15 +62,15 @@ class RealismLayer(
      * Generates horizontal accuracy in meters.
      */
     fun generateHorizontalAccuracy(isMoving: Boolean = false): Float {
-        val base = settingsPrefs?.baseAccuracy ?: 1.0f
-        if (!isMoving) return base.coerceAtLeast(0.5f)
+        val base = settingsPrefs?.baseAccuracy ?: 3.5f
+        if (!isMoving) return base.coerceIn(2.5f, 5.0f)
 
         val shouldRandomize = settingsPrefs?.randomizeJitter ?: false
         return if (shouldRandomize) {
-            val variance = (random.nextFloat() * 0.6f) - 0.3f
-            (base + variance).coerceAtLeast(0.5f)
+            val variance = (random.nextFloat() * 0.8f) - 0.4f
+            (base + variance).coerceIn(2.5f, 5.0f)
         } else {
-            base.coerceAtLeast(0.5f)
+            base.coerceIn(2.5f, 5.0f)
         }
     }
 

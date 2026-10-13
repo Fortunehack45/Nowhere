@@ -200,10 +200,10 @@ class MockLocationEngine(
         }
 
         val finalAltitude = if (isMoving) realismLayer.generateAltitude(altitude, true) else altitude
-        val horizontalAccuracy = if (isMoving) realismLayer.generateHorizontalAccuracy(true) else 1.0f
-        val verticalAccuracy = if (isMoving) realismLayer.generateVerticalAccuracy(true) else 0.5f
-        val speedAccuracy = if (isMoving) realismLayer.generateSpeedAccuracy(true) else 0.0f
-        val bearingAccuracy = if (isMoving) realismLayer.generateBearingAccuracy(true) else 0.0f
+        val horizontalAccuracy = if (isMoving) realismLayer.generateHorizontalAccuracy(true) else 3.5f
+        val verticalAccuracy = if (isMoving) realismLayer.generateVerticalAccuracy(true) else 1.5f
+        val speedAccuracy = if (isMoving) realismLayer.generateSpeedAccuracy(true) else 0.1f
+        val bearingAccuracy = if (isMoving) realismLayer.generateBearingAccuracy(true) else 1.0f
 
         var lastSuccessfulLocation: Location? = null
         val nowMs = System.currentTimeMillis()
@@ -261,16 +261,38 @@ class MockLocationEngine(
         }
 
         if (lastSuccessfulLocation != null) {
-            // Also inject directly into Google Play Services Fused Location Provider Client for 100% rubberband immunity
+            // Also inject directly into Google Play Services Fused Location Provider Client for 100% rubberband immunity and active blue dot
             try {
                 val gmsFix = Location(lastSuccessfulLocation).apply {
                     provider = LocationManager.GPS_PROVIDER
-                    accuracy = if (horizontalAccuracy < 1.0f) 1.5f else horizontalAccuracy
+                    accuracy = horizontalAccuracy.coerceIn(2.5f, 5.0f)
                     time = nowMs
                     elapsedRealtimeNanos = nowNanos
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        bearingAccuracyDegrees = 1.0f
+                        speedAccuracyMetersPerSecond = 0.1f
+                        verticalAccuracyMeters = 1.0f
+                    }
                 }
                 fusedLocationClient.setMockLocation(gmsFix)
-            } catch (ignored: Exception) {}
+                    .addOnFailureListener {
+                        try {
+                            fusedLocationClient.setMockMode(true).addOnSuccessListener {
+                                fusedLocationClient.setMockLocation(gmsFix)
+                            }
+                        } catch (ignored: Exception) {}
+                    }
+
+                // Also inject as FUSED provider for GMS subscribers like Google Maps
+                try {
+                    val fusedFix = Location(gmsFix).apply { provider = FUSED_PROVIDER_NAME }
+                    fusedLocationClient.setMockLocation(fusedFix)
+                } catch (ignored: Exception) {}
+            } catch (ignored: Exception) {
+                try {
+                    fusedLocationClient.setMockMode(true)
+                } catch (ignored: Exception) {}
+            }
             return Result.success(lastSuccessfulLocation)
         } else {
             isInitialized = false

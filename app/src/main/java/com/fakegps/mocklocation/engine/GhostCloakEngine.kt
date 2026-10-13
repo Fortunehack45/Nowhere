@@ -138,24 +138,6 @@ class GhostCloakEngine(
             val locClass = Location::class.java
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 try {
-                    val fieldName = String(charArrayOf('m', 'F', 'i', 'e', 'l', 'd', 's', 'M', 'a', 's', 'k'))
-                    val fieldsMaskField = locClass.getDeclaredField(fieldName)
-                    fieldsMaskField.isAccessible = true
-                    var mask = fieldsMaskField.getInt(location)
-                    // Clear HAS_MOCK_PROVIDER_MASK (bit 4 / 16)
-                    mask = mask and (1 shl 4).inv()
-                    mask = mask and (1 shl 15).inv()
-                    fieldsMaskField.setInt(location, mask)
-                } catch (ignored: Throwable) {}
-
-                try {
-                    val methodName = String(charArrayOf('s', 'e', 't', 'I', 's', 'F', 'r', 'o', 'm', 'M', 'o', 'c', 'k', 'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r'))
-                    val isMockMethod = locClass.getDeclaredMethod(methodName, Boolean::class.javaPrimitiveType)
-                    isMockMethod.isAccessible = true
-                    isMockMethod.invoke(location, false)
-                } catch (ignored: Throwable) {}
-
-                try {
                     val methodName = String(charArrayOf('s', 'e', 't', 'M', 'o', 'c', 'k'))
                     val setMockMethod = locClass.getDeclaredMethod(methodName, Boolean::class.javaPrimitiveType)
                     setMockMethod.isAccessible = true
@@ -177,6 +159,11 @@ class GhostCloakEngine(
                 } catch (ignored: Throwable) {}
             }
         } catch (ignored: Throwable) {}
+
+        // Guarantee that location accuracy is never zero or missing so Google Maps displays an active solid blue dot
+        if (location.accuracy <= 0.1f) {
+            location.accuracy = 3.5f
+        }
     }
 
     /**

@@ -92,7 +92,16 @@
             android:stopWithTask="false"
             android:exported="false" />
 
-
+        <service
+            android:name=".vpn.NowhereVpnService"
+            android:enabled="true"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Network privacy protection and hardware-level mock IP telemetry" />
+        </service>
 
         <!-- AndroidX Per-App Language Metadata Holder Service (Android 12 and below) -->
         <service

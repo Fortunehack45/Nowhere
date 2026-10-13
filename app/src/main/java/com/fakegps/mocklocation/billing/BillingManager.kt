@@ -307,53 +307,79 @@ class BillingManager private constructor(private val context: Context) : Purchas
         _isLoadingProducts.value = true
         _billingError.value = null
 
-        val candidateSubscriptionIds = PremiumEntitlement.ALL_PRODUCT_IDS
-            .filter { it != PremiumEntitlement.PRODUCT_ID_SANDBOX }
+        val primaryProductList = PremiumEntitlement.PRIMARY_PRODUCT_IDS.map { prodId ->
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(prodId)
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build()
+        }
 
-        val retrievedProductDetails = mutableListOf<ProductDetails>()
-        val totalQueries = candidateSubscriptionIds.size
-        var completedQueries = 0
+        val primaryParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(primaryProductList)
+            .build()
 
-        fun checkFinished() {
-            if (completedQueries >= totalQueries) {
-                if (retrievedProductDetails.isNotEmpty()) {
-                    processLoadedProductDetails(retrievedProductDetails)
+        billingClient.queryProductDetailsAsync(primaryParams) { billingResult, queryResult ->
+            mainHandler.post {
+                val primaryProducts = queryResult.productDetailsList.orEmpty()
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && primaryProducts.isNotEmpty()) {
+                    lastResponseCode = BillingClient.BillingResponseCode.OK
+                    lastDebugMessage = "OK"
+                    Log.d(TAG, "Primary QueryProductDetails found ${primaryProducts.size} products directly!")
+                    processLoadedProductDetails(primaryProducts)
+
+                    // If both monthly and yearly are satisfied, we finish immediately
+                    if (hasMonthlyOffer() && hasYearlyOffer()) {
+                        _isLoadingProducts.value = false
+                        executePendingPurchaseIfReady()
+                        onComplete?.invoke()
+                        return@post
+                    }
+                } else if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                    lastResponseCode = billingResult.responseCode
+                    lastDebugMessage = billingResult.debugMessage
+                    Log.w(TAG, "Primary query returned code ${billingResult.responseCode}: ${billingResult.debugMessage}")
+                }
+
+                // If primary query missed one or both plans, run secondary candidate discovery
+                querySecondarySubscriptionProducts(primaryProducts, onComplete)
+            }
+        }
+    }
+
+    private fun querySecondarySubscriptionProducts(
+        alreadyFound: List<ProductDetails>,
+        onComplete: (() -> Unit)? = null
+    ) {
+        val secondaryCandidateIds = PremiumEntitlement.ALL_PRODUCT_IDS
+            .filter { it != PremiumEntitlement.PRODUCT_ID_SANDBOX && !PremiumEntitlement.PRIMARY_PRODUCT_IDS.contains(it) }
+            .take(6) // Top secondary variants (e.g. nowhere-pro, nowhere_pro, nowhere_premium, etc.)
+
+        val secondaryProductList = secondaryCandidateIds.map { prodId ->
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(prodId)
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build()
+        }
+
+        val secondaryParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(secondaryProductList)
+            .build()
+
+        billingClient.queryProductDetailsAsync(secondaryParams) { billingResult, queryResult ->
+            mainHandler.post {
+                val combined = ArrayList(alreadyFound)
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && queryResult.productDetailsList.isNotEmpty()) {
+                    combined.addAll(queryResult.productDetailsList)
+                    lastResponseCode = BillingClient.BillingResponseCode.OK
+                }
+
+                if (combined.isNotEmpty()) {
+                    processLoadedProductDetails(combined)
                     _isLoadingProducts.value = false
                     executePendingPurchaseIfReady()
                     onComplete?.invoke()
                 } else {
-                    // Fallback check for one-time INAPP products if no SUBS were returned
-                    queryInAppProductDetails(candidateSubscriptionIds, onComplete)
-                }
-            }
-        }
-
-        for (prodId in candidateSubscriptionIds) {
-            val params = QueryProductDetailsParams.newBuilder()
-                .setProductList(
-                    listOf(
-                        QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId(prodId)
-                            .setProductType(BillingClient.ProductType.SUBS)
-                            .build()
-                    )
-                )
-                .build()
-
-            billingClient.queryProductDetailsAsync(params) { billingResult, queryResult ->
-                mainHandler.post {
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                        if (queryResult.productDetailsList.isNotEmpty()) {
-                            retrievedProductDetails.addAll(queryResult.productDetailsList)
-                            Log.d(TAG, "QueryProductDetails for $prodId found: ${queryResult.productDetailsList.size} items")
-                        }
-                    } else {
-                        lastResponseCode = billingResult.responseCode
-                        lastDebugMessage = billingResult.debugMessage
-                        Log.d(TAG, "QueryProductDetails for $prodId returned code ${billingResult.responseCode}: ${billingResult.debugMessage}")
-                    }
-                    completedQueries++
-                    checkFinished()
+                    queryInAppProductDetails(onComplete)
                 }
             }
         }
@@ -362,21 +388,29 @@ class BillingManager private constructor(private val context: Context) : Purchas
     /**
      * Fallback query for in-app products (in case user configured one-time purchase in Play Console).
      */
-    private fun queryInAppProductDetails(candidateIds: List<String>, onComplete: (() -> Unit)? = null) {
-        val inAppResults = mutableListOf<ProductDetails>()
-        var inAppCompleted = 0
-        val totalInApp = candidateIds.size
+    private fun queryInAppProductDetails(onComplete: (() -> Unit)? = null) {
+        val inAppCandidates = PremiumEntitlement.ALL_PRODUCT_IDS.take(4)
+        val inAppProducts = inAppCandidates.map { prodId ->
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(prodId)
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        }
+        val inAppParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(inAppProducts)
+            .build()
 
-        fun finishInApp() {
-            if (inAppCompleted >= totalInApp) {
+        billingClient.queryProductDetailsAsync(inAppParams) { billingResult, queryResult ->
+            mainHandler.post {
                 _isLoadingProducts.value = false
-                if (inAppResults.isNotEmpty()) {
-                    Log.d(TAG, "QueryProductDetails (INAPP) found: ${inAppResults.size} items")
-                    processLoadedProductDetails(inAppResults)
+                val inAppList = queryResult.productDetailsList.orEmpty()
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && inAppList.isNotEmpty()) {
+                    Log.d(TAG, "QueryProductDetails (INAPP) found: ${inAppList.size} items")
+                    processLoadedProductDetails(inAppList)
                     executePendingPurchaseIfReady()
                 } else {
                     val notFoundMsg = buildString {
-                        append("Google Play returned 0 products for [${candidateIds.take(4).joinToString(", ")}...].")
+                        append("Google Play returned 0 products for [${PremiumEntitlement.PRIMARY_PRODUCT_IDS.joinToString(", ")}...].")
                         if (lastResponseCode != BillingClient.BillingResponseCode.OK) {
                             append(" (Response code $lastResponseCode: ${lastDebugMessage.orEmpty()})")
                         }
@@ -388,34 +422,6 @@ class BillingManager private constructor(private val context: Context) : Purchas
                     cancelPendingPurchase(notFoundMsg)
                 }
                 onComplete?.invoke()
-            }
-        }
-
-        for (prodId in candidateIds) {
-            val inAppParams = QueryProductDetailsParams.newBuilder()
-                .setProductList(
-                    listOf(
-                        QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId(prodId)
-                            .setProductType(BillingClient.ProductType.INAPP)
-                            .build()
-                    )
-                )
-                .build()
-
-            billingClient.queryProductDetailsAsync(inAppParams) { billingResult, queryResult ->
-                mainHandler.post {
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                        if (queryResult.productDetailsList.isNotEmpty()) {
-                            inAppResults.addAll(queryResult.productDetailsList)
-                        }
-                    } else {
-                        lastResponseCode = billingResult.responseCode
-                        lastDebugMessage = billingResult.debugMessage
-                    }
-                    inAppCompleted++
-                    finishInApp()
-                }
             }
         }
     }
@@ -437,15 +443,24 @@ class BillingManager private constructor(private val context: Context) : Purchas
     }
 
     private fun isOfferYearly(offer: ProductDetails.SubscriptionOfferDetails, productId: String = ""): Boolean {
+        val prodId = productId.lowercase(Locale.ROOT)
+        if (prodId == PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_MONTHLY ||
+            (prodId.contains("month") && !prodId.contains("year"))) {
+            return false
+        }
+
+        val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
+        if (basePlan.contains("month") && !basePlan.contains("year")) {
+            return false
+        }
+
         val recurringPhase = getRecurringPhase(offer)
         val period = recurringPhase?.billingPeriod?.uppercase(Locale.ROOT).orEmpty()
         if (period.contains("Y") || period == "P1Y" || period == "P12M") {
             return true
         }
 
-        val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
         val offerId = offer.offerId?.lowercase(Locale.ROOT).orEmpty()
-        val prodId = productId.lowercase(Locale.ROOT)
 
         val yearlyKeywords = listOf("year", "annual", "annually", "12m", "p1y")
         if (yearlyKeywords.any { basePlan.contains(it) || offerId.contains(it) || prodId.contains(it) }) {
@@ -465,6 +480,12 @@ class BillingManager private constructor(private val context: Context) : Purchas
             return false
         }
 
+        val prodId = productId.lowercase(Locale.ROOT)
+        if (prodId == PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_YEARLY ||
+            (prodId.contains("year") && !prodId.contains("month"))) {
+            return false
+        }
+
         val recurringPhase = getRecurringPhase(offer)
         val period = recurringPhase?.billingPeriod?.uppercase(Locale.ROOT).orEmpty()
         if (period == "P1M" || period == "P30D" || period == "P4W" || (period.contains("M") && !period.contains("Y") && period != "P12M")) {
@@ -473,7 +494,6 @@ class BillingManager private constructor(private val context: Context) : Purchas
 
         val basePlan = offer.basePlanId.lowercase(Locale.ROOT)
         val offerId = offer.offerId?.lowercase(Locale.ROOT).orEmpty()
-        val prodId = productId.lowercase(Locale.ROOT)
 
         val monthlyKeywords = listOf("month", "monthly", "1m", "p1m")
         if (monthlyKeywords.any { basePlan.contains(it) || offerId.contains(it) || prodId.contains(it) }) {
@@ -852,7 +872,10 @@ class BillingManager private constructor(private val context: Context) : Purchas
         if (activePurchase != null) {
             val matchedProductId = activePurchase.products.firstOrNull { PremiumEntitlement.ALL_PRODUCT_IDS.contains(it) }
                 ?: PremiumEntitlement.PRODUCT_ID_PREMIUM
-            val isYearly = matchedProductId == PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY
+            val isYearly = matchedProductId == PremiumEntitlement.PRODUCT_ID_NOWHERE_PRO_YEARLY ||
+                matchedProductId == PremiumEntitlement.PRODUCT_ID_PREMIUM_YEARLY ||
+                matchedProductId.contains("year", ignoreCase = true) ||
+                matchedProductId.contains("annual", ignoreCase = true)
 
             when (activePurchase.purchaseState) {
                 Purchase.PurchaseState.PURCHASED -> {

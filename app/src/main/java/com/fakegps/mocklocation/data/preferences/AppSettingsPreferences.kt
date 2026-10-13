@@ -181,7 +181,7 @@ class AppSettingsPreferences(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_RANDOMIZE_ALTITUDE, value).apply()
 
     var baseAccuracy: Float
-        get() = prefs.getFloat(KEY_BASE_ACCURACY, 1.5f)
+        get() = prefs.getFloat(KEY_BASE_ACCURACY, 3.5f)
         set(value) = prefs.edit().putFloat(KEY_BASE_ACCURACY, value).apply()
 
     var updateIntervalMovingMs: Long

@@ -72,6 +72,9 @@ data class PremiumEntitlement(
         const val PRODUCT_ID_NOWHERE_VIP = "nowhere_vip"
         const val PRODUCT_ID_SANDBOX = "nowhere_premium_sandbox"
 
+        const val BASE_PLAN_NOWHERE_PRO_MONTHLY = "nowhere-pro-monthly"
+        const val BASE_PLAN_NOWHERE_PRO_YEARLY = "nowhere-pro-yearly"
+
         const val BASE_PLAN_MONTHLY = "monthly"
         const val BASE_PLAN_MONTHLY_HYPHEN = "premium-monthly"
         const val BASE_PLAN_NOWHERE_MONTHLY = "nowhere-monthly"
@@ -83,19 +86,24 @@ data class PremiumEntitlement(
         const val BASE_PLAN_NOWHERE_YEARLY = "nowhere-yearly"
         const val BASE_PLAN_P1Y = "p1y"
 
+        val PRIMARY_PRODUCT_IDS = listOf(
+            PRODUCT_ID_NOWHERE_PRO_MONTHLY,
+            PRODUCT_ID_NOWHERE_PRO_YEARLY
+        )
+
         val ALL_PRODUCT_IDS = listOf(
+            PRODUCT_ID_NOWHERE_PRO_MONTHLY,
+            PRODUCT_ID_NOWHERE_PRO_YEARLY,
+            PRODUCT_ID_NOWHERE_PRO_MONTHLY_HYPHEN,
+            PRODUCT_ID_NOWHERE_PRO_YEARLY_HYPHEN,
+            PRODUCT_ID_NOWHERE_PRO,
+            PRODUCT_ID_NOWHERE_PRO_HYPHEN,
             PRODUCT_ID_PREMIUM,
             PRODUCT_ID_PREMIUM_YEARLY,
             PRODUCT_ID_PREMIUM_MONTHLY,
             PRODUCT_ID_PREMIUM_YEARLY_HYPHEN,
             PRODUCT_ID_PREMIUM_MONTHLY_HYPHEN,
-            PRODUCT_ID_NOWHERE_PRO,
-            PRODUCT_ID_NOWHERE_PRO_HYPHEN,
             PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN,
-            PRODUCT_ID_NOWHERE_PRO_YEARLY,
-            PRODUCT_ID_NOWHERE_PRO_YEARLY_HYPHEN,
-            PRODUCT_ID_NOWHERE_PRO_MONTHLY,
-            PRODUCT_ID_NOWHERE_PRO_MONTHLY_HYPHEN,
             PRODUCT_ID_NOWHERE_SUBSCRIPTION,
             PRODUCT_ID_NOWHERE_SUBSCRIPTION_HYPHEN,
             PRODUCT_ID_NOWHERE_SUBSCRIPTION_YEARLY,
