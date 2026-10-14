@@ -44,19 +44,33 @@ class MockLocationEngine(
     private var isInitialized = false
 
     private val registeredProviders = mutableSetOf<String>()
+    private var lastGmsMockModeCheck = 0L
 
     private fun getTargetProviders(): List<String> {
-        val list = mutableListOf(
+        // Register GPS and NETWORK with system LocationManager.
+        // FUSED is handled directly via Google Play Services FusedLocationProviderClient to prevent
+        // system test provider collisions with GMS internal location engine.
+        return listOf(
             LocationManager.GPS_PROVIDER,
             LocationManager.NETWORK_PROVIDER
         )
-        // Add "fused" for Android 12+ (API 31+) or if registered in system LocationManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || locationManager.allProviders.contains(FUSED_PROVIDER_NAME)) {
-            if (settingsPrefs.useFusedProvider) {
-                list.add(FUSED_PROVIDER_NAME)
-            }
+    }
+
+    /**
+     * Re-engages GMS Fused Location Provider mock mode safely.
+     */
+    fun ensureGmsMockMode() {
+        try {
+            fusedLocationClient.setMockMode(true)
+                .addOnSuccessListener {
+                    Log.d(TAG, "GMS FusedLocationProviderClient mock mode successfully engaged.")
+                }
+                .addOnFailureListener { e ->
+                    Log.w(TAG, "GMS FusedLocationProviderClient setMockMode warning: ${e.message}")
+                }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not setMockMode on GMS FusedLocationProviderClient: ${e.message}")
         }
-        return list
     }
 
     /**
@@ -75,17 +89,7 @@ class MockLocationEngine(
         }
 
         // Engage Google Play Services Fused Location Provider Mock Mode
-        try {
-            fusedLocationClient.setMockMode(true)
-                .addOnSuccessListener {
-                    Log.d(TAG, "GMS FusedLocationProviderClient mock mode successfully engaged.")
-                }
-                .addOnFailureListener { e ->
-                    Log.w(TAG, "GMS FusedLocationProviderClient setMockMode warning: ${e.message}")
-                }
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not setMockMode on GMS FusedLocationProviderClient: ${e.message}")
-        }
+        ensureGmsMockMode()
 
         val providers = getTargetProviders()
         var atLeastOneRegistered = false
@@ -261,11 +265,18 @@ class MockLocationEngine(
         }
 
         if (lastSuccessfulLocation != null) {
-            // Also inject directly into Google Play Services Fused Location Provider Client for 100% rubberband immunity and active blue dot
+            val nowRealtime = SystemClock.elapsedRealtime()
+            if (nowRealtime - lastGmsMockModeCheck >= 30_000L) {
+                lastGmsMockModeCheck = nowRealtime
+                ensureGmsMockMode()
+            }
+
+            // Inject directly into Google Play Services Fused Location Provider Client
+            // Uses "fused" provider so Google Maps FusedLocationProvider receives the exact high-accuracy fix
             try {
                 val gmsFix = Location(lastSuccessfulLocation).apply {
-                    provider = LocationManager.GPS_PROVIDER
-                    accuracy = horizontalAccuracy.coerceIn(2.5f, 5.0f)
+                    provider = FUSED_PROVIDER_NAME
+                    accuracy = horizontalAccuracy.coerceIn(2.5f, 4.0f)
                     time = nowMs
                     elapsedRealtimeNanos = nowNanos
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -274,7 +285,14 @@ class MockLocationEngine(
                         verticalAccuracyMeters = 1.0f
                     }
                 }
-                fusedLocationClient.setMockLocation(gmsFix)
+                fusedLocationClient.setMockLocation(gmsFix).addOnFailureListener { e ->
+                    Log.w(TAG, "GMS setMockLocation failed: ${e.message}, re-engaging mock mode...")
+                    try {
+                        fusedLocationClient.setMockMode(true).addOnSuccessListener {
+                            fusedLocationClient.setMockLocation(gmsFix)
+                        }
+                    } catch (ignored: Exception) {}
+                }
             } catch (ignored: Throwable) {}
             return Result.success(lastSuccessfulLocation)
         } else {

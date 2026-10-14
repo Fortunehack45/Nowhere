@@ -53,7 +53,7 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
                     return
                 }
                 if (MockLocationService.isSimulationRunning()) {
-                    activeService?.scheduleWatchdog() // healthy: re-arm the keepalive
+                    (MockLocationService.activeInstance ?: activeService)?.scheduleWatchdog() // healthy: re-arm the keepalive
                 } else {
                     val restore = Intent(context, MockLocationService::class.java).apply {
                         action = MockLocationService.ACTION_RESTORE_SESSION

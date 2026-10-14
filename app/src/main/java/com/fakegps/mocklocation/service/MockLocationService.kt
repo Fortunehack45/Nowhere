@@ -291,6 +291,9 @@ class MockLocationService : Service() {
             bearingDegrees = 0f,
             isPaused = false
         )
+        if (sessionPrefs.isSessionExpired || sessionPrefs.getTimeRemainingMillis() <= 0L) {
+            sessionPrefs.startNewSession(SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS, forceRestart = true)
+        }
         SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
 
         // Sync WireGuard VPN Shield if user enabled auto-VPN sync and has active Pro
@@ -789,6 +792,9 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         if (!fromRestore) {
+            if (sessionPrefs.isSessionExpired || sessionPrefs.getTimeRemainingMillis() <= 0L) {
+                sessionPrefs.startNewSession(SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS, forceRestart = true)
+            }
             SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
         } else {
             SessionTimerManager.resumeExistingTimer(this)
@@ -837,19 +843,17 @@ class MockLocationService : Service() {
     private fun startContinuousHeartbeatLoop() {
         if (simulationJob?.isActive == true) return
         simulationJob = serviceScope.launch {
-            try {
-                var lastNotificationUpdateTime = 0L
-                var lastWidgetUpdateTime = 0L
-                while (isActive) {
+            var lastNotificationUpdateTime = 0L
+            var lastWidgetUpdateTime = 0L
+            while (isActive) {
+                try {
                     if (!sessionPrefs.isPremiumActive()) {
                         val remaining = sessionPrefs.getTimeRemainingMillis()
                         if (remaining <= 0L) {
-                            Log.i(TAG, "Continuous session duration expired in background. Stopping mock location...")
+                            Log.i(TAG, "Continuous session duration expired in background (quota reached).")
                             sessionPrefs.isSessionExpired = true
                             sessionPrefs.isSessionRunning = false
                             SessionTimerManager.notifySessionExpired(this@MockLocationService)
-                            stopSpoofing()
-                            break
                         }
                     }
 
@@ -876,7 +880,9 @@ class MockLocationService : Service() {
                     } else {
                         val loc = result.getOrNull()
                         if (loc != null) {
-                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(loc.latitude, loc.longitude, loc.altitude, spd, brg)
+                            try {
+                                com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(loc.latitude, loc.longitude, loc.altitude, spd, brg)
+                            } catch (e: Exception) {}
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = loc.latitude,
@@ -889,13 +895,12 @@ class MockLocationService : Service() {
                     }
 
                     val now = android.os.SystemClock.elapsedRealtime()
-                    if (now - lastWidgetUpdateTime >= 1000L) {
+                    if (now - lastWidgetUpdateTime >= 15000L) {
                         lastWidgetUpdateTime = now
-                        updateAllWidgets()
+                        try { updateAllWidgets() } catch (e: Exception) {}
                     }
                     if (now - lastNotificationUpdateTime >= 5000L) {
                         lastNotificationUpdateTime = now
-                        scheduleBackgroundRestartAlarm(15_000L) // Rolling dead-man's switch
                         val modeDesc = if (sessionPrefs.activeMode == "MOTION_SYNC") "Motion Sync Active" else "Teleported / Fixed"
                         updateLocationNotification(lat, lon, modeDesc)
                     }
@@ -909,12 +914,12 @@ class MockLocationService : Service() {
                         1000L
                     }
                     delay(loopDelay)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Non-fatal error in fixed/motion simulation loop tick: ${t.message}", t)
+                    delay(1000L)
                 }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (t: Throwable) {
-                Log.e(TAG, "Uncaught fatal error in fixed/motion simulation loop: ${t.message}", t)
-                stopSpoofing()
             }
         }
     }
@@ -973,6 +978,9 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         if (!fromRestore) {
+            if (sessionPrefs.isSessionExpired || sessionPrefs.getTimeRemainingMillis() <= 0L) {
+                sessionPrefs.startNewSession(SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS, forceRestart = true)
+            }
             SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
         } else {
             SessionTimerManager.resumeExistingTimer(this)
@@ -1011,25 +1019,22 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         simulationJob = serviceScope.launch {
-            try {
-                var lastTickTime = android.os.SystemClock.elapsedRealtime()
-                var lastWidgetUpdateTime = 0L
-                var lastNotificationUpdateTime = 0L
-                var lastWeatherUpdateTime = 0L
-                var lastWeatherLat = 0.0
-                var lastWeatherLon = 0.0
-                var lastRestartAlarmReArmTime = 0L
+            var lastTickTime = android.os.SystemClock.elapsedRealtime()
+            var lastWidgetUpdateTime = 0L
+            var lastNotificationUpdateTime = 0L
+            var lastWeatherUpdateTime = 0L
+            var lastWeatherLat = 0.0
+            var lastWeatherLon = 0.0
 
-                while (isActive) {
+            while (isActive) {
+                try {
                     if (!sessionPrefs.isPremiumActive()) {
                         val remaining = sessionPrefs.getTimeRemainingMillis()
                         if (remaining <= 0L) {
-                            Log.i(TAG, "Route session duration expired in background. Stopping mock location...")
+                            Log.i(TAG, "Route session duration expired in background (quota reached).")
                             sessionPrefs.isSessionExpired = true
                             sessionPrefs.isSessionRunning = false
                             SessionTimerManager.notifySessionExpired(this@MockLocationService)
-                            stopSpoofing()
-                            break
                         }
                     }
 
@@ -1052,7 +1057,9 @@ class MockLocationService : Service() {
                             val error = result.exceptionOrNull()
                             Log.w(TAG, "Transient route injection error: ${error?.message}, retrying...")
                         } else {
-                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(simLoc.latitude, simLoc.longitude, simLoc.altitude, simLoc.speedMps, simLoc.bearingDegrees)
+                            try {
+                                com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(simLoc.latitude, simLoc.longitude, simLoc.altitude, simLoc.speedMps, simLoc.bearingDegrees)
+                            } catch (e: Exception) {}
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = simLoc.latitude,
@@ -1072,22 +1079,16 @@ class MockLocationService : Service() {
                             sessionPrefs.routeCoveredDistanceMeters = simLoc.distanceCoveredMeters
                             sessionPrefs.routeRemainingDistanceMeters = simLoc.distanceRemainingMeters
 
-                            // Real-time home screen widget update in background (every 1s)
-                            if (now - lastWidgetUpdateTime >= 1000L) {
+                            // Periodic home screen widget update in background (every 5s)
+                            if (now - lastWidgetUpdateTime >= 5000L) {
                                 lastWidgetUpdateTime = now
-                                updateAllWidgets()
+                                try { updateAllWidgets() } catch (e: Exception) {}
                             }
 
-                            // Real-time foreground notification progress update in background (every 1s)
-                            if (now - lastNotificationUpdateTime >= 1000L) {
+                            // Real-time foreground notification progress update in background (every 2s)
+                            if (now - lastNotificationUpdateTime >= 2000L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(simLoc.latitude, simLoc.longitude, "Route Active (${transportMode.title})")
-                            }
-
-                            // Rolling dead-man's switch restart alarm re-arm every 5s
-                            if (now - lastRestartAlarmReArmTime >= 5000L) {
-                                lastRestartAlarmReArmTime = now
-                                scheduleBackgroundRestartAlarm(15_000L)
                             }
 
                             // Periodic weather update during route travel (every 45s or when moved > 0.05 degrees ~ 5km)
@@ -1107,18 +1108,18 @@ class MockLocationService : Service() {
                         if (simLoc.isCompleted) {
                             Log.i(TAG, "Route completed: automatically transitioning to Fixed mock location at destination: (${simLoc.latitude}, ${simLoc.longitude})")
                             sendRouteCompletedNotification(simLoc.totalDistanceMeters, simLoc.latitude, simLoc.longitude)
-                            updateAllWidgets()
+                            try { updateAllWidgets() } catch (e: Exception) {}
                             startFixed(simLoc.latitude, simLoc.longitude, simLoc.altitude)
                             break
                         }
                     }
                     delay(200L) // Ultra-smooth 200ms route physics & continuous anti-dropout anchor pulse (5Hz)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Non-fatal error in route simulation tick: ${t.message}", t)
+                    delay(200L)
                 }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (t: Throwable) {
-                Log.e(TAG, "Uncaught fatal error in route simulation loop: ${t.message}", t)
-                stopSpoofing()
             }
         }
     }
@@ -1272,6 +1273,9 @@ class MockLocationService : Service() {
         updateAllWidgets()
 
         if (!fromRestore) {
+            if (sessionPrefs.isSessionExpired || sessionPrefs.getTimeRemainingMillis() <= 0L) {
+                sessionPrefs.startNewSession(SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS, forceRestart = true)
+            }
             SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
         } else {
             SessionTimerManager.resumeExistingTimer(this)
@@ -1310,28 +1314,26 @@ class MockLocationService : Service() {
         }
 
         simulationJob = serviceScope.launch {
-            try {
-                val deltaSeconds = 0.1
-                var lastWidgetUpdateTime = 0L
-                var lastNotificationUpdateTime = 0L
+            val deltaSeconds = 0.1
+            var lastWidgetUpdateTime = 0L
+            var lastNotificationUpdateTime = 0L
 
-                while (isActive) {
+            while (isActive) {
+                try {
                     if (!sessionPrefs.isPremiumActive()) {
                         val remaining = sessionPrefs.getTimeRemainingMillis()
                         if (remaining <= 0L) {
-                            Log.i(TAG, "Joystick session duration expired in background. Stopping mock location...")
+                            Log.i(TAG, "Joystick session duration expired in background (quota reached).")
                             sessionPrefs.isSessionExpired = true
                             sessionPrefs.isSessionRunning = false
                             SessionTimerManager.notifySessionExpired(this@MockLocationService)
-                            stopSpoofing()
-                            break
                         }
                     }
 
                     val now = android.os.SystemClock.elapsedRealtime()
-                    if (now - lastWidgetUpdateTime >= 1000L) {
+                    if (now - lastWidgetUpdateTime >= 5000L) {
                         lastWidgetUpdateTime = now
-                        updateAllWidgets()
+                        try { updateAllWidgets() } catch (e: Exception) {}
                     }
 
                     if (joystickMagnitude > 0.01f) {
@@ -1359,7 +1361,9 @@ class MockLocationService : Service() {
                         )
 
                         if (result.isSuccess) {
-                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(newLat, newLon, 15.0, speedMps, joystickAngleDeg)
+                            try {
+                                com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(newLat, newLon, 15.0, speedMps, joystickAngleDeg)
+                            } catch (e: Exception) {}
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = newLat,
@@ -1385,7 +1389,9 @@ class MockLocationService : Service() {
                             applyStationaryJitter = settingsPrefs.randomizeJitter
                         )
                         if (result.isSuccess) {
-                            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(joystickLat, joystickLon, 15.0, 0.0f, joystickAngleDeg)
+                            try {
+                                com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(joystickLat, joystickLon, 15.0, 0.0f, joystickAngleDeg)
+                            } catch (e: Exception) {}
                             _serviceState.value = ServiceState.Running(
                                 mode = activeMode,
                                 latitude = joystickLat,
@@ -1404,12 +1410,12 @@ class MockLocationService : Service() {
                     }
 
                     delay(100L)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Non-fatal error in joystick simulation loop tick: ${t.message}", t)
+                    delay(100L)
                 }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (t: Throwable) {
-                Log.e(TAG, "Uncaught fatal error in joystick simulation loop: ${t.message}", t)
-                stopSpoofing()
             }
         }
     }
@@ -1582,8 +1588,8 @@ class MockLocationService : Service() {
         }
         if (userStopped) {
             try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
+            try { engine.stop() } catch (e: Exception) {}
         }
-        try { engine.stop() } catch (e: Exception) {}
         serviceJob.cancel()
         super.onDestroy()
     }
