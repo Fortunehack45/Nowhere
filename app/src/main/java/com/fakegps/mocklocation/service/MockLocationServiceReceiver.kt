@@ -48,16 +48,25 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
             ACTION_RESTORE_MOCK_SESSION -> {
                 android.util.Log.i("MockLocationReceiver", "ACTION_RESTORE_MOCK_SESSION received. Checking simulation status...")
                 val sessionPrefs = com.fakegps.mocklocation.data.preferences.SessionPreferences(context)
-                if (sessionPrefs.isSessionActive && sessionPrefs.isPersistentBootInjectionEnabled) {
-                    if (MockLocationService.isSimulationRunning()) {
-                        // Re-arm watchdog check for continuous background health
-                        activeService?.scheduleWatchdog()
-                    } else {
-                        // Simulation is NOT running. Do NOT auto-connect or start foreground service out of nowhere!
-                        android.util.Log.d("MockLocationReceiver", "Simulation is not active; suppressing auto-connect from background alarm.")
-                    }
+                if (!sessionPrefs.isSessionActive) {
+                    android.util.Log.d("MockLocationReceiver", "No active session. Ignoring.")
+                    return
+                }
+                if (MockLocationService.isSimulationRunning()) {
+                    activeService?.scheduleWatchdog() // healthy: re-arm the keepalive
                 } else {
-                    android.util.Log.d("MockLocationReceiver", "Session not active or persistent mode disabled. Ignoring restore intent.")
+                    val restore = Intent(context, MockLocationService::class.java).apply {
+                        action = MockLocationService.ACTION_RESTORE_SESSION
+                    }
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            context.startForegroundService(restore)
+                        } else {
+                            context.startService(restore)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.w("MockLocationReceiver", "Restart blocked by OS: ${e.message}")
+                    }
                 }
             }
         }

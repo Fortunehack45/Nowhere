@@ -529,12 +529,22 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         binding.mapView.onPause()
-        com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
+        val isSessionActive = SessionPreferences(this).isSessionActive
+        if (isSessionActive && settingsPrefs.isRecentsShieldEnabled) {
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
+        } else {
+            com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
+        val isSessionActive = SessionPreferences(this).isSessionActive
+        if (isSessionActive && settingsPrefs.isRecentsShieldEnabled) {
+            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
+        } else {
+            com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
+        }
         try {
             connectivityManager?.unregisterNetworkCallback(networkCallback)
         } catch (_: Exception) {}
@@ -1898,9 +1908,23 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
+    private var hasPromptedBackgroundHealthThisSession = false
+
+    private fun checkBackgroundHealthOnSessionStart() {
+        if (hasPromptedBackgroundHealthThisSession) return
+        if (!PermissionHelper.isIgnoringBatteryOptimizations(this)) {
+            hasPromptedBackgroundHealthThisSession = true
+            com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
+        } else if (!PermissionHelper.canScheduleExactAlarms(this)) {
+            hasPromptedBackgroundHealthThisSession = true
+            com.fakegps.mocklocation.ui.dialogs.ExactAlarmPermissionDialog(this).show()
+        }
+    }
+
     private fun startFixedSpoofing() {
         if (!verifyMockAppSelected()) return
         if (!ensureActiveSessionOrPrompt { startFixedSpoofing() }) return
+        checkBackgroundHealthOnSessionStart()
         checkNotificationPermissionBeforeSimulation {
             performHapticFeedbackIfEnabled()
             SessionPreferences(this).hasUserSelectedLocation = true
@@ -1923,6 +1947,7 @@ class MainActivity : AppCompatActivity() {
     private fun startRouteSpoofing() {
         if (!verifyMockAppSelected()) return
         if (!ensureActiveSessionOrPrompt { startRouteSpoofing() }) return
+        checkBackgroundHealthOnSessionStart()
         checkNotificationPermissionBeforeSimulation {
             performHapticFeedbackIfEnabled()
             SessionPreferences(this).hasUserSelectedLocation = true
@@ -2012,6 +2037,7 @@ class MainActivity : AppCompatActivity() {
     private fun startJoystickSpoofing() {
         if (!verifyMockAppSelected()) return
         if (!ensureActiveSessionOrPrompt { startJoystickSpoofing() }) return
+        checkBackgroundHealthOnSessionStart()
         checkNotificationPermissionBeforeSimulation {
             performHapticFeedbackIfEnabled()
 
@@ -2032,6 +2058,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopSpoofing() {
+        hasPromptedBackgroundHealthThisSession = false
         performHapticFeedbackIfEnabled()
         com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
         com.fakegps.mocklocation.service.SessionTimerManager.stopTimer(this)

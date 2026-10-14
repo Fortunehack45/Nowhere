@@ -1,4 +1,4 @@
-﻿package com.fakegps.mocklocation
+package com.fakegps.mocklocation
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
@@ -58,6 +58,19 @@ class OEMDetectorTest {
         ShadowBuild.setManufacturer("samsung")
         assertEquals(OEMDetector.OEM.SAMSUNG, OEMDetector.getDeviceOEM())
         assertTrue(OEMDetector.getOEMGuidanceMessage().contains("Samsung"))
+    }
+
+    @Test
+    fun testOEMDetection_Transsion_Tecno() {
+        ShadowBuild.setManufacturer("TECNO")
+        assertEquals(OEMDetector.OEM.TRANSSION, OEMDetector.getDeviceOEM())
+        assertTrue(OEMDetector.getOEMGuidanceMessage().contains("Tecno") || OEMDetector.getOEMGuidanceMessage().contains("Infinix"))
+    }
+
+    @Test
+    fun testOEMDetection_Transsion_Infinix() {
+        ShadowBuild.setManufacturer("Infinix")
+        assertEquals(OEMDetector.OEM.TRANSSION, OEMDetector.getDeviceOEM())
     }
 
     @Test

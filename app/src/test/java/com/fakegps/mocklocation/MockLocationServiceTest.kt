@@ -1,5 +1,7 @@
 package com.fakegps.mocklocation
 
+import android.app.Application
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
@@ -16,6 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.android.controller.ServiceController
 import org.robolectric.annotation.Config
 
@@ -175,16 +178,81 @@ class MockLocationServiceTest {
     }
 
     @Test
-    fun testService_onTaskRemoved_schedulesRestartAlarm() {
+    fun testService_startCommand_returnsStartSticky_whenSessionActive() {
+        val intent = Intent(context, MockLocationService::class.java).apply {
+            action = MockLocationService.ACTION_START_FIXED
+            putExtra(MockLocationService.EXTRA_LATITUDE, 37.7749)
+            putExtra(MockLocationService.EXTRA_LONGITUDE, -122.4194)
+        }
+        val result = service.onStartCommand(intent, 0, 1)
+        assertEquals(Service.START_STICKY, result)
+    }
+
+    @Test
+    fun testService_startCommand_nullIntent_restoresSession() {
+        SessionPreferences(context).apply {
+            isSessionActive = true
+            activeMode = "FIXED"
+            lastLatitude = 37.7749
+            lastLongitude = -122.4194
+        }
+        val result = service.onStartCommand(null, 0, 1)
+        assertEquals(Service.START_STICKY, result)
+        assertTrue("Null intent restore should re-acquire WakeLock", service.isWakeLockHeld())
+    }
+
+    @Test
+    fun testService_onDestroy_systemKill_preservesSessionActive() {
+        val intent = Intent(context, MockLocationService::class.java).apply {
+            action = MockLocationService.ACTION_START_FIXED
+            putExtra(MockLocationService.EXTRA_LATITUDE, 37.7749)
+            putExtra(MockLocationService.EXTRA_LONGITUDE, -122.4194)
+        }
+        service.onStartCommand(intent, 0, 1)
         val sessionPrefs = SessionPreferences(context)
-        sessionPrefs.isSessionActive = true
-        sessionPrefs.activeMode = "FIXED"
-        sessionPrefs.lastLatitude = 37.7749
-        sessionPrefs.lastLongitude = -122.4194
+        assertTrue(sessionPrefs.isSessionActive)
 
-        val rootIntent = Intent(context, MockLocationService::class.java)
-        service.onTaskRemoved(rootIntent)
+        // System kills/destroys service without stopSpoofing()
+        service.onDestroy()
 
-        assertTrue("WakeLock should be re-acquired during onTaskRemoved", service.isWakeLockHeld())
+        // Session must remain active to allow auto-revival
+        assertTrue("Session active must remain true on system destroy", sessionPrefs.isSessionActive)
+    }
+
+    @Test
+    fun testService_onDestroy_userStop_clearsSessionActive() {
+        val intent = Intent(context, MockLocationService::class.java).apply {
+            action = MockLocationService.ACTION_START_FIXED
+            putExtra(MockLocationService.EXTRA_LATITUDE, 37.7749)
+            putExtra(MockLocationService.EXTRA_LONGITUDE, -122.4194)
+        }
+        service.onStartCommand(intent, 0, 1)
+        val sessionPrefs = SessionPreferences(context)
+        assertTrue(sessionPrefs.isSessionActive)
+
+        // User explicitly stops spoofing
+        service.stopSpoofing()
+        service.onDestroy()
+
+        assertFalse("Session active must be cleared when user stops", sessionPrefs.isSessionActive)
+    }
+
+    @Test
+    fun testReceiver_restoreMockSession_whenSimDead_restartsService() {
+        SessionPreferences(context).apply {
+            isSessionActive = true
+            activeMode = "FIXED"
+            lastLatitude = 37.7749
+            lastLongitude = -122.4194
+        }
+        assertFalse(MockLocationService.isSimulationRunning())
+
+        val receiver = MockLocationServiceReceiver()
+        val restoreIntent = Intent(MockLocationServiceReceiver.ACTION_RESTORE_MOCK_SESSION)
+        receiver.onReceive(context, restoreIntent)
+
+        val nextStartedService = Shadows.shadowOf(context as Application).nextStartedService
+        assertNotNull("Receiver should restart MockLocationService on dead sim with active session", nextStartedService)
+        assertEquals(MockLocationService.ACTION_RESTORE_SESSION, nextStartedService.action)
     }
 }

@@ -8,7 +8,7 @@ import android.os.Build
 object OEMDetector {
 
     enum class OEM {
-        XIAOMI, SAMSUNG, HUAWEI, OPPO_ONEPLUS, VIVO, OTHER
+        XIAOMI, SAMSUNG, HUAWEI, OPPO_ONEPLUS, VIVO, TRANSSION, OTHER
     }
 
     fun getDeviceOEM(): OEM {
@@ -19,7 +19,15 @@ object OEMDetector {
             manufacturer.contains("huawei") || manufacturer.contains("honor") -> OEM.HUAWEI
             manufacturer.contains("oppo") || manufacturer.contains("oneplus") || manufacturer.contains("realme") -> OEM.OPPO_ONEPLUS
             manufacturer.contains("vivo") || manufacturer.contains("iqoo") -> OEM.VIVO
+            manufacturer.contains("tecno") || manufacturer.contains("infinix") || manufacturer.contains("itel") || manufacturer.contains("transsion") -> OEM.TRANSSION
             else -> OEM.OTHER
+        }
+    }
+
+    fun isAggressiveOEM(): Boolean {
+        return when (getDeviceOEM()) {
+            OEM.XIAOMI, OEM.SAMSUNG, OEM.HUAWEI, OEM.OPPO_ONEPLUS, OEM.VIVO, OEM.TRANSSION -> true
+            OEM.OTHER -> false
         }
     }
 
@@ -30,6 +38,7 @@ object OEMDetector {
             OEM.HUAWEI -> "Huawei EMUI may aggressively stop background services. Go to Battery > App Launch and set Nowhere to 'Manage Manually' (Auto-launch, Secondary launch, and Run in background enabled)."
             OEM.OPPO_ONEPLUS -> "ColorOS/OxygenOS may kill background services on 'Clear All'. Please allow background activity in Battery settings and lock Nowhere in Recent Apps (tap 3-dots > Lock 🔒)."
             OEM.VIVO -> "Vivo FuntouchOS may terminate background location apps. Please allow 'High Background Power Consumption' and lock Nowhere in Recent Apps (swipe card down > Lock 🔒)."
+            OEM.TRANSSION -> "Tecno / Infinix / itel (HiOS / XOS) aggressively stops background GPS. Go to Phone Master > Auto-start Management and allow Nowhere, then set Battery to 'Unrestricted' and lock Nowhere in Recent Apps (padlock 🔒)."
             OEM.OTHER -> "Please ensure battery optimization is disabled so location spoofing continues reliably when Nowhere is backgrounded or cleared from recents."
         }
     }
@@ -59,6 +68,12 @@ object OEMDetector {
                 Intent().setComponent(ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")),
                 Intent().setComponent(ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity"))
             )
+            OEM.TRANSSION -> listOf(
+                Intent().setComponent(ComponentName("com.transsion.phonemaster", "com.transsion.phonemaster.AutoStartActivity")),
+                Intent().setComponent(ComponentName("com.transsion.phonemaster", "com.transsion.phonemaster.activity.AutoStartActivity")),
+                Intent().setComponent(ComponentName("com.transsion.phonemaster", "com.transsion.phonemaster.MainActivity")),
+                Intent().setComponent(ComponentName("com.transsion.phonemanager", "com.transsion.phonemanager.AutoStartActivity"))
+            )
             else -> emptyList()
         }
 
@@ -70,6 +85,21 @@ object OEMDetector {
             } catch (ignored: Exception) {
             }
         }
-        return false
+
+        // Fallback to Application Details Settings if specific OEM component intent is not found
+        return openAppDetailsSettings(context)
+    }
+
+    fun openAppDetailsSettings(context: Context): Boolean {
+        return try {
+            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = android.net.Uri.fromParts("package", context.packageName, null)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+            true
+        } catch (ignored: Exception) {
+            false
+        }
     }
 }

@@ -121,6 +121,14 @@ class SessionPreferences(private val context: Context) {
         get() = Double.fromBits(prefs.getLong("key_route_remaining_distance", 0L))
         set(value) = prefs.edit().putLong("key_route_remaining_distance", value.toBits()).apply()
 
+    var lastTransportMode: String
+        get() = prefs.getString("key_last_transport_mode", "VEHICLE") ?: "VEHICLE"
+        set(value) = prefs.edit().putString("key_last_transport_mode", value).apply()
+
+    var lastRouteIndex: Int
+        get() = prefs.getInt("key_last_route_index", 0)
+        set(value) = prefs.edit().putInt("key_last_route_index", value).apply()
+
     fun saveWaypoints(waypoints: List<RoutePoint>) {
         val jsonArray = JSONArray()
         for (wp in waypoints) {
@@ -329,6 +337,7 @@ class SessionPreferences(private val context: Context) {
         prefs.edit()
             .putBoolean(KEY_IS_SESSION_ACTIVE, false)
             .remove(KEY_WAYPOINTS_JSON)
+            .remove("key_last_route_index")
             .apply()
     }
 
@@ -342,6 +351,7 @@ class SessionPreferences(private val context: Context) {
             .putLong("key_session_remaining_duration_millis", -1L)
             .putLong("key_session_allocated_duration", DEFAULT_SESSION_DURATION_MILLIS)
             .remove(KEY_WAYPOINTS_JSON)
+            .remove("key_last_route_index")
             .apply()
     }
 }

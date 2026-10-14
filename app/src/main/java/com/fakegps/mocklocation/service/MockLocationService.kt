@@ -247,11 +247,18 @@ class MockLocationService : Service() {
             ACTION_STOP_MOTION_SYNC -> {
                 stopMotionSync()
             }
+            null -> {
+                // System restarted us after a kill (START_STICKY) -> restore the session
+                Log.i(TAG, "onStartCommand: null intent received (OS restart). Checking session...")
+                if (sessionPrefs.isSessionActive) {
+                    restoreActiveSession()
+                }
+            }
             else -> {
-                Log.d(TAG, "onStartCommand: Unrecognized or null action (${intent?.action}). Skipping auto-restore.")
+                Log.d(TAG, "onStartCommand: Unrecognized action (${intent.action}). Skipping.")
             }
         }
-        return START_NOT_STICKY
+        return if (sessionPrefs.isSessionActive) START_STICKY else START_NOT_STICKY
     }
 
     fun startMotionSync(initialLat: Double, initialLon: Double) {
@@ -336,13 +343,15 @@ class MockLocationService : Service() {
             if (simulationJob == null || !simulationJob!!.isActive) {
                 startContinuousHeartbeatLoop()
             }
+            scheduleBackgroundRestartAlarm(1000L)
+            scheduleWatchdog()
         }
     }
 
-    fun scheduleBackgroundRestartAlarm() {
+    fun scheduleBackgroundRestartAlarm(delayMs: Long = 1000L) {
         if (!sessionPrefs.isSessionActive) return
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
-        val triggerAt = android.os.SystemClock.elapsedRealtime() + 1000L
+        val triggerAt = android.os.SystemClock.elapsedRealtime() + delayMs
 
         // Primary: Broadcast to MockLocationServiceReceiver (officially supported on Android 12-15)
         val broadcastIntent = Intent(applicationContext, MockLocationServiceReceiver::class.java).apply {
@@ -499,31 +508,58 @@ class MockLocationService : Service() {
             .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
             .build()
 
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            var started = false
+            try {
                 startForeground(
                     NOTIFICATION_ID,
                     notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
                 )
-            } else {
-                startForeground(NOTIFICATION_ID, notification)
+                Log.i(TAG, "startForeground succeeded with LOCATION|SPECIAL_USE")
+                started = true
+            } catch (e: Exception) {
+                Log.w(TAG, "startForeground with LOCATION|SPECIAL_USE failed: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.w(TAG, "Standard startForeground with location type failed (${e.message}), attempting fallback: ", e)
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (!started) {
+                try {
                     startForeground(
                         NOTIFICATION_ID,
                         notification,
                         ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
                     )
-                } else {
-                    startForeground(NOTIFICATION_ID, notification)
+                    Log.i(TAG, "startForeground succeeded with SPECIAL_USE")
+                    started = true
+                } catch (e: Exception) {
+                    Log.w(TAG, "startForeground with SPECIAL_USE failed: ${e.message}")
                 }
-            } catch (fallbackEx: Exception) {
-                Log.e(TAG, "All startForeground attempts encountered exception: ${fallbackEx.message}")
             }
+            if (!started) {
+                try {
+                    startForeground(NOTIFICATION_ID, notification)
+                    Log.i(TAG, "startForeground succeeded with plain startForeground fallback")
+                } catch (e: Exception) {
+                    Log.e(TAG, "All startForeground attempts failed on API 34+: ${e.message}", e)
+                }
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                )
+                Log.i(TAG, "startForeground succeeded with LOCATION")
+            } catch (e: Exception) {
+                Log.w(TAG, "startForeground with LOCATION failed, falling back to plain: ${e.message}")
+                try {
+                    startForeground(NOTIFICATION_ID, notification)
+                } catch (fallbackEx: Exception) {
+                    Log.e(TAG, "Plain startForeground fallback failed: ${fallbackEx.message}", fallbackEx)
+                }
+            }
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
         }
         scheduleWatchdog()
     }
@@ -723,7 +759,7 @@ class MockLocationService : Service() {
         }
     }
 
-    fun startFixed(latitude: Double, longitude: Double, altitude: Double = 15.0) {
+    fun startFixed(latitude: Double, longitude: Double, altitude: Double = 15.0, fromRestore: Boolean = false) {
         activeInstance = this
         MockLocationServiceReceiver.activeService = this
         isStopping.set(false)
@@ -752,7 +788,11 @@ class MockLocationService : Service() {
         )
         updateAllWidgets()
 
-        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        if (!fromRestore) {
+            SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        } else {
+            SessionTimerManager.resumeExistingTimer(this)
+        }
 
         // Sync WireGuard VPN Shield if user enabled auto-VPN sync and has active Pro
         val isPremFixed = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
@@ -855,6 +895,7 @@ class MockLocationService : Service() {
                     }
                     if (now - lastNotificationUpdateTime >= 5000L) {
                         lastNotificationUpdateTime = now
+                        scheduleBackgroundRestartAlarm(15_000L) // Rolling dead-man's switch
                         val modeDesc = if (sessionPrefs.activeMode == "MOTION_SYNC") "Motion Sync Active" else "Teleported / Fixed"
                         updateLocationNotification(lat, lon, modeDesc)
                     }
@@ -883,7 +924,9 @@ class MockLocationService : Service() {
         speedKmh: Float = 20.0f,
         isLooping: Boolean = true,
         transportMode: TransportMode = TransportMode.VEHICLE,
-        forceRestart: Boolean = false
+        forceRestart: Boolean = false,
+        fromRestore: Boolean = false,
+        initialWaypointIndex: Int = 0
     ) {
         if (waypoints.size < 2) return
 
@@ -902,6 +945,9 @@ class MockLocationService : Service() {
         acquireWakeLock()
 
         val simulator = RouteSimulator(waypoints, speedKmh, isLooping, transportMode)
+        if (initialWaypointIndex > 0) {
+            simulator.seekToWaypointIndex(initialWaypointIndex)
+        }
         routeSimulator = simulator
         activeMode = SimulationMode.Route(waypoints, speedKmh, isLooping)
         motionSyncEngine?.setRoutePlaybackActive(true)
@@ -910,6 +956,8 @@ class MockLocationService : Service() {
         sessionPrefs.activeMode = "ROUTE"
         sessionPrefs.lastSpeedKmh = speedKmh
         sessionPrefs.isLooping = isLooping
+        sessionPrefs.lastTransportMode = transportMode.name
+        sessionPrefs.lastRouteIndex = initialWaypointIndex
         sessionPrefs.saveWaypoints(waypoints)
 
         val firstPt = waypoints.first()
@@ -924,7 +972,11 @@ class MockLocationService : Service() {
         )
         updateAllWidgets()
 
-        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        if (!fromRestore) {
+            SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        } else {
+            SessionTimerManager.resumeExistingTimer(this)
+        }
 
         // Sync WireGuard VPN Shield if user enabled auto-VPN sync and has active Pro
         val isPremRoute = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
@@ -966,6 +1018,7 @@ class MockLocationService : Service() {
                 var lastWeatherUpdateTime = 0L
                 var lastWeatherLat = 0.0
                 var lastWeatherLon = 0.0
+                var lastRestartAlarmReArmTime = 0L
 
                 while (isActive) {
                     if (!sessionPrefs.isPremiumActive()) {
@@ -1014,6 +1067,7 @@ class MockLocationService : Service() {
                             )
                             sessionPrefs.lastLatitude = simLoc.latitude
                             sessionPrefs.lastLongitude = simLoc.longitude
+                            sessionPrefs.lastRouteIndex = simulator.currentSegmentIndex
                             sessionPrefs.routeTotalDistanceMeters = simLoc.totalDistanceMeters
                             sessionPrefs.routeCoveredDistanceMeters = simLoc.distanceCoveredMeters
                             sessionPrefs.routeRemainingDistanceMeters = simLoc.distanceRemainingMeters
@@ -1028,6 +1082,12 @@ class MockLocationService : Service() {
                             if (now - lastNotificationUpdateTime >= 1000L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(simLoc.latitude, simLoc.longitude, "Route Active (${transportMode.title})")
+                            }
+
+                            // Rolling dead-man's switch restart alarm re-arm every 5s
+                            if (now - lastRestartAlarmReArmTime >= 5000L) {
+                                lastRestartAlarmReArmTime = now
+                                scheduleBackgroundRestartAlarm(15_000L)
                             }
 
                             // Periodic weather update during route travel (every 45s or when moved > 0.05 degrees ~ 5km)
@@ -1180,7 +1240,7 @@ class MockLocationService : Service() {
         }
     }
 
-    fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f) {
+    fun startJoystick(startLat: Double, startLon: Double, speedKmh: Float = 10.0f, fromRestore: Boolean = false) {
         activeInstance = this
         MockLocationServiceReceiver.activeService = this
         isStopping.set(false)
@@ -1211,7 +1271,11 @@ class MockLocationService : Service() {
         )
         updateAllWidgets()
 
-        SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        if (!fromRestore) {
+            SessionTimerManager.startOrResumeTimer(this, SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS)
+        } else {
+            SessionTimerManager.resumeExistingTimer(this)
+        }
 
         // Sync WireGuard VPN Shield if user enabled auto-VPN sync and has active Pro
         val isPremJoystick = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
@@ -1404,6 +1468,7 @@ class MockLocationService : Service() {
             Log.d(TAG, "restoreActiveSession: simulation already active, skipping.")
             return
         }
+        isStopping.set(false)
         acquireWakeLock()
         SessionTimerManager.resumeExistingTimer(this)
 
@@ -1412,23 +1477,33 @@ class MockLocationService : Service() {
                 startFixed(
                     sessionPrefs.lastLatitude,
                     sessionPrefs.lastLongitude,
-                    sessionPrefs.lastAltitude
+                    sessionPrefs.lastAltitude,
+                    fromRestore = true
                 )
             }
             "ROUTE" -> {
                 val waypoints = sessionPrefs.getWaypoints()
+                val savedMode = try {
+                    TransportMode.valueOf(sessionPrefs.lastTransportMode)
+                } catch (e: Exception) {
+                    TransportMode.VEHICLE
+                }
+                val savedIndex = sessionPrefs.lastRouteIndex
                 if (waypoints.size >= 2) {
                     startRoute(
-                        waypoints,
-                        sessionPrefs.lastSpeedKmh,
-                        sessionPrefs.isLooping,
-                        TransportMode.VEHICLE
+                        waypoints = waypoints,
+                        speedKmh = sessionPrefs.lastSpeedKmh,
+                        isLooping = sessionPrefs.isLooping,
+                        transportMode = savedMode,
+                        fromRestore = true,
+                        initialWaypointIndex = savedIndex
                     )
                 } else {
                     startFixed(
                         sessionPrefs.lastLatitude,
                         sessionPrefs.lastLongitude,
-                        sessionPrefs.lastAltitude
+                        sessionPrefs.lastAltitude,
+                        fromRestore = true
                     )
                 }
             }
@@ -1436,7 +1511,8 @@ class MockLocationService : Service() {
                 startJoystick(
                     sessionPrefs.lastLatitude,
                     sessionPrefs.lastLongitude,
-                    sessionPrefs.lastSpeedKmh
+                    sessionPrefs.lastSpeedKmh,
+                    fromRestore = true
                 )
             }
             "MOTION_SYNC" -> {
@@ -1449,8 +1525,30 @@ class MockLocationService : Service() {
                 startFixed(
                     sessionPrefs.lastLatitude,
                     sessionPrefs.lastLongitude,
-                    sessionPrefs.lastAltitude
+                    sessionPrefs.lastAltitude,
+                    fromRestore = true
                 )
+            }
+        }
+
+        // Retry loop for initial location injection on restore (ensures immediate blue dot)
+        serviceScope.launch {
+            var attempts = 0
+            while (attempts < 5 && isActive) {
+                val res = engine.setLocation(
+                    latitude = sessionPrefs.lastLatitude,
+                    longitude = sessionPrefs.lastLongitude,
+                    altitude = sessionPrefs.lastAltitude,
+                    speed = 0.0f,
+                    bearing = 0.0f,
+                    applyStationaryJitter = false
+                )
+                if (res.isSuccess) {
+                    Log.i(TAG, "Initial mock location successfully injected on restore.")
+                    break
+                }
+                attempts++
+                delay(300L)
             }
         }
     }
@@ -1459,23 +1557,32 @@ class MockLocationService : Service() {
         if (activeInstance == this) activeInstance = null
         if (MockLocationServiceReceiver.activeService == this) MockLocationServiceReceiver.activeService = null
 
-        sessionPrefs.isSessionActive = false
-        SessionTimerManager.stopTimer(this)
+        val userStopped = isStopping.get() // set true only by stopSpoofing()
+        if (userStopped) {
+            sessionPrefs.isSessionActive = false
+            SessionTimerManager.stopTimer(this)
+            cancelBackgroundRestartAlarm()
+        } else if (sessionPrefs.isSessionActive) {
+            // System-initiated destroy (OS / OEM kill): keep session active, schedule alarm to bring us back
+            scheduleBackgroundRestartAlarm(1000L)
+        }
+
         activeMode = SimulationMode.Idle
         _serviceState.value = ServiceState.Idle
 
         isSimulationPaused = false
         cancelWatchdog()
-        cancelBackgroundRestartAlarm()
         stopCurrentLoop()
         releaseWakeLock()
         try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
         try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
         try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
-        if (settingsPrefs.isAutoVpnSyncEnabled) {
+        if (userStopped && settingsPrefs.isAutoVpnSyncEnabled) {
             try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
         }
-        try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
+        if (userStopped) {
+            try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
+        }
         try { engine.stop() } catch (e: Exception) {}
         serviceJob.cancel()
         super.onDestroy()

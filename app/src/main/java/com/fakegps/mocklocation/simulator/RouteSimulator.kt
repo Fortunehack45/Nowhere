@@ -132,6 +132,26 @@ class RouteSimulator(
         completedDwellIndices.clear()
     }
 
+    val currentSegmentIndex: Int
+        get() = cachedSegmentIndex
+
+    val currentDistanceCovered: Double
+        get() = currentDistanceAlongRoute
+
+    fun seekToDistance(distanceMeters: Double) {
+        currentDistanceAlongRoute = distanceMeters.coerceIn(0.0, totalDistanceMeters)
+        cachedSegmentIndex = findSegmentIndexForDistance(currentDistanceAlongRoute)
+    }
+
+    fun seekToWaypointIndex(index: Int) {
+        if (segments.isNotEmpty()) {
+            val clampedIndex = index.coerceIn(0, segments.lastIndex)
+            val seg = segments[clampedIndex]
+            currentDistanceAlongRoute = seg.startCumulativeDistance
+            cachedSegmentIndex = clampedIndex
+        }
+    }
+
     /**
      * Advances simulation by [deltaTimeSeconds] and returns the calculated position, speed, and heading.
      */

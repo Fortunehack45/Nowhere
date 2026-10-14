@@ -17,6 +17,7 @@ import com.fakegps.mocklocation.data.preferences.SessionPreferences
 import com.fakegps.mocklocation.databinding.ActivitySettingsBinding
 import com.fakegps.mocklocation.ui.dialogs.SetupGuideDialog
 import com.fakegps.mocklocation.util.PermissionHelper
+import com.fakegps.mocklocation.util.OEMDetector
 import android.Manifest
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
@@ -260,6 +261,52 @@ class SettingsActivity : AppCompatActivity() {
     private fun refreshSystemStatus() {
         renderSessionTimerUI(com.fakegps.mocklocation.service.SessionTimerManager.timerState.value)
 
+        // Background Health Card
+        val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(this)
+        if (isBatteryExempt) {
+            binding.tvHealthBatteryStatus.text = "Unrestricted (Safe from aggressive OS kill)"
+            binding.tvHealthBatteryStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
+            binding.btnHealthBatteryFix.text = "Active"
+            binding.btnHealthBatteryFix.isEnabled = false
+            binding.btnHealthBatteryFix.alpha = 0.5f
+        } else {
+            binding.tvHealthBatteryStatus.text = "Restricted - may be killed on swipe or idle"
+            binding.tvHealthBatteryStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_error_text))
+            binding.btnHealthBatteryFix.text = "Fix"
+            binding.btnHealthBatteryFix.isEnabled = true
+            binding.btnHealthBatteryFix.alpha = 1.0f
+        }
+
+        val canExactAlarm = PermissionHelper.canScheduleExactAlarms(this)
+        if (canExactAlarm) {
+            binding.tvHealthAlarmStatus.text = "Allowed (Dead-man's switch active)"
+            binding.tvHealthAlarmStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
+            binding.btnHealthAlarmFix.text = "Active"
+            binding.btnHealthAlarmFix.isEnabled = false
+            binding.btnHealthAlarmFix.alpha = 0.5f
+        } else {
+            binding.tvHealthAlarmStatus.text = "Denied - cannot auto-revive if killed"
+            binding.tvHealthAlarmStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_error_text))
+            binding.btnHealthAlarmFix.text = "Fix"
+            binding.btnHealthAlarmFix.isEnabled = true
+            binding.btnHealthAlarmFix.alpha = 1.0f
+        }
+
+        val hasNotification = PermissionHelper.hasNotificationPermission(this)
+        if (hasNotification) {
+            binding.tvHealthNotificationStatus.text = "Allowed (Persistent foreground service)"
+            binding.tvHealthNotificationStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
+            binding.btnHealthNotificationFix.text = "Active"
+            binding.btnHealthNotificationFix.isEnabled = false
+            binding.btnHealthNotificationFix.alpha = 0.5f
+        } else {
+            binding.tvHealthNotificationStatus.text = "Denied - foreground service notification hidden"
+            binding.tvHealthNotificationStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_error_text))
+            binding.btnHealthNotificationFix.text = "Fix"
+            binding.btnHealthNotificationFix.isEnabled = true
+            binding.btnHealthNotificationFix.alpha = 1.0f
+        }
+
         // Mock Location in Developer Options
         val isMockEnabled = PermissionHelper.isMockLocationEnabled(this)
         if (isMockEnabled) {
@@ -273,7 +320,6 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         // Battery Optimization
-        val isBatteryExempt = PermissionHelper.isIgnoringBatteryOptimizations(this)
         if (isBatteryExempt) {
             binding.tvSettingsBatteryStatus.text = getString(R.string.settings_battery_unrestricted)
             binding.tvSettingsBatteryStatus.setTextColor(ContextCompat.getColor(this, R.color.badge_active_text))
@@ -429,6 +475,26 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.btnSettingsBattery.setOnClickListener {
             PermissionHelper.requestIgnoreBatteryOptimizations(this)
+        }
+
+        binding.btnHealthBatteryFix.setOnClickListener {
+            if (OEMDetector.isAggressiveOEM()) {
+                com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
+            } else {
+                PermissionHelper.requestIgnoreBatteryOptimizations(this)
+            }
+        }
+
+        binding.btnHealthAlarmFix.setOnClickListener {
+            PermissionHelper.requestExactAlarmPermission(this)
+        }
+
+        binding.btnHealthNotificationFix.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                PermissionHelper.openAppNotificationSettings(this)
+            }
         }
 
         binding.switchRecentsShield.setOnCheckedChangeListener { buttonView, isChecked ->
