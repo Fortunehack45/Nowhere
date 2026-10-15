@@ -34,9 +34,10 @@ class MockLocationService : Service() {
 
     companion object {
         private const val TAG = "MockLocationService"
-        const val CHANNEL_ID = "mock_location_foreground_channel_v3"
+        const val CHANNEL_ID = "mock_location_foreground_channel_v4"
         private const val OLD_CHANNEL_ID = "mock_location_foreground_channel"
         private const val OLD_CHANNEL_ID_V2 = "mock_location_foreground_channel_v2"
+        private const val OLD_CHANNEL_ID_V3 = "mock_location_foreground_channel_v3"
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START_FIXED = "action_start_fixed"
@@ -67,8 +68,7 @@ class MockLocationService : Service() {
             val service = activeInstance ?: MockLocationServiceReceiver.activeService ?: return false
             if (service.isSimulationPaused) return false
             val state = service.serviceState.value
-            if (state is ServiceState.Running && state.isPaused) return false
-            return service.activeMode !is SimulationMode.Idle || state is ServiceState.Running
+            return service.activeMode !is SimulationMode.Idle || (state is ServiceState.Running && !state.isPaused)
         }
     }
 
@@ -136,6 +136,93 @@ class MockLocationService : Service() {
     // Automation Engines (Wifi triggers and Motion-linked mock movement)
     private var wifiTriggerHandler: com.fakegps.mocklocation.automation.engine.WifiTriggerHandler? = null
     private var motionSyncEngine: com.fakegps.mocklocation.automation.engine.MotionSyncEngine? = null
+
+    // Cached PendingIntents for high-frequency sub-second notification updates (zero GC allocation)
+    private var cachedStopPendingIntent: PendingIntent? = null
+    private var cachedOpenAppPendingIntent: PendingIntent? = null
+    private var cachedJoystickPendingIntent: PendingIntent? = null
+    private var cachedPauseRoutePendingIntent: PendingIntent? = null
+    private var cachedResumeRoutePendingIntent: PendingIntent? = null
+
+    private fun getStopPendingIntent(): PendingIntent {
+        if (cachedStopPendingIntent == null) {
+            val stopIntent = Intent(this, MockLocationService::class.java).apply {
+                action = ACTION_STOP
+                setPackage(packageName)
+            }
+            cachedStopPendingIntent = PendingIntent.getService(
+                this,
+                1,
+                stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+        return cachedStopPendingIntent!!
+    }
+
+    private fun getOpenAppPendingIntent(): PendingIntent {
+        if (cachedOpenAppPendingIntent == null) {
+            val openAppIntent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                setPackage(packageName)
+            }
+            cachedOpenAppPendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+        return cachedOpenAppPendingIntent!!
+    }
+
+    private fun getJoystickPendingIntent(): PendingIntent {
+        if (cachedJoystickPendingIntent == null) {
+            val joystickIntent = Intent(this, com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider::class.java).apply {
+                action = com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.ACTION_WIDGET_JOYSTICK
+                setPackage(packageName)
+            }
+            cachedJoystickPendingIntent = PendingIntent.getBroadcast(
+                this,
+                30,
+                joystickIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+        return cachedJoystickPendingIntent!!
+    }
+
+    private fun getPauseResumePendingIntent(isPaused: Boolean): PendingIntent {
+        return if (isPaused) {
+            if (cachedResumeRoutePendingIntent == null) {
+                val resumeIntent = Intent(this, MockLocationService::class.java).apply {
+                    action = ACTION_RESUME_ROUTE
+                    setPackage(packageName)
+                }
+                cachedResumeRoutePendingIntent = PendingIntent.getService(
+                    this,
+                    2,
+                    resumeIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            }
+            cachedResumeRoutePendingIntent!!
+        } else {
+            if (cachedPauseRoutePendingIntent == null) {
+                val pauseIntent = Intent(this, MockLocationService::class.java).apply {
+                    action = ACTION_PAUSE_ROUTE
+                    setPackage(packageName)
+                }
+                cachedPauseRoutePendingIntent = PendingIntent.getService(
+                    this,
+                    2,
+                    pauseIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            }
+            cachedPauseRoutePendingIntent!!
+        }
+    }
 
     internal fun isWakeLockHeld(): Boolean = wakeLock?.isHeld == true
 
@@ -549,59 +636,20 @@ class MockLocationService : Service() {
         views.setTextViewText(R.id.btnWidgetTeleport, "Stop")
 
         // Stop PendingIntent
-        val stopIntent = Intent(this, MockLocationService::class.java).apply {
-            action = ACTION_STOP
-            setPackage(packageName)
-        }
-        val stopPendingIntent = PendingIntent.getService(
-            this,
-            1,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.btnWidgetTeleport, stopPendingIntent)
+        views.setOnClickPendingIntent(R.id.btnWidgetTeleport, getStopPendingIntent())
 
         // Secondary Action Button (Joystick or Route Pause/Resume)
         if (isRoute) {
             val actionTitle = if (isPaused) "Resume" else "Pause"
             views.setTextViewText(R.id.btnWidgetJoystick, actionTitle)
-            val pauseResumeIntent = Intent(this, MockLocationService::class.java).apply {
-                action = if (isPaused) ACTION_RESUME_ROUTE else ACTION_PAUSE_ROUTE
-                setPackage(packageName)
-            }
-            val pauseResumePendingIntent = PendingIntent.getService(
-                this,
-                2,
-                pauseResumeIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.btnWidgetJoystick, pauseResumePendingIntent)
+            views.setOnClickPendingIntent(R.id.btnWidgetJoystick, getPauseResumePendingIntent(isPaused))
         } else {
             views.setTextViewText(R.id.btnWidgetJoystick, "Joystick")
-            val joystickIntent = Intent(this, com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider::class.java).apply {
-                action = com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.ACTION_WIDGET_JOYSTICK
-                setPackage(packageName)
-            }
-            val joystickPendingIntent = PendingIntent.getBroadcast(
-                this,
-                30,
-                joystickIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.btnWidgetJoystick, joystickPendingIntent)
+            views.setOnClickPendingIntent(R.id.btnWidgetJoystick, getJoystickPendingIntent())
         }
 
         // Open App PendingIntent
-        val openAppIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-            setPackage(packageName)
-        }
-        val openAppPendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            openAppIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val openAppPendingIntent = getOpenAppPendingIntent()
         views.setOnClickPendingIntent(R.id.widgetRoot, openAppPendingIntent)
         views.setOnClickPendingIntent(R.id.btnWidgetOpenApp, openAppPendingIntent)
 
@@ -609,25 +657,8 @@ class MockLocationService : Service() {
     }
 
     private fun startForegroundNotification(locationTitle: String, contentSubtitle: String = "Location Injected & Active") {
-        val stopIntent = Intent(this, MockLocationService::class.java).apply {
-            action = ACTION_STOP
-        }
-        val stopPendingIntent = PendingIntent.getService(
-            this,
-            1,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val openAppIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        val openAppPendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            openAppIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val stopPendingIntent = getStopPendingIntent()
+        val openAppPendingIntent = getOpenAppPendingIntent()
 
         val remainingTimeStr = if (sessionPrefs.isPremiumActive()) "UNLIMITED" else sessionPrefs.formatRemainingTime()
         val formattedSubtitle = "⏱️ $remainingTimeStr left • $contentSubtitle"
@@ -641,7 +672,7 @@ class MockLocationService : Service() {
         val remoteViews = buildNotificationRemoteViews(
             locationName = locationTitle,
             coordsText = formattedSubtitle,
-            statusText = "GPS LOCKED",
+            statusText = "● GPS LOCKED",
             isRoute = activeMode is SimulationMode.Route,
             isPaused = isSimulationPaused,
             isDark = isDark
@@ -655,16 +686,16 @@ class MockLocationService : Service() {
             .setContentIntent(openAppPendingIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCustomContentView(remoteViews)
             .setCustomBigContentView(remoteViews)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
             .apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                    foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
                 }
             }
             .build()
@@ -725,163 +756,137 @@ class MockLocationService : Service() {
     }
 
     private fun updateLocationNotification(lat: Double, lon: Double, modeDescription: String = "Active") {
-        serviceScope.launch {
-            try {
-                val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
-                val placeName = if (!cachedName.isNullOrBlank()) {
-                    cachedName
-                } else if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
-                    sessionPrefs.lastLocationName
-                } else {
-                    // Trigger background resolution for future ticks
-                    serviceScope.launch(Dispatchers.IO) {
-                        val resolved = com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
-                            this@MockLocationService,
-                            lat,
-                            lon
-                        )
-                        if (resolved.isNotBlank()) {
-                            sessionPrefs.lastLocationName = resolved
-                            updateLocationNotification(lat, lon, modeDescription)
-                        }
-                    }
-                    String.format(Locale.US, "%.5f°, %.5f°", lat, lon)
-                }
-
-                val coordsText = String.format("%.5f°, %.5f° • %s", lat, lon, modeDescription)
-
-                val stopIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
-                    action = ACTION_STOP
-                }
-                val stopPendingIntent = PendingIntent.getService(
-                    this@MockLocationService,
-                    1,
-                    stopIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-
-                val openAppIntent = Intent(this@MockLocationService, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-                val openAppPendingIntent = PendingIntent.getActivity(
-                    this@MockLocationService,
-                    0,
-                    openAppIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-
-                val runningState = _serviceState.value as? ServiceState.Running
-                val isRoute = activeMode is SimulationMode.Route && runningState != null && runningState.totalDistanceMeters > 0
-                val isPaused = isSimulationPaused || (runningState?.isPaused == true)
-                val progress = if (isRoute && runningState!!.totalDistanceMeters > 0) {
-                    ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt().coerceIn(0, 100)
-                } else 0
-
-                val coveredStr = if (isRoute) String.format(Locale.US, "%.2f km", runningState!!.distanceCoveredMeters / 1000.0) else ""
-                val totalStr = if (isRoute) String.format(Locale.US, "%.2f km", runningState!!.totalDistanceMeters / 1000.0) else ""
-                val remainingStr = if (isRoute) String.format(Locale.US, "%.2f km", runningState!!.distanceRemainingMeters / 1000.0) else ""
-                val speedKmh = if (runningState != null) runningState.speedMps * 3.6f else 0.0f
-                val speedMps = if (runningState != null) runningState.speedMps.coerceAtLeast(0.1f) else 0.1f
-                val etaSec = if (isRoute && speedMps > 0.3f && runningState!!.distanceRemainingMeters > 5.0) {
-                    (runningState.distanceRemainingMeters / speedMps).toLong()
-                } else 0L
-                val etaStr = if (isRoute) formatEta(etaSec) else ""
-
-                val remainingTimeStr = if (sessionPrefs.isPremiumActive()) "UNLIMITED" else sessionPrefs.formatRemainingTime()
-
-                val notifTitle = if (isRoute) {
-                    "📍 Route: $coveredStr / $totalStr ($progress%) • ⏱️ $remainingTimeStr"
-                } else {
-                    "📍 $placeName • ⏱️ $remainingTimeStr"
-                }
-
-                val notifText = if (isRoute) {
-                    "⏱️ $remainingTimeStr left • ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
-                } else {
-                    "⏱️ $remainingTimeStr left • $coordsText"
-                }
-
-                val routeDetails = if (isRoute) {
-                    "\n📍 Route: $coveredStr / $totalStr ($progress%) • $remainingStr left\n⏱️ ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
-                } else ""
-
-                val isDark = when (settingsPrefs.appTheme) {
-                    "LIGHT" -> false
-                    "DARK" -> true
-                    else -> com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(this@MockLocationService)
-                }
-
-                val statusText = when {
-                    isPaused -> "PAUSED"
-                    isRoute -> "ROUTE ($progress%)"
-                    activeMode is SimulationMode.Joystick -> "JOYSTICK"
-                    sessionPrefs.activeMode == "MOTION_SYNC" -> "MOTION SYNC"
-                    else -> "GPS LOCKED"
-                }
-
-                val remoteViews = buildNotificationRemoteViews(
-                    locationName = placeName,
-                    coordsText = "$coordsText • ⏱️ $remainingTimeStr left",
-                    statusText = statusText,
-                    isRoute = isRoute,
-                    isPaused = isPaused,
-                    isDark = isDark
-                )
-
-                val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
-                    .setContentTitle(notifTitle)
-                    .setContentText(notifText)
-                    .setSmallIcon(R.drawable.ic_launcher_monochrome)
-                    .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MockLocationService))
-                    .setContentIntent(openAppPendingIntent)
-                    .setOngoing(true)
-                    .setOnlyAlertOnce(true)
-                    .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
-                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                    .setPriority(NotificationCompat.PRIORITY_MAX)
-                    .setCustomContentView(remoteViews)
-                    .setCustomBigContentView(remoteViews)
-                    .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-                    .apply {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-                        }
-                    }
-
-                if (isRoute) {
-                    builder.setProgress(100, progress, false)
-                }
-
-                builder.setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .setBigContentTitle(notifTitle)
-                        .bigText("$coordsText$routeDetails\nGPS Mocking active in background across all apps.")
-                )
-
-                if (activeMode is SimulationMode.Route) {
-                    val pauseResumeIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
-                        action = if (isPaused) ACTION_RESUME_ROUTE else ACTION_PAUSE_ROUTE
-                    }
-                    val pauseResumePendingIntent = PendingIntent.getService(
+        try {
+            val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
+            val placeName = if (!cachedName.isNullOrBlank()) {
+                cachedName
+            } else if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+                sessionPrefs.lastLocationName
+            } else {
+                // Trigger background resolution for future ticks
+                serviceScope.launch(Dispatchers.IO) {
+                    val resolved = com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationName(
                         this@MockLocationService,
-                        2,
-                        pauseResumeIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        lat,
+                        lon
                     )
-                    val actionTitle = if (isPaused) "Resume" else "Pause"
-                    val actionIcon = if (isPaused) R.drawable.ic_play else R.drawable.ic_pause
-                    builder.addAction(actionIcon, actionTitle, pauseResumePendingIntent)
+                    if (resolved.isNotBlank()) {
+                        sessionPrefs.lastLocationName = resolved
+                        updateLocationNotification(lat, lon, modeDescription)
+                    }
+                }
+                String.format(Locale.US, "%.5f°, %.5f°", lat, lon)
+            }
+
+            val coordsText = String.format(Locale.US, "%.5f°, %.5f° • %s", lat, lon, modeDescription)
+
+            val stopPendingIntent = getStopPendingIntent()
+            val openAppPendingIntent = getOpenAppPendingIntent()
+
+            val runningState = _serviceState.value as? ServiceState.Running
+            val isRoute = activeMode is SimulationMode.Route && runningState != null && runningState.totalDistanceMeters > 0
+            val isPaused = isSimulationPaused || (runningState?.isPaused == true)
+            val progress = if (isRoute && runningState != null && runningState.totalDistanceMeters > 0) {
+                ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt().coerceIn(0, 100)
+            } else 0
+
+            val coveredStr = if (isRoute && runningState != null) String.format(Locale.US, "%.2f km", runningState.distanceCoveredMeters / 1000.0) else ""
+            val totalStr = if (isRoute && runningState != null) String.format(Locale.US, "%.2f km", runningState.totalDistanceMeters / 1000.0) else ""
+            val remainingStr = if (isRoute && runningState != null) String.format(Locale.US, "%.2f km", runningState.distanceRemainingMeters / 1000.0) else ""
+            val speedKmh = if (runningState != null) runningState.speedMps * 3.6f else 0.0f
+            val speedMps = runningState?.speedMps?.coerceAtLeast(0.1f) ?: 0.1f
+            val etaSec = if (isRoute && runningState != null && speedMps > 0.3f && runningState.distanceRemainingMeters > 5.0) {
+                (runningState.distanceRemainingMeters / speedMps).toLong()
+            } else 0L
+            val etaStr = if (isRoute) formatEta(etaSec) else ""
+
+            val remainingTimeStr = if (sessionPrefs.isPremiumActive()) "UNLIMITED" else sessionPrefs.formatRemainingTime()
+
+            val notifTitle = if (isRoute) {
+                "📍 Route: $coveredStr / $totalStr ($progress%) • ⏱️ $remainingTimeStr"
+            } else {
+                "📍 $placeName • ⏱️ $remainingTimeStr"
+            }
+
+            val notifText = if (isRoute) {
+                "⏱️ $remainingTimeStr left • ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
+            } else {
+                "⏱️ $remainingTimeStr left • $coordsText"
+            }
+
+            val routeDetails = if (isRoute) {
+                "\n📍 Route: $coveredStr / $totalStr ($progress%) • $remainingStr left\n⏱️ ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
+            } else ""
+
+            val isDark = when (settingsPrefs.appTheme) {
+                "LIGHT" -> false
+                "DARK" -> true
+                else -> com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(this@MockLocationService)
+            }
+
+            val baseStatus = when {
+                isPaused -> "PAUSED"
+                isRoute -> "ROUTE ($progress%)"
+                activeMode is SimulationMode.Joystick -> "JOYSTICK"
+                sessionPrefs.activeMode == "MOTION_SYNC" -> "MOTION SYNC"
+                else -> "GPS LOCKED"
+            }
+            val statusText = "● $baseStatus"
+
+            val remoteViews = buildNotificationRemoteViews(
+                locationName = placeName,
+                coordsText = "$coordsText • ⏱️ $remainingTimeStr left",
+                statusText = statusText,
+                isRoute = isRoute,
+                isPaused = isPaused,
+                isDark = isDark
+            )
+
+            val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
+                .setContentTitle(notifTitle)
+                .setContentText(notifText)
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MockLocationService))
+                .setContentIntent(openAppPendingIntent)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setCustomContentView(remoteViews)
+                .setCustomBigContentView(remoteViews)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .apply {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
+                    }
                 }
 
-                builder.addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
-
-                val manager = getSystemService(NotificationManager::class.java)
-                manager?.notify(NOTIFICATION_ID, builder.build())
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w(TAG, "Non-fatal error updating notification: ${e.message}")
+            if (isRoute) {
+                builder.setProgress(100, progress, false)
             }
+
+            builder.setStyle(
+                NotificationCompat.BigTextStyle()
+                    .setBigContentTitle(notifTitle)
+                    .bigText("$coordsText$routeDetails\nGPS Mocking active in background across all apps.")
+            )
+
+            if (activeMode is SimulationMode.Route) {
+                val pauseResumePendingIntent = getPauseResumePendingIntent(isPaused)
+                val actionTitle = if (isPaused) "Resume" else "Pause"
+                val actionIcon = if (isPaused) R.drawable.ic_play else R.drawable.ic_pause
+                builder.addAction(actionIcon, actionTitle, pauseResumePendingIntent)
+            }
+
+            builder.addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
+
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.notify(NOTIFICATION_ID, builder.build())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Non-fatal error updating notification: ${e.message}")
         }
     }
 
@@ -917,13 +922,16 @@ class MockLocationService : Service() {
             try {
                 manager.deleteNotificationChannel(OLD_CHANNEL_ID_V2)
             } catch (ignored: Exception) {}
+            try {
+                manager.deleteNotificationChannel(OLD_CHANNEL_ID_V3)
+            } catch (ignored: Exception) {}
 
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Nowhere Active GPS Service",
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Notifies when Nowhere GPS simulation is actively running"
+                description = "Silent status indicator when Nowhere GPS simulation is actively running"
                 setShowBadge(false)
                 setSound(null, null)
                 enableVibration(false)
@@ -1287,6 +1295,8 @@ class MockLocationService : Service() {
                                 serviceScope.launch(Dispatchers.IO) {
                                     try {
                                         com.fakegps.mocklocation.weather.WeatherManager.fetchWeather(this@MockLocationService, simLoc.latitude, simLoc.longitude)
+                                    } catch (e: CancellationException) {
+                                        throw e
                                     } catch (ignored: Exception) {}
                                 }
                             }
@@ -1330,7 +1340,7 @@ class MockLocationService : Service() {
 
             val builder = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Route Simulation Active")
-                .setContentText("$waypointsCount waypoints • $distStr • Speed: ${speedKmh.toInt()} km/h • ETA: $etaStr")
+                .setContentText("$waypointsCount waypoints • $transportMode • $distStr • Speed: ${speedKmh.toInt()} km/h • ETA: $etaStr")
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
                 .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
                 .setContentIntent(pendingIntent)
@@ -1568,8 +1578,8 @@ class MockLocationService : Service() {
                                 bearingDegrees = joystickAngleDeg
                             )
 
-                            // Real-time notification update during joystick movement
-                            if (now - lastNotificationUpdateTime >= 2500L) {
+                            // Real-time notification update during joystick movement (every 2s)
+                            if (now - lastNotificationUpdateTime >= 2000L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(newLat, newLon, "Joystick Active (${String.format(java.util.Locale.US, "%.1f km/h", joystickSpeedKmh * joystickMagnitude)})")
                             }
@@ -1596,7 +1606,7 @@ class MockLocationService : Service() {
                                 bearingDegrees = joystickAngleDeg
                             )
 
-                            // Periodic notification update when joystick is stationary
+                            // Periodic notification update when joystick is stationary (every 5s)
                             if (now - lastNotificationUpdateTime >= 5000L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(joystickLat, joystickLon, "Joystick Active (Stationary)")
