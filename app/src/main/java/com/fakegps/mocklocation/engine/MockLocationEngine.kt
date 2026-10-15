@@ -47,21 +47,13 @@ class MockLocationEngine(
     private var lastGmsMockModeCheck = 0L
 
     private fun getTargetProviders(): List<String> {
-        val providers = mutableListOf(
+        // Strictly register GPS and NETWORK with system LocationManager.
+        // FUSED is handled directly via Google Play Services FusedLocationProviderClient because
+        // calling addTestProvider("fused") throws IllegalArgumentException on Android 12+ (API 31+).
+        return listOf(
             LocationManager.GPS_PROVIDER,
             LocationManager.NETWORK_PROVIDER
         )
-        // Android 12+ (API 31+) explicitly exposes LocationManager.FUSED_PROVIDER as a system provider.
-        // Mocks "fused" with LocationManager so Google Maps and background services do not receive
-        // leaked hardware Wi-Fi or cell tower positions, completely eliminating the "ash/grey dot".
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || locationManager.allProviders.contains(FUSED_PROVIDER_NAME)) {
-                providers.add(FUSED_PROVIDER_NAME)
-            }
-        } catch (ignored: Exception) {
-            providers.add(FUSED_PROVIDER_NAME)
-        }
-        return providers
     }
 
     /**
@@ -240,6 +232,10 @@ class MockLocationEngine(
                         this.speedAccuracyMetersPerSecond = speedAccuracy
                         this.verticalAccuracyMeters = verticalAccuracy
                     }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        this.mslAltitudeMeters = finalAltitude
+                        this.mslAltitudeAccuracyMeters = verticalAccuracy
+                    }
                 }
 
                 // Apply Ghost Cloak Anti-Detection Transformation (NMEA, Micro-Clock Drift, Satellite Constellation)
@@ -264,6 +260,15 @@ class MockLocationEngine(
                         this.accuracy = horizontalAccuracy
                         this.time = nowMs
                         this.elapsedRealtimeNanos = nowNanos
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            this.bearingAccuracyDegrees = bearingAccuracy
+                            this.speedAccuracyMetersPerSecond = speedAccuracy
+                            this.verticalAccuracyMeters = verticalAccuracy
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            this.mslAltitudeMeters = finalAltitude
+                            this.mslAltitudeAccuracyMeters = verticalAccuracy
+                        }
                     }
                     val cloakedRetry = ghostCloakEngine.cloakLocation(retryLoc, nowMs, nowNanos)
                     locationManager.setTestProviderLocation(provider, cloakedRetry)
@@ -304,6 +309,10 @@ class MockLocationEngine(
                         speedAccuracyMetersPerSecond = 0.1f
                         verticalAccuracyMeters = 1.0f
                     }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        mslAltitudeMeters = finalAltitude
+                        mslAltitudeAccuracyMeters = 1.0f
+                    }
                 }
 
                 fusedLocationClient.setMockLocation(gmsFusedFix).addOnFailureListener { e ->
@@ -333,7 +342,7 @@ class MockLocationEngine(
             fusedLocationClient.setMockMode(false)
         } catch (ignored: Exception) {}
 
-        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, FUSED_PROVIDER_NAME)
+        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
         for (provider in providers) {
             try {
                 locationManager.setTestProviderEnabled(provider, false)

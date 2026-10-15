@@ -1912,12 +1912,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkBackgroundHealthOnSessionStart() {
         if (hasPromptedBackgroundHealthThisSession) return
+        val sessionPrefs = SessionPreferences(this)
         if (!PermissionHelper.isIgnoringBatteryOptimizations(this)) {
             hasPromptedBackgroundHealthThisSession = true
             com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
         } else if (!PermissionHelper.canScheduleExactAlarms(this)) {
             hasPromptedBackgroundHealthThisSession = true
             com.fakegps.mocklocation.ui.dialogs.ExactAlarmPermissionDialog(this).show()
+        } else if (!sessionPrefs.hasPromptedWifiScanningWarning && (PermissionHelper.isWifiScanningEnabled(this) || PermissionHelper.isBleScanningEnabled(this))) {
+            hasPromptedBackgroundHealthThisSession = true
+            sessionPrefs.hasPromptedWifiScanningWarning = true
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("📍 Optimize Google Maps Blue Dot")
+                .setMessage("Wi-Fi scanning is currently active on your phone.\n\nTo prevent Google Maps from showing an ash/grey dot or snapping to your real location, please turn OFF 'Wi-Fi scanning' and 'Google Location Accuracy' in Location Settings.")
+                .setPositiveButton("Open Settings") { _, _ ->
+                    PermissionHelper.openLocationScanningSettings(this)
+                }
+                .setNegativeButton("Got It", null)
+                .show()
         }
     }
 

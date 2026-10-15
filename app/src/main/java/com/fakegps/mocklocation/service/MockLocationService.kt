@@ -898,20 +898,20 @@ class MockLocationService : Service() {
                         updateLocationNotification(lat, lon, modeDesc)
                     }
 
-                    // Steady 1Hz GPS heartbeat cadence (1000ms stationary, 500ms-800ms moving):
-                    // Guarantees Google Maps, navigation, and background apps continuously receive fresh GPS fixes
-                    // without entering stale state ("ash/grey dot").
+                    // Sub-second 500ms (2Hz) continuous GPS heartbeat cadence:
+                    // Saturates Google Maps' internal location buffer so the fix is always fresh (< 600ms old).
+                    // Permanently prevents Google Maps' Kalman filter from degrading into stale state ("ash/grey dot").
                     val loopDelay = if (spd > 0.05f) {
-                        settingsPrefs.updateIntervalMovingMs.coerceIn(500L, 800L)
+                        settingsPrefs.updateIntervalMovingMs.coerceIn(250L, 500L)
                     } else {
-                        1000L
+                        500L
                     }
                     delay(loopDelay)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (t: Throwable) {
                     Log.e(TAG, "Non-fatal error in fixed/motion simulation loop tick: ${t.message}", t)
-                    delay(1000L)
+                    delay(500L)
                 }
             }
         }

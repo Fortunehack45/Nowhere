@@ -80,6 +80,10 @@ class SessionPreferences(private val context: Context) {
         get() = prefs.getBoolean("key_exact_alarm_prompted", false)
         set(value) = prefs.edit().putBoolean("key_exact_alarm_prompted", value).apply()
 
+    var hasPromptedWifiScanningWarning: Boolean
+        get() = prefs.getBoolean("key_wifi_scanning_prompted", false)
+        set(value) = prefs.edit().putBoolean("key_wifi_scanning_prompted", value).apply()
+
     var isPersistentBootInjectionEnabled: Boolean
         get() = prefs.getBoolean("key_persistent_boot_injection", false)
         set(value) = prefs.edit().putBoolean("key_persistent_boot_injection", value).apply()
