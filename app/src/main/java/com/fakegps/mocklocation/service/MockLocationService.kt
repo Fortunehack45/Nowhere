@@ -34,10 +34,11 @@ class MockLocationService : Service() {
 
     companion object {
         private const val TAG = "MockLocationService"
-        const val CHANNEL_ID = "mock_location_foreground_channel_v4"
+        const val CHANNEL_ID = "mock_location_foreground_channel_v5"
         private const val OLD_CHANNEL_ID = "mock_location_foreground_channel"
         private const val OLD_CHANNEL_ID_V2 = "mock_location_foreground_channel_v2"
         private const val OLD_CHANNEL_ID_V3 = "mock_location_foreground_channel_v3"
+        private const val OLD_CHANNEL_ID_V4 = "mock_location_foreground_channel_v4"
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START_FIXED = "action_start_fixed"
@@ -404,6 +405,9 @@ class MockLocationService : Service() {
         currentSimSpeedMps = 0.0f
         currentSimBearing = 0.0f
         activeMode = SimulationMode.Fixed(initialLat, initialLon, 10.0)
+        sessionPrefs.isSessionActive = true
+        sessionPrefs.isSessionRunning = true
+        sessionPrefs.isSessionPaused = false
         _serviceState.value = ServiceState.Running(
             mode = activeMode,
             latitude = initialLat,
@@ -688,7 +692,7 @@ class MockLocationService : Service() {
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCustomContentView(remoteViews)
             .setCustomBigContentView(remoteViews)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
@@ -696,6 +700,14 @@ class MockLocationService : Service() {
             .apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
+                }
+                val expiry = sessionPrefs.getEffectiveExpiryTimestamp()
+                if (!sessionPrefs.isPremiumActive() && expiry > System.currentTimeMillis() && sessionPrefs.isSessionRunning && !isSimulationPaused) {
+                    setWhen(expiry)
+                    setUsesChronometer(true)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        setChronometerCountDown(true)
+                    }
                 }
             }
             .build()
@@ -755,8 +767,40 @@ class MockLocationService : Service() {
         }
     }
 
-    private fun updateLocationNotification(lat: Double, lon: Double, modeDescription: String = "Active") {
+    private var lastNotifiedRemainingTimeStr = ""
+    private var lastNotifiedCoordsText = ""
+    private var lastNotifiedStatusText = ""
+    private var lastNotificationPostTime = 0L
+
+    fun refreshNotificationTimer() {
+        val lat = currentSimLat
+        val lon = currentSimLon
+        val runningState = _serviceState.value as? ServiceState.Running
+        val isRoute = activeMode is SimulationMode.Route && runningState != null && runningState.totalDistanceMeters > 0
+        val progress = if (isRoute && runningState != null) {
+            ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt().coerceIn(0, 100)
+        } else 0
+        val modeDesc = when {
+            isRoute -> "Route Active ($progress%)"
+            activeMode is SimulationMode.Joystick -> "Joystick Active"
+            sessionPrefs.activeMode == "MOTION_SYNC" -> "Motion Sync Active"
+            else -> "Teleported / Fixed"
+        }
+        updateLocationNotification(lat, lon, modeDesc, forceRefresh = true)
+    }
+
+    private fun updateLocationNotification(
+        lat: Double,
+        lon: Double,
+        modeDescription: String = "Active",
+        forceRefresh: Boolean = false
+    ) {
         try {
+            val nowRealtime = android.os.SystemClock.elapsedRealtime()
+            if (!forceRefresh && nowRealtime - lastNotificationPostTime < 950L) {
+                return
+            }
+
             val cachedName = com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(lat, lon)
             val placeName = if (!cachedName.isNullOrBlank()) {
                 cachedName
@@ -772,7 +816,7 @@ class MockLocationService : Service() {
                     )
                     if (resolved.isNotBlank()) {
                         sessionPrefs.lastLocationName = resolved
-                        updateLocationNotification(lat, lon, modeDescription)
+                        updateLocationNotification(lat, lon, modeDescription, forceRefresh = true)
                     }
                 }
                 String.format(Locale.US, "%.5f°, %.5f°", lat, lon)
@@ -828,6 +872,14 @@ class MockLocationService : Service() {
             }
             val statusText = "● $baseStatus"
 
+            if (!forceRefresh &&
+                remainingTimeStr == lastNotifiedRemainingTimeStr &&
+                coordsText == lastNotifiedCoordsText &&
+                statusText == lastNotifiedStatusText
+            ) {
+                return
+            }
+
             val remoteViews = buildNotificationRemoteViews(
                 locationName = placeName,
                 coordsText = "$coordsText • ⏱️ $remainingTimeStr left",
@@ -847,13 +899,21 @@ class MockLocationService : Service() {
                 .setOnlyAlertOnce(true)
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setCustomContentView(remoteViews)
                 .setCustomBigContentView(remoteViews)
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .apply {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
+                    }
+                    val expiry = sessionPrefs.getEffectiveExpiryTimestamp()
+                    if (!sessionPrefs.isPremiumActive() && expiry > System.currentTimeMillis() && sessionPrefs.isSessionRunning && !isPaused) {
+                        setWhen(expiry)
+                        setUsesChronometer(true)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            setChronometerCountDown(true)
+                        }
                     }
                 }
 
@@ -869,6 +929,11 @@ class MockLocationService : Service() {
             }
 
             builder.addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
+
+            lastNotificationPostTime = nowRealtime
+            lastNotifiedRemainingTimeStr = remainingTimeStr
+            lastNotifiedCoordsText = coordsText
+            lastNotifiedStatusText = statusText
 
             val manager = getSystemService(NotificationManager::class.java)
             manager?.notify(NOTIFICATION_ID, builder.build())
@@ -914,13 +979,16 @@ class MockLocationService : Service() {
             try {
                 manager.deleteNotificationChannel(OLD_CHANNEL_ID_V3)
             } catch (ignored: Exception) {}
+            try {
+                manager.deleteNotificationChannel(OLD_CHANNEL_ID_V4)
+            } catch (ignored: Exception) {}
 
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Nowhere Active GPS Service",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Silent status indicator when Nowhere GPS simulation is actively running"
+                description = "Continuous high-priority GPS location simulation service"
                 setShowBadge(false)
                 setSound(null, null)
                 enableVibration(false)
@@ -939,6 +1007,8 @@ class MockLocationService : Service() {
         acquireWakeLock()
         activeMode = SimulationMode.Fixed(latitude, longitude, altitude)
         sessionPrefs.isSessionActive = true
+        sessionPrefs.isSessionRunning = true
+        sessionPrefs.isSessionPaused = false
         sessionPrefs.activeMode = "FIXED"
         sessionPrefs.lastLatitude = latitude
         sessionPrefs.lastLongitude = longitude
@@ -1025,11 +1095,14 @@ class MockLocationService : Service() {
                 try {
                     if (!sessionPrefs.isPremiumActive()) {
                         val remaining = sessionPrefs.getTimeRemainingMillis()
-                        if (remaining <= 0L) {
-                            Log.i(TAG, "Continuous session duration expired in background (quota reached).")
+                        if (sessionPrefs.isSessionExpired || remaining <= 0L) {
+                            Log.i(TAG, "Continuous session duration expired in background (quota reached). Disconnecting...")
                             sessionPrefs.isSessionExpired = true
                             sessionPrefs.isSessionRunning = false
+                            sessionPrefs.isSessionActive = false
                             SessionTimerManager.notifySessionExpired(this@MockLocationService)
+                            stopSpoofing()
+                            break
                         }
                     }
 
@@ -1075,7 +1148,7 @@ class MockLocationService : Service() {
                         lastWidgetUpdateTime = now
                         try { updateAllWidgets() } catch (e: Exception) {}
                     }
-                    if (now - lastNotificationUpdateTime >= 500L) {
+                    if (now - lastNotificationUpdateTime >= 1000L) {
                         lastNotificationUpdateTime = now
                         val modeDesc = if (sessionPrefs.activeMode == "MOTION_SYNC") "Motion Sync Active" else "Teleported / Fixed"
                         updateLocationNotification(lat, lon, modeDesc)
@@ -1134,6 +1207,8 @@ class MockLocationService : Service() {
         motionSyncEngine?.setRoutePlaybackActive(true)
 
         sessionPrefs.isSessionActive = true
+        sessionPrefs.isSessionRunning = true
+        sessionPrefs.isSessionPaused = false
         sessionPrefs.activeMode = "ROUTE"
         sessionPrefs.lastSpeedKmh = speedKmh
         sessionPrefs.isLooping = isLooping
@@ -1214,11 +1289,14 @@ class MockLocationService : Service() {
                 try {
                     if (!sessionPrefs.isPremiumActive()) {
                         val remaining = sessionPrefs.getTimeRemainingMillis()
-                        if (remaining <= 0L) {
-                            Log.i(TAG, "Route session duration expired in background (quota reached).")
+                        if (sessionPrefs.isSessionExpired || remaining <= 0L) {
+                            Log.i(TAG, "Route session duration expired in background (quota reached). Disconnecting...")
                             sessionPrefs.isSessionExpired = true
                             sessionPrefs.isSessionRunning = false
+                            sessionPrefs.isSessionActive = false
                             SessionTimerManager.notifySessionExpired(this@MockLocationService)
+                            stopSpoofing()
+                            break
                         }
                     }
 
@@ -1270,7 +1348,7 @@ class MockLocationService : Service() {
                             }
 
                             // Real-time foreground notification progress update in background (every 500ms)
-                            if (now - lastNotificationUpdateTime >= 500L) {
+                            if (now - lastNotificationUpdateTime >= 1000L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(simLoc.latitude, simLoc.longitude, "Route Active (${transportMode.title})")
                             }
@@ -1442,6 +1520,8 @@ class MockLocationService : Service() {
 
         activeMode = SimulationMode.Joystick(startLat, startLon, speedKmh)
         sessionPrefs.isSessionActive = true
+        sessionPrefs.isSessionRunning = true
+        sessionPrefs.isSessionPaused = false
         sessionPrefs.activeMode = "JOYSTICK"
         sessionPrefs.lastLatitude = startLat
         sessionPrefs.lastLongitude = startLon
@@ -1516,11 +1596,14 @@ class MockLocationService : Service() {
                 try {
                     if (!sessionPrefs.isPremiumActive()) {
                         val remaining = sessionPrefs.getTimeRemainingMillis()
-                        if (remaining <= 0L) {
-                            Log.i(TAG, "Joystick session duration expired in background (quota reached).")
+                        if (sessionPrefs.isSessionExpired || remaining <= 0L) {
+                            Log.i(TAG, "Joystick session duration expired in background (quota reached). Disconnecting...")
                             sessionPrefs.isSessionExpired = true
                             sessionPrefs.isSessionRunning = false
+                            sessionPrefs.isSessionActive = false
                             SessionTimerManager.notifySessionExpired(this@MockLocationService)
+                            stopSpoofing()
+                            break
                         }
                     }
 
@@ -1567,8 +1650,8 @@ class MockLocationService : Service() {
                                 bearingDegrees = joystickAngleDeg
                             )
 
-                            // Real-time notification update during joystick movement (every 500ms)
-                            if (now - lastNotificationUpdateTime >= 500L) {
+                            // Real-time notification update during joystick movement (every 1000ms)
+                            if (now - lastNotificationUpdateTime >= 1000L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(newLat, newLon, "Joystick Active (${String.format(java.util.Locale.US, "%.1f km/h", joystickSpeedKmh * joystickMagnitude)})")
                             }
@@ -1595,8 +1678,8 @@ class MockLocationService : Service() {
                                 bearingDegrees = joystickAngleDeg
                             )
 
-                            // Real-time notification update when joystick is stationary (every 500ms)
-                            if (now - lastNotificationUpdateTime >= 500L) {
+                            // Real-time notification update when joystick is stationary (every 1000ms)
+                            if (now - lastNotificationUpdateTime >= 1000L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(joystickLat, joystickLon, "Joystick Active (Stationary)")
                             }
@@ -1662,7 +1745,10 @@ class MockLocationService : Service() {
     }
 
     private fun restoreActiveSession() {
-        if (!sessionPrefs.isSessionActive) return
+        if (!sessionPrefs.isSessionActive || sessionPrefs.isSessionExpired || (!sessionPrefs.isPremiumActive() && sessionPrefs.getTimeRemainingMillis() <= 0L)) {
+            Log.d(TAG, "restoreActiveSession: session inactive or expired, skipping restore.")
+            return
+        }
         // If simulation is already running (e.g. watchdog fired while active), skip restore
         if (simulationJob?.isActive == true) {
             Log.d(TAG, "restoreActiveSession: simulation already active, skipping.")
@@ -1758,8 +1844,11 @@ class MockLocationService : Service() {
         if (MockLocationServiceReceiver.activeService == this) MockLocationServiceReceiver.activeService = null
 
         val userStopped = isStopping.get() // set true only by stopSpoofing()
-        if (userStopped) {
+        val isExpired = sessionPrefs.isSessionExpired || (!sessionPrefs.isPremiumActive() && sessionPrefs.getTimeRemainingMillis() <= 0L)
+        if (userStopped || isExpired) {
             sessionPrefs.isSessionActive = false
+            sessionPrefs.isSessionRunning = false
+            sessionPrefs.isSessionExpired = true
             SessionTimerManager.stopTimer(this)
             cancelBackgroundRestartAlarm()
         } else if (sessionPrefs.isSessionActive) {
@@ -1777,10 +1866,10 @@ class MockLocationService : Service() {
         try { wifiTriggerHandler?.stop(); wifiTriggerHandler = null } catch (e: Exception) {}
         try { motionSyncEngine?.stop(); motionSyncEngine = null } catch (e: Exception) {}
         try { com.fakegps.mocklocation.hotspot.HotspotLocationServer.stopServer() } catch (e: Exception) {}
-        if (userStopped && settingsPrefs.isAutoVpnSyncEnabled) {
+        if ((userStopped || isExpired) && settingsPrefs.isAutoVpnSyncEnabled) {
             try { com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this) } catch (e: Exception) {}
         }
-        if (userStopped) {
+        if (userStopped || isExpired) {
             try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
             try { engine.stop() } catch (e: Exception) {}
         }

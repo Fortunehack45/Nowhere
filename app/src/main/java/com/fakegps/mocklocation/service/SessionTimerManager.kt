@@ -55,6 +55,7 @@ object SessionTimerManager {
     private var hasFired30s = false
     private var hasFired10s = false
     private var hasFiredExpired = false
+    private var lastTickNotifiedSec = -1L
 
     fun startOrResumeTimer(context: Context, durationMillis: Long = SessionPreferences.DEFAULT_SESSION_DURATION_MILLIS) {
         val sessionPrefs = SessionPreferences(context)
@@ -169,6 +170,7 @@ object SessionTimerManager {
         hasFired30s = false
         hasFired10s = false
         hasFiredExpired = false
+        lastTickNotifiedSec = -1L
     }
 
     private fun startTickerLoop(appContext: Context) {
@@ -228,8 +230,7 @@ object SessionTimerManager {
                     if (remainingMillis <= 0L) {
                         sessionPrefs.isSessionExpired = true
                         sessionPrefs.isSessionRunning = false
-                        // Keep sessionPrefs.isSessionActive true so background mock location injection persists
-                        // until user explicitly taps STOP.
+                        sessionPrefs.isSessionActive = false
                         val state = SessionTimerState(
                             isRunning = false,
                             isExpired = true,
@@ -248,6 +249,34 @@ object SessionTimerManager {
                         }
                         try {
                             NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                            NowhereAppWidgetProvider.updateAllWidgets(appContext)
+                        } catch (e: Exception) {}
+
+                        // Auto-disconnect mock location simulation when timer ends
+                        try {
+                            val service = MockLocationService.activeInstance ?: MockLocationServiceReceiver.activeService
+                            if (service != null) {
+                                service.stopSpoofing()
+                            } else {
+                                val stopIntent = Intent(appContext, MockLocationService::class.java).apply {
+                                    action = MockLocationService.ACTION_STOP
+                                }
+                                appContext.startService(stopIntent)
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Error stopping spoofing upon timer expiry: ${e.message}")
+                        }
+                        try {
+                            com.fakegps.mocklocation.engine.MockLocationEngine(appContext).stop()
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Error stopping MockLocationEngine upon timer expiry: ${e.message}")
+                        }
+                        try {
+                            com.fakegps.mocklocation.service.FloatingJoystickService.stop(appContext)
+                        } catch (e: Exception) {}
+                        try {
+                            val nm = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                            nm?.cancel(MockLocationService.NOTIFICATION_ID)
                         } catch (e: Exception) {}
                         break
                     } else {
@@ -275,6 +304,17 @@ object SessionTimerManager {
                             NowhereAppWidgetProvider.updateAllWidgets(appContext)
                         } catch (e: Exception) {
                             Log.w(TAG, "Non-fatal error updating widgets from ticker: ${e.message}")
+                        }
+
+                        // Real-time notification timer update on 1-second boundaries
+                        if (remainingSecs != lastTickNotifiedSec) {
+                            lastTickNotifiedSec = remainingSecs
+                            try {
+                                val service = MockLocationService.activeInstance ?: MockLocationServiceReceiver.activeService
+                                service?.refreshNotificationTimer()
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Non-fatal error updating notification timer from ticker: ${e.message}")
+                            }
                         }
                     }
                 }

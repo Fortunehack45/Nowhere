@@ -2481,6 +2481,12 @@ class MainActivity : AppCompatActivity() {
                         binding.tvSessionTimerBadge.text = getString(R.string.status_expired)
                         binding.tvSessionTimerBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.badge_error_text))
                         binding.ivSessionTimerIcon.imageTintList = ContextCompat.getColorStateList(this@MainActivity, R.color.badge_error_text)
+                        if (isSimRunning) {
+                            stopSpoofing()
+                            com.fakegps.mocklocation.ui.dialogs.SessionExtendDialog(this@MainActivity, isExpiredPrompt = true) {
+                                startFixedSpoofing()
+                            }.show()
+                        }
                     } else {
                         binding.layoutSessionTimerBadge.visibility = View.GONE
                     }

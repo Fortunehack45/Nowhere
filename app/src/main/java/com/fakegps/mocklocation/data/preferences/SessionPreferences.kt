@@ -197,7 +197,17 @@ class SessionPreferences(private val context: Context) {
 
     var isSessionExpired: Boolean
         get() = prefs.getBoolean("key_is_session_expired", false)
-        set(value) = prefs.edit().putBoolean("key_is_session_expired", value).apply()
+        set(value) {
+            prefs.edit().putBoolean("key_is_session_expired", value).apply()
+            if (value) {
+                prefs.edit()
+                    .putLong("key_session_remaining_duration_millis", 0L)
+                    .putLong("key_session_expires_timestamp", 0L)
+                    .putBoolean(KEY_IS_SESSION_ACTIVE, false)
+                    .putBoolean("key_is_session_running", false)
+                    .apply()
+            }
+        }
 
     var sessionRemainingDurationMillis: Long
         get() = prefs.getLong("key_session_remaining_duration_millis", -1L)
@@ -285,6 +295,7 @@ class SessionPreferences(private val context: Context) {
 
     fun getTimeRemainingMillis(): Long {
         if (isPremiumActive()) return Long.MAX_VALUE
+        if (isSessionExpired) return 0L
         if (isSessionRunning && !isSessionPaused && sessionExpiresTimestamp > 0L) {
             val now = System.currentTimeMillis()
             val remaining = sessionExpiresTimestamp - now
