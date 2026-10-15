@@ -33,7 +33,8 @@ class MockLocationService : Service() {
 
     companion object {
         private const val TAG = "MockLocationService"
-        const val CHANNEL_ID = "mock_location_foreground_channel"
+        const val CHANNEL_ID = "mock_location_foreground_channel_v2"
+        private const val OLD_CHANNEL_ID = "mock_location_foreground_channel"
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START_FIXED = "action_start_fixed"
@@ -86,6 +87,21 @@ class MockLocationService : Service() {
     // Dedicated independent coroutine scope that runs continuously in background
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(serviceJob + Dispatchers.Default)
+
+    // Dedicated high-priority hardware injection dispatcher:
+    // Pinned to THREAD_PRIORITY_URGENT_DISPLAY so the Linux CPU scheduler never throttles
+    // GPS injection ticks, guaranteeing 500ms delivery parity with active launcher widgets.
+    private val hardwareTickExecutor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor { runnable ->
+        Thread({
+            try {
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY)
+            } catch (ignored: Throwable) {}
+            runnable.run()
+        }, "Nowhere-GpsTickThread").apply {
+            priority = Thread.MAX_PRIORITY
+        }
+    }
+    private val hardwareTickDispatcher = hardwareTickExecutor.asCoroutineDispatcher()
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var wakeLockRenewalJob: Job? = null
@@ -523,10 +539,16 @@ class MockLocationService : Service() {
             .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this))
             .setContentIntent(openAppPendingIntent)
             .setOngoing(true)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setOnlyAlertOnce(true)
+            .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
+            .apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                }
+            }
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -671,9 +693,15 @@ class MockLocationService : Service() {
                     .setColor(com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this@MockLocationService))
                     .setContentIntent(openAppPendingIntent)
                     .setOngoing(true)
-                    .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                    .setOnlyAlertOnce(true)
+                    .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .apply {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                        }
+                    }
 
                 if (isRoute) {
                     builder.setProgress(100, progress, false)
@@ -738,17 +766,23 @@ class MockLocationService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java) ?: return
+            try {
+                manager.deleteNotificationChannel(OLD_CHANNEL_ID)
+            } catch (ignored: Exception) {}
+
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Nowhere Location Service",
-                NotificationManager.IMPORTANCE_LOW
+                "Nowhere Active GPS Service",
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Notifies when Nowhere GPS simulation is actively running"
                 setShowBadge(false)
+                setSound(null, null)
+                enableVibration(false)
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
-            val manager = getSystemService(NotificationManager::class.java)
-            manager?.createNotificationChannel(channel)
+            manager.createNotificationChannel(channel)
         }
     }
 
@@ -832,9 +866,9 @@ class MockLocationService : Service() {
 
     private fun startContinuousHeartbeatLoop() {
         if (simulationJob?.isActive == true) return
-        simulationJob = serviceScope.launch(Dispatchers.IO) {
+        simulationJob = serviceScope.launch(hardwareTickDispatcher) {
             try {
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY)
             } catch (ignored: Throwable) {}
             if (!engine.isEngineActive()) {
                 engine.initialize()
@@ -1016,9 +1050,9 @@ class MockLocationService : Service() {
         }
         updateAllWidgets()
 
-        simulationJob = serviceScope.launch(Dispatchers.IO) {
+        simulationJob = serviceScope.launch(hardwareTickDispatcher) {
             try {
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY)
             } catch (ignored: Throwable) {}
             if (!engine.isEngineActive()) {
                 engine.initialize()
@@ -1319,9 +1353,9 @@ class MockLocationService : Service() {
             updateAllWidgets()
         }
 
-        simulationJob = serviceScope.launch(Dispatchers.IO) {
+        simulationJob = serviceScope.launch(hardwareTickDispatcher) {
             try {
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY)
             } catch (ignored: Throwable) {}
             if (!engine.isEngineActive()) {
                 engine.initialize()
@@ -1604,6 +1638,7 @@ class MockLocationService : Service() {
             try { com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Mock GPS service destroyed") } catch (e: Exception) {}
             try { engine.stop() } catch (e: Exception) {}
         }
+        try { hardwareTickExecutor.shutdownNow() } catch (ignored: Throwable) {}
         serviceJob.cancel()
         super.onDestroy()
     }
