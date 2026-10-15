@@ -222,7 +222,7 @@ object SessionTimerManager {
                     delay(30_000L) // Sleep for 30 seconds since unlimited state is static
                     continue
                 } else {
-                    val remainingMillis = sessionPrefs.decrementRemainingTime()
+                    val remainingMillis = sessionPrefs.decrementRemainingTime(500L)
                     val totalAllocated = sessionPrefs.sessionAllocatedDurationMillis
 
                     if (remainingMillis <= 0L) {
@@ -269,19 +269,17 @@ object SessionTimerManager {
                             isUnlimited = false
                         )
 
-                        // Throttled home screen widget refresh (every 10s or when minute rolls)
-                        if (remainingSecs % 10L == 0L) {
-                            try {
-                                NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
-                                NowhereAppWidgetProvider.updateAllWidgets(appContext)
-                            } catch (e: Exception) {
-                                Log.w(TAG, "Non-fatal error updating widgets from ticker: ${e.message}")
-                            }
+                        // Real-time home screen widget refresh on every 500ms
+                        try {
+                            NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                            NowhereAppWidgetProvider.updateAllWidgets(appContext)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Non-fatal error updating widgets from ticker: ${e.message}")
                         }
                     }
                 }
 
-                delay(1000L)
+                delay(500L)
             }
         }
     }

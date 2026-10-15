@@ -264,11 +264,11 @@ class MockLocationService : Service() {
                 bearingDegrees = bearing
             )
             val now = android.os.SystemClock.elapsedRealtime()
-            if (now - lastMotionNotifUpdateTime >= 2000L) {
+            if (now - lastMotionNotifUpdateTime >= 500L) {
                 lastMotionNotifUpdateTime = now
                 updateLocationNotification(lat, lon, "Motion Sync Active")
             }
-            if (now - lastMotionWidgetUpdateTime >= 4000L) {
+            if (now - lastMotionWidgetUpdateTime >= 500L) {
                 lastMotionWidgetUpdateTime = now
                 updateAllWidgets()
             }
@@ -786,13 +786,12 @@ class MockLocationService : Service() {
             val runningState = _serviceState.value as? ServiceState.Running
             val isRoute = activeMode is SimulationMode.Route && runningState != null && runningState.totalDistanceMeters > 0
             val isPaused = isSimulationPaused || (runningState?.isPaused == true)
-            val progress = if (isRoute && runningState != null && runningState.totalDistanceMeters > 0) {
+            val progress = if (isRoute && runningState != null) {
                 ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt().coerceIn(0, 100)
             } else 0
 
             val coveredStr = if (isRoute && runningState != null) String.format(Locale.US, "%.2f km", runningState.distanceCoveredMeters / 1000.0) else ""
             val totalStr = if (isRoute && runningState != null) String.format(Locale.US, "%.2f km", runningState.totalDistanceMeters / 1000.0) else ""
-            val remainingStr = if (isRoute && runningState != null) String.format(Locale.US, "%.2f km", runningState.distanceRemainingMeters / 1000.0) else ""
             val speedKmh = if (runningState != null) runningState.speedMps * 3.6f else 0.0f
             val speedMps = runningState?.speedMps?.coerceAtLeast(0.1f) ?: 0.1f
             val etaSec = if (isRoute && runningState != null && speedMps > 0.3f && runningState.distanceRemainingMeters > 5.0) {
@@ -813,10 +812,6 @@ class MockLocationService : Service() {
             } else {
                 "⏱️ $remainingTimeStr left • $coordsText"
             }
-
-            val routeDetails = if (isRoute) {
-                "\n📍 Route: $coveredStr / $totalStr ($progress%) • $remainingStr left\n⏱️ ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
-            } else ""
 
             val isDark = when (settingsPrefs.appTheme) {
                 "LIGHT" -> false
@@ -865,12 +860,6 @@ class MockLocationService : Service() {
             if (isRoute) {
                 builder.setProgress(100, progress, false)
             }
-
-            builder.setStyle(
-                NotificationCompat.BigTextStyle()
-                    .setBigContentTitle(notifTitle)
-                    .bigText("$coordsText$routeDetails\nGPS Mocking active in background across all apps.")
-            )
 
             if (activeMode is SimulationMode.Route) {
                 val pauseResumePendingIntent = getPauseResumePendingIntent(isPaused)
@@ -1082,11 +1071,11 @@ class MockLocationService : Service() {
                     }
 
                     val now = android.os.SystemClock.elapsedRealtime()
-                    if (now - lastWidgetUpdateTime >= 15000L) {
+                    if (now - lastWidgetUpdateTime >= 500L) {
                         lastWidgetUpdateTime = now
                         try { updateAllWidgets() } catch (e: Exception) {}
                     }
-                    if (now - lastNotificationUpdateTime >= 5000L) {
+                    if (now - lastNotificationUpdateTime >= 500L) {
                         lastNotificationUpdateTime = now
                         val modeDesc = if (sessionPrefs.activeMode == "MOTION_SYNC") "Motion Sync Active" else "Teleported / Fixed"
                         updateLocationNotification(lat, lon, modeDesc)
@@ -1274,14 +1263,14 @@ class MockLocationService : Service() {
                             sessionPrefs.routeCoveredDistanceMeters = simLoc.distanceCoveredMeters
                             sessionPrefs.routeRemainingDistanceMeters = simLoc.distanceRemainingMeters
 
-                            // Periodic home screen widget update in background (every 5s)
-                            if (now - lastWidgetUpdateTime >= 5000L) {
+                            // Real-time home screen widget update in background (every 500ms)
+                            if (now - lastWidgetUpdateTime >= 500L) {
                                 lastWidgetUpdateTime = now
                                 try { updateAllWidgets() } catch (e: Exception) {}
                             }
 
-                            // Real-time foreground notification progress update in background (every 2s)
-                            if (now - lastNotificationUpdateTime >= 2000L) {
+                            // Real-time foreground notification progress update in background (every 500ms)
+                            if (now - lastNotificationUpdateTime >= 500L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(simLoc.latitude, simLoc.longitude, "Route Active (${transportMode.title})")
                             }
@@ -1536,7 +1525,7 @@ class MockLocationService : Service() {
                     }
 
                     val now = android.os.SystemClock.elapsedRealtime()
-                    if (now - lastWidgetUpdateTime >= 5000L) {
+                    if (now - lastWidgetUpdateTime >= 500L) {
                         lastWidgetUpdateTime = now
                         try { updateAllWidgets() } catch (e: Exception) {}
                     }
@@ -1578,8 +1567,8 @@ class MockLocationService : Service() {
                                 bearingDegrees = joystickAngleDeg
                             )
 
-                            // Real-time notification update during joystick movement (every 2s)
-                            if (now - lastNotificationUpdateTime >= 2000L) {
+                            // Real-time notification update during joystick movement (every 500ms)
+                            if (now - lastNotificationUpdateTime >= 500L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(newLat, newLon, "Joystick Active (${String.format(java.util.Locale.US, "%.1f km/h", joystickSpeedKmh * joystickMagnitude)})")
                             }
@@ -1606,8 +1595,8 @@ class MockLocationService : Service() {
                                 bearingDegrees = joystickAngleDeg
                             )
 
-                            // Periodic notification update when joystick is stationary (every 5s)
-                            if (now - lastNotificationUpdateTime >= 5000L) {
+                            // Real-time notification update when joystick is stationary (every 500ms)
+                            if (now - lastNotificationUpdateTime >= 500L) {
                                 lastNotificationUpdateTime = now
                                 updateLocationNotification(joystickLat, joystickLon, "Joystick Active (Stationary)")
                             }

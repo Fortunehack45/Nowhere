@@ -231,12 +231,9 @@ class SessionPreferences(private val context: Context) {
             isSessionExpired = false
             return
         }
-        if (!forceRestart && !isSessionExpired && getTimeRemainingMillis() > 0L) {
+        val hasActiveQuota = hasValidActiveSession()
+        if (!forceRestart && hasActiveQuota) {
             val remaining = getTimeRemainingMillis()
-            // If session was paused or stopped, resume expiry from now
-            if (!isSessionActive || sessionExpiresTimestamp <= now) {
-                sessionExpiresTimestamp = now + remaining
-            }
             sessionRemainingDurationMillis = remaining
             isSessionActive = true
             isSessionRunning = false
@@ -256,6 +253,7 @@ class SessionPreferences(private val context: Context) {
         if (isPremiumActive()) {
             isSessionActive = true
             isSessionExpired = false
+            isSessionRunning = true
             return
         }
         val now = System.currentTimeMillis()
@@ -263,19 +261,20 @@ class SessionPreferences(private val context: Context) {
         val updatedRemaining = currentRemaining + extraMillis
         sessionRemainingDurationMillis = updatedRemaining
         sessionAllocatedDurationMillis = if (sessionAllocatedDurationMillis > 0L) sessionAllocatedDurationMillis + extraMillis else updatedRemaining
-        sessionExpiresTimestamp = if (isSessionActive && sessionExpiresTimestamp > now) {
+        sessionExpiresTimestamp = if (sessionExpiresTimestamp > now) {
             sessionExpiresTimestamp + extraMillis
         } else {
             now + updatedRemaining
         }
         isSessionExpired = false
         isSessionActive = true
+        isSessionRunning = true
         isSessionPaused = false
     }
 
     fun getEffectiveExpiryTimestamp(): Long {
         if (isPremiumActive()) return Long.MAX_VALUE
-        if (isSessionActive && sessionExpiresTimestamp > 0L) {
+        if (sessionExpiresTimestamp > 0L) {
             return sessionExpiresTimestamp
         }
         if (sessionRemainingDurationMillis >= 0L) {
