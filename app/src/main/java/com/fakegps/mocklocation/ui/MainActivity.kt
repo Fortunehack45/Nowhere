@@ -949,7 +949,6 @@ class MainActivity : AppCompatActivity() {
         updateFixedPinMarker(lat, lon)
 
         if (viewModel.uiState.value.isServiceRunning && viewModel.uiState.value.selectedTab == SelectedModeTab.FIXED) {
-            mockService?.startFixed(lat, lon)
             val intent = Intent(this@MainActivity, MockLocationService::class.java).apply {
                 action = MockLocationService.ACTION_START_FIXED
                 putExtra(MockLocationService.EXTRA_LATITUDE, lat)
@@ -1507,7 +1506,6 @@ class MainActivity : AppCompatActivity() {
                 putExtra(MockLocationService.EXTRA_LONGITUDE, lon)
             }
             startForegroundServiceCompat(intent)
-            mockService?.startMotionSync(lat, lon)
             lifecycleScope.launch(Dispatchers.IO) {
                 AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setMotionSyncEnabled(true)
             }
@@ -1521,7 +1519,6 @@ class MainActivity : AppCompatActivity() {
             action = MockLocationService.ACTION_STOP_MOTION_SYNC
         }
         startService(intent)
-        mockService?.stopMotionSync()
         com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
         lifecycleScope.launch(Dispatchers.IO) {
             AppDatabase.getInstance(this@MainActivity).automationSettingsDao().setMotionSyncEnabled(false)
@@ -1604,11 +1601,10 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnRoutePause.setOnClickListener {
             val isPaused = (viewModel.uiState.value.serviceState as? ServiceState.Running)?.isPaused == true
-            if (isPaused) {
-                mockService?.resumeRoute()
-            } else {
-                mockService?.pauseRoute()
+            val intent = Intent(this, MockLocationService::class.java).apply {
+                action = if (isPaused) MockLocationService.ACTION_RESUME_ROUTE else MockLocationService.ACTION_PAUSE_ROUTE
             }
+            startService(intent)
         }
     }
 
@@ -1651,7 +1647,6 @@ class MainActivity : AppCompatActivity() {
                 if (!viewModel.uiState.value.isServiceRunning && magnitude > 0.02f) {
                     startJoystickSpoofing()
                 }
-                mockService?.updateJoystickVector(angleDegrees, magnitude, speedKmh)
                 MockLocationServiceReceiver.sendJoystickUpdate(this@MainActivity, angleDegrees, magnitude, speedKmh)
             }
         })
@@ -1922,7 +1917,21 @@ class MainActivity : AppCompatActivity() {
         } else if (!sessionPrefs.hasPromptedWifiScanningWarning && PermissionHelper.isGoogleLocationAccuracyPromptNeeded(this)) {
             hasPromptedBackgroundHealthThisSession = true
             sessionPrefs.hasPromptedWifiScanningWarning = true
+            sessionPrefs.lastScanningReminderTimestampMs = System.currentTimeMillis()
             com.fakegps.mocklocation.ui.dialogs.GoogleMapsBlueDotDialog(this).show()
+        } else if (PermissionHelper.isGoogleLocationAccuracyPromptNeeded(this)) {
+            val now = System.currentTimeMillis()
+            val dayMillis = 24 * 60 * 60 * 1000L
+            if (now - sessionPrefs.lastScanningReminderTimestampMs >= dayMillis) {
+                sessionPrefs.lastScanningReminderTimestampMs = now
+                com.google.android.material.snackbar.Snackbar.make(
+                    binding.root,
+                    "Disable Wi-Fi scanning for stable Google Maps blue dot",
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).setAction("Settings") {
+                    PermissionHelper.openLocationScanningSettings(this)
+                }.show()
+            }
         }
     }
 
@@ -1944,7 +1953,6 @@ class MainActivity : AppCompatActivity() {
                 putExtra(MockLocationService.EXTRA_LONGITUDE, state.fixedLongitude)
             }
             startForegroundServiceCompat(intent)
-            mockService?.startFixed(state.fixedLatitude, state.fixedLongitude)
             com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
         }
     }
@@ -2022,13 +2030,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        mockService?.startRoute(
-            waypoints = waypointsToRun,
-            speedKmh = state.routeSpeedKmh,
-            isLooping = state.isRouteLooping,
-            transportMode = state.transportMode
-        )
-
         val intent = Intent(this, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_START_ROUTE
             putExtra(MockLocationService.EXTRA_SPEED_KMH, state.routeSpeedKmh)
@@ -2057,7 +2058,6 @@ class MainActivity : AppCompatActivity() {
                 putExtra(MockLocationService.EXTRA_SPEED_KMH, state.joystickSpeedKmh)
             }
             startForegroundServiceCompat(intent)
-            mockService?.startJoystick(state.fixedLatitude, state.fixedLongitude, state.joystickSpeedKmh)
             com.fakegps.mocklocation.util.AppReviewManager.recordSuccessfulAction(this)
         }
     }
@@ -2071,7 +2071,6 @@ class MainActivity : AppCompatActivity() {
             action = MockLocationService.ACTION_STOP
         }
         startService(intent)
-        mockService?.stopSpoofing()
         try {
             com.fakegps.mocklocation.service.FloatingJoystickService.stop(this)
         } catch (ignored: Exception) {}

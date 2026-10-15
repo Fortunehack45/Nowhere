@@ -255,4 +255,35 @@ class MockLocationServiceTest {
         assertNotNull("Receiver should restart MockLocationService on dead sim with active session", nextStartedService)
         assertEquals(MockLocationService.ACTION_RESTORE_SESSION, nextStartedService.action)
     }
+
+    @Test
+    fun testStartFixed_idempotentAndCheapTeleport() {
+        val lat1 = 37.7749
+        val lon1 = -122.4194
+        val alt1 = 15.0
+
+        service.startFixed(lat1, lon1, alt1)
+        val firstJob = service.simulationJob
+        assertNotNull("Simulation job should be started", firstJob)
+        assertTrue("Simulation job should be active", firstJob!!.isActive)
+
+        val sessionPrefs = SessionPreferences(context)
+        val initialExpiry = sessionPrefs.sessionExpiresTimestamp
+
+        // Second call with same coordinates: should be cheap no-op
+        service.startFixed(lat1, lon1, alt1)
+        assertSame("Same coordinates must keep the same active simulation job", firstJob, service.simulationJob)
+        assertEquals("Timer expiry must not be reset", initialExpiry, sessionPrefs.sessionExpiresTimestamp)
+
+        // Third call with different coordinates (teleport): should update currentSim* without cancelling loop
+        val lat2 = 40.7128
+        val lon2 = -74.0060
+        service.startFixed(lat2, lon2, 25.0)
+
+        assertSame("Teleport must keep the same active simulation job without restarting", firstJob, service.simulationJob)
+        assertEquals(lat2, service.currentSimLat, 0.0001)
+        assertEquals(lon2, service.currentSimLon, 0.0001)
+        assertEquals(lat2, sessionPrefs.lastLatitude, 0.0001)
+        assertEquals(lon2, sessionPrefs.lastLongitude, 0.0001)
+    }
 }

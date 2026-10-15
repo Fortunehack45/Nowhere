@@ -67,8 +67,9 @@ jobs:
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           fi
           # Ensure branded AAB exists for Google Play Store release
-          if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
-            cp "app/build/outputs/bundle/release/app-release.aab" "app/build/outputs/bundle/release/Nowhere-v${VERSION}-release.aab"
+          AAB_FILE=$(ls app/build/outputs/bundle/release/*.aab 2>/dev/null | head -n 1)
+          if [ -n "$AAB_FILE" ] && [ ! -f "app/build/outputs/bundle/release/Nowhere-v${VERSION}-release.aab" ]; then
+            cp "$AAB_FILE" "app/build/outputs/bundle/release/Nowhere-v${VERSION}-release.aab"
           fi
 
       - name: Publish GitHub Release (Progressive Updates)

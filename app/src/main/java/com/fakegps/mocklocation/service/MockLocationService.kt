@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
-class MockLocationService : Service() {
+open class MockLocationService : Service() {
 
     companion object {
         private const val TAG = "MockLocationService"
@@ -112,7 +112,7 @@ class MockLocationService : Service() {
     private val _serviceState = MutableStateFlow<ServiceState>(ServiceState.Idle)
     val serviceState: StateFlow<ServiceState> = _serviceState.asStateFlow()
 
-    private var simulationJob: Job? = null
+    internal var simulationJob: Job? = null
     var activeMode: SimulationMode = SimulationMode.Idle
     @Volatile var isSimulationPaused: Boolean = false
     private var routeSimulator: RouteSimulator? = null
@@ -128,11 +128,11 @@ class MockLocationService : Service() {
     private var joystickMagnitude: Float = 0.0f
 
     // Unified simulation coordinate state for continuous heartbeat pulsing
-    @Volatile private var currentSimLat: Double = 0.0
-    @Volatile private var currentSimLon: Double = 0.0
-    @Volatile private var currentSimAlt: Double = 15.0
-    @Volatile private var currentSimSpeedMps: Float = 0.0f
-    @Volatile private var currentSimBearing: Float = 0.0f
+    @Volatile internal var currentSimLat: Double = 0.0
+    @Volatile internal var currentSimLon: Double = 0.0
+    @Volatile internal var currentSimAlt: Double = 15.0
+    @Volatile internal var currentSimSpeedMps: Float = 0.0f
+    @Volatile internal var currentSimBearing: Float = 0.0f
 
     // Automation Engines (Wifi triggers and Motion-linked mock movement)
     private var wifiTriggerHandler: com.fakegps.mocklocation.automation.engine.WifiTriggerHandler? = null
@@ -1032,11 +1032,67 @@ class MockLocationService : Service() {
         }
     }
 
-    fun startFixed(latitude: Double, longitude: Double, altitude: Double = 15.0, fromRestore: Boolean = false) {
+    open fun startFixed(latitude: Double, longitude: Double, altitude: Double = 15.0, fromRestore: Boolean = false) {
         activeInstance = this
         MockLocationServiceReceiver.activeService = this
         isStopping.set(false)
         isSimulationPaused = false
+
+        // Idempotent and cheap teleport: if fixed simulation is already active, do not stop or restart the loop
+        if (simulationJob?.isActive == true && activeMode is SimulationMode.Fixed && !fromRestore) {
+            val isSameCoords = kotlin.math.abs(currentSimLat - latitude) < 1e-7 &&
+                    kotlin.math.abs(currentSimLon - longitude) < 1e-7 &&
+                    kotlin.math.abs(currentSimAlt - altitude) < 1e-3
+            if (isSameCoords) {
+                Log.d(TAG, "startFixed called with identical coordinates while already running: no-op")
+                return
+            }
+
+            Log.i(TAG, "Cheap teleport in active fixed mode to ($latitude, $longitude)")
+            activeMode = SimulationMode.Fixed(latitude, longitude, altitude)
+            sessionPrefs.lastLatitude = latitude
+            sessionPrefs.lastLongitude = longitude
+            sessionPrefs.lastAltitude = altitude
+            currentSimLat = latitude
+            currentSimLon = longitude
+            currentSimAlt = altitude
+            currentSimSpeedMps = 0.0f
+            currentSimBearing = 0.0f
+            _serviceState.value = ServiceState.Running(
+                mode = activeMode,
+                latitude = latitude,
+                longitude = longitude,
+                altitude = altitude,
+                speedMps = 0.0f,
+                bearingDegrees = 0.0f,
+                isPaused = false
+            )
+            updateAllWidgets()
+
+            serviceScope.launch(Dispatchers.IO) {
+                com.fakegps.mocklocation.weather.WeatherManager.fetchWeather(this@MockLocationService, latitude, longitude)
+            }
+
+            com.fakegps.mocklocation.hotspot.HotspotLocationServer.updateLocation(latitude, longitude, altitude, 0.0f, 0.0f)
+            val placeName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+                sessionPrefs.lastLocationName
+            } else {
+                com.fakegps.mocklocation.util.LocationNameResolver.getCachedLocationName(latitude, longitude) ?: String.format(Locale.US, "%.5f°, %.5f°", latitude, longitude)
+            }
+            startForegroundNotification(
+                "📍 $placeName",
+                String.format(Locale.US, "Fixed Location • %.5f°, %.5f°", latitude, longitude)
+            )
+            updateLocationNotification(latitude, longitude, "Teleported / Fixed")
+
+            com.fakegps.mocklocation.util.LocationNameResolver.resolveLocationNameAsync(this, latitude, longitude) { resolvedName ->
+                sessionPrefs.lastLocationName = resolvedName
+                updateLocationNotification(latitude, longitude, "Teleported / Fixed")
+                updateAllWidgets()
+            }
+            return
+        }
+
         stopCurrentLoop()
         acquireWakeLock()
         activeMode = SimulationMode.Fixed(latitude, longitude, altitude)
@@ -1121,7 +1177,7 @@ class MockLocationService : Service() {
             if (!engine.isEngineActive()) {
                 engine.initialize()
             } else if (!engine.isGmsMockModeEngaged) {
-                engine.ensureGmsMockMode(2000L)
+                engine.requestGmsReengage()
             }
             var lastNotificationUpdateTime = 0L
             var lastWidgetUpdateTime = 0L
@@ -1310,7 +1366,7 @@ class MockLocationService : Service() {
             if (!engine.isEngineActive()) {
                 engine.initialize()
             } else if (!engine.isGmsMockModeEngaged) {
-                engine.ensureGmsMockMode(2000L)
+                engine.requestGmsReengage()
             }
             var lastTickTime = android.os.SystemClock.elapsedRealtime()
             var lastWidgetUpdateTime = 0L
@@ -1620,7 +1676,7 @@ class MockLocationService : Service() {
             if (!engine.isEngineActive()) {
                 engine.initialize()
             } else if (!engine.isGmsMockModeEngaged) {
-                engine.ensureGmsMockMode(2000L)
+                engine.requestGmsReengage()
             }
             val deltaSeconds = 0.1
             var lastWidgetUpdateTime = 0L
