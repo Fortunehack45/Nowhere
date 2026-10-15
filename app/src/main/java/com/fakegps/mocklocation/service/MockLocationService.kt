@@ -632,9 +632,43 @@ class MockLocationService : Service() {
 
         views.setTextColor(R.id.tvWidgetLocationName, primaryText)
         views.setTextColor(R.id.tvWidgetCoords, secondaryText)
+        views.setTextColor(R.id.tvWidgetTimerStatic, secondaryText)
+        views.setTextColor(R.id.chronometerWidgetTimer, primaryColor)
         views.setTextColor(R.id.tvWidgetStatus, primaryColor)
         views.setTextColor(R.id.btnWidgetJoystick, primaryColor)
         views.setInt(R.id.btnWidgetOpenApp, "setColorFilter", secondaryText)
+
+        // Real-time hardware Chronometer ticking via SystemUI (never freezes)
+        val isPremium = sessionPrefs.isPremiumActive()
+        val expiry = sessionPrefs.getEffectiveExpiryTimestamp()
+        val isSessionRunning = sessionPrefs.isSessionRunning
+        val nowMs = System.currentTimeMillis()
+
+        if (isPremium) {
+            views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.GONE)
+            views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.VISIBLE)
+            views.setTextViewText(R.id.tvWidgetTimerStatic, "⏱️ UNLIMITED")
+        } else if (isPaused) {
+            views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.GONE)
+            views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.VISIBLE)
+            views.setTextViewText(R.id.tvWidgetTimerStatic, "⏱️ PAUSED (${sessionPrefs.formatRemainingTime()})")
+        } else if (isSessionRunning && expiry > nowMs) {
+            val remainingMillis = (expiry - nowMs).coerceAtLeast(0L)
+            val baseRealtime = android.os.SystemClock.elapsedRealtime() + remainingMillis
+            views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.GONE)
+            views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.VISIBLE)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                views.setChronometerCountDown(R.id.chronometerWidgetTimer, true)
+            }
+            views.setChronometer(R.id.chronometerWidgetTimer, baseRealtime, "⏱️ %s", true)
+        } else if (sessionPrefs.isSessionExpired) {
+            views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.GONE)
+            views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.VISIBLE)
+            views.setTextViewText(R.id.tvWidgetTimerStatic, "⏱️ EXPIRED")
+        } else {
+            views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.GONE)
+            views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.GONE)
+        }
 
         // Teleport / Stop button in notification
         views.setTextViewText(R.id.btnWidgetTeleport, "Stop")
@@ -675,7 +709,7 @@ class MockLocationService : Service() {
 
         val remoteViews = buildNotificationRemoteViews(
             locationName = locationTitle,
-            coordsText = formattedSubtitle,
+            coordsText = contentSubtitle,
             statusText = "● GPS LOCKED",
             isRoute = activeMode is SimulationMode.Route,
             isPaused = isSimulationPaused,
@@ -882,7 +916,7 @@ class MockLocationService : Service() {
 
             val remoteViews = buildNotificationRemoteViews(
                 locationName = placeName,
-                coordsText = "$coordsText • ⏱️ $remainingTimeStr left",
+                coordsText = coordsText,
                 statusText = statusText,
                 isRoute = isRoute,
                 isPaused = isPaused,
@@ -1144,11 +1178,11 @@ class MockLocationService : Service() {
                     }
 
                     val now = android.os.SystemClock.elapsedRealtime()
-                    if (now - lastWidgetUpdateTime >= 500L) {
+                    if (now - lastWidgetUpdateTime >= 5000L) {
                         lastWidgetUpdateTime = now
                         try { updateAllWidgets() } catch (e: Exception) {}
                     }
-                    if (now - lastNotificationUpdateTime >= 1000L) {
+                    if (now - lastNotificationUpdateTime >= 2000L) {
                         lastNotificationUpdateTime = now
                         val modeDesc = if (sessionPrefs.activeMode == "MOTION_SYNC") "Motion Sync Active" else "Teleported / Fixed"
                         updateLocationNotification(lat, lon, modeDesc)

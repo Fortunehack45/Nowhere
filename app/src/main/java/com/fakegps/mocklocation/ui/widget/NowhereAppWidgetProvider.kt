@@ -93,8 +93,41 @@ class NowhereAppWidgetProvider : AppWidgetProvider() {
 
             views.setTextColor(R.id.tvWidgetLocationName, primaryText)
             views.setTextColor(R.id.tvWidgetCoords, secondaryText)
+            views.setTextColor(R.id.tvWidgetTimerStatic, secondaryText)
+            views.setTextColor(R.id.chronometerWidgetTimer, primaryColor)
             views.setTextColor(R.id.btnWidgetJoystick, primaryColor)
             views.setInt(R.id.btnWidgetOpenApp, "setColorFilter", secondaryText)
+
+            val isPremium = sessionPrefs.isPremiumActive()
+            val expiry = sessionPrefs.getEffectiveExpiryTimestamp()
+            val isPaused = sessionPrefs.isSessionPaused
+            val nowMs = System.currentTimeMillis()
+
+            if (isPremium) {
+                views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.GONE)
+                views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.VISIBLE)
+                views.setTextViewText(R.id.tvWidgetTimerStatic, "⏱️ UNLIMITED")
+            } else if (isPaused) {
+                views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.GONE)
+                views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.VISIBLE)
+                views.setTextViewText(R.id.tvWidgetTimerStatic, "⏱️ PAUSED")
+            } else if (isSimRunning && sessionPrefs.isSessionRunning && expiry > nowMs) {
+                val remainingMillis = (expiry - nowMs).coerceAtLeast(0L)
+                val baseRealtime = android.os.SystemClock.elapsedRealtime() + remainingMillis
+                views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.GONE)
+                views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.VISIBLE)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    views.setChronometerCountDown(R.id.chronometerWidgetTimer, true)
+                }
+                views.setChronometer(R.id.chronometerWidgetTimer, baseRealtime, "⏱️ %s", true)
+            } else if (sessionPrefs.isSessionExpired) {
+                views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.GONE)
+                views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.VISIBLE)
+                views.setTextViewText(R.id.tvWidgetTimerStatic, "⏱️ EXPIRED")
+            } else {
+                views.setViewVisibility(R.id.chronometerWidgetTimer, android.view.View.GONE)
+                views.setViewVisibility(R.id.tvWidgetTimerStatic, android.view.View.GONE)
+            }
 
             if (isSimRunning) {
                 views.setTextViewText(R.id.tvWidgetStatus, "ACTIVE")

@@ -298,23 +298,18 @@ object SessionTimerManager {
                             isUnlimited = false
                         )
 
-                        // Real-time home screen widget refresh on every 500ms
-                        try {
-                            NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
-                            NowhereAppWidgetProvider.updateAllWidgets(appContext)
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Non-fatal error updating widgets from ticker: ${e.message}")
+                        // Home screen widget refresh throttled to 5 seconds to eliminate IPC lag
+                        if (remainingSecs % 5L == 0L && remainingSecs != lastTickNotifiedSec) {
+                            try {
+                                NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                                NowhereAppWidgetProvider.updateAllWidgets(appContext)
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Non-fatal error updating widgets from ticker: ${e.message}")
+                            }
                         }
 
-                        // Real-time notification timer update on 1-second boundaries
                         if (remainingSecs != lastTickNotifiedSec) {
                             lastTickNotifiedSec = remainingSecs
-                            try {
-                                val service = MockLocationService.activeInstance ?: MockLocationServiceReceiver.activeService
-                                service?.refreshNotificationTimer()
-                            } catch (e: Exception) {
-                                Log.w(TAG, "Non-fatal error updating notification timer from ticker: ${e.message}")
-                            }
                         }
                     }
                 }

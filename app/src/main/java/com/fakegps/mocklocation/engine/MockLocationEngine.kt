@@ -304,7 +304,7 @@ class MockLocationEngine(
             }
 
             // Inject directly into Google Play Services Fused Location Provider Client.
-            // Feeds authoritative high-accuracy fixes for both "gps" and "fused" so Google Maps
+            // Feeds authoritative high-accuracy GPS fixes with full GNSS satellite metadata so Google Maps
             // immediately locks a solid, bright blue dot with direction beam, permanently eliminating the ash/grey dot.
             try {
                 val gmsGpsFix = Location(LocationManager.GPS_PROVIDER).apply {
@@ -328,43 +328,21 @@ class MockLocationEngine(
                     }
                 }
 
+                // Apply Ghost Cloak GNSS satellite bundle (PRNs, SNR/cn0, NMEA, clock sync)
+                val cloakedGmsFix = ghostCloakEngine.cloakLocation(gmsGpsFix, nowMs, nowNanos)
+
                 // Primary injection for Google Play Services Fused Location Provider Client
-                fusedLocationClient.setMockLocation(gmsGpsFix)
+                fusedLocationClient.setMockLocation(cloakedGmsFix)
                     .addOnFailureListener { e ->
                         Log.w(TAG, "GMS setMockLocation(GPS) failed: ${e.message}, re-engaging mock mode...")
                         isGmsMockModeEngaged = false
                         try {
                             fusedLocationClient.setMockMode(true).addOnSuccessListener {
                                 isGmsMockModeEngaged = true
-                                fusedLocationClient.setMockLocation(gmsGpsFix)
+                                fusedLocationClient.setMockLocation(cloakedGmsFix)
                             }
                         } catch (ignored: Exception) {}
                     }
-
-                // Complementary fused-tagged fix in its own isolated try-catch
-                try {
-                    val gmsFusedFix = Location("fused").apply {
-                        this.latitude = finalLat
-                        this.longitude = finalLon
-                        this.altitude = finalAltitude
-                        this.speed = speed
-                        this.bearing = bearing
-                        this.accuracy = horizontalAccuracy.coerceIn(2.0f, 3.2f)
-                        this.time = nowMs
-                        this.elapsedRealtimeNanos = nowNanos
-
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            this.bearingAccuracyDegrees = bearingAccuracy
-                            this.speedAccuracyMetersPerSecond = speedAccuracy
-                            this.verticalAccuracyMeters = verticalAccuracy
-                        }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            this.mslAltitudeMeters = finalAltitude
-                            this.mslAltitudeAccuracyMeters = verticalAccuracy
-                        }
-                    }
-                    fusedLocationClient.setMockLocation(gmsFusedFix)
-                } catch (ignored: Throwable) {}
             } catch (t: Throwable) {
                 Log.w(TAG, "GMS mock injection exception: ${t.message}")
             }
