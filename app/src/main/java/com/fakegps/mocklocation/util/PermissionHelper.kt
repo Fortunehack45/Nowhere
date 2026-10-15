@@ -324,4 +324,25 @@ object PermissionHelper {
         }
         return false
     }
+
+    fun isGoogleLocationAccuracyPromptNeeded(context: Context): Boolean {
+        return isWifiScanningEnabled(context) || isBleScanningEnabled(context)
+    }
+
+    fun openGoogleMapsAppInfo(context: Context) {
+        val intents = arrayOf(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:com.google.android.apps.maps")
+            },
+            Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS),
+            Intent(Settings.ACTION_SETTINGS)
+        )
+        for (intent in intents) {
+            try {
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                context.startActivity(intent)
+                return
+            } catch (ignored: Exception) {}
+        }
+    }
 }

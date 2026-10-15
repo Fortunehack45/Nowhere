@@ -243,7 +243,7 @@ class AntiDetectionBottomSheet : BottomSheetDialogFragment() {
             binding.tvDiagWifiScan.text = getString(R.string.anti_detect_wifi_scan_detected)
             binding.ivDiagWifiScanIcon.imageTintList = ContextCompat.getColorStateList(ctx, R.color.badge_warning_text)
             binding.layoutWifiScanNotice.setOnClickListener {
-                PermissionHelper.openLocationScanningSettings(ctx)
+                GoogleMapsBlueDotDialog(requireActivity()).show()
             }
         } else {
             binding.tvDiagWifiScan.text = getString(R.string.anti_detect_wifi_scan_disabled)

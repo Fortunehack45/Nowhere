@@ -13,6 +13,8 @@ import com.fakegps.mocklocation.data.preferences.AppSettingsPreferences
 import com.fakegps.mocklocation.util.PermissionHelper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Tasks
+import java.util.concurrent.TimeUnit
 
 /**
  * Low-level mock location provider engine interfacing directly with Android's LocationManager
@@ -37,11 +39,15 @@ class MockLocationEngine(
 
     // Google Play Services Fused Location Provider Client (direct GMS mock injection)
     private val fusedLocationClient: FusedLocationProviderClient by lazy {
-        LocationServices.getFusedLocationProviderClient(context)
+        LocationServices.getFusedLocationProviderClient(context.applicationContext)
     }
 
     @Volatile
     private var isInitialized = false
+
+    @Volatile
+    var isGmsMockModeEngaged = false
+        private set
 
     private val registeredProviders = mutableSetOf<String>()
     private var lastGmsMockModeCheck = 0L
@@ -57,19 +63,32 @@ class MockLocationEngine(
     }
 
     /**
-     * Re-engages GMS Fused Location Provider mock mode safely.
+     * Synchronously engages or verifies GMS Fused Location Provider mock mode.
+     * When running on a background worker thread, uses Tasks.await() with timeout
+     * to eliminate startup race conditions where setMockLocation is called before mock mode is active.
      */
-    fun ensureGmsMockMode() {
-        try {
-            fusedLocationClient.setMockMode(true)
-                .addOnSuccessListener {
-                    Log.d(TAG, "GMS FusedLocationProviderClient mock mode successfully engaged.")
-                }
-                .addOnFailureListener { e ->
+    fun ensureGmsMockMode(timeoutMs: Long = 3000L): Boolean {
+        return try {
+            val task = fusedLocationClient.setMockMode(true)
+            if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+                Tasks.await(task, timeoutMs, TimeUnit.MILLISECONDS)
+                isGmsMockModeEngaged = true
+                Log.d(TAG, "GMS FusedLocationProviderClient mock mode successfully engaged (synchronous).")
+                true
+            } else {
+                task.addOnSuccessListener {
+                    isGmsMockModeEngaged = true
+                    Log.d(TAG, "GMS FusedLocationProviderClient mock mode successfully engaged (async).")
+                }.addOnFailureListener { e ->
+                    isGmsMockModeEngaged = false
                     Log.w(TAG, "GMS FusedLocationProviderClient setMockMode warning: ${e.message}")
                 }
+                isGmsMockModeEngaged
+            }
         } catch (e: Exception) {
+            isGmsMockModeEngaged = false
             Log.w(TAG, "Could not setMockMode on GMS FusedLocationProviderClient: ${e.message}")
+            false
         }
     }
 
@@ -279,52 +298,47 @@ class MockLocationEngine(
 
         if (lastSuccessfulLocation != null) {
             val nowRealtime = SystemClock.elapsedRealtime()
-            if (nowRealtime - lastGmsMockModeCheck >= 30_000L) {
+            if (!isGmsMockModeEngaged || nowRealtime - lastGmsMockModeCheck >= 30_000L) {
                 lastGmsMockModeCheck = nowRealtime
-                ensureGmsMockMode()
+                ensureGmsMockMode(1000L)
             }
 
-            // Inject directly into Google Play Services Fused Location Provider Client
-            // Injects both "fused" and GPS_PROVIDER so Google Maps FusedLocationProvider and all GMS
-            // location listeners receive authoritative fixes without falling back to stale/grey state ("ash dot").
+            // Inject directly into Google Play Services Fused Location Provider Client.
+            // Feeds a single, authoritative, high-accuracy GPS fix so Google Maps FusedLocationProvider
+            // immediately locks a solid, bright blue dot with direction beam, permanently eliminating the ash/grey dot.
             try {
-                val gmsFusedFix = Location(lastSuccessfulLocation).apply {
-                    provider = FUSED_PROVIDER_NAME
-                    accuracy = horizontalAccuracy.coerceIn(2.5f, 3.8f)
-                    time = nowMs
-                    elapsedRealtimeNanos = nowNanos
+                val gmsFix = Location(LocationManager.GPS_PROVIDER).apply {
+                    this.latitude = finalLat
+                    this.longitude = finalLon
+                    this.altitude = finalAltitude
+                    this.speed = speed
+                    this.bearing = bearing
+                    this.accuracy = horizontalAccuracy.coerceIn(2.0f, 3.5f)
+                    this.time = nowMs
+                    this.elapsedRealtimeNanos = nowNanos
+
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        bearingAccuracyDegrees = 1.0f
-                        speedAccuracyMetersPerSecond = 0.1f
-                        verticalAccuracyMeters = 1.0f
-                    }
-                }
-                val gmsGpsFix = Location(lastSuccessfulLocation).apply {
-                    provider = LocationManager.GPS_PROVIDER
-                    accuracy = horizontalAccuracy.coerceIn(2.5f, 3.8f)
-                    time = nowMs
-                    elapsedRealtimeNanos = nowNanos
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        bearingAccuracyDegrees = 1.0f
-                        speedAccuracyMetersPerSecond = 0.1f
-                        verticalAccuracyMeters = 1.0f
+                        this.bearingAccuracyDegrees = bearingAccuracy
+                        this.speedAccuracyMetersPerSecond = speedAccuracy
+                        this.verticalAccuracyMeters = verticalAccuracy
                     }
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        mslAltitudeMeters = finalAltitude
-                        mslAltitudeAccuracyMeters = 1.0f
+                        this.mslAltitudeMeters = finalAltitude
+                        this.mslAltitudeAccuracyMeters = verticalAccuracy
                     }
                 }
 
-                fusedLocationClient.setMockLocation(gmsFusedFix).addOnFailureListener { e ->
-                    Log.w(TAG, "GMS setMockLocation(fused) failed: ${e.message}, re-engaging mock mode...")
-                    try {
-                        fusedLocationClient.setMockMode(true).addOnSuccessListener {
-                            fusedLocationClient.setMockLocation(gmsFusedFix)
-                            fusedLocationClient.setMockLocation(gmsGpsFix)
-                        }
-                    } catch (ignored: Exception) {}
-                }
-                fusedLocationClient.setMockLocation(gmsGpsFix)
+                fusedLocationClient.setMockLocation(gmsFix)
+                    .addOnFailureListener { e ->
+                        Log.w(TAG, "GMS setMockLocation failed: ${e.message}, re-engaging mock mode...")
+                        isGmsMockModeEngaged = false
+                        try {
+                            fusedLocationClient.setMockMode(true).addOnSuccessListener {
+                                isGmsMockModeEngaged = true
+                                fusedLocationClient.setMockLocation(gmsFix)
+                            }
+                        } catch (ignored: Exception) {}
+                    }
             } catch (ignored: Throwable) {}
             return Result.success(lastSuccessfulLocation)
         } else {
@@ -341,6 +355,7 @@ class MockLocationEngine(
         try {
             fusedLocationClient.setMockMode(false)
         } catch (ignored: Exception) {}
+        isGmsMockModeEngaged = false
 
         val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
         for (provider in providers) {

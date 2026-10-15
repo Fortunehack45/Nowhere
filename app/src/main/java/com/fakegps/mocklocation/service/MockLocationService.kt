@@ -836,6 +836,11 @@ class MockLocationService : Service() {
             try {
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
             } catch (ignored: Throwable) {}
+            if (!engine.isEngineActive()) {
+                engine.initialize()
+            } else if (!engine.isGmsMockModeEngaged) {
+                engine.ensureGmsMockMode(2000L)
+            }
             var lastNotificationUpdateTime = 0L
             var lastWidgetUpdateTime = 0L
             while (isActive) {
@@ -1015,6 +1020,11 @@ class MockLocationService : Service() {
             try {
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
             } catch (ignored: Throwable) {}
+            if (!engine.isEngineActive()) {
+                engine.initialize()
+            } else if (!engine.isGmsMockModeEngaged) {
+                engine.ensureGmsMockMode(2000L)
+            }
             var lastTickTime = android.os.SystemClock.elapsedRealtime()
             var lastWidgetUpdateTime = 0L
             var lastNotificationUpdateTime = 0L
@@ -1313,6 +1323,11 @@ class MockLocationService : Service() {
             try {
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
             } catch (ignored: Throwable) {}
+            if (!engine.isEngineActive()) {
+                engine.initialize()
+            } else if (!engine.isGmsMockModeEngaged) {
+                engine.ensureGmsMockMode(2000L)
+            }
             val deltaSeconds = 0.1
             var lastWidgetUpdateTime = 0L
             var lastNotificationUpdateTime = 0L

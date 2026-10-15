@@ -73,5 +73,23 @@ class MockLocationEngineTest {
 
         engine.stop()
         assertFalse("Engine should be inactive after stop()", engine.isEngineActive())
+        assertFalse("GMS mock mode should be marked inactive after stop()", engine.isGmsMockModeEngaged)
+    }
+
+    @Test
+    fun testEnsureGmsMockMode_doesNotCrash() {
+        val result = engine.ensureGmsMockMode(1000L)
+        // In Robolectric without full GMS Play Services process, ensureGmsMockMode handles gracefully
+        assertNotNull(result)
+    }
+
+    @Test
+    fun testSetLocation_stationaryAccuracyBound() {
+        engine.initialize()
+        val result = engine.setLocation(40.7128, -74.0060, 10.0, 0.0f, 0.0f, false)
+        assertTrue(result.isSuccess)
+        val loc = result.getOrNull()
+        assertNotNull(loc)
+        assertTrue("Accuracy should be between 2.0 and 5.0m for solid blue dot", loc!!.accuracy in 2.0f..5.0f)
     }
 }
