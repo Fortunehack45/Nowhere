@@ -272,10 +272,10 @@ class MockLocationEngine(
             }
 
             // Inject directly into Google Play Services Fused Location Provider Client
-            // Uses "fused" provider so Google Maps FusedLocationProvider receives the exact high-accuracy fix
+            // Uses GPS_PROVIDER so Google Maps FusedLocationProvider accepts it as authoritative GPS fix
             try {
                 val gmsFix = Location(lastSuccessfulLocation).apply {
-                    provider = FUSED_PROVIDER_NAME
+                    provider = LocationManager.GPS_PROVIDER
                     accuracy = horizontalAccuracy.coerceIn(2.5f, 4.0f)
                     time = nowMs
                     elapsedRealtimeNanos = nowNanos

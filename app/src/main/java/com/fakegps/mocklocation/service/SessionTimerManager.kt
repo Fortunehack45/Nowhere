@@ -228,7 +228,8 @@ object SessionTimerManager {
                     if (remainingMillis <= 0L) {
                         sessionPrefs.isSessionExpired = true
                         sessionPrefs.isSessionRunning = false
-                        sessionPrefs.isSessionActive = false
+                        // Keep sessionPrefs.isSessionActive true so background mock location injection persists
+                        // until user explicitly taps STOP.
                         val state = SessionTimerState(
                             isRunning = false,
                             isExpired = true,
@@ -245,7 +246,9 @@ object SessionTimerManager {
                             hasFiredExpired = true
                             notifySessionExpired(appContext)
                         }
-                        NowhereAppWidgetProvider.updateAllWidgets(appContext)
+                        try {
+                            NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                        } catch (e: Exception) {}
                         break
                     } else {
                         val remainingSecs = remainingMillis / 1000L
@@ -266,9 +269,15 @@ object SessionTimerManager {
                             isUnlimited = false
                         )
 
-                        // Real-time home screen widget refresh (every second)
-                        NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
-                        NowhereAppWidgetProvider.updateAllWidgets(appContext)
+                        // Throttled home screen widget refresh (every 10s or when minute rolls)
+                        if (remainingSecs % 10L == 0L) {
+                            try {
+                                NowhereSessionTimerWidgetProvider.updateAllSessionWidgets(appContext)
+                                NowhereAppWidgetProvider.updateAllWidgets(appContext)
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Non-fatal error updating widgets from ticker: ${e.message}")
+                            }
+                        }
                     }
                 }
 

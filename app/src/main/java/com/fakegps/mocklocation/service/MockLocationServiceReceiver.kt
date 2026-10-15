@@ -53,20 +53,20 @@ class MockLocationServiceReceiver : BroadcastReceiver() {
                     return
                 }
                 if (MockLocationService.isSimulationRunning()) {
-                    (MockLocationService.activeInstance ?: activeService)?.scheduleWatchdog() // healthy: re-arm the keepalive
-                } else {
-                    val restore = Intent(context, MockLocationService::class.java).apply {
-                        action = MockLocationService.ACTION_RESTORE_SESSION
+                    android.util.Log.d("MockLocationReceiver", "Simulation is actively running. No action required.")
+                    return
+                }
+                val restore = Intent(context, MockLocationService::class.java).apply {
+                    action = MockLocationService.ACTION_RESTORE_SESSION
+                }
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(restore)
+                    } else {
+                        context.startService(restore)
                     }
-                    try {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            context.startForegroundService(restore)
-                        } else {
-                            context.startService(restore)
-                        }
-                    } catch (e: Exception) {
-                        android.util.Log.w("MockLocationReceiver", "Restart blocked by OS: ${e.message}")
-                    }
+                } catch (t: Throwable) {
+                    android.util.Log.w("MockLocationReceiver", "Restart blocked by OS: ${t.message}")
                 }
             }
         }

@@ -200,6 +200,23 @@ class MockLocationService : Service() {
         activeInstance = this
         MockLocationServiceReceiver.activeService = this
         acquireWakeLock()
+
+        // Guarantee Android's 5-second startForeground contract is immediately satisfied
+        // for any startForegroundService intent, preventing RemoteServiceException crashes.
+        if (intent?.action != ACTION_STOP) {
+            val placeName = if (sessionPrefs.lastLocationName.isNotBlank() && sessionPrefs.lastLocationName != "Mock Location Active") {
+                sessionPrefs.lastLocationName
+            } else if (sessionPrefs.isSessionActive) {
+                String.format(Locale.US, "%.5f°, %.5f°", sessionPrefs.lastLatitude, sessionPrefs.lastLongitude)
+            } else {
+                "Nowhere Location Service"
+            }
+            startForegroundNotification(
+                "📍 $placeName",
+                "Nowhere Active • Location Simulation"
+            )
+        }
+
         when (intent?.action) {
             ACTION_STOP -> stopSpoofing()
             ACTION_PAUSE_ROUTE -> pauseRoute()
@@ -346,8 +363,7 @@ class MockLocationService : Service() {
             if (simulationJob == null || !simulationJob!!.isActive) {
                 startContinuousHeartbeatLoop()
             }
-            scheduleBackgroundRestartAlarm(1000L)
-            scheduleWatchdog()
+            // Do not alarm ourselves while service is actively running in foreground
         }
     }
 
@@ -564,7 +580,6 @@ class MockLocationService : Service() {
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
-        scheduleWatchdog()
     }
 
     private fun updateLocationNotification(lat: Double, lon: Double, modeDescription: String = "Active") {
@@ -697,36 +712,9 @@ class MockLocationService : Service() {
     }
 
     fun scheduleWatchdog() {
-        if (!sessionPrefs.isSessionActive) return
-        try {
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
-            val broadcastIntent = Intent(applicationContext, MockLocationServiceReceiver::class.java).apply {
-                action = MockLocationServiceReceiver.ACTION_RESTORE_MOCK_SESSION
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                applicationContext,
-                999,
-                broadcastIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val triggerTime = android.os.SystemClock.elapsedRealtime() + 60_000L // 60s keepalive check
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(
-                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.set(
-                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            }
-            Log.d(TAG, "Watchdog alarm scheduled for 60s safety heartbeat.")
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not schedule watchdog alarm: ${e.message}")
-        }
+        // Disabled: Recurring 60s alarms while foreground service is active trigger
+        // ForegroundServiceStartNotAllowedException / RemoteServiceException crashes on Android 12-15.
+        cancelWatchdog()
     }
 
     private fun cancelWatchdog() {
