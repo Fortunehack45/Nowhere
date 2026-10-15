@@ -10,6 +10,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 object LocationNameResolver {
 
@@ -70,23 +72,18 @@ object LocationNameResolver {
                     val geocoder = Geocoder(context, Locale.getDefault())
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         var resolvedName: String? = null
-                        val lock = Object()
+                        val latch = CountDownLatch(1)
                         geocoder.getFromLocation(latitude, longitude, 1) { addresses ->
-                            synchronized(lock) {
-                                if (addresses.isNotEmpty()) {
-                                    resolvedName = formatAddress(addresses[0])
-                                }
-                                lock.notifyAll()
+                            if (addresses.isNotEmpty()) {
+                                resolvedName = formatAddress(addresses[0])
                             }
+                            latch.countDown()
                         }
-                        synchronized(lock) {
-                            if (resolvedName == null) {
-                                lock.wait(1200)
-                            }
-                        }
-                        if (!resolvedName.isNullOrBlank() && !resolvedName!!.matches(Regex("^[0-9\\-+, .°]+$"))) {
-                            cache[cacheKey] = resolvedName!!
-                            return@withContext resolvedName!!
+                        latch.await(1200, TimeUnit.MILLISECONDS)
+                        val name = resolvedName
+                        if (!name.isNullOrBlank() && !name.matches(Regex("^[0-9\\-+, .°]+$"))) {
+                            cache[cacheKey] = name
+                            return@withContext name
                         }
                     } else {
                         @Suppress("DEPRECATION")
@@ -195,23 +192,19 @@ object LocationNameResolver {
                     val geocoder = Geocoder(context, Locale.US)
                     val addresses: List<Address>? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         var list: List<Address>? = null
-                        val lock = Object()
+                        val latch = CountDownLatch(1)
                         geocoder.getFromLocation(latitude, longitude, 1) { res ->
-                            synchronized(lock) {
-                                list = res
-                                lock.notifyAll()
-                            }
+                            list = res
+                            latch.countDown()
                         }
-                        synchronized(lock) {
-                            if (list == null) lock.wait(500)
-                        }
+                        latch.await(500, TimeUnit.MILLISECONDS)
                         list
                     } else {
                         @Suppress("DEPRECATION")
                         geocoder.getFromLocation(latitude, longitude, 1)
                     }
 
-                    if (addresses != null && addresses.isNotEmpty()) {
+                    if (!addresses.isNullOrEmpty()) {
                         val addr = addresses[0]
                         val thoroughfare = addr.thoroughfare
                         val subThoroughfare = addr.subThoroughfare
@@ -256,12 +249,10 @@ object LocationNameResolver {
                     val json = JSONObject(body)
                     val category = json.optString("category")
                     val type = json.optString("type")
-                    val addressObj = json.optJSONObject("address")
 
-                    val isWaterTag = category == "natural" && (type == "water" || type == "bay" || type == "coastline" || type == "beach") ||
+                    val isWater = category == "natural" && (type == "water" || type == "bay" || type == "coastline" || type == "beach") ||
                             category == "waterway" || type == "sea" || type == "ocean" || type == "lake" || type == "harbour"
 
-                    val isWater = isWaterTag
                     waterCache[cacheKey] = isWater
                     return@withContext isWater
                 }

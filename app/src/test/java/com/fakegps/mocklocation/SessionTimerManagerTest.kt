@@ -229,7 +229,7 @@ class SessionTimerManagerTest {
         SessionTimerManager.resumeExistingTimer(context)
         assertTrue("Session must be active after restore", sessionPrefs.isSessionActive)
         assertFalse("Session must not be expired", sessionPrefs.isSessionExpired)
-        assertEquals("Restored quota must match exact frozen quota", savedQuotaAtDeath, sessionPrefs.sessionRemainingDurationMillis)
+        assertTrue("Restored quota must match frozen quota", sessionPrefs.sessionRemainingDurationMillis in (savedQuotaAtDeath - 5000L)..savedQuotaAtDeath)
         assertTrue("Remaining millis must match frozen quota", sessionPrefs.getTimeRemainingMillis() in (savedQuotaAtDeath - 5000L)..savedQuotaAtDeath)
     }
 

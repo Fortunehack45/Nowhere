@@ -69,23 +69,17 @@ class AppReviewBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.btnRateOnPlayStore.setOnClickListener {
-            context?.let { ctx ->
-                AppReviewManager.openPlayStoreReview(ctx)
-            }
+            AppReviewManager.openPlayStoreReview(context)
             dismiss()
         }
 
         binding.btnRemindLater.setOnClickListener {
-            context?.let { ctx ->
-                AppReviewManager.onRemindLater(ctx)
-            }
+            AppReviewManager.onRemindLater(context)
             dismiss()
         }
 
         binding.btnNeverAskAgain.setOnClickListener {
-            context?.let { ctx ->
-                AppReviewManager.onNeverAskAgain(ctx)
-            }
+            AppReviewManager.onNeverAskAgain(context)
             dismiss()
         }
     }

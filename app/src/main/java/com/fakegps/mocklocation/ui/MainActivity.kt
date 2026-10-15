@@ -11,6 +11,8 @@ import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -367,7 +369,7 @@ class MainActivity : AppCompatActivity() {
         com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
 
         lifecycleScope.launch {
-            kotlinx.coroutines.delay(2500L)
+            kotlinx.coroutines.delay(2500.milliseconds)
             val updateInfo = com.fakegps.mocklocation.util.AppUpdateManager.checkForUpdates(this@MainActivity)
             if (updateInfo.isUpdateAvailable && updateInfo.appUpdateInfo != null && !isFinishing && !isDestroyed) {
                 com.fakegps.mocklocation.util.AppUpdateManager.startPlayUpdateFlow(this@MainActivity, updateInfo.appUpdateInfo)
@@ -520,7 +522,6 @@ class MainActivity : AppCompatActivity() {
         if (svc != null) {
             if (svc.isSimulationPaused) return false
             val state = svc.serviceState.value
-            if (state is ServiceState.Running && state.isPaused) return false
             return svc.activeMode !is com.fakegps.mocklocation.simulator.SimulationMode.Idle || state is ServiceState.Running
         }
         return false
@@ -778,7 +779,7 @@ class MainActivity : AppCompatActivity() {
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
             setTileSource(settingsPrefs.getOsmTileSource())
             setMultiTouchControls(true)
-            setTilesScaledToDpi(true) // Crisp retina high-DPI map rendering
+            isTilesScaledToDpi = true // Crisp retina high-DPI map rendering
             isHorizontalMapRepetitionEnabled = true
             isVerticalMapRepetitionEnabled = false
             isFlingEnabled = true
@@ -838,7 +839,7 @@ class MainActivity : AppCompatActivity() {
                     android.view.MotionEvent.ACTION_MOVE -> {
                         if (isOneHandedZoomActive) {
                             val deltaY = lastTouchY - event.y
-                            if (Math.abs(deltaY) > 2f) {
+                            if (abs(deltaY) > 2f) {
                                 val zoomDelta = deltaY * 0.0025
                                 val currentZoom = binding.mapView.zoomLevelDouble
                                 val newZoom = (currentZoom + zoomDelta).coerceIn(3.0, 21.0)
@@ -1013,13 +1014,14 @@ class MainActivity : AppCompatActivity() {
 
         val directCoords = com.fakegps.mocklocation.ui.MainViewModel.parseCoordinates(currentQuery)
         if (directCoords != null) {
+            val (directLat, directLon) = directCoords
             overlay.cardDirectCoordinateJump.visibility = View.VISIBLE
-            overlay.tvDetectedCoordinates.text = String.format(java.util.Locale.US, "%.5f, %.5f", directCoords.first, directCoords.second)
+            overlay.tvDetectedCoordinates.text = String.format(java.util.Locale.US, "%.5f, %.5f", directLat, directLon)
             overlay.btnJumpDirectCoords.setOnClickListener {
-                selectDestinationAndCloseSearch("GPS (${directCoords.first}, ${directCoords.second})", "Direct Coordinates", directCoords.first, directCoords.second)
+                selectDestinationAndCloseSearch("GPS ($directLat, $directLon)", "Direct Coordinates", directLat, directLon)
             }
             overlay.cardDirectCoordinateJump.setOnClickListener {
-                selectDestinationAndCloseSearch("GPS (${directCoords.first}, ${directCoords.second})", "Direct Coordinates", directCoords.first, directCoords.second)
+                selectDestinationAndCloseSearch("GPS ($directLat, $directLon)", "Direct Coordinates", directLat, directLon)
             }
         } else {
             overlay.cardDirectCoordinateJump.visibility = View.GONE
@@ -1248,8 +1250,8 @@ class MainActivity : AppCompatActivity() {
                     if (state.searchResults.isNotEmpty()) {
                         binding.includedSearchOverlay.layoutSearchOverlayEmptyState.visibility = View.GONE
                         binding.includedSearchOverlay.rvSearchOverlayResults.visibility = View.VISIBLE
-                        val liveEntries = state.searchResults.map {
-                            SearchEntry.LiveResult(it.title, it.snippet, it.latitude, it.longitude)
+                        val liveEntries = state.searchResults.map { (title, snippet, latitude, longitude) ->
+                            SearchEntry.LiveResult(title, snippet, latitude, longitude)
                         }
                         unifiedSearchAdapter.submitEntries(liveEntries)
                     } else if (!state.isSearching) {
@@ -1685,7 +1687,7 @@ class MainActivity : AppCompatActivity() {
                 if (e1 == null) return false
                 val diffY: Float = e2.y - e1.y
                 val diffX: Float = e2.x - e1.x
-                if (Math.abs(diffY) > Math.abs(diffX)) {
+                if (abs(diffY) > abs(diffX)) {
                     if (diffY > 30f || velocityY > 250f) {
                         setBottomDeckExpanded(false)
                         return true
@@ -1699,7 +1701,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
                 if (e1 == null) return false
-                if (Math.abs(distanceY) > Math.abs(distanceX) && Math.abs(distanceY) > 20f) {
+                if (abs(distanceY) > abs(distanceX) && abs(distanceY) > 20f) {
                     if (distanceY < -15f) {
                         setBottomDeckExpanded(false)
                         return true
@@ -1777,7 +1779,6 @@ class MainActivity : AppCompatActivity() {
 
         binding.fabOpenFavorites.setOnClickListener {
             FavoritesBottomSheet { favorite ->
-                val sessionPrefs = SessionPreferences(this)
                 sessionPrefs.hasUserSelectedLocation = true
                 viewModel.setFixedCoordinates(favorite.latitude, favorite.longitude)
                 updateFixedPinMarker(favorite.latitude, favorite.longitude)
@@ -1794,7 +1795,6 @@ class MainActivity : AppCompatActivity() {
         binding.fabOpenHistory.setOnClickListener {
             HistoryBottomSheet(
                 onReuseLocation = { lat, lon, name ->
-                    val sessionPrefs = SessionPreferences(this)
                     sessionPrefs.hasUserSelectedLocation = true
                     viewModel.setFixedCoordinates(lat, lon)
                     updateFixedPinMarker(lat, lon)
@@ -1886,6 +1886,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
         // VpnService removed to comply with Google Play Store policy.
     }
@@ -1975,7 +1976,9 @@ class MainActivity : AppCompatActivity() {
             if (state.transportMode == com.fakegps.mocklocation.simulator.TransportMode.SHIP) {
                 Toast.makeText(this, "Validating marine waters...", Toast.LENGTH_SHORT).show()
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val (isValid, reason) = com.fakegps.mocklocation.simulator.RoadRouter.validateMarineRoute(this@MainActivity, effectiveWaypoints)
+                    val marineValidation = com.fakegps.mocklocation.simulator.RoadRouter.validateMarineRoute(this@MainActivity, effectiveWaypoints)
+                    val isValid = marineValidation.first
+                    val reason = marineValidation.second
                     withContext(Dispatchers.Main) {
                         if (!isValid) {
                             MaterialAlertDialogBuilder(this@MainActivity)
@@ -2563,7 +2566,7 @@ class MainActivity : AppCompatActivity() {
         val lon = if (state.isServiceRunning && state.serviceState is ServiceState.Running) state.serviceState.longitude else state.fixedLongitude
         val latDir = if (lat >= 0) "N" else "S"
         val lonDir = if (lon >= 0) "E" else "W"
-        binding.tvFixedCoords.text = String.format("%.5f° %s, %.5f° %s", Math.abs(lat), latDir, Math.abs(lon), lonDir)
+        binding.tvFixedCoords.text = String.format("%.5f° %s, %.5f° %s", abs(lat), latDir, abs(lon), lonDir)
 
         if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
             val speedKmh = state.serviceState.speedMps * 3.6f
@@ -2664,7 +2667,7 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         String.format(Locale.US, "ETA: %02dm %02ds", minutes, seconds)
                     }
-                } else if (remainingMeters <= 5.0 && runningState.totalDistanceMeters > 0) {
+                } else if (remainingMeters <= 5.0) {
                     getString(R.string.eta_arrived)
                 } else {
                     "ETA: --"
@@ -2780,16 +2783,12 @@ class MainActivity : AppCompatActivity() {
                 routePolyline = null
             }
 
-            val pathPoints = if (state.routeWaypoints.isNotEmpty()) {
-                state.routeWaypoints
-            } else if (state.userKeypoints.isNotEmpty()) {
+            val pathPoints = state.routeWaypoints.ifEmpty {
                 state.userKeypoints
-            } else {
-                emptyList()
             }
 
             if (pathPoints.isNotEmpty()) {
-                val geoPoints = pathPoints.map { GeoPoint(it.latitude, it.longitude) }
+                val geoPoints = pathPoints.map { (lat, lon) -> GeoPoint(lat, lon) }
                 if (geoPoints.size >= 2) {
                     routePolyline = Polyline().apply {
                         setPoints(geoPoints)
@@ -2820,7 +2819,9 @@ class MainActivity : AppCompatActivity() {
                     sampled
                 }
 
-                for ((labelIdx, wp) in waypointsToMark) {
+                for (entry in waypointsToMark) {
+                    val labelIdx = entry.first
+                    val wp = entry.second
                     val marker = Marker(binding.mapView).apply {
                         position = GeoPoint(wp.latitude, wp.longitude)
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)

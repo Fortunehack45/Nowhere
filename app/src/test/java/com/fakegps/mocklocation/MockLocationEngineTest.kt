@@ -151,7 +151,8 @@ class MockLocationEngineTest {
 
         // Must still be at most 1 setMockMode call — no redundant calls while healthy!
         assertEquals("setMockMode(true) must be called at most once when GMS is healthy", 1, fakeGms.setMockModeCalls)
-        assertEquals(100, fakeGms.setMockLocationCalls)
+        // 2 calls per injection tick (GPS + Fused provider dual injection to saturate Google Maps Kalman filter)
+        assertEquals(200, fakeGms.setMockLocationCalls)
     }
 
     @Test

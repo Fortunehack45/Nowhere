@@ -492,9 +492,33 @@ class MockLocationEngine(
                         .addOnFailureListener { e ->
                             consecutiveFailures++
                             windowGmsFailures++
-                            Log.w(TAG, "GMS setMockLocation failed (failures=$consecutiveFailures): ${e.message}")
+                            Log.w(TAG, "GMS setMockLocation (gps) failed (failures=$consecutiveFailures): ${e.message}")
                             requestGmsReengage()
                         }
+
+                    // Dual injection: Also feed "fused" provider fix so Google Maps' Kalman filter receives seamless continuous updates
+                    val gmsFusedFix = Location(FUSED_PROVIDER_NAME).apply {
+                        this.latitude = finalLat
+                        this.longitude = finalLon
+                        this.altitude = finalAltitude
+                        this.speed = speed
+                        this.bearing = bearing
+                        this.accuracy = horizontalAccuracy.coerceIn(2.0f, 3.2f)
+                        this.time = nowMs
+                        this.elapsedRealtimeNanos = nowNanos
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            this.bearingAccuracyDegrees = bearingAccuracy
+                            this.speedAccuracyMetersPerSecond = speedAccuracy
+                            this.verticalAccuracyMeters = verticalAccuracy
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            this.mslAltitudeMeters = finalAltitude
+                            this.mslAltitudeAccuracyMeters = verticalAccuracy
+                        }
+                    }
+                    val cloakedFusedFix = ghostCloakEngine.cloakLocation(gmsFusedFix, nowMs, nowNanos)
+                    gmsLocationClient.setMockLocation(cloakedFusedFix)
                 } catch (t: Throwable) {
                     consecutiveFailures++
                     windowGmsFailures++

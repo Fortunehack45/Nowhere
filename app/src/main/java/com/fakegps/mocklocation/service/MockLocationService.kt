@@ -29,16 +29,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.milliseconds
 
 open class MockLocationService : Service() {
 
     companion object {
         private const val TAG = "MockLocationService"
-        const val CHANNEL_ID = "mock_location_foreground_channel_v5"
+        const val CHANNEL_ID = "mock_location_foreground_channel_v6"
         private const val OLD_CHANNEL_ID = "mock_location_foreground_channel"
         private const val OLD_CHANNEL_ID_V2 = "mock_location_foreground_channel_v2"
         private const val OLD_CHANNEL_ID_V3 = "mock_location_foreground_channel_v3"
         private const val OLD_CHANNEL_ID_V4 = "mock_location_foreground_channel_v4"
+        private const val OLD_CHANNEL_ID_V5 = "mock_location_foreground_channel_v5"
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START_FIXED = "action_start_fixed"
@@ -569,7 +571,7 @@ open class MockLocationService : Service() {
         wakeLockRenewalJob = serviceScope.launch {
             try {
                 while (isActive) {
-                    delay(WAKE_LOCK_RENEWAL_INTERVAL_MS)
+                    delay(WAKE_LOCK_RENEWAL_INTERVAL_MS.milliseconds)
                     if (sessionPrefs.isSessionActive && wakeLock?.isHeld == true) {
                         Log.i(TAG, "Periodic wake lock renewal: refreshing 24h hold for active session.")
                         try {
@@ -724,9 +726,9 @@ open class MockLocationService : Service() {
             .setContentIntent(openAppPendingIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCustomContentView(remoteViews)
             .setCustomBigContentView(remoteViews)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
@@ -931,9 +933,9 @@ open class MockLocationService : Service() {
                 .setContentIntent(openAppPendingIntent)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
-                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCustomContentView(remoteViews)
                 .setCustomBigContentView(remoteViews)
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
@@ -1016,11 +1018,14 @@ open class MockLocationService : Service() {
             try {
                 manager.deleteNotificationChannel(OLD_CHANNEL_ID_V4)
             } catch (ignored: Exception) {}
+            try {
+                manager.deleteNotificationChannel(OLD_CHANNEL_ID_V5)
+            } catch (ignored: Exception) {}
 
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Nowhere Active GPS Service",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Continuous high-priority GPS location simulation service"
                 setShowBadge(false)
@@ -1214,7 +1219,7 @@ open class MockLocationService : Service() {
                     if (result.isFailure) {
                         val error = result.exceptionOrNull()
                         Log.w(TAG, "Transient injection error: ${error?.message}, retrying...")
-                        delay(250L)
+                        delay(250.milliseconds)
                         continue
                     } else {
                         val loc = result.getOrNull()
@@ -1252,12 +1257,12 @@ open class MockLocationService : Service() {
                     } else {
                         500L
                     }
-                    delay(loopDelay)
+                    delay(loopDelay.milliseconds)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (t: Throwable) {
                     Log.e(TAG, "Non-fatal error in fixed/motion simulation loop tick: ${t.message}", t)
-                    delay(500L)
+                    delay(500.milliseconds)
                 }
             }
         }
@@ -1306,12 +1311,12 @@ open class MockLocationService : Service() {
         sessionPrefs.lastRouteIndex = initialWaypointIndex
         sessionPrefs.saveWaypoints(waypoints)
 
-        val firstPt = waypoints.first()
+        val (firstLat, firstLon, firstAlt) = waypoints.first()
         _serviceState.value = ServiceState.Running(
             mode = activeMode,
-            latitude = firstPt.latitude,
-            longitude = firstPt.longitude,
-            altitude = firstPt.altitude,
+            latitude = firstLat,
+            longitude = firstLon,
+            altitude = firstAlt,
             speedMps = (speedKmh * 1000f / 3600f),
             bearingDegrees = 0f,
             isPaused = false
@@ -1330,7 +1335,7 @@ open class MockLocationService : Service() {
         // Sync WireGuard VPN Shield if user enabled auto-VPN sync and has active Pro
         val isPremRoute = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
         if (isPremRoute && settingsPrefs.isAutoVpnSyncEnabled && !com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
-            val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(firstPt.latitude, firstPt.longitude)
+            val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(firstLat, firstLon)
             try {
                 sessionPrefs.isIpMaskingEnabled = true
                 com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
@@ -1467,12 +1472,12 @@ open class MockLocationService : Service() {
                             break
                         }
                     }
-                    delay(200L) // Ultra-smooth 200ms route physics & continuous anti-dropout anchor pulse (5Hz)
+                    delay(200.milliseconds) // Ultra-smooth 200ms route physics & continuous anti-dropout anchor pulse (5Hz)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (t: Throwable) {
                     Log.e(TAG, "Non-fatal error in route simulation tick: ${t.message}", t)
-                    delay(200L)
+                    delay(200.milliseconds)
                 }
             }
         }
@@ -1707,12 +1712,14 @@ open class MockLocationService : Service() {
                         val speedMps = (joystickSpeedKmh * 1000f / 3600f) * joystickMagnitude
                         val distanceMeters = speedMps * deltaSeconds
 
-                        val (newLat, newLon) = GeoUtils.computeDestinationPoint(
+                        val dest = GeoUtils.computeDestinationPoint(
                             joystickLat,
                             joystickLon,
                             joystickAngleDeg,
                             distanceMeters
                         )
+                        val newLat = dest.first
+                        val newLon = dest.second
                         joystickLat = newLat
                         joystickLon = newLon
                         sessionPrefs.lastLatitude = newLat
@@ -1776,12 +1783,12 @@ open class MockLocationService : Service() {
                         }
                     }
 
-                    delay(100L)
+                    delay(100.milliseconds)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (t: Throwable) {
                     Log.e(TAG, "Non-fatal error in joystick simulation loop tick: ${t.message}", t)
-                    delay(100L)
+                    delay(100.milliseconds)
                 }
             }
         }
@@ -1924,7 +1931,7 @@ open class MockLocationService : Service() {
                     break
                 }
                 attempts++
-                delay(300L)
+                delay(300.milliseconds)
             }
         }
     }

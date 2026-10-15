@@ -194,7 +194,7 @@ class WelcomeActivity : AppCompatActivity() {
                     page.alpha = 0f
                 }
                 position <= 1 -> {
-                    val factor = 1f - Math.abs(position)
+                    val factor = 1f - kotlin.math.abs(position)
                     page.alpha = 0.35f + factor * 0.65f
                     page.scaleX = 0.94f + factor * 0.06f
                     page.scaleY = 0.94f + factor * 0.06f
@@ -340,16 +340,16 @@ class WelcomeActivity : AppCompatActivity() {
         override fun getItemCount(): Int = steps.size
 
         override fun onBindViewHolder(holder: StepViewHolder, position: Int) {
-            val step = steps[position]
+            val (type, iconRes, badgeText, headlineText, descriptionText, highlights) = steps[position]
             val context = this@WelcomeActivity
 
             with(holder.itemBinding) {
-                ivSlideGraphic.setImageResource(step.iconRes)
-                tvSlideBadge.text = step.badgeText
-                tvSlideHeadline.text = step.headlineText
-                tvSlideDescription.text = step.descriptionText
+                ivSlideGraphic.setImageResource(iconRes)
+                tvSlideBadge.text = badgeText
+                tvSlideHeadline.text = headlineText
+                tvSlideDescription.text = descriptionText
 
-                if (step.type == StepType.SETUP_HUB) {
+                if (type == StepType.SETUP_HUB) {
                     cardFeatureHighlights.visibility = View.GONE
                     cardSetupHub.visibility = View.VISIBLE
 
@@ -451,18 +451,18 @@ class WelcomeActivity : AppCompatActivity() {
                     cardFeatureHighlights.visibility = View.VISIBLE
                     cardSetupHub.visibility = View.GONE
 
-                    if (step.highlights.size >= 3) {
-                        ivHighlight1.setImageResource(step.highlights[0].iconRes)
-                        tvHighlightTitle1.text = step.highlights[0].title
-                        tvHighlightDesc1.text = step.highlights[0].desc
+                    if (highlights.size >= 3) {
+                        ivHighlight1.setImageResource(highlights[0].iconRes)
+                        tvHighlightTitle1.text = highlights[0].title
+                        tvHighlightDesc1.text = highlights[0].desc
 
-                        ivHighlight2.setImageResource(step.highlights[1].iconRes)
-                        tvHighlightTitle2.text = step.highlights[1].title
-                        tvHighlightDesc2.text = step.highlights[1].desc
+                        ivHighlight2.setImageResource(highlights[1].iconRes)
+                        tvHighlightTitle2.text = highlights[1].title
+                        tvHighlightDesc2.text = highlights[1].desc
 
-                        ivHighlight3.setImageResource(step.highlights[2].iconRes)
-                        tvHighlightTitle3.text = step.highlights[2].title
-                        tvHighlightDesc3.text = step.highlights[2].desc
+                        ivHighlight3.setImageResource(highlights[2].iconRes)
+                        tvHighlightTitle3.text = highlights[2].title
+                        tvHighlightDesc3.text = highlights[2].desc
                     }
                 }
             }

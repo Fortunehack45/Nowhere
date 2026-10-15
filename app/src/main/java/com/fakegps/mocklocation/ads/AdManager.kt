@@ -358,7 +358,7 @@ object AdManager {
 
         // Media
         nativeAd.mediaContent?.let { mediaContent ->
-            adView.mediaView?.setMediaContent(mediaContent)
+            adView.mediaView?.mediaContent = mediaContent
             adView.mediaView?.visibility = View.VISIBLE
         } ?: run {
             adView.mediaView?.visibility = View.GONE
