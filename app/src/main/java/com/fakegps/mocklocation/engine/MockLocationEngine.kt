@@ -304,10 +304,10 @@ class MockLocationEngine(
             }
 
             // Inject directly into Google Play Services Fused Location Provider Client.
-            // Feeds a single, authoritative, high-accuracy GPS fix so Google Maps FusedLocationProvider
+            // Feeds authoritative high-accuracy fixes for both "fused" and "gps" so Google Maps
             // immediately locks a solid, bright blue dot with direction beam, permanently eliminating the ash/grey dot.
             try {
-                val gmsFix = Location(LocationManager.GPS_PROVIDER).apply {
+                val gmsFusedFix = Location("fused").apply {
                     this.latitude = finalLat
                     this.longitude = finalLon
                     this.altitude = finalAltitude
@@ -328,14 +328,37 @@ class MockLocationEngine(
                     }
                 }
 
-                fusedLocationClient.setMockLocation(gmsFix)
+                val gmsGpsFix = Location(LocationManager.GPS_PROVIDER).apply {
+                    this.latitude = finalLat
+                    this.longitude = finalLon
+                    this.altitude = finalAltitude
+                    this.speed = speed
+                    this.bearing = bearing
+                    this.accuracy = horizontalAccuracy.coerceIn(2.0f, 3.5f)
+                    this.time = nowMs
+                    this.elapsedRealtimeNanos = nowNanos
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        this.bearingAccuracyDegrees = bearingAccuracy
+                        this.speedAccuracyMetersPerSecond = speedAccuracy
+                        this.verticalAccuracyMeters = verticalAccuracy
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        this.mslAltitudeMeters = finalAltitude
+                        this.mslAltitudeAccuracyMeters = verticalAccuracy
+                    }
+                }
+
+                fusedLocationClient.setMockLocation(gmsFusedFix)
+                fusedLocationClient.setMockLocation(gmsGpsFix)
                     .addOnFailureListener { e ->
                         Log.w(TAG, "GMS setMockLocation failed: ${e.message}, re-engaging mock mode...")
                         isGmsMockModeEngaged = false
                         try {
                             fusedLocationClient.setMockMode(true).addOnSuccessListener {
                                 isGmsMockModeEngaged = true
-                                fusedLocationClient.setMockLocation(gmsFix)
+                                fusedLocationClient.setMockLocation(gmsFusedFix)
+                                fusedLocationClient.setMockLocation(gmsGpsFix)
                             }
                         } catch (ignored: Exception) {}
                     }

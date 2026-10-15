@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.fakegps.mocklocation.R
@@ -33,8 +34,9 @@ class MockLocationService : Service() {
 
     companion object {
         private const val TAG = "MockLocationService"
-        const val CHANNEL_ID = "mock_location_foreground_channel_v2"
+        const val CHANNEL_ID = "mock_location_foreground_channel_v3"
         private const val OLD_CHANNEL_ID = "mock_location_foreground_channel"
+        private const val OLD_CHANNEL_ID_V2 = "mock_location_foreground_channel_v2"
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START_FIXED = "action_start_fixed"
@@ -508,6 +510,104 @@ class MockLocationService : Service() {
         } catch (ignored: Exception) {}
     }
 
+    private fun buildNotificationRemoteViews(
+        locationName: String,
+        coordsText: String,
+        statusText: String,
+        isRoute: Boolean,
+        isPaused: Boolean,
+        isDark: Boolean
+    ): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.widget_nowhere_layout)
+        val primaryColor = com.fakegps.mocklocation.util.ThemeColorManager.getPrimaryColor(this)
+
+        views.setTextViewText(R.id.tvWidgetLocationName, locationName)
+        views.setTextViewText(R.id.tvWidgetCoords, coordsText)
+        views.setTextViewText(R.id.tvWidgetStatus, statusText)
+
+        views.setTextColor(R.id.tvWidgetBrandTitle, primaryColor)
+        views.setInt(R.id.ivWidgetLogo, "setColorFilter", primaryColor)
+        views.setInt(R.id.ivWidgetTeleportBg, "setColorFilter", primaryColor)
+
+        // Dynamic Dark / Light theme styling matching Nowhere widget
+        val bgGlassRes = if (isDark) R.drawable.bg_widget_glass_dark else R.drawable.bg_widget_glass_light
+        val bgButtonRes = if (isDark) R.drawable.bg_widget_button_dark else R.drawable.bg_widget_button_light
+        val primaryText = if (isDark) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+        val secondaryText = if (isDark) android.graphics.Color.parseColor("#AEAEB2") else android.graphics.Color.parseColor("#636366")
+
+        views.setInt(R.id.widgetRoot, "setBackgroundResource", bgGlassRes)
+        views.setInt(R.id.btnWidgetJoystick, "setBackgroundResource", bgButtonRes)
+        views.setInt(R.id.btnWidgetOpenApp, "setBackgroundResource", bgButtonRes)
+
+        views.setTextColor(R.id.tvWidgetLocationName, primaryText)
+        views.setTextColor(R.id.tvWidgetCoords, secondaryText)
+        views.setTextColor(R.id.tvWidgetStatus, primaryColor)
+        views.setTextColor(R.id.btnWidgetJoystick, primaryColor)
+        views.setInt(R.id.btnWidgetOpenApp, "setColorFilter", secondaryText)
+
+        // Teleport / Stop button in notification
+        views.setTextViewText(R.id.btnWidgetTeleport, "Stop")
+
+        // Stop PendingIntent
+        val stopIntent = Intent(this, MockLocationService::class.java).apply {
+            action = ACTION_STOP
+            setPackage(packageName)
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            1,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.btnWidgetTeleport, stopPendingIntent)
+
+        // Secondary Action Button (Joystick or Route Pause/Resume)
+        if (isRoute) {
+            val actionTitle = if (isPaused) "Resume" else "Pause"
+            views.setTextViewText(R.id.btnWidgetJoystick, actionTitle)
+            val pauseResumeIntent = Intent(this, MockLocationService::class.java).apply {
+                action = if (isPaused) ACTION_RESUME_ROUTE else ACTION_PAUSE_ROUTE
+                setPackage(packageName)
+            }
+            val pauseResumePendingIntent = PendingIntent.getService(
+                this,
+                2,
+                pauseResumeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.btnWidgetJoystick, pauseResumePendingIntent)
+        } else {
+            views.setTextViewText(R.id.btnWidgetJoystick, "Joystick")
+            val joystickIntent = Intent(this, com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider::class.java).apply {
+                action = com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider.ACTION_WIDGET_JOYSTICK
+                setPackage(packageName)
+            }
+            val joystickPendingIntent = PendingIntent.getBroadcast(
+                this,
+                30,
+                joystickIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.btnWidgetJoystick, joystickPendingIntent)
+        }
+
+        // Open App PendingIntent
+        val openAppIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            setPackage(packageName)
+        }
+        val openAppPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.widgetRoot, openAppPendingIntent)
+        views.setOnClickPendingIntent(R.id.btnWidgetOpenApp, openAppPendingIntent)
+
+        return views
+    }
+
     private fun startForegroundNotification(locationTitle: String, contentSubtitle: String = "Location Injected & Active") {
         val stopIntent = Intent(this, MockLocationService::class.java).apply {
             action = ACTION_STOP
@@ -532,6 +632,21 @@ class MockLocationService : Service() {
         val remainingTimeStr = if (sessionPrefs.isPremiumActive()) "UNLIMITED" else sessionPrefs.formatRemainingTime()
         val formattedSubtitle = "⏱️ $remainingTimeStr left • $contentSubtitle"
 
+        val isDark = when (settingsPrefs.appTheme) {
+            "LIGHT" -> false
+            "DARK" -> true
+            else -> com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(this)
+        }
+
+        val remoteViews = buildNotificationRemoteViews(
+            locationName = locationTitle,
+            coordsText = formattedSubtitle,
+            statusText = "GPS LOCKED",
+            isRoute = activeMode is SimulationMode.Route,
+            isPaused = isSimulationPaused,
+            isDark = isDark
+        )
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(locationTitle)
             .setContentText(formattedSubtitle)
@@ -542,7 +657,10 @@ class MockLocationService : Service() {
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCustomContentView(remoteViews)
+            .setCustomBigContentView(remoteViews)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
             .apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -654,6 +772,7 @@ class MockLocationService : Service() {
 
                 val runningState = _serviceState.value as? ServiceState.Running
                 val isRoute = activeMode is SimulationMode.Route && runningState != null && runningState.totalDistanceMeters > 0
+                val isPaused = isSimulationPaused || (runningState?.isPaused == true)
                 val progress = if (isRoute && runningState!!.totalDistanceMeters > 0) {
                     ((runningState.distanceCoveredMeters / runningState.totalDistanceMeters) * 100).toInt().coerceIn(0, 100)
                 } else 0
@@ -686,6 +805,29 @@ class MockLocationService : Service() {
                     "\n📍 Route: $coveredStr / $totalStr ($progress%) • $remainingStr left\n⏱️ ETA: $etaStr • Speed: ${speedKmh.toInt()} km/h"
                 } else ""
 
+                val isDark = when (settingsPrefs.appTheme) {
+                    "LIGHT" -> false
+                    "DARK" -> true
+                    else -> com.fakegps.mocklocation.util.ThemeColorManager.isWidgetDarkMode(this@MockLocationService)
+                }
+
+                val statusText = when {
+                    isPaused -> "PAUSED"
+                    isRoute -> "ROUTE ($progress%)"
+                    activeMode is SimulationMode.Joystick -> "JOYSTICK"
+                    sessionPrefs.activeMode == "MOTION_SYNC" -> "MOTION SYNC"
+                    else -> "GPS LOCKED"
+                }
+
+                val remoteViews = buildNotificationRemoteViews(
+                    locationName = placeName,
+                    coordsText = "$coordsText • ⏱️ $remainingTimeStr left",
+                    statusText = statusText,
+                    isRoute = isRoute,
+                    isPaused = isPaused,
+                    isDark = isDark
+                )
+
                 val builder = NotificationCompat.Builder(this@MockLocationService, CHANNEL_ID)
                     .setContentTitle(notifTitle)
                     .setContentText(notifText)
@@ -696,7 +838,10 @@ class MockLocationService : Service() {
                     .setOnlyAlertOnce(true)
                     .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setCustomContentView(remoteViews)
+                    .setCustomBigContentView(remoteViews)
+                    .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                     .apply {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
@@ -714,7 +859,6 @@ class MockLocationService : Service() {
                 )
 
                 if (activeMode is SimulationMode.Route) {
-                    val isPaused = (_serviceState.value as? ServiceState.Running)?.isPaused == true
                     val pauseResumeIntent = Intent(this@MockLocationService, MockLocationService::class.java).apply {
                         action = if (isPaused) ACTION_RESUME_ROUTE else ACTION_PAUSE_ROUTE
                     }
@@ -770,11 +914,14 @@ class MockLocationService : Service() {
             try {
                 manager.deleteNotificationChannel(OLD_CHANNEL_ID)
             } catch (ignored: Exception) {}
+            try {
+                manager.deleteNotificationChannel(OLD_CHANNEL_ID_V2)
+            } catch (ignored: Exception) {}
 
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Nowhere Active GPS Service",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notifies when Nowhere GPS simulation is actively running"
                 setShowBadge(false)
