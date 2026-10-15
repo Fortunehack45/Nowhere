@@ -61,11 +61,12 @@ class GhostCloakEngineTest {
         assertTrue("Should contain \$GPGSA sentence", hasGsa)
         assertTrue("Should contain \$GPGSV sentence", hasGsv)
 
-        // Validate XOR checksum for all generated sentences
+        // Validate XOR checksum and CRLF termination for all generated sentences
         for (sentence in sentences) {
             assertTrue("Sentence must start with '$'", sentence.startsWith("$"))
             assertTrue("Sentence must contain '*'", sentence.contains("*"))
-            val parts = sentence.substring(1).split("*")
+            assertTrue("Sentence must end with CRLF", sentence.endsWith("\r\n"))
+            val parts = sentence.trim().substring(1).split("*")
             assertEquals(2, parts.size)
             val payload = parts[0]
             val expectedHex = parts[1]

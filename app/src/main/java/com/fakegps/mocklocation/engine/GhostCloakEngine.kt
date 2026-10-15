@@ -239,7 +239,7 @@ class GhostCloakEngine(
             checksum = checksum xor ch.code
         }
         val checksumHex = String.format(Locale.US, "%02X", checksum)
-        return "\$$payloadWithoutDollar*$checksumHex"
+        return "\$$payloadWithoutDollar*$checksumHex\r\n"
     }
 
     private fun formatNmeaLatitude(latitude: Double): Pair<String, String> {

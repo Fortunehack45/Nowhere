@@ -443,8 +443,10 @@ class MockLocationService : Service() {
                 val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
                 wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Nowhere::MockLocationLock").apply {
                     setReferenceCounted(false)
-                    acquire(WAKE_LOCK_TIMEOUT_MS)
                 }
+            }
+            if (wakeLock?.isHeld != true) {
+                wakeLock?.acquire(WAKE_LOCK_TIMEOUT_MS)
                 Log.d(TAG, "WakeLock acquired with 24h safeguard.")
             }
             startWakeLockRenewalTimer()
@@ -830,7 +832,10 @@ class MockLocationService : Service() {
 
     private fun startContinuousHeartbeatLoop() {
         if (simulationJob?.isActive == true) return
-        simulationJob = serviceScope.launch {
+        simulationJob = serviceScope.launch(Dispatchers.IO) {
+            try {
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+            } catch (ignored: Throwable) {}
             var lastNotificationUpdateTime = 0L
             var lastWidgetUpdateTime = 0L
             while (isActive) {
@@ -1006,7 +1011,10 @@ class MockLocationService : Service() {
         }
         updateAllWidgets()
 
-        simulationJob = serviceScope.launch {
+        simulationJob = serviceScope.launch(Dispatchers.IO) {
+            try {
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+            } catch (ignored: Throwable) {}
             var lastTickTime = android.os.SystemClock.elapsedRealtime()
             var lastWidgetUpdateTime = 0L
             var lastNotificationUpdateTime = 0L
@@ -1301,7 +1309,10 @@ class MockLocationService : Service() {
             updateAllWidgets()
         }
 
-        simulationJob = serviceScope.launch {
+        simulationJob = serviceScope.launch(Dispatchers.IO) {
+            try {
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+            } catch (ignored: Throwable) {}
             val deltaSeconds = 0.1
             var lastWidgetUpdateTime = 0L
             var lastNotificationUpdateTime = 0L
