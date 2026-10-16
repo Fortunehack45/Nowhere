@@ -58,3 +58,20 @@
 - **Contrast Accents**: Crisp Pure White (`#FFFFFF`), Soft Slate White (`#F8FAFC`).
 - **Surfaces**: Obsidian Glass (`#EB121826`) and Deep Charcoal (`#0A0D14`).
 - **Icons**: Material You (Android 13+) themed adaptive icons with single-color monochrome mask.
+
+---
+
+## ⚖️ License & Proprietary Intellectual Property Notice
+
+**Copyright © 2026 Fortunehack45. All Rights Reserved.**
+
+This repository is source-available solely for personal learning, architectural inspection, and educational review.
+
+> [!WARNING]
+> **STRICT PROHIBITION ON COMMERCIAL CLONING & APP STORE DISTRIBUTION**
+> You may **NOT** copy, modify, white-label, rebrand, monetize, bundle with ads, or publish this software (or any derivative or recompiled build) to the **Google Play Store**, **Apple App Store**, or any other mobile application marketplace.
+> Unauthorized clones, republishing, or commercial exploitation will face immediate DMCA takedown requests, Google Play / Apple developer account infringement reporting, and legal enforcement.
+
+For complete terms and legal conditions, refer to:
+- [LICENSE.md](LICENSE.md) — Strict Proprietary Source-Available License & Non-Commercial Terms of Use
+- [PROPRIETARY_NOTICE.md](PROPRIETARY_NOTICE.md) — Anti-Cloning Notice & Policy Violation Consequences
