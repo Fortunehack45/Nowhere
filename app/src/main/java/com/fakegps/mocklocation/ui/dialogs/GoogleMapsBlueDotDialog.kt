@@ -9,32 +9,42 @@ class GoogleMapsBlueDotDialog(
 ) {
 
     fun show() {
-        val options = arrayOf(
-            "1️⃣  Location Settings (Turn OFF 'Google Location Accuracy' & Wi-Fi Scanning)",
-            "2️⃣  Developer Options (Verify Nowhere is Mock App)",
-            "3️⃣  Force Stop Google Maps (Clean Reconnect)"
+        val oemDetector = com.fakegps.mocklocation.util.OEMDetector
+        val isOEM = oemDetector.isAggressiveOEM()
+        val oemName = oemDetector.getDeviceOEM().name.replace("_", " ")
+
+        val options = mutableListOf(
+            "📍  Location Permission -> Select 'Allow all the time'",
+            "⚡  Battery Usage -> Select 'Unrestricted'",
+            "📶  Turn OFF 'Google Location Accuracy' & Wi-Fi Scanning",
+            "🗺️  Force Stop Google Maps (Clean Reconnect)"
         )
+        if (isOEM) {
+            options.add("🛡️  Open $oemName Auto-start / Background Settings")
+        }
 
         MaterialAlertDialogBuilder(activity)
-            .setTitle("🔵 Google Maps Blue Dot Optimizer")
+            .setTitle("🔵 Keep Google Maps Blue in Background")
             .setMessage(
-                "If Google Maps displays an ash or grey dot instead of a solid blue dot:\n\n" +
-                "• Reason: Google Location Accuracy scans nearby Wi-Fi & cell towers in the background, conflicting with your mock GPS.\n\n" +
-                "• Quick Fix: Turn OFF 'Google Location Accuracy' and 'Wi-Fi scanning', then force stop Google Maps once.\n\n" +
-                "Tap any action below:"
+                "If Google Maps turns ash or grey when Nowhere is in the background:\n\n" +
+                "1. Location Permission: Must be set to 'Allow all the time' so Android keeps sending GPS fixes when you switch to Maps.\n\n" +
+                "2. Battery: Set Nowhere to 'Unrestricted' so the system does not pause GPS injection.\n\n" +
+                "3. Google Location Accuracy: Turn OFF Wi-Fi scanning to prevent real-world network location conflicts."
             )
-            .setItems(options) { dialog, which ->
+            .setItems(options.toTypedArray()) { _, which ->
                 when (which) {
-                    0 -> PermissionHelper.openLocationScanningSettings(activity)
-                    1 -> PermissionHelper.openDeveloperSettings(activity)
-                    2 -> PermissionHelper.openGoogleMapsAppInfo(activity)
+                    0 -> com.fakegps.mocklocation.util.PermissionHelper.openAppNotificationSettings(activity)
+                    1 -> com.fakegps.mocklocation.util.PermissionHelper.requestIgnoreBatteryOptimizations(activity)
+                    2 -> com.fakegps.mocklocation.util.PermissionHelper.openLocationScanningSettings(activity)
+                    3 -> com.fakegps.mocklocation.util.PermissionHelper.openGoogleMapsAppInfo(activity)
+                    4 -> oemDetector.openOEMSpecificSettings(activity)
                 }
             }
-            .setPositiveButton("Open Location Settings") { _, _ ->
-                PermissionHelper.openLocationScanningSettings(activity)
+            .setPositiveButton("Set Permission") { _, _ ->
+                com.fakegps.mocklocation.util.PermissionHelper.openAppNotificationSettings(activity)
             }
-            .setNeutralButton("Force Stop Maps") { _, _ ->
-                PermissionHelper.openGoogleMapsAppInfo(activity)
+            .setNeutralButton("Battery: Unrestricted") { _, _ ->
+                com.fakegps.mocklocation.util.PermissionHelper.requestIgnoreBatteryOptimizations(activity)
             }
             .setNegativeButton("Got It", null)
             .show()

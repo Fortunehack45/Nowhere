@@ -176,14 +176,14 @@ object WeatherManager {
                     forecast = forecastList
                 )
 
-                // Detect meaningful weather/temperature change
-                if (currentCached != null) {
-                    val tempDiff = abs(currentWeather.temperatureC - currentCached.current.temperatureC)
-                    val conditionChanged = currentWeather.conditionName != currentCached.current.conditionName
-                    if (tempDiff >= 1.0 || conditionChanged) {
-                        sendWeatherChangeNotification(context, currentCached, report)
-                    }
-                }
+                // Weather updates flow silently to UI and widgets without popping up notifications
+                // if (currentCached != null) {
+                //     val tempDiff = abs(currentWeather.temperatureC - currentCached.current.temperatureC)
+                //     val conditionChanged = currentWeather.conditionName != currentCached.current.conditionName
+                //     if (tempDiff >= 1.0 || conditionChanged) {
+                //         sendWeatherChangeNotification(context, currentCached, report)
+                //     }
+                // }
 
                 cachedReport = report
                 lastFetchTimestamp = System.currentTimeMillis()

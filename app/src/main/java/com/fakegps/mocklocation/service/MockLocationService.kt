@@ -35,12 +35,13 @@ open class MockLocationService : Service() {
 
     companion object {
         private const val TAG = "MockLocationService"
-        const val CHANNEL_ID = "mock_location_foreground_channel_v6"
+        const val CHANNEL_ID = "mock_location_foreground_channel_v7"
         private const val OLD_CHANNEL_ID = "mock_location_foreground_channel"
         private const val OLD_CHANNEL_ID_V2 = "mock_location_foreground_channel_v2"
         private const val OLD_CHANNEL_ID_V3 = "mock_location_foreground_channel_v3"
         private const val OLD_CHANNEL_ID_V4 = "mock_location_foreground_channel_v4"
         private const val OLD_CHANNEL_ID_V5 = "mock_location_foreground_channel_v5"
+        private const val OLD_CHANNEL_ID_V6 = "mock_location_foreground_channel_v6"
         const val NOTIFICATION_ID = 1001
 
         const val ACTION_START_FIXED = "action_start_fixed"
@@ -728,7 +729,7 @@ open class MockLocationService : Service() {
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCustomContentView(remoteViews)
             .setCustomBigContentView(remoteViews)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
@@ -935,7 +936,7 @@ open class MockLocationService : Service() {
                 .setOnlyAlertOnce(true)
                 .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setCustomContentView(remoteViews)
                 .setCustomBigContentView(remoteViews)
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
@@ -1021,13 +1022,16 @@ open class MockLocationService : Service() {
             try {
                 manager.deleteNotificationChannel(OLD_CHANNEL_ID_V5)
             } catch (ignored: Exception) {}
+            try {
+                manager.deleteNotificationChannel(OLD_CHANNEL_ID_V6)
+            } catch (ignored: Exception) {}
 
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Nowhere Active GPS Service",
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Continuous high-priority GPS location simulation service"
+                description = "Continuous silent GPS location simulation service"
                 setShowBadge(false)
                 setSound(null, null)
                 enableVibration(false)
@@ -1347,8 +1351,7 @@ open class MockLocationService : Service() {
         // Signal Kill Switch that mock GPS is active (arms protection, allows normal traffic)
         com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStarted(this)
 
-        val totalRouteDist = simulator.totalDistanceMeters
-        sendRouteStartedNotification(waypoints.size, totalRouteDist, speedKmh, transportMode.title)
+        // Persistent foreground notification already displays route details seamlessly
 
         startForegroundNotification(
             String.format("Route: %d waypoints", waypoints.size),

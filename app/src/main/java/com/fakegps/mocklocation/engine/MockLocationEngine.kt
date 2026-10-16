@@ -127,8 +127,8 @@ class MockLocationEngine(
                 .addOnFailureListener { e ->
                     gmsState = GmsState.OFF
                     consecutiveFailures++
-                    val shift = (consecutiveFailures - 1).coerceIn(0, 5)
-                    val backoffMs = minOf(1000L * (1L shl shift), 30_000L)
+                    val shift = (consecutiveFailures - 1).coerceIn(0, 3)
+                    val backoffMs = minOf(250L * (1L shl shift), 1500L)
                     nextRetryAtElapsedMs = SystemClock.elapsedRealtime() + backoffMs
                     reengageInFlight.set(false)
                     Log.w(TAG, "GMS setMockMode failed (failures=$consecutiveFailures, retry in ${backoffMs}ms): ${e.message}")
@@ -136,8 +136,8 @@ class MockLocationEngine(
         } catch (e: Exception) {
             gmsState = GmsState.OFF
             consecutiveFailures++
-            val shift = (consecutiveFailures - 1).coerceIn(0, 5)
-            val backoffMs = minOf(1000L * (1L shl shift), 30_000L)
+            val shift = (consecutiveFailures - 1).coerceIn(0, 3)
+            val backoffMs = minOf(250L * (1L shl shift), 1500L)
             nextRetryAtElapsedMs = SystemClock.elapsedRealtime() + backoffMs
             reengageInFlight.set(false)
             Log.w(TAG, "Exception launching GMS setMockMode: ${e.message}")

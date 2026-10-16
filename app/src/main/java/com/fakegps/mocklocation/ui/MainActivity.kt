@@ -1912,6 +1912,10 @@ class MainActivity : AppCompatActivity() {
         if (!PermissionHelper.isIgnoringBatteryOptimizations(this)) {
             hasPromptedBackgroundHealthThisSession = true
             com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !PermissionHelper.hasBackgroundLocationPermission(this) && !sessionPrefs.hasPromptedWifiScanningWarning) {
+            hasPromptedBackgroundHealthThisSession = true
+            sessionPrefs.hasPromptedWifiScanningWarning = true
+            com.fakegps.mocklocation.ui.dialogs.GoogleMapsBlueDotDialog(this).show()
         } else if (!PermissionHelper.canScheduleExactAlarms(this)) {
             hasPromptedBackgroundHealthThisSession = true
             com.fakegps.mocklocation.ui.dialogs.ExactAlarmPermissionDialog(this).show()

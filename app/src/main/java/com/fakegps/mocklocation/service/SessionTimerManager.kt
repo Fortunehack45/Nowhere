@@ -374,15 +374,9 @@ object SessionTimerManager {
     }
 
     private fun checkAndNotifyThresholds(context: Context, remainingSecs: Long) {
-        if (remainingSecs in 51..60 && !hasFired60s) {
+        if (remainingSecs in 45..60 && !hasFired60s) {
             hasFired60s = true
             notifyThreshold(context, NOTIF_ID_60S, "1 Minute Remaining", "Your simulation session expires in 60 seconds. Tap to extend.")
-        } else if (remainingSecs in 21..30 && !hasFired30s) {
-            hasFired30s = true
-            notifyThreshold(context, NOTIF_ID_30S, "30 Seconds Remaining", "Simulation will pause in 30 seconds. Tap to extend.")
-        } else if (remainingSecs in 1..10 && !hasFired10s) {
-            hasFired10s = true
-            notifyThreshold(context, NOTIF_ID_10S, "Session Expiring", "Simulation is about to end. Tap to keep active.")
         }
     }
 
