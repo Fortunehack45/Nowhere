@@ -490,10 +490,7 @@ class MockLocationEngine(
                             consecutiveFailures = 0
                         }
                         .addOnFailureListener { e ->
-                            consecutiveFailures++
-                            windowGmsFailures++
-                            Log.w(TAG, "GMS setMockLocation (gps) failed (failures=$consecutiveFailures): ${e.message}")
-                            requestGmsReengage()
+                            Log.d(TAG, "GMS setMockLocation (gps) notice: ${e.message}")
                         }
 
                     // Dual injection: Also feed "fused" provider fix so Google Maps' Kalman filter receives seamless continuous updates
@@ -519,6 +516,15 @@ class MockLocationEngine(
                     }
                     val cloakedFusedFix = ghostCloakEngine.cloakLocation(gmsFusedFix, nowMs, nowNanos)
                     gmsLocationClient.setMockLocation(cloakedFusedFix)
+                        .addOnSuccessListener {
+                            consecutiveFailures = 0
+                        }
+                        .addOnFailureListener { e ->
+                            consecutiveFailures++
+                            windowGmsFailures++
+                            Log.w(TAG, "GMS setMockLocation (fused) failed (failures=$consecutiveFailures): ${e.message}")
+                            requestGmsReengage()
+                        }
                 } catch (t: Throwable) {
                     consecutiveFailures++
                     windowGmsFailures++

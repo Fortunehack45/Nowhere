@@ -500,13 +500,8 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchRecentsShield.setOnCheckedChangeListener { buttonView, isChecked ->
             if (buttonView.isPressed) {
                 settingsPrefs.isRecentsShieldEnabled = isChecked
-                if (!isChecked) {
-                    com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
-                } else {
-                    val isRunning = isSimulationRunningCompat()
-                    com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, isRunning)
-                }
-                val msg = if (isChecked) "Recents Shield Active: Nowhere will be hidden from Recents while simulating" else "Nowhere will always appear in Recent Apps"
+                com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
+                val msg = "Nowhere will always remain protected and visible in Recent Apps"
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
             }
         }

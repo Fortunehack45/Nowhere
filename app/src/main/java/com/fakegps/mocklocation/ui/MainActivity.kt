@@ -530,22 +530,12 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         binding.mapView.onPause()
-        val isSessionActive = SessionPreferences(this).isSessionActive
-        if (isSessionActive && settingsPrefs.isRecentsShieldEnabled) {
-            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
-        } else {
-            com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
-        }
+        com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
     }
 
     override fun onStop() {
         super.onStop()
-        val isSessionActive = SessionPreferences(this).isSessionActive
-        if (isSessionActive && settingsPrefs.isRecentsShieldEnabled) {
-            com.fakegps.mocklocation.util.RecentsShieldManager.updateRecentsShield(this, true)
-        } else {
-            com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
-        }
+        com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
         try {
             connectivityManager?.unregisterNetworkCallback(networkCallback)
         } catch (_: Exception) {}
@@ -1071,9 +1061,8 @@ class MainActivity : AppCompatActivity() {
                 if (binding.includedSearchOverlay.layoutSearchOverlayRoot.visibility == View.VISIBLE) {
                     hideSearchOverlay()
                 } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
-                    isEnabled = true
+                    // Move task to background without destroying the activity or removing from Recents
+                    moveTaskToBack(true)
                 }
             }
         })

@@ -1190,6 +1190,7 @@ open class MockLocationService : Service() {
             }
             var lastNotificationUpdateTime = 0L
             var lastWidgetUpdateTime = 0L
+            var lastWatchdogAlarmTime = 0L
             while (isActive) {
                 try {
                     if (!sessionPrefs.isPremiumActive()) {
@@ -1251,6 +1252,10 @@ open class MockLocationService : Service() {
                         lastNotificationUpdateTime = now
                         val modeDesc = if (sessionPrefs.activeMode == "MOTION_SYNC") "Motion Sync Active" else "Teleported / Fixed"
                         updateLocationNotification(lat, lon, modeDesc)
+                    }
+                    if (now - lastWatchdogAlarmTime >= 15000L) {
+                        lastWatchdogAlarmTime = now
+                        try { scheduleBackgroundRestartAlarm(delayMs = 30000L) } catch (e: Exception) {}
                     }
 
                     // Sub-second 500ms (2Hz) continuous GPS heartbeat cadence:

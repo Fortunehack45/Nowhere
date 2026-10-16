@@ -17,33 +17,10 @@ object RecentsShieldManager {
      * - The ongoing notification, floating joystick, and launcher icon remain 100% active to control Nowhere.
      * When [shouldExclude] is false, normal Recents overview visibility is restored.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun updateRecentsShield(context: Context, shouldExclude: Boolean) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
-
-        val prefs = AppSettingsPreferences(context)
-        // Strictly only exclude if the user explicitly enabled the setting in Settings
-        val targetExcluded = shouldExclude && prefs.isRecentsShieldEnabled
-
-        try {
-            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-            val appTasks = activityManager?.appTasks
-
-            if (appTasks.isNullOrEmpty()) {
-                Log.d(TAG, "No AppTasks found for package to update recents shield.")
-                return
-            }
-
-            for (task in appTasks) {
-                try {
-                    task.setExcludeFromRecents(targetExcluded)
-                    Log.d(TAG, "setExcludeFromRecents($targetExcluded) applied successfully to task.")
-                } catch (taskEx: Exception) {
-                    Log.w(TAG, "Failed to apply setExcludeFromRecents to task: ${taskEx.message}")
-                }
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Error accessing ActivityManager for recents shield: ${e.message}")
-        }
+        // Guarantee Nowhere always remains visible in Recent Apps overview
+        ensureVisibleInRecents(context)
     }
 
     /**
