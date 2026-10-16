@@ -1853,6 +1853,15 @@ class MainActivity : AppCompatActivity() {
                 binding.btnToggleSideMenu.contentDescription = "Collapse Extra Tools"
             }
         }
+
+        binding.btnStabilityInfo.setOnClickListener {
+            performHapticFeedbackIfEnabled()
+            com.fakegps.mocklocation.ui.dialogs.StabilityWidgetInfoDialog(this).show()
+        }
+        binding.cardStabilityInfo.setOnClickListener {
+            performHapticFeedbackIfEnabled()
+            com.fakegps.mocklocation.ui.dialogs.StabilityWidgetInfoDialog(this).show()
+        }
     }
 
     private fun performHapticFeedbackIfEnabled() {
@@ -2219,6 +2228,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnHeaderLanguage.imageTintList = primaryCsl
         binding.btnHeaderWidgets.imageTintList = primaryCsl
         binding.btnHeaderSettings.imageTintList = primaryCsl
+        binding.btnStabilityInfo.imageTintList = primaryCsl
 
         // Dynamic Joystick Colors
         binding.joystickOverlay.setJoystickColor(primaryColor)

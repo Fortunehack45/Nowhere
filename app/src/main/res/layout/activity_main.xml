@@ -683,6 +683,34 @@
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
+    <!-- Left Floating Stability & Widget Info Button (Designated Info Button) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardStabilityInfo"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@color/surface_glass_card"
+        app:cardCornerRadius="19dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/stroke_glass_specular"
+        app:strokeWidth="1.2dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layoutTopHeader">
+
+        <ImageButton
+            android:id="@+id/btnStabilityInfo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/stability_info_title"
+            android:padding="8dp"
+            android:src="@drawable/ic_info"
+            app:tint="@color/text_primary" />
+    </com.google.android.material.card.MaterialCardView>
+
     <!-- Right Quick Floating Tools Stack (Solid Card over Map) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardSideButtons"

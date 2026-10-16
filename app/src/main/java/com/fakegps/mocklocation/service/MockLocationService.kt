@@ -562,6 +562,7 @@ open class MockLocationService : Service() {
                 Log.d(TAG, "WakeLock acquired with 24h safeguard.")
             }
             startWakeLockRenewalTimer()
+            SilentAudioKeepAlive.start()
         } catch (e: Exception) {
             Log.w(TAG, "Could not acquire WakeLock: ${e.message}")
         }
@@ -601,6 +602,7 @@ open class MockLocationService : Service() {
                 Log.d(TAG, "WakeLock released.")
             }
             wakeLock = null
+            SilentAudioKeepAlive.stop()
         } catch (ignored: Exception) {}
     }
 
