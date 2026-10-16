@@ -490,11 +490,16 @@ class MockLocationEngine(
                             consecutiveFailures = 0
                         }
                         .addOnFailureListener { e ->
-                            Log.d(TAG, "GMS setMockLocation (gps) notice: ${e.message}")
+                            consecutiveFailures++
+                            windowGmsFailures++
+                            Log.w(TAG, "GMS setMockLocation (gps) failure: ${e.message}")
+                            requestGmsReengage()
                         }
 
-                    // Dual injection: Also feed "fused" provider fix so Google Maps' Kalman filter receives seamless continuous updates
-                    val gmsFusedFix = Location(FUSED_PROVIDER_NAME).apply {
+                    // Dual injection: Also feed "network" provider fix so Google Play Services NLP (Network Location Provider)
+                    // and Google Maps' Kalman filter receive identical mock coordinates across both providers.
+                    // This permanently prevents Google Location Accuracy from conflicting with GPS and turning the dot ash.
+                    val gmsNetworkFix = Location(LocationManager.NETWORK_PROVIDER).apply {
                         this.latitude = finalLat
                         this.longitude = finalLon
                         this.altitude = finalAltitude
@@ -514,16 +519,13 @@ class MockLocationEngine(
                             this.mslAltitudeAccuracyMeters = verticalAccuracy
                         }
                     }
-                    val cloakedFusedFix = ghostCloakEngine.cloakLocation(gmsFusedFix, nowMs, nowNanos)
-                    gmsLocationClient.setMockLocation(cloakedFusedFix)
+                    val cloakedNetworkFix = ghostCloakEngine.cloakLocation(gmsNetworkFix, nowMs, nowNanos)
+                    gmsLocationClient.setMockLocation(cloakedNetworkFix)
                         .addOnSuccessListener {
                             consecutiveFailures = 0
                         }
                         .addOnFailureListener { e ->
-                            consecutiveFailures++
-                            windowGmsFailures++
-                            Log.w(TAG, "GMS setMockLocation (fused) failed (failures=$consecutiveFailures): ${e.message}")
-                            requestGmsReengage()
+                            Log.d(TAG, "GMS setMockLocation (network) notice: ${e.message}")
                         }
                 } catch (t: Throwable) {
                     consecutiveFailures++

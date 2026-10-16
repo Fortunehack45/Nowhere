@@ -86,34 +86,42 @@ class GhostCloakEngine(
             }
         }
 
-        // 2. Location Extras Sanitization & Hardware GNSS Metadata
+        // 2. Location Extras Sanitization & Provider-Specific Telemetry
+        val isGpsProvider = location.provider == null || location.provider == android.location.LocationManager.GPS_PROVIDER
         val extras = Bundle()
-        val satellitesInUse = 14 + (random.nextInt(6)) // 14 to 19 satellites
-        val maxSatellites = 32
-        val meanCn0 = 33.5 + (random.nextDouble() * 5.0) // 33.5 - 38.5 dB-Hz
 
-        extras.putInt("satellites", satellitesInUse)
-        extras.putInt("maxSatellites", maxSatellites)
-        extras.putInt("satellitesInView", 22 + random.nextInt(6))
-        extras.putDouble("meanCn0", meanCn0)
-        extras.putString("fixType", "3D")
-        extras.putFloat("hdop", 0.8f + (random.nextFloat() * 0.3f))
-        extras.putFloat("vdop", 0.9f + (random.nextFloat() * 0.4f))
+        if (isGpsProvider) {
+            val satellitesInUse = 14 + (random.nextInt(6)) // 14 to 19 satellites
+            val maxSatellites = 32
+            val meanCn0 = 33.5 + (random.nextDouble() * 5.0) // 33.5 - 38.5 dB-Hz
 
-        // 3. Hardware NMEA-0183 Sentence Stream Generation
-        val isNmeaEnabled = settingsPrefs?.isNmeaSynthesisEnabled ?: true
-        if (isNmeaEnabled) {
-            val nmeaList = generateNmeaStream(
-                latitude = location.latitude,
-                longitude = location.longitude,
-                altitude = location.altitude,
-                speedMps = location.speed,
-                bearingDeg = location.bearing,
-                timestampMs = nowMs,
-                satellitesInUse = satellitesInUse
-            )
-            extras.putStringArrayList("nmeaSentences", ArrayList(nmeaList))
-            extras.putString("lastNmea", nmeaList.firstOrNull() ?: "")
+            extras.putInt("satellites", satellitesInUse)
+            extras.putInt("maxSatellites", maxSatellites)
+            extras.putInt("satellitesInView", 22 + random.nextInt(6))
+            extras.putDouble("meanCn0", meanCn0)
+            extras.putString("fixType", "3D")
+            extras.putFloat("hdop", 0.8f + (random.nextFloat() * 0.3f))
+            extras.putFloat("vdop", 0.9f + (random.nextFloat() * 0.4f))
+
+            // 3. Hardware NMEA-0183 Sentence Stream Generation
+            val isNmeaEnabled = settingsPrefs?.isNmeaSynthesisEnabled ?: true
+            if (isNmeaEnabled) {
+                val nmeaList = generateNmeaStream(
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    altitude = location.altitude,
+                    speedMps = location.speed,
+                    bearingDeg = location.bearing,
+                    timestampMs = nowMs,
+                    satellitesInUse = satellitesInUse
+                )
+                extras.putStringArrayList("nmeaSentences", ArrayList(nmeaList))
+                extras.putString("lastNmea", nmeaList.firstOrNull() ?: "")
+            }
+        } else {
+            // Authentic Network Location Provider (NLP) extras (Wi-Fi triangulation)
+            // Ensures Google Location Accuracy accepts network fixes seamlessly
+            extras.putString("networkLocationType", "wifi")
         }
 
         location.extras = extras

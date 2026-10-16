@@ -1895,15 +1895,28 @@ class MainActivity : AppCompatActivity() {
 
     private var hasPromptedBackgroundHealthThisSession = false
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1002) {
+            val granted = grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (granted) {
+                com.google.android.material.snackbar.Snackbar.make(
+                    binding.root,
+                    "✓ Background Location Granted — Google Maps will stay blue without widgets!",
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
     private fun checkBackgroundHealthOnSessionStart() {
         if (hasPromptedBackgroundHealthThisSession) return
         val sessionPrefs = SessionPreferences(this)
         if (!PermissionHelper.isIgnoringBatteryOptimizations(this)) {
             hasPromptedBackgroundHealthThisSession = true
             com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog(this).show()
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !PermissionHelper.hasBackgroundLocationPermission(this) && !sessionPrefs.hasPromptedWifiScanningWarning) {
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !PermissionHelper.hasBackgroundLocationPermission(this)) {
             hasPromptedBackgroundHealthThisSession = true
-            sessionPrefs.hasPromptedWifiScanningWarning = true
             com.fakegps.mocklocation.ui.dialogs.GoogleMapsBlueDotDialog(this).show()
         } else if (!PermissionHelper.canScheduleExactAlarms(this)) {
             hasPromptedBackgroundHealthThisSession = true

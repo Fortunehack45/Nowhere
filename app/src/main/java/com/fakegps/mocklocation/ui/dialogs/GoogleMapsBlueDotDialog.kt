@@ -1,6 +1,7 @@
 package com.fakegps.mocklocation.ui.dialogs
 
 import android.app.Activity
+import android.os.Build
 import com.fakegps.mocklocation.util.PermissionHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -24,16 +25,22 @@ class GoogleMapsBlueDotDialog(
         }
 
         MaterialAlertDialogBuilder(activity)
-            .setTitle("🔵 Keep Google Maps Blue in Background")
+            .setTitle("🔵 Keep Google Maps Blue Without Widgets")
             .setMessage(
-                "If Google Maps turns ash or grey when Nowhere is in the background:\n\n" +
-                "1. Location Permission: Must be set to 'Allow all the time' so Android keeps sending GPS fixes when you switch to Maps.\n\n" +
-                "2. Battery: Set Nowhere to 'Unrestricted' so the system does not pause GPS injection.\n\n" +
-                "3. Google Location Accuracy: Turn OFF Wi-Fi scanning to prevent real-world network location conflicts."
+                "To keep Google Maps 100% solid blue in the background without needing a home screen widget:\n\n" +
+                "1. Location Permission: Must be set to 'Allow all the time' so Android keeps streaming mock coordinates when Nowhere is minimized.\n\n" +
+                "2. Battery: Set Nowhere to 'Unrestricted' so the system never freezes the background GPS engine.\n\n" +
+                "3. Google Location Accuracy: Turn OFF Wi-Fi scanning to prevent real-world network conflicts."
             )
             .setItems(options.toTypedArray()) { _, which ->
                 when (which) {
-                    0 -> com.fakegps.mocklocation.util.PermissionHelper.openAppNotificationSettings(activity)
+                    0 -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !PermissionHelper.hasBackgroundLocationPermission(activity)) {
+                            PermissionHelper.requestBackgroundLocationPermission(activity)
+                        } else {
+                            PermissionHelper.openAppLocationSettings(activity)
+                        }
+                    }
                     1 -> com.fakegps.mocklocation.util.PermissionHelper.requestIgnoreBatteryOptimizations(activity)
                     2 -> com.fakegps.mocklocation.util.PermissionHelper.openLocationScanningSettings(activity)
                     3 -> com.fakegps.mocklocation.util.PermissionHelper.openGoogleMapsAppInfo(activity)
@@ -41,7 +48,11 @@ class GoogleMapsBlueDotDialog(
                 }
             }
             .setPositiveButton("Set Permission") { _, _ ->
-                com.fakegps.mocklocation.util.PermissionHelper.openAppNotificationSettings(activity)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !PermissionHelper.hasBackgroundLocationPermission(activity)) {
+                    PermissionHelper.requestBackgroundLocationPermission(activity)
+                } else {
+                    PermissionHelper.openAppLocationSettings(activity)
+                }
             }
             .setNeutralButton("Battery: Unrestricted") { _, _ ->
                 com.fakegps.mocklocation.util.PermissionHelper.requestIgnoreBatteryOptimizations(activity)

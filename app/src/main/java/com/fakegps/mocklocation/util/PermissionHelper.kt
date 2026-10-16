@@ -84,6 +84,47 @@ object PermissionHelper {
         }
     }
 
+    /**
+     * Directly opens the system Application Details Settings screen for Nowhere,
+     * allowing the user to tap Permissions -> Location and choose "Allow all the time".
+     */
+    fun openAppLocationSettings(context: Context) {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:${context.packageName}")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                val intent = Intent(Settings.ACTION_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
+            } catch (ignored: Exception) {}
+        }
+    }
+
+    /**
+     * Direct system prompt to grant ACCESS_BACKGROUND_LOCATION ("Allow all the time")
+     * so Google Maps remains solid blue in the background without requiring any home screen widget.
+     */
+    fun requestBackgroundLocationPermission(activity: Activity, requestCode: Int = 1002) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                androidx.core.app.ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                    requestCode
+                )
+            } catch (e: Exception) {
+                openAppLocationSettings(activity)
+            }
+        } else {
+            openAppLocationSettings(activity)
+        }
+    }
+
     fun isIgnoringBatteryOptimizations(context: Context): Boolean {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return true
         return powerManager.isIgnoringBatteryOptimizations(context.packageName)

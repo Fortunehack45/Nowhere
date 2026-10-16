@@ -35,6 +35,12 @@ class WelcomeActivity : AppCompatActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            PermissionHelper.hasFineLocationPermission(this) &&
+            !PermissionHelper.hasBackgroundLocationPermission(this)
+        ) {
+            PermissionHelper.requestBackgroundLocationPermission(this)
+        }
         if (::walkthroughAdapter.isInitialized) {
             walkthroughAdapter.notifyItemChanged(3)
         }
