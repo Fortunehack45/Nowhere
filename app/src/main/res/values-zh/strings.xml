@@ -730,4 +730,20 @@
     <string name="battery_device_opt_fmt">Device Optimization (%s)</string>
     <string name="battery_recommended_for_fmt">RECOMMENDED FOR %s</string>
     <string name="battery_widget_hint_fmt">Add the Nowhere Quick Actions or Icon widget to your home screen — active widgets prevent %s battery managers from freezing or killing background location spoofing.</string>
+
+    <!-- Stability & Widget Guide -->
+    <string name="stability_info_title">后台运行稳定性与小部件指南</string>
+    <string name="stability_info_subtitle">保持 Google 地图蓝点稳定，防止后台中断</string>
+    <string name="stability_info_desc">如果离开 Nowhere 时 Google 地图变为灰色：
+
+部分厂商激进的后台电池管理（如 Infinix/Tecno 或小米 MIUI）会冻结后台模拟定位。
+
+在桌面添加任意 Nowhere 小部件可向系统标记应用活跃状态，彻底防止后台定位被冻结，让 Google 地图始终保持蓝点！</string>
+    <string name="stability_info_pin_widget">添加 Nowhere 小部件至主屏幕</string>
+    <string name="stability_info_browse_gallery">浏览小部件库</string>
+    <string name="stability_info_battery_unrestricted">电池用量：无限制</string>
+    <string name="stability_info_location_all_time">定位权限：始终允许</string>
+    <string name="stability_info_oem_settings">打开 %s 后台设置</string>
+    <string name="stability_info_dismiss">知道了</string>
+    <string name="stability_widget_pinned_success">已向桌面发送添加小部件请求！</string>
 </resources>

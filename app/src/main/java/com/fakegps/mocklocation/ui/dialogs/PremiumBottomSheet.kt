@@ -157,13 +157,7 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
-        // Developer test harness shortcut: long-press the sparkle icon to toggle test entitlement
-        binding.btnSparkleHeader.setOnLongClickListener {
-            val isNowPro = billingManager.toggleDebugSandboxPremium()
-            val msg = if (isNowPro) "Sandbox Nowhere Pro Activated!" else "Sandbox Nowhere Pro Deactivated."
-            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-            true
-        }
+
 
         binding.btnManageSubscription.setOnClickListener {
             activity?.let { act ->
@@ -222,7 +216,7 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
             .setMessage(
                 "Google Play Store currently has only the Annual plan active on this device ($yearlyPrice).\n\n" +
                 "To subscribe monthly, ensure a Monthly base plan (e.g., 'monthly' or 'p1m') or subscription ID ('nowhere_pro_monthly') is set to 'Active' in Google Play Console.\n\n" +
-                "Would you like to unlock the Annual plan now (Save $discount%) or activate Sandbox Pro for testing?"
+                "Would you like to unlock the Annual plan now (Save $discount%)?"
             )
             .setPositiveButton("Unlock Annual ($discount% OFF)") { _, _ ->
                 selectedPlan = PremiumEntitlement.PlanType.YEARLY
@@ -230,10 +224,6 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
                 activity?.let { act ->
                     billingManager.launchPurchaseFlow(act, PremiumEntitlement.PlanType.YEARLY)
                 }
-            }
-            .setNeutralButton("Activate Sandbox Pro") { _, _ ->
-                billingManager.toggleDebugSandboxPremium(true)
-                Toast.makeText(ctx, "Sandbox Nowhere Pro Activated!", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -269,18 +259,13 @@ class PremiumBottomSheet : BottomSheetDialogFragment() {
             append("Play Console Troubleshooting Checklist:\n")
             append("1. Subscriptions ➔ Base Plans: Ensure status is 'Active' (not Draft).\n")
             append("2. Settings ➔ License Testing: Add your device's Google account.\n")
-            append("3. Device: Make sure Google Play Store is logged in.\n\n")
-            append("Instant Test Option: Tap below to activate Nowhere Pro locally in Sandbox mode.")
+            append("3. Device: Make sure Google Play Store is logged in.")
         }
 
         com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
             .setTitle("Google Play Connection Status")
             .setMessage(details)
-            .setPositiveButton("Activate Test Pro (Sandbox)") { _, _ ->
-                billingManager.toggleDebugSandboxPremium(true)
-                Toast.makeText(ctx, "Sandbox Nowhere Pro Activated!", Toast.LENGTH_SHORT).show()
-            }
-            .setNeutralButton("Retry Connection") { _, _ ->
+            .setPositiveButton("Retry Connection") { _, _ ->
                 billingManager.refreshProductDetails()
                 Toast.makeText(ctx, "Reconnecting to Google Play...", Toast.LENGTH_SHORT).show()
             }

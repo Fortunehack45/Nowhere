@@ -3,6 +3,7 @@ package com.fakegps.mocklocation.ui.dialogs
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.res.ColorStateList
 import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +14,7 @@ import com.fakegps.mocklocation.databinding.LayoutDialogStabilityWidgetInfoBindi
 import com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider
 import com.fakegps.mocklocation.util.OEMDetector
 import com.fakegps.mocklocation.util.PermissionHelper
+import com.fakegps.mocklocation.util.ThemeColorManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class StabilityWidgetInfoDialog(
@@ -25,6 +27,18 @@ class StabilityWidgetInfoDialog(
             .setView(binding.root)
             .setCancelable(true)
             .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        // Apply active color theme dynamically so dialog matches user's chosen theme (e.g. Pink, Cyan, Emerald)
+        val primaryColor = ThemeColorManager.getPrimaryColor(activity)
+        val primaryCsl = ColorStateList.valueOf(primaryColor)
+
+        binding.ivHeaderIcon.imageTintList = primaryCsl
+        binding.ivSparkleNotice.imageTintList = primaryCsl
+        binding.btnPinWidget.backgroundTintList = primaryCsl
+
+        ThemeColorManager.applyThemeRecursively(binding.root, activity)
 
         val oem = OEMDetector.getDeviceOEM()
         val isAggressiveOem = OEMDetector.isAggressiveOEM()

@@ -758,11 +758,11 @@
     <string name="stability_info_title">Background Stability &amp; Widget Guide</string>
     <string name="stability_info_subtitle">Keep Google Maps solid blue &amp; prevent background drops</string>
     <string name="stability_info_desc">If Google Maps turns ash or grey when you switch away from Nowhere:\n\nAggressive OEM battery managers (such as Infinix/Tecno Power Marathon or Xiaomi MIUI) freeze background GPS spoofing.\n\nAdding any Nowhere widget to your home screen signals the system that Nowhere is actively in use on your device, permanently preventing the OS from freezing mock GPS and keeping Google Maps solid blue indefinitely!</string>
-    <string name="stability_info_pin_widget">📌 Add Nowhere Widget to Home Screen</string>
-    <string name="stability_info_browse_gallery">🖼️ Browse Widget Gallery</string>
-    <string name="stability_info_battery_unrestricted">⚡ Battery Usage: Unrestricted</string>
-    <string name="stability_info_location_all_time">📍 Location: Allow all the time</string>
-    <string name="stability_info_oem_settings">🛡️ Open %s Background / Auto-start Settings</string>
+    <string name="stability_info_pin_widget">Add Nowhere Widget to Home Screen</string>
+    <string name="stability_info_browse_gallery">Browse Widget Gallery</string>
+    <string name="stability_info_battery_unrestricted">Battery Usage: Unrestricted</string>
+    <string name="stability_info_location_all_time">Location: Allow all the time</string>
+    <string name="stability_info_oem_settings">Open %s Background Settings</string>
     <string name="stability_info_dismiss">Got It</string>
     <string name="stability_widget_pinned_success">Widget pin request sent to launcher!</string>
 </resources>

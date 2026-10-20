@@ -70,7 +70,6 @@ data class PremiumEntitlement(
 
         const val PRODUCT_ID_VIP = "vip"
         const val PRODUCT_ID_NOWHERE_VIP = "nowhere_vip"
-        const val PRODUCT_ID_SANDBOX = "nowhere_premium_sandbox"
 
         const val BASE_PLAN_NOWHERE_PRO_MONTHLY = "nowhere-pro-monthly"
         const val BASE_PLAN_NOWHERE_PRO_YEARLY = "nowhere-pro-yearly"
@@ -126,8 +125,7 @@ data class PremiumEntitlement(
             PRODUCT_ID_ANNUAL,
             PRODUCT_ID_MONTHLY,
             PRODUCT_ID_VIP,
-            PRODUCT_ID_NOWHERE_VIP,
-            PRODUCT_ID_SANDBOX
+            PRODUCT_ID_NOWHERE_VIP
         ).distinct()
 
         val FREE = PremiumEntitlement(

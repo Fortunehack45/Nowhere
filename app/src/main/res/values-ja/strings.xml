@@ -730,4 +730,20 @@
     <string name="battery_device_opt_fmt">Device Optimization (%s)</string>
     <string name="battery_recommended_for_fmt">RECOMMENDED FOR %s</string>
     <string name="battery_widget_hint_fmt">Add the Nowhere Quick Actions or Icon widget to your home screen — active widgets prevent %s battery managers from freezing or killing background location spoofing.</string>
+
+    <!-- Stability & Widget Guide -->
+    <string name="stability_info_title">バックグラウンド安定化＆ウィジェットガイド</string>
+    <string name="stability_info_subtitle">Googleマップの青い点を維持し、中断を防止</string>
+    <string name="stability_info_desc">Nowhereを離れた際にGoogleマップが灰色になる場合：
+
+一部の端末（Infinix/TecnoやXiaomiなど）のバッテリー管理機能がバックグラウンドでのGPS偽装を停止させます。
+
+ホーム画面にNowhereウィジェットを追加することで、OSによる停止を防ぎ、Googleマップで常に正確に動作させることができます！</string>
+    <string name="stability_info_pin_widget">ホーム画面にNowhereウィジェットを追加</string>
+    <string name="stability_info_browse_gallery">ウィジェットギャラリーを見る</string>
+    <string name="stability_info_battery_unrestricted">バッテリー使用量：制限なし</string>
+    <string name="stability_info_location_all_time">位置情報：常に許可</string>
+    <string name="stability_info_oem_settings">%sのバックグラウンド設定を開く</string>
+    <string name="stability_info_dismiss">了解</string>
+    <string name="stability_widget_pinned_success">ホーム画面へのウィジェット追加リクエストを送信しました！</string>
 </resources>

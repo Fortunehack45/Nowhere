@@ -730,4 +730,20 @@
     <string name="battery_device_opt_fmt">Device Optimization (%s)</string>
     <string name="battery_recommended_for_fmt">RECOMMENDED FOR %s</string>
     <string name="battery_widget_hint_fmt">Add the Nowhere Quick Actions or Icon widget to your home screen — active widgets prevent %s battery managers from freezing or killing background location spoofing.</string>
+
+    <!-- Stability & Widget Guide -->
+    <string name="stability_info_title">Hintergrund-Stabilität &amp; Widget-Leitfaden</string>
+    <string name="stability_info_subtitle">Google Maps blau halten &amp; Hintergrund-Abbrüche verhindern</string>
+    <string name="stability_info_desc">Falls Google Maps grau wird, wenn Sie Nowhere verlassen:
+
+Aggressive Akku-Manager (z. B. Infinix/Tecno Power Marathon oder Xiaomi MIUI) frieren GPS-Simulationen im Hintergrund ein.
+
+Das Hinzufügen eines Nowhere-Widgets auf Ihrem Startbildschirm signalisiert dem System eine aktive Nutzung und verhindert zuverlässig das Einfrieren!</string>
+    <string name="stability_info_pin_widget">Nowhere-Widget zum Startbildschirm hinzufügen</string>
+    <string name="stability_info_browse_gallery">Widget-Galerie durchsuchen</string>
+    <string name="stability_info_battery_unrestricted">Akkunutzung: Uneingeschränkt</string>
+    <string name="stability_info_location_all_time">Standort: Immer zulassen</string>
+    <string name="stability_info_oem_settings">%s Hintergrund-Einstellungen öffnen</string>
+    <string name="stability_info_dismiss">Verstanden</string>
+    <string name="stability_widget_pinned_success">Widget-Pin-Anfrage an den Startbildschirm gesendet!</string>
 </resources>

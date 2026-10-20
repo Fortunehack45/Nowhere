@@ -708,7 +708,7 @@
             android:contentDescription="@string/stability_info_title"
             android:padding="8dp"
             android:src="@drawable/ic_info"
-            app:tint="@color/text_primary" />
+            app:tint="@color/primary" />
     </com.google.android.material.card.MaterialCardView>
 
     <!-- Right Quick Floating Tools Stack (Solid Card over Map) -->

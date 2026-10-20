@@ -730,4 +730,20 @@
     <string name="battery_device_opt_fmt">Device Optimization (%s)</string>
     <string name="battery_recommended_for_fmt">RECOMMENDED FOR %s</string>
     <string name="battery_widget_hint_fmt">Add the Nowhere Quick Actions or Icon widget to your home screen — active widgets prevent %s battery managers from freezing or killing background location spoofing.</string>
+
+    <!-- Stability & Widget Guide -->
+    <string name="stability_info_title">Guia de Estabilidade em Segundo Plano e Widgets</string>
+    <string name="stability_info_subtitle">Mantenha o Google Maps azul sólido e evite quedas</string>
+    <string name="stability_info_desc">Se o Google Maps ficar cinza ao sair do Nowhere:
+
+Gerenciadores de bateria rígidos (como Infinix/Tecno ou Xiaomi) congelam a simulação de GPS em segundo plano.
+
+Adicionar qualquer widget do Nowhere à sua tela inicial sinaliza o uso ativo ao sistema, evitando congelamentos e mantendo o Google Maps azul permanentemente!</string>
+    <string name="stability_info_pin_widget">Adicionar Widget do Nowhere à Tela Inicial</string>
+    <string name="stability_info_browse_gallery">Explorar Galeria de Widgets</string>
+    <string name="stability_info_battery_unrestricted">Uso da Bateria: Irrestrito</string>
+    <string name="stability_info_location_all_time">Localização: Permitir o tempo todo</string>
+    <string name="stability_info_oem_settings">Abrir Configurações de Segundo Plano do %s</string>
+    <string name="stability_info_dismiss">Entendi</string>
+    <string name="stability_widget_pinned_success">Solicitação de fixação de widget enviada para a tela inicial!</string>
 </resources>

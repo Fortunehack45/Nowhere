@@ -351,7 +351,7 @@ class BillingManager private constructor(private val context: Context) : Purchas
         onComplete: (() -> Unit)? = null
     ) {
         val secondaryCandidateIds = PremiumEntitlement.ALL_PRODUCT_IDS
-            .filter { it != PremiumEntitlement.PRODUCT_ID_SANDBOX && !PremiumEntitlement.PRIMARY_PRODUCT_IDS.contains(it) }
+            .filter { !PremiumEntitlement.PRIMARY_PRODUCT_IDS.contains(it) }
             .take(6) // Top secondary variants (e.g. nowhere-pro, nowhere_pro, nowhere_premium, etc.)
 
         val secondaryProductList = secondaryCandidateIds.map { prodId ->
@@ -916,12 +916,7 @@ class BillingManager private constructor(private val context: Context) : Purchas
                 }
             }
         } else {
-            // Keep debug sandbox premium active if currently enabled
-            if (_entitlementState.value.productId == PremiumEntitlement.PRODUCT_ID_SANDBOX && _entitlementState.value.isPremium) {
-                Log.d(TAG, "Retaining Sandbox Nowhere Pro entitlement.")
-            } else {
-                resetToFreeEntitlement()
-            }
+            resetToFreeEntitlement()
         }
     }
 
@@ -1039,7 +1034,6 @@ class BillingManager private constructor(private val context: Context) : Purchas
             allProductDetailsList.distinctBy { it.productId }
         }
         val candidateSubscriptionIds = PremiumEntitlement.ALL_PRODUCT_IDS
-            .filter { it != PremiumEntitlement.PRODUCT_ID_SANDBOX }
         return BillingDiagnosticInfo(
             billingStatus = _billingStatus.value,
             isReady = billingClient.isReady,
@@ -1058,38 +1052,7 @@ class BillingManager private constructor(private val context: Context) : Purchas
         )
     }
 
-    /**
-     * Toggles a secure developer sandbox entitlement for testing on devices
-     * where Google Play testing credentials or internal test tracks are unavailable.
-     */
-    fun toggleDebugSandboxPremium(enable: Boolean? = null): Boolean {
-        val current = _isPremium.value
-        val target = enable ?: !current
-
-        if (target) {
-            val now = System.currentTimeMillis()
-            val entitlement = PremiumEntitlement(
-                isPremium = true,
-                productId = PremiumEntitlement.PRODUCT_ID_SANDBOX,
-                purchaseToken = "sandbox_token_$now",
-                orderId = "GPA.SANDBOX-$now",
-                purchaseTime = now,
-                autoRenewing = true,
-                isPending = false,
-                formattedPrice = "$0.00",
-                monthlyPrice = "$0.00",
-                yearlyPrice = "$0.00",
-                yearlyMonthlyEquivalent = "$0.00 / mo",
-                lastVerifiedTimestamp = now
-            )
-            updateEntitlement(entitlement)
-            _purchaseMessage.value = "Sandbox Nowhere Pro Activated!"
-        } else {
-            resetToFreeEntitlement()
-            _purchaseMessage.value = "Sandbox Nowhere Pro Deactivated."
-        }
-        return _isPremium.value
-    }
+    
 
     /**
      * Opens the Google Play subscription management page so users can manage or cancel.
@@ -1266,16 +1229,10 @@ class BillingManager private constructor(private val context: Context) : Purchas
         val ts = prefs.getLong(KEY_CACHED_TIMESTAMP, 0L)
         val cachedSig = prefs.getString(KEY_CACHED_SIGNATURE, null)
 
-        val isSandbox = isPremRaw && prodId == PremiumEntitlement.PRODUCT_ID_SANDBOX
-
         // Cryptographic tamper verification: protect against unauthorized XML edits on rooted devices
         val isValidSignature = if (isPremRaw) {
-            if (isSandbox) {
-                true
-            } else {
-                !token.isNullOrBlank() && (PremiumEntitlement.ALL_PRODUCT_IDS.contains(prodId)) &&
-                cachedSig != null && cachedSig == generateCacheSignature(prodId, token, pTime)
-            }
+            !token.isNullOrBlank() && (PremiumEntitlement.ALL_PRODUCT_IDS.contains(prodId)) &&
+            cachedSig != null && cachedSig == generateCacheSignature(prodId, token, pTime)
         } else {
             false
         }

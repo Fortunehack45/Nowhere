@@ -730,4 +730,20 @@
     <string name="battery_device_opt_fmt">Device Optimization (%s)</string>
     <string name="battery_recommended_for_fmt">RECOMMENDED FOR %s</string>
     <string name="battery_widget_hint_fmt">Add the Nowhere Quick Actions or Icon widget to your home screen — active widgets prevent %s battery managers from freezing or killing background location spoofing.</string>
+
+    <!-- Stability & Widget Guide -->
+    <string name="stability_info_title">دليل استقرار الخلفية والأدوات</string>
+    <string name="stability_info_subtitle">الحفاظ على نقطة خرائط Google زرقاء ومنع الإيقاف في الخلفية</string>
+    <string name="stability_info_desc">إذا تحولت خرائط Google إلى اللون الرمادي عند مغادرة تطبيق Nowhere:
+
+تقوم أنظمة توفير الطاقة الصارمة (مثل Infinix/Tecno أو Xiaomi) بتجميد نظام تحديد المواقع في الخلفية.
+
+إضافة أي أداة مصغرة (Widget) لتطبيق Nowhere إلى شاشتك الرئيسية يمنع النظام من إيقاف الخدمة نهائياً ويحافظ على استقرار الموقع!</string>
+    <string name="stability_info_pin_widget">إضافة أداة Nowhere إلى الشاشة الرئيسية</string>
+    <string name="stability_info_browse_gallery">استعراض معرض الأدوات</string>
+    <string name="stability_info_battery_unrestricted">استخدام البطارية: غير مقيد</string>
+    <string name="stability_info_location_all_time">الموقع: السماح طوال الوقت</string>
+    <string name="stability_info_oem_settings">فتح إعدادات الخلفية لـ %s</string>
+    <string name="stability_info_dismiss">حسناً فهمت</string>
+    <string name="stability_widget_pinned_success">تم إرسال طلب تثبيت الأداة إلى الشاشة الرئيسية!</string>
 </resources>

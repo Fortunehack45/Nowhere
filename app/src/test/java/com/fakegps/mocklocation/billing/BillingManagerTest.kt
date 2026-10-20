@@ -35,7 +35,6 @@ class BillingManagerTest {
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_YEARLY))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_PREMIUM_HYPHEN))
         assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_NOWHERE_SUBSCRIPTION))
-        assertTrue(PremiumEntitlement.ALL_PRODUCT_IDS.contains(PremiumEntitlement.PRODUCT_ID_SANDBOX))
     }
 
     @Test
@@ -71,19 +70,12 @@ class BillingManagerTest {
     }
 
     @Test
-    fun testBillingManager_sandboxEntitlementToggle() {
+    fun testBillingManager_securityEntitlementIntegrity() {
         val billingManager = BillingManager.getInstance(context)
-
-        // Toggle on
-        val activated = billingManager.toggleDebugSandboxPremium(true)
-        assertTrue(activated)
-        assertTrue(billingManager.isPremium.value)
-        assertEquals(PremiumEntitlement.PRODUCT_ID_SANDBOX, billingManager.entitlementState.value.productId)
-
-        // Toggle off
-        val deactivated = billingManager.toggleDebugSandboxPremium(false)
-        assertFalse(deactivated)
+        // With no legitimate Google Play token or purchase, entitlement MUST strictly remain false
         assertFalse(billingManager.isPremium.value)
+        assertFalse(billingManager.entitlementState.value.isPremium)
+        assertNull(billingManager.entitlementState.value.purchaseToken)
     }
 
     @Test

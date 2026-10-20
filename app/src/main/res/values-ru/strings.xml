@@ -730,4 +730,20 @@
     <string name="battery_device_opt_fmt">Device Optimization (%s)</string>
     <string name="battery_recommended_for_fmt">RECOMMENDED FOR %s</string>
     <string name="battery_widget_hint_fmt">Add the Nowhere Quick Actions or Icon widget to your home screen — active widgets prevent %s battery managers from freezing or killing background location spoofing.</string>
+
+    <!-- Stability & Widget Guide -->
+    <string name="stability_info_title">Стабильность в фоне и руководство по виджетам</string>
+    <string name="stability_info_subtitle">Сохраняйте синюю точку в Google Maps без сбоев в фоне</string>
+    <string name="stability_info_desc">Если Google Maps становится серым при переключении из Nowhere:
+
+Агрессивные менеджеры батареи (например, Infinix/Tecno или Xiaomi MIUI) замораживают имитацию GPS в фоне.
+
+Добавление любого виджета Nowhere на главный экран сообщает системе об активной работе, предотвращая остановку службы!</string>
+    <string name="stability_info_pin_widget">Добавить виджет Nowhere на главный экран</string>
+    <string name="stability_info_browse_gallery">Открыть галерею виджетов</string>
+    <string name="stability_info_battery_unrestricted">Батарея: Без ограничений</string>
+    <string name="stability_info_location_all_time">Местоположение: Разрешить в любом режиме</string>
+    <string name="stability_info_oem_settings">Открыть настройки работы в фоне %s</string>
+    <string name="stability_info_dismiss">Понятно</string>
+    <string name="stability_widget_pinned_success">Запрос на добавление виджета отправлен на главный экран!</string>
 </resources>
