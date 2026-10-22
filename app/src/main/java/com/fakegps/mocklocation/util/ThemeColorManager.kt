@@ -43,13 +43,13 @@ object ThemeColorManager {
     var isThemeStale: Boolean = false
 
     val THEMES = listOf(
-        ColorTheme("RED", "Crimson Red (Default)", "🔴", "#E41B1B", "#B91C1C", "#FEE2E2", "#20E41B1B"),
-        ColorTheme("BLUE", "Electric Blue", "🔵", "#2563EB", "#1D4ED8", "#DBEAFE", "#202563EB"),
-        ColorTheme("CYAN", "Cyberpunk Cyan", "💎", "#00B4D8", "#0077B6", "#CFFAFE", "#2000B4D8"),
-        ColorTheme("GREEN", "Matrix Emerald", "🟢", "#10B981", "#059669", "#D1FAE5", "#2010B981"),
-        ColorTheme("PURPLE", "Royal Purple", "🟣", "#8B5CF6", "#6D28D9", "#EDE9FE", "#208B5CF6"),
-        ColorTheme("GOLD", "Sunset Amber", "🟠", "#F59E0B", "#B45309", "#FEF3C7", "#20F59E0B"),
-        ColorTheme("PINK", "Neon Rose", "🌸", "#EC4899", "#BE185D", "#FCE7F3", "#20EC4899")
+        ColorTheme("RED", "Crimson Red (Default)", "ðŸ”´", "#E41B1B", "#B91C1C", "#FEE2E2", "#20E41B1B"),
+        ColorTheme("BLUE", "Electric Blue", "ðŸ”µ", "#2563EB", "#1D4ED8", "#DBEAFE", "#202563EB"),
+        ColorTheme("CYAN", "Cyberpunk Cyan", "ðŸ’Ž", "#00B4D8", "#0077B6", "#CFFAFE", "#2000B4D8"),
+        ColorTheme("GREEN", "Matrix Emerald", "ðŸŸ¢", "#10B981", "#059669", "#D1FAE5", "#2010B981"),
+        ColorTheme("PURPLE", "Royal Purple", "ðŸŸ£", "#8B5CF6", "#6D28D9", "#EDE9FE", "#208B5CF6"),
+        ColorTheme("GOLD", "Sunset Amber", "ðŸŸ ", "#F59E0B", "#B45309", "#FEF3C7", "#20F59E0B"),
+        ColorTheme("PINK", "Neon Rose", "ðŸŒ¸", "#EC4899", "#BE185D", "#FCE7F3", "#20EC4899")
     )
 
     private val _themeChangeFlow = MutableSharedFlow<ColorTheme>(replay = 1)
@@ -427,6 +427,9 @@ object ThemeColorManager {
                     arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
                     intArrayOf(primaryColor, Color.parseColor("#334155"))
                 )
+            }
+            is com.fakegps.mocklocation.ui.custom.LiquidGlassNavGroup -> {
+                view.setThemeColor(primaryColor, darkColor)
             }
             is android.widget.RadioGroup -> {
                 for (i in 0 until view.childCount) {

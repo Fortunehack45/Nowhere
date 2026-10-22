@@ -175,7 +175,7 @@ class MainActivity : AppCompatActivity() {
     ) { isGranted ->
         viewModel.refreshPermissionStates()
         if (isGranted) {
-            Toast.makeText(this, "🔔 Notifications enabled", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "ðŸ”” Notifications enabled", Toast.LENGTH_SHORT).show()
         }
         val action = pendingSimulationAction
         pendingSimulationAction = null
@@ -752,7 +752,7 @@ class MainActivity : AppCompatActivity() {
                     binding.cardBottomContainer
                 },
                 title = "Control Deck & Simulation Modes",
-                description = "Switch between Fixed Pin teleport, Multi-Point Route Simulation, and 360° Floating Joystick. Tap Start Mocking to inject GPS globally across all apps.",
+                description = "Switch between Fixed Pin teleport, Multi-Point Route Simulation, and 360Â° Floating Joystick. Tap Start Mocking to inject GPS globally across all apps.",
                 iconRes = R.drawable.ic_route,
                 stepNumber = 5,
                 totalSteps = 5,
@@ -865,7 +865,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnClearSearch.visibility = View.GONE
 
         val sessionPrefs = SessionPreferences(this)
-        if (sessionPrefs.lastLocationName.isBlank() || sessionPrefs.lastLocationName == "Mock Location Active" || sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .°]+$"))) {
+        if (sessionPrefs.lastLocationName.isBlank() || sessionPrefs.lastLocationName == "Mock Location Active" || sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .Â°]+$"))) {
             val lat = viewModel.uiState.value.fixedLatitude
             val lon = viewModel.uiState.value.fixedLongitude
             if (lat != 0.0 || lon != 0.0) {
@@ -1417,7 +1417,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnToggleTerrainAdvanced.setOnClickListener {
             val isExpanded = binding.layoutTerrainAdvancedSettings.visibility == View.VISIBLE
             binding.layoutTerrainAdvancedSettings.visibility = if (isExpanded) View.GONE else View.VISIBLE
-            binding.btnToggleTerrainAdvanced.text = if (isExpanded) "Advanced Settings ▸" else "Advanced Settings ▾"
+            binding.btnToggleTerrainAdvanced.text = if (isExpanded) "Advanced Settings â–¸" else "Advanced Settings â–¾"
         }
 
         binding.sliderTerrainRadius.addOnChangeListener { _, value, fromUser ->
@@ -1980,7 +1980,7 @@ class MainActivity : AppCompatActivity() {
             if (granted) {
                 com.google.android.material.snackbar.Snackbar.make(
                     binding.root,
-                    "✓ Background Location Granted — Google Maps will stay blue without widgets!",
+                    "âœ“ Background Location Granted â€” Google Maps will stay blue without widgets!",
                     com.google.android.material.snackbar.Snackbar.LENGTH_LONG
                 ).show()
             }
@@ -2066,7 +2066,7 @@ class MainActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         if (!isValid) {
                             MaterialAlertDialogBuilder(this@MainActivity)
-                                .setTitle("⚓ Ship Cannot Sail on Land")
+                                .setTitle("âš“ Ship Cannot Sail on Land")
                                 .setMessage("Ships and marine vessels can only operate in water (oceans, seas, lakes, rivers).\n\n${reason ?: "One or more route waypoints are on land."}\n\nPlease reposition your waypoints into a water body or switch to Vehicle / Foot / Aircraft mode.")
                                 .setPositiveButton("Reposition Waypoints", null)
                                 .setNegativeButton("Switch to Vehicle") { _, _ ->
@@ -2294,10 +2294,10 @@ class MainActivity : AppCompatActivity() {
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToSlider(binding.sliderRouteSpeed, primaryColor, this)
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToSlider(binding.sliderJoystickSpeed, primaryColor, this)
 
-        // Dynamic Segmented Pill Backgrounds
-        binding.rbFixedMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
-        binding.rbRouteMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
-        binding.rbJoystickMode.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
+        // Dynamic Liquid Glass Navigation Bar Themes
+        val darkColor = com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this)
+        binding.rgModeTabs.setThemeColor(primaryColor, darkColor)
+        binding.rgTransportMode.setThemeColor(primaryColor, darkColor)
 
         // Dynamic Map FAB icon tints
         binding.fabMyLocation.imageTintList = primaryCsl
@@ -2314,10 +2314,6 @@ class MainActivity : AppCompatActivity() {
         // Dynamic Joystick Colors
         binding.joystickOverlay.setJoystickColor(primaryColor)
 
-        binding.rbTransportFoot.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
-        binding.rbTransportVehicle.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
-        binding.rbTransportAircraft.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
-        binding.rbTransportShip.background = com.fakegps.mocklocation.util.ThemeColorManager.createSegmentedPillDrawable(primaryColor)
         binding.btnRoutePause.iconTint = primaryCsl
 
         // Dynamic Route Action Bar Buttons (Saved Routes, Save Route, Reverse, GPX, Clear)
@@ -2329,7 +2325,6 @@ class MainActivity : AppCompatActivity() {
         binding.btnClearRoute.iconTint = primaryCsl
 
         // Dynamic Brand Logo
-        val darkColor = com.fakegps.mocklocation.util.ThemeColorManager.getDarkColor(this)
         binding.ivTopBrandLogo.setImageDrawable(com.fakegps.mocklocation.util.ThemeColorManager.getThemedLogoDrawable(this, primaryColor, darkColor))
 
         // Dynamic Map Target Pin
@@ -2515,9 +2510,9 @@ class MainActivity : AppCompatActivity() {
                 if (report != null && !isFinishing && !isDestroyed) {
                     binding.ivWeatherBadgeIcon.setImageResource(R.drawable.ic_weather_cloud_sun)
                     val tempStr = if (settingsPrefs.useImperialUnits) {
-                        String.format(Locale.US, "%.0f°F", report.current.temperatureF)
+                        String.format(Locale.US, "%.0fÂ°F", report.current.temperatureF)
                     } else {
-                        String.format(Locale.US, "%.0f°C", report.current.temperatureC)
+                        String.format(Locale.US, "%.0fÂ°C", report.current.temperatureC)
                     }
                     binding.tvWeatherBadgeText.text = tempStr
                     binding.layoutWeatherBadge.contentDescription = "${report.locationName}: ${report.current.conditionName}, $tempStr"
@@ -2663,12 +2658,12 @@ class MainActivity : AppCompatActivity() {
         val lon = if (state.isServiceRunning && state.serviceState is ServiceState.Running) state.serviceState.longitude else state.fixedLongitude
         val latDir = if (lat >= 0) "N" else "S"
         val lonDir = if (lon >= 0) "E" else "W"
-        binding.tvFixedCoords.text = String.format("%.5f° %s, %.5f° %s", abs(lat), latDir, abs(lon), lonDir)
+        binding.tvFixedCoords.text = String.format("%.5fÂ° %s, %.5fÂ° %s", abs(lat), latDir, abs(lon), lonDir)
 
         if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
             val speedKmh = state.serviceState.speedMps * 3.6f
             val formattedSpeed = settingsPrefs.formatSpeed(speedKmh)
-            binding.tvTelemetryMeta.text = String.format("%s • ±%.1fm • 18 SAT", formattedSpeed, settingsPrefs.baseAccuracy)
+            binding.tvTelemetryMeta.text = String.format("%s â€¢ Â±%.1fm â€¢ 18 SAT", formattedSpeed, settingsPrefs.baseAccuracy)
 
             if (state.selectedTab == SelectedModeTab.FIXED && (state.serviceState.latitude != 0.0 || state.serviceState.longitude != 0.0)) {
                 updateFixedPinMarker(state.serviceState.latitude, state.serviceState.longitude)
@@ -2677,7 +2672,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } else {
-            binding.tvTelemetryMeta.text = String.format("%s • ±%.1fm • 18 SAT", getString(R.string.status_standby), settingsPrefs.baseAccuracy)
+            binding.tvTelemetryMeta.text = String.format("%s â€¢ Â±%.1fm â€¢ 18 SAT", getString(R.string.status_standby), settingsPrefs.baseAccuracy)
         }
 
         // Fixed Controls State
