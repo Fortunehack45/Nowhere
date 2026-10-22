@@ -2635,21 +2635,27 @@ class MainActivity : AppCompatActivity() {
                 binding.layoutRouteControls.visibility = View.GONE
                 binding.layoutJoystickControls.visibility = View.GONE
                 binding.joystickOverlay.visibility = View.GONE
-                binding.rbFixedMode.isChecked = true
+                if (binding.rgModeTabs.checkedRadioButtonId != R.id.rbFixedMode) {
+                    binding.rgModeTabs.check(R.id.rbFixedMode)
+                }
             }
             SelectedModeTab.ROUTE -> {
                 binding.layoutFixedControls.visibility = View.GONE
                 binding.layoutRouteControls.visibility = View.VISIBLE
                 binding.layoutJoystickControls.visibility = View.GONE
                 binding.joystickOverlay.visibility = View.GONE
-                binding.rbRouteMode.isChecked = true
+                if (binding.rgModeTabs.checkedRadioButtonId != R.id.rbRouteMode) {
+                    binding.rgModeTabs.check(R.id.rbRouteMode)
+                }
             }
             SelectedModeTab.JOYSTICK -> {
                 binding.layoutFixedControls.visibility = View.GONE
                 binding.layoutRouteControls.visibility = View.GONE
                 binding.layoutJoystickControls.visibility = View.VISIBLE
                 binding.joystickOverlay.visibility = if (state.isServiceRunning) View.VISIBLE else View.GONE
-                binding.rbJoystickMode.isChecked = true
+                if (binding.rgModeTabs.checkedRadioButtonId != R.id.rbJoystickMode) {
+                    binding.rgModeTabs.check(R.id.rbJoystickMode)
+                }
             }
         }
 
@@ -2714,11 +2720,14 @@ class MainActivity : AppCompatActivity() {
         binding.sliderRouteSpeed.value = state.routeSpeedKmh.coerceIn(state.transportMode.minSpeedKmh, state.transportMode.maxSpeedKmh)
         binding.switchLoopRoute.isChecked = state.isRouteLooping
 
-        when (state.transportMode) {
-            com.fakegps.mocklocation.simulator.TransportMode.FOOT -> binding.rbTransportFoot.isChecked = true
-            com.fakegps.mocklocation.simulator.TransportMode.AIRCRAFT -> binding.rbTransportAircraft.isChecked = true
-            com.fakegps.mocklocation.simulator.TransportMode.SHIP -> binding.rbTransportShip.isChecked = true
-            else -> binding.rbTransportVehicle.isChecked = true
+        val transportRadioId = when (state.transportMode) {
+            com.fakegps.mocklocation.simulator.TransportMode.FOOT -> R.id.rbTransportFoot
+            com.fakegps.mocklocation.simulator.TransportMode.AIRCRAFT -> R.id.rbTransportAircraft
+            com.fakegps.mocklocation.simulator.TransportMode.SHIP -> R.id.rbTransportShip
+            else -> R.id.rbTransportVehicle
+        }
+        if (binding.rgTransportMode.checkedRadioButtonId != transportRadioId) {
+            binding.rgTransportMode.check(transportRadioId)
         }
 
 

@@ -625,6 +625,18 @@ object ThemeColorManager {
         )
         radioButton.buttonTintList = buttonTintList
 
+        // Never override liquid glass nav buttons with legacy solid drawables
+        val isInsideLiquidNav = (radioButton.parent is com.fakegps.mocklocation.ui.custom.LiquidGlassNavGroup) ||
+            radioButton.id == R.id.rbFixedMode || radioButton.id == R.id.rbRouteMode || radioButton.id == R.id.rbJoystickMode ||
+            radioButton.id == R.id.rbTransportFoot || radioButton.id == R.id.rbTransportVehicle ||
+            radioButton.id == R.id.rbTransportAircraft || radioButton.id == R.id.rbTransportShip
+
+        if (isInsideLiquidNav) {
+            radioButton.background = null
+            radioButton.buttonDrawable = null
+            return
+        }
+
         // Only use segmented pill background if the button has no circle icon (android:button="@null")
         // or its parent has a segmented background (e.g. Automation tab buttons)
         val hasNoButtonDrawable = radioButton.buttonDrawable == null

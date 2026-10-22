@@ -4,7 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.content.Context
-import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
@@ -46,6 +46,7 @@ import kotlin.math.roundToInt
  *   * Boundary resistance (0.25x rubber-band damping past outer tabs).
  *   * Tactile haptic ticks when dragging across tab boundaries.
  *   * Under-damped spring settle on release (stiffness 220, damping 0.84 equivalent).
+ *   * Automatic self-healing state synchronization with RadioGroup checked button.
  */
 class LiquidGlassNavGroup @JvmOverloads constructor(
     context: Context,
@@ -76,19 +77,17 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
     private val lensSpecularPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val lensPrismPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 1.5f * density
+        strokeWidth = 1.6f * density
     }
     private val lensRimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1.0f * density
-        color = Color.parseColor("#66FFFFFF")
     }
 
     private val trackRect = RectF()
     private val lensRect = RectF()
     private val scaledLensRect = RectF()
     private val shadowRect = RectF()
-    private val prismClipPath = Path()
 
     // State Variables
     private var primaryColor: Int = ThemeColorManager.getPrimaryColor(context)
@@ -111,6 +110,10 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
     private var travelAnimator: ValueAnimator? = null
     private var liftAnimator: ValueAnimator? = null
 
+    // Listener wrapper to intercept both user interaction and programmatic checks
+    private var externalCheckedChangeListener: OnCheckedChangeListener? = null
+    private var isInternalChecking = false
+
     init {
         setWillNotDraw(false)
         orientation = HORIZONTAL
@@ -127,30 +130,46 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
         invalidate()
     }
 
-    private fun updateColors() {
-        // Track Stroke
-        trackStrokePaint.color = ContextCompat.getColor(context, R.color.stroke_liquid_glass_specular)
+    private fun isDarkMode(): Boolean {
+        val nightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return nightMode == Configuration.UI_MODE_NIGHT_YES
+    }
 
-        // Prism rim spectral colors (cyan -> lime -> gold -> magenta -> violet)
-        val prismColors = intArrayOf(
-            Color.parseColor("#0000E5FF"),
-            Color.parseColor("#4D00E5FF"),
-            Color.parseColor("#5900FF88"),
-            Color.parseColor("#59FFD600"),
-            Color.parseColor("#59FF4081"),
-            Color.parseColor("#4D7C4DFF"),
-            Color.parseColor("#007C4DFF")
-        )
-        val prismPositions = floatArrayOf(0.0f, 0.16f, 0.35f, 0.55f, 0.75f, 0.90f, 1.0f)
-        lensPrismPaint.shader = LinearGradient(
-            0f, 0f, 200f * density, 0f,
-            prismColors, prismPositions, Shader.TileMode.CLAMP
-        )
+    private fun updateColors() {
+        val darkMode = isDarkMode()
+        val strokeColor = if (darkMode) {
+            Color.parseColor("#45FFFFFF")
+        } else {
+            Color.parseColor("#55CBD5E1")
+        }
+        trackStrokePaint.color = strokeColor
+    }
+
+    override fun setOnCheckedChangeListener(listener: OnCheckedChangeListener?) {
+        externalCheckedChangeListener = listener
+        super.setOnCheckedChangeListener { group, checkedId ->
+            if (!isInternalChecking) {
+                syncToCheckedId(checkedId, animate = isLaidOut && width > 0)
+            }
+            externalCheckedChangeListener?.onCheckedChanged(group, checkedId)
+        }
     }
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-        // Ensure all child RadioButtons have transparent backgrounds and correct padding
+        cleanChildRadioButtons()
+        syncSelectedIndexWithCheckedButton()
+        updateChildScales(selectedIndex)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        cleanChildRadioButtons()
+        syncSelectedIndexWithCheckedButton()
+        updateChildScales(selectedIndex)
+    }
+
+    private fun cleanChildRadioButtons() {
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             if (child is RadioButton) {
@@ -158,30 +177,38 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
                 child.buttonDrawable = null
             }
         }
-        syncSelectedIndexWithCheckedButton()
     }
 
     override fun check(id: Int) {
         super.check(id)
-        val newIndex = findIndexOfChildId(id)
+        syncToCheckedId(id, animate = isLaidOut && width > 0)
+    }
+
+    private fun syncToCheckedId(checkedId: Int, animate: Boolean) {
+        val newIndex = findIndexOfChildId(checkedId)
         if (newIndex in 0 until childCount && newIndex != selectedIndex) {
-            if (width > 0 && isLaidOut) {
-                animateToTab(newIndex)
+            if (animate && width > 0 && isLaidOut) {
+                animateToTab(newIndex, notifyRadioGroup = false)
             } else {
+                travelAnimator?.cancel()
                 selectedIndex = newIndex
                 currentPosition = newIndex.toFloat()
                 lastHapticTab = newIndex
+                updateChildScales(newIndex)
+                postInvalidateOnAnimation()
             }
         }
     }
 
     private fun syncSelectedIndexWithCheckedButton() {
         val checkedId = checkedRadioButtonId
-        val idx = findIndexOfChildId(checkedId)
-        if (idx in 0 until childCount) {
-            selectedIndex = idx
-            currentPosition = idx.toFloat()
-            lastHapticTab = idx
+        if (checkedId != -1) {
+            val idx = findIndexOfChildId(checkedId)
+            if (idx in 0 until childCount) {
+                selectedIndex = idx
+                currentPosition = idx.toFloat()
+                lastHapticTab = idx
+            }
         }
     }
 
@@ -194,15 +221,9 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
-        // Ensure child RadioButtons backgrounds remain transparent
-        for (i in 0 until childCount) {
-            val child = getChildAt(i)
-            if (child is RadioButton && child.background != null) {
-                child.background = null
-                child.buttonDrawable = null
-            }
-        }
+        cleanChildRadioButtons()
         syncSelectedIndexWithCheckedButton()
+        updateChildScales(selectedIndex)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -213,12 +234,25 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
             return
         }
 
+        // Self-healing synchronization: if checked button differs and no animator/drag active
+        val currentCheckedId = checkedRadioButtonId
+        if (currentCheckedId != -1 && !isDragging && travelAnimator?.isRunning != true) {
+            val targetIdx = findIndexOfChildId(currentCheckedId)
+            if (targetIdx in 0 until childCount && targetIdx != selectedIndex) {
+                selectedIndex = targetIdx
+                currentPosition = targetIdx.toFloat()
+                lastHapticTab = targetIdx
+                updateChildScales(targetIdx)
+            }
+        }
+
         val cornerRadius = h / 2f
+        val darkMode = isDarkMode()
 
         // 1. Draw Outer Capsule Liquid Glass Track
         trackRect.set(1f * density, 1f * density, w - 1f * density, h - 1f * density)
-        val startColor = ContextCompat.getColor(context, R.color.liquid_glass_start)
-        val endColor = ContextCompat.getColor(context, R.color.liquid_glass_end)
+        val startColor = if (darkMode) Color.parseColor("#331E202C") else Color.parseColor("#E6F4F5F8")
+        val endColor = if (darkMode) Color.parseColor("#4D12141F") else Color.parseColor("#CCFFFFFF")
         trackPaint.shader = LinearGradient(0f, 0f, 0f, h, startColor, endColor, Shader.TileMode.CLAMP)
 
         canvas.drawRoundRect(trackRect, cornerRadius, cornerRadius, trackPaint)
@@ -234,7 +268,7 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
         val cx = lensRect.centerX()
         val cy = lensRect.centerY()
         val halfW = (lensRect.width() / 2f) * scaleX
-        val liftHeightExpansion = lift * 2.5f * density
+        val liftHeightExpansion = lift * 3.5f * density
         val halfH = (lensRect.height() / 2f) * scaleY + liftHeightExpansion
 
         scaledLensRect.set(cx - halfW, cy - halfH, cx + halfW, cy + halfH)
@@ -242,20 +276,22 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
 
         // 3. Draw Soft Elevated Drop Shadow when Lifted
         if (lift > 0.01f) {
-            val shadowOffsetY = lift * 4.5f * density
+            val shadowOffsetY = lift * 5.0f * density
             shadowRect.set(
-                scaledLensRect.left + 2f * density,
+                scaledLensRect.left + 1f * density,
                 scaledLensRect.top + shadowOffsetY,
-                scaledLensRect.right - 2f * density,
+                scaledLensRect.right - 1f * density,
                 scaledLensRect.bottom + shadowOffsetY
             )
-            lensShadowPaint.alpha = (lift * 65).toInt().coerceIn(0, 255)
+            lensShadowPaint.alpha = (lift * 75).toInt().coerceIn(0, 255)
             canvas.drawRoundRect(shadowRect, lensCorner, lensCorner, lensShadowPaint)
         }
 
-        // 4. Draw Traveling Liquid Glass Lens Body
-        val lensTopColor = adjustAlpha(primaryColor, 0.88f)
-        val lensBottomColor = adjustAlpha(darkColor, 0.94f)
+        // 4. Draw Traveling Liquid Glass Lens Body (Translucent Refraction Fill)
+        val topAlpha = if (darkMode) 0.52f else 0.42f
+        val bottomAlpha = if (darkMode) 0.68f else 0.58f
+        val lensTopColor = adjustAlpha(primaryColor, topAlpha)
+        val lensBottomColor = adjustAlpha(darkColor, bottomAlpha)
         lensFillPaint.shader = LinearGradient(
             scaledLensRect.left, scaledLensRect.top,
             scaledLensRect.left, scaledLensRect.bottom,
@@ -263,33 +299,44 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
         )
         canvas.drawRoundRect(scaledLensRect, lensCorner, lensCorner, lensFillPaint)
 
-        // 5. Draw 3D Convex Top Glare Sheen
+        // 5. Draw 3D Convex Top Glare Sheen (Lens Curvature)
         lensSpecularPaint.shader = LinearGradient(
             scaledLensRect.left, scaledLensRect.top,
-            scaledLensRect.left, scaledLensRect.top + scaledLensRect.height() * 0.55f,
-            Color.parseColor("#48FFFFFF"),
-            Color.TRANSPARENT,
+            scaledLensRect.left, scaledLensRect.top + scaledLensRect.height() * 0.58f,
+            intArrayOf(
+                Color.parseColor("#7AFFFFFF"),
+                Color.parseColor("#25FFFFFF"),
+                Color.TRANSPARENT
+            ),
+            floatArrayOf(0.0f, 0.38f, 1.0f),
             Shader.TileMode.CLAMP
         )
         canvas.drawRoundRect(scaledLensRect, lensCorner, lensCorner, lensSpecularPaint)
 
-        // 6. Draw Chromatic Dispersion Prism Rim (Optical Rainbow Refraction)
+        // 6. Draw Chromatic Dispersion Prism Rim (Spectral Rainbow Refraction)
         lensPrismPaint.shader = LinearGradient(
             scaledLensRect.left, scaledLensRect.top,
             scaledLensRect.right, scaledLensRect.bottom,
             intArrayOf(
-                Color.parseColor("#4400E5FF"), // Cyan
-                Color.parseColor("#5500FF88"), // Mint
-                Color.parseColor("#55FFD600"), // Yellow-gold
-                Color.parseColor("#55FF4081"), // Magenta
-                Color.parseColor("#447C4DFF")  // Violet
+                Color.parseColor("#8000E5FF"), // Cyan
+                Color.parseColor("#9000FF88"), // Mint
+                Color.parseColor("#90FFD600"), // Amber Gold
+                Color.parseColor("#90FF4081"), // Magenta
+                Color.parseColor("#807C4DFF")  // Violet
             ),
-            floatArrayOf(0.0f, 0.25f, 0.5f, 0.75f, 1.0f),
+            floatArrayOf(0.0f, 0.22f, 0.50f, 0.78f, 1.0f),
             Shader.TileMode.CLAMP
         )
         canvas.drawRoundRect(scaledLensRect, lensCorner, lensCorner, lensPrismPaint)
 
-        // 7. Draw Hairline Specular Outer Rim
+        // 7. Draw Hairline Specular Outer Rim (Reflective Glass Bevel)
+        lensRimPaint.shader = LinearGradient(
+            scaledLensRect.left, scaledLensRect.top,
+            scaledLensRect.left, scaledLensRect.bottom,
+            Color.parseColor("#B3FFFFFF"),
+            Color.parseColor("#33FFFFFF"),
+            Shader.TileMode.CLAMP
+        )
         canvas.drawRoundRect(scaledLensRect, lensCorner, lensCorner, lensRimPaint)
 
         // 8. Super call draws Child RadioButton Texts & Icons cleanly above the lens
@@ -308,11 +355,12 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
         val currentChild = getChildAt(baseIndex)
         val nextChild = if (baseIndex + 1 < n) getChildAt(baseIndex + 1) else currentChild
 
-        val pad = 3f * density
-        val left = (currentChild.left + (nextChild.left - currentChild.left) * fraction) + pad
-        val right = (currentChild.right + (nextChild.right - currentChild.right) * fraction) - pad
-        val top = (currentChild.top + (nextChild.top - currentChild.top) * fraction) + pad
-        val bottom = (currentChild.bottom + (nextChild.bottom - currentChild.bottom) * fraction) - pad
+        val padX = 2f * density
+        val padY = 2f * density
+        val left = (currentChild.left + (nextChild.left - currentChild.left) * fraction) + padX
+        val right = (currentChild.right + (nextChild.right - currentChild.right) * fraction) - padX
+        val top = (currentChild.top + (nextChild.top - currentChild.top) * fraction) + padY
+        val bottom = (currentChild.bottom + (nextChild.bottom - currentChild.bottom) * fraction) - padY
 
         outRect.set(left, top, right, bottom)
     }
@@ -332,6 +380,7 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
                 totalDragX = 0f
                 isDragging = false
                 parent?.requestDisallowInterceptTouchEvent(true)
+                startLiftAnimation(true)
             }
             MotionEvent.ACTION_MOVE -> {
                 val dx = abs(ev.x - downX)
@@ -339,8 +388,12 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
                 if (dx > clickSlopPx && dx > dy) {
                     isDragging = true
                     parent?.requestDisallowInterceptTouchEvent(true)
-                    startLiftAnimation(true)
                     return true
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (!isDragging) {
+                    startLiftAnimation(false)
                 }
             }
         }
@@ -414,7 +467,7 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
                 val isRtl = layoutDirection == View.LAYOUT_DIRECTION_RTL
 
                 if (isDragging) {
-                    // Release snap calculation matching Vibra_Music FloatingBottomBar
+                    // Fluid release snap calculation matching Vibra_Music
                     val rawRatio = totalDragX / stepPx
                     val ratio = if (isRtl) -rawRatio else rawRatio
                     val shift = when {
@@ -423,10 +476,15 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
                         else -> 0
                     }
                     val targetTab = (selectedIndex + shift).coerceIn(0, childCount - 1)
+
+                    // Seamless transition: transfer current offset position to currentPosition before resetting dragOffsetPx
+                    val currentLensPos = (currentPosition + dragOffsetPxToPosDelta()).coerceIn(0f, (childCount - 1).toFloat())
+                    currentPosition = currentLensPos
                     dragOffsetPx = 0f
-                    animateToTab(targetTab)
+
+                    animateToTab(targetTab, notifyRadioGroup = true)
                 } else {
-                    // Tap detection on specific child bounds (RTL & LTR safe)
+                    // Tap detection on specific child bounds
                     val tapX = event.x
                     var tappedIndex = selectedIndex
                     for (i in 0 until childCount) {
@@ -436,7 +494,7 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
                             break
                         }
                     }
-                    animateToTab(tappedIndex)
+                    animateToTab(tappedIndex, notifyRadioGroup = true)
                 }
 
                 isDragging = false
@@ -449,26 +507,31 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
                 isDragging = false
                 dragOffsetPx = 0f
                 startLiftAnimation(false)
-                animateToTab(selectedIndex)
+                animateToTab(selectedIndex, notifyRadioGroup = false)
                 return true
             }
         }
         return super.onTouchEvent(event)
     }
 
-    private fun animateToTab(targetIndex: Int) {
+    private fun animateToTab(targetIndex: Int, notifyRadioGroup: Boolean = true) {
         if (targetIndex !in 0 until childCount) return
 
         selectedIndex = targetIndex
         lastHapticTab = targetIndex
         updateChildScales(targetIndex)
 
-        val child = getChildAt(targetIndex)
-        if (child != null && child.id != checkedRadioButtonId) {
-            super.check(child.id)
-            try {
-                performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            } catch (_: Exception) {}
+        if (notifyRadioGroup) {
+            val child = getChildAt(targetIndex)
+            if (child != null && child.id != checkedRadioButtonId) {
+                isInternalChecking = true
+                super.check(child.id)
+                isInternalChecking = false
+                externalCheckedChangeListener?.onCheckedChanged(this, child.id)
+                try {
+                    performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                } catch (_: Exception) {}
+            }
         }
 
         travelAnimator?.cancel()
@@ -478,7 +541,7 @@ class LiquidGlassNavGroup @JvmOverloads constructor(
         travelAnimator = ValueAnimator.ofFloat(fromPos, toPos).apply {
             duration = 320L
             // Under-damped spring settle matching GlassSpring (damping 0.84, stiffness 220)
-            interpolator = OvershootInterpolator(1.4f)
+            interpolator = OvershootInterpolator(1.35f)
             addUpdateListener { va ->
                 val pos = va.animatedValue as Float
                 lag = abs(toPos - pos).coerceIn(0f, 1f)
