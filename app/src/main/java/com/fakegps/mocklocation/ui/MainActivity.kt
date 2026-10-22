@@ -46,6 +46,7 @@ import com.fakegps.mocklocation.service.ServiceState
 import com.fakegps.mocklocation.simulator.RoutePoint
 import com.fakegps.mocklocation.simulator.SimulationMode
 import com.fakegps.mocklocation.ui.custom.JoystickView
+import com.fakegps.mocklocation.ui.custom.applyLiquidTouch
 import com.fakegps.mocklocation.ui.dialogs.BatteryOptimizationDialog
 import com.fakegps.mocklocation.ui.dialogs.HistoryBottomSheet
 import com.fakegps.mocklocation.ui.dialogs.IpChangerBottomSheet
@@ -239,6 +240,7 @@ class MainActivity : AppCompatActivity() {
         setupJoystick()
         setupBottomDeckToggle()
         setupFloatingButtons()
+        setupLiquidGlassInteractions()
         setupIpShield()
         setupGhostCloak()
         observeUiState()
@@ -1864,6 +1866,73 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupLiquidGlassInteractions() {
+        // Primary Action Buttons
+        binding.btnFixedToggle.applyLiquidTouch()
+        binding.btnRouteToggle.applyLiquidTouch()
+        binding.btnRoutePause.applyLiquidTouch()
+        binding.btnJoystickToggle.applyLiquidTouch()
+        binding.btnFloatingOverlayToggle.applyLiquidTouch()
+        binding.btnBannerEnable.applyLiquidTouch()
+        binding.btnBannerErrorDismiss.applyLiquidTouch()
+
+        // Route Sub-deck Action Buttons
+        binding.btnSavedRoutesDrawer.applyLiquidTouch()
+        binding.btnSaveCurrentRoute.applyLiquidTouch()
+        binding.btnReverseRoute.applyLiquidTouch()
+        binding.btnImportGpx.applyLiquidTouch()
+        binding.btnExportGpx.applyLiquidTouch()
+        binding.btnClearRoute.applyLiquidTouch()
+        binding.btnRouteUndo.applyLiquidTouch()
+        binding.btnRouteRedo.applyLiquidTouch()
+
+        // Floating Side Tools & Map Controls
+        binding.fabZoomIn.applyLiquidTouch()
+        binding.fabZoomOut.applyLiquidTouch()
+        binding.fabMyLocation.applyLiquidTouch()
+        binding.fabMapLayers.applyLiquidTouch()
+        binding.btnToggleSideMenu.applyLiquidTouch()
+        binding.fabSaveFavorite.applyLiquidTouch()
+        binding.fabOpenFavorites.applyLiquidTouch()
+        binding.fabOpenHistory.applyLiquidTouch()
+
+        // Stability / Widget Info Dialog Trigger
+        binding.btnStabilityInfo.applyLiquidTouch()
+        binding.cardStabilityInfo.applyLiquidTouch()
+
+        // Top Header Action Buttons & Interactive Badges
+        binding.btnHeaderLanguage.applyLiquidTouch()
+        binding.btnHeaderWidgets.applyLiquidTouch()
+        binding.btnHeaderSettings.applyLiquidTouch()
+        binding.layoutWeatherBadge.applyLiquidTouch()
+        binding.layoutIpShieldBadge.applyLiquidTouch()
+        binding.layoutGhostCloakBadge.applyLiquidTouch()
+        binding.layoutHotspotBadge.applyLiquidTouch()
+        binding.layoutSessionTimerBadge.applyLiquidTouch()
+        binding.layoutPremiumBadge.applyLiquidTouch()
+        binding.layoutAutomationBadge.applyLiquidTouch()
+
+        // Preset City Destination Chips
+        binding.chipPresetNewYork.applyLiquidTouch()
+        binding.chipPresetParis.applyLiquidTouch()
+        binding.chipPresetTokyo.applyLiquidTouch()
+        binding.chipPresetDubai.applyLiquidTouch()
+        binding.chipPresetLondon.applyLiquidTouch()
+        binding.chipPresetHonolulu.applyLiquidTouch()
+
+        // Bottom Deck & Coordinates Controls
+        binding.btnToggleBottomDeck.applyLiquidTouch()
+        binding.btnCopyCoords.applyLiquidTouch()
+
+        // Search Overlay Controls
+        val overlay = binding.includedSearchOverlay
+        overlay.btnSearchOverlayBack.applyLiquidTouch()
+        overlay.btnPasteOverlaySearch.applyLiquidTouch()
+        overlay.btnClearOverlaySearch.applyLiquidTouch()
+        overlay.btnJumpDirectCoords.applyLiquidTouch()
+        overlay.btnClearAllSearchHistory.applyLiquidTouch()
+    }
+
     private fun performHapticFeedbackIfEnabled() {
         if (!settingsPrefs.enableHapticFeedback) return
         try {
@@ -2209,6 +2278,18 @@ class MainActivity : AppCompatActivity() {
         binding.tvRouteDistanceRemaining.setTextColor(primaryColor)
         binding.pbRouteLiveProgress.progressTintList = primaryCsl
         binding.tvWaypointsCount.setTextColor(primaryColor)
+
+        // Dynamic Primary Toggle Buttons Accent
+        val state = viewModel.uiState.value
+        if (!state.isServiceRunning || state.selectedTab != SelectedModeTab.FIXED) {
+            binding.btnFixedToggle.backgroundTintList = primaryCsl
+        }
+        if (!state.isServiceRunning || state.selectedTab != SelectedModeTab.ROUTE) {
+            binding.btnRouteToggle.backgroundTintList = primaryCsl
+        }
+        if (!state.isServiceRunning || state.selectedTab != SelectedModeTab.JOYSTICK) {
+            binding.btnJoystickToggle.backgroundTintList = primaryCsl
+        }
 
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToSlider(binding.sliderRouteSpeed, primaryColor, this)
         com.fakegps.mocklocation.util.ThemeColorManager.applyThemeToSlider(binding.sliderJoystickSpeed, primaryColor, this)

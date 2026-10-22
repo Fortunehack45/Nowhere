@@ -32,6 +32,18 @@
     <color name="glass_chip_end">#EFE8EEF5</color>
     <color name="stroke_glass_specular">#80FFFFFF</color>
 
+    <!-- Liquid Glass Tokens (Light Mode - Apple/Vibra Liquid Glass) -->
+    <color name="liquid_glass_start">#F2FFFFFF</color>
+    <color name="liquid_glass_end">#E6F4F5F8</color>
+    <color name="liquid_glass_inner">#0D000000</color>
+    <color name="stroke_liquid_glass_specular">#99FFFFFF</color>
+    <color name="liquid_glass_sheen">#33FFFFFF</color>
+
+    <!-- Solid Dialog Tokens (100% Opaque Solid Surfaces) -->
+    <color name="surface_dialog_solid">#FFFFFF</color>
+    <color name="surface_dialog_elevated_solid">#F2F4F7</color>
+    <color name="stroke_dialog_solid">#E5E7EB</color>
+
     <!-- Edge Blur Depth Gradient Scrims -->
     <color name="edge_blur_top_start">#E6F2F2F7</color>
     <color name="edge_blur_top_mid">#80F2F2F7</color>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Liquid Pill Body -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="@color/liquid_glass_start"
+                android:endColor="@color/liquid_glass_end"
+                android:type="linear" />
+            <corners android:radius="999dp" />
+            <stroke
+                android:width="1.2dp"
+                android:color="@color/stroke_liquid_glass_specular" />
+        </shape>
+    </item>
+    <!-- Liquid Top Light Reflection -->
+    <item
+        android:left="2dp"
+        android:right="2dp"
+        android:top="1dp"
+        android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="@color/liquid_glass_sheen"
+                android:endColor="@android:color/transparent"
+                android:type="linear" />
+            <corners android:radius="999dp" />
+        </shape>
+    </item>
+</layer-list>

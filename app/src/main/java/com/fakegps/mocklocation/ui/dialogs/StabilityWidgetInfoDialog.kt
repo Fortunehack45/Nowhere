@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import com.fakegps.mocklocation.R
 import com.fakegps.mocklocation.databinding.LayoutDialogStabilityWidgetInfoBinding
+import com.fakegps.mocklocation.ui.custom.applyLiquidTouch
 import com.fakegps.mocklocation.ui.widget.NowhereAppWidgetProvider
 import com.fakegps.mocklocation.util.OEMDetector
 import com.fakegps.mocklocation.util.PermissionHelper
@@ -56,7 +57,7 @@ class StabilityWidgetInfoDialog(
             binding.tvOemNoticeHeader.text = "Why Google Maps turns ash on $oemDisplayName"
             binding.btnOemSettings.visibility = View.VISIBLE
             binding.btnOemSettings.text = activity.getString(R.string.stability_info_oem_settings, oemDisplayName)
-            binding.btnOemSettings.setOnClickListener {
+            binding.btnOemSettings.applyLiquidTouch {
                 OEMDetector.openOEMSpecificSettings(activity)
             }
         } else {
@@ -64,8 +65,8 @@ class StabilityWidgetInfoDialog(
             binding.btnOemSettings.visibility = View.GONE
         }
 
-        // Pin Widget Directly with 1 Tap
-        binding.btnPinWidget.setOnClickListener {
+        // Pin Widget Directly with 1 Tap (Liquid Button Touch)
+        binding.btnPinWidget.applyLiquidTouch {
             val appWidgetManager = AppWidgetManager.getInstance(activity)
             val provider = ComponentName(activity, NowhereAppWidgetProvider::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && appWidgetManager.isRequestPinAppWidgetSupported) {
@@ -81,19 +82,19 @@ class StabilityWidgetInfoDialog(
             dialog.dismiss()
         }
 
-        // Open Widget Gallery
-        binding.btnBrowseGallery.setOnClickListener {
+        // Open Widget Gallery (Liquid Button Touch)
+        binding.btnBrowseGallery.applyLiquidTouch {
             openWidgetGallery()
             dialog.dismiss()
         }
 
-        // Battery Unrestricted
-        binding.btnBatteryUnrestricted.setOnClickListener {
+        // Battery Unrestricted (Liquid Button Touch)
+        binding.btnBatteryUnrestricted.applyLiquidTouch {
             PermissionHelper.requestIgnoreBatteryOptimizations(activity)
         }
 
-        // Location Allow All The Time
-        binding.btnLocationAllTime.setOnClickListener {
+        // Location Allow All The Time (Liquid Button Touch)
+        binding.btnLocationAllTime.applyLiquidTouch {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !PermissionHelper.hasBackgroundLocationPermission(activity)) {
                 PermissionHelper.requestBackgroundLocationPermission(activity)
             } else {
@@ -101,7 +102,7 @@ class StabilityWidgetInfoDialog(
             }
         }
 
-        binding.btnDismiss.setOnClickListener {
+        binding.btnDismiss.applyLiquidTouch {
             dialog.dismiss()
         }
 

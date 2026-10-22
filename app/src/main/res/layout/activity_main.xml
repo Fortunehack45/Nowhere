@@ -41,7 +41,7 @@
             app:cardBackgroundColor="@color/surface_glass_card"
             app:cardCornerRadius="22dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_glass_specular"
+            app:strokeColor="@color/stroke_liquid_glass_specular"
             app:strokeWidth="1.2dp">
 
             <LinearLayout
@@ -421,7 +421,7 @@
             app:cardBackgroundColor="@color/surface_search"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/stroke_glass_specular"
+            app:strokeColor="@color/stroke_liquid_glass_specular"
             app:strokeWidth="1.2dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -695,7 +695,7 @@
         app:cardBackgroundColor="@color/surface_glass_card"
         app:cardCornerRadius="19dp"
         app:cardElevation="0dp"
-        app:strokeColor="@color/stroke_glass_specular"
+        app:strokeColor="@color/stroke_liquid_glass_specular"
         app:strokeWidth="1.2dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutTopHeader">
@@ -722,7 +722,7 @@
         app:cardBackgroundColor="@color/surface_glass_card"
         app:cardCornerRadius="18dp"
         app:cardElevation="0dp"
-        app:strokeColor="@color/stroke_glass_specular"
+        app:strokeColor="@color/stroke_liquid_glass_specular"
         app:strokeWidth="1.2dp"
         app:layout_constraintBottom_toTopOf="@id/cardBottomContainer"
         app:layout_constraintEnd_toEndOf="parent"
@@ -908,7 +908,7 @@
         app:cardBackgroundColor="@color/surface_glass_sheet"
         app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
-        app:strokeColor="@color/stroke_glass_specular"
+        app:strokeColor="@color/stroke_liquid_glass_specular"
         app:strokeWidth="1.2dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
@@ -1089,8 +1089,8 @@
                     android:textStyle="bold"
                     app:cornerRadius="16dp"
                     app:elevation="3dp"
-                    app:strokeColor="#40FFFFFF"
-                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/stroke_liquid_glass_specular"
+                    app:strokeWidth="1.2dp"
                     app:icon="@drawable/ic_teleport"
                     app:iconTint="@color/white" />
             </LinearLayout>
@@ -1131,7 +1131,7 @@
                 app:cardBackgroundColor="@color/surface_glass_inner"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/stroke_glass_specular"
+                app:strokeColor="@color/stroke_liquid_glass_specular"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -1754,8 +1754,8 @@
                     android:textStyle="bold"
                     app:cornerRadius="16dp"
                     app:elevation="3dp"
-                    app:strokeColor="#40FFFFFF"
-                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/stroke_liquid_glass_specular"
+                    app:strokeWidth="1.2dp"
                     app:icon="@drawable/ic_play"
                     app:iconTint="@color/white" />
 
@@ -1772,7 +1772,7 @@
                     android:visibility="gone"
                     app:cornerRadius="16dp"
                     app:elevation="2dp"
-                    app:strokeColor="@color/stroke_glass_specular"
+                    app:strokeColor="@color/stroke_liquid_glass_specular"
                     app:strokeWidth="1dp"
                     app:icon="@drawable/ic_pause"
                     app:iconTint="@color/text_primary" />
@@ -1834,8 +1834,8 @@
                     android:textStyle="bold"
                     app:cornerRadius="16dp"
                     app:elevation="3dp"
-                    app:strokeColor="#40FFFFFF"
-                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/stroke_liquid_glass_specular"
+                    app:strokeWidth="1.2dp"
                     app:icon="@drawable/ic_play"
                     app:iconTint="@color/white" />
 
@@ -1851,7 +1851,7 @@
                     android:textStyle="bold"
                     app:cornerRadius="16dp"
                     app:elevation="2dp"
-                    app:strokeColor="@color/stroke_glass_specular"
+                    app:strokeColor="@color/stroke_liquid_glass_specular"
                     app:strokeWidth="1dp"
                     app:icon="@drawable/ic_joystick"
                     app:iconTint="@color/primary" />

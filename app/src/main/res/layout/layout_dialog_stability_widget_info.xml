@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_card_glass"
+    android:background="@drawable/bg_card_solid_dialog"
     android:fillViewport="true"
     android:overScrollMode="never"
     android:scrollbars="vertical">
@@ -44,12 +44,12 @@
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
-        <!-- Explanatory Card -->
+        <!-- Explanatory Card (Solid Elevated) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card_elevated"
+            android:background="@drawable/bg_card_solid_elevated"
             android:orientation="vertical"
             android:padding="16dp">
 

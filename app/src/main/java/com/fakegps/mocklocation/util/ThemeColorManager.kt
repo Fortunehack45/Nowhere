@@ -158,6 +158,42 @@ object ThemeColorManager {
     }
 
     /**
+     * Dynamically generates a Liquid Glass Primary Action Button drawable
+     * matching the current theme accent, specular top highlight, and rounded corners.
+     */
+    fun createLiquidGlassButtonDrawable(primaryColor: Int, darkColor: Int, cornerRadiusDp: Float = 16f): Drawable {
+        val density = android.content.res.Resources.getSystem().displayMetrics.density
+        val radiusPx = cornerRadiusDp * density
+
+        val baseGradient = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(primaryColor, darkColor)
+        ).apply {
+            cornerRadius = radiusPx
+            setStroke((1.2f * density).toInt(), Color.parseColor("#55FFFFFF"))
+        }
+
+        val sheenGradient = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(Color.parseColor("#4DFFFFFF"), Color.TRANSPARENT)
+        ).apply {
+            cornerRadii = floatArrayOf(
+                radiusPx, radiusPx,
+                radiusPx, radiusPx,
+                radiusPx * 0.4f, radiusPx * 0.4f,
+                radiusPx * 0.4f, radiusPx * 0.4f
+            )
+        }
+
+        val layerList = android.graphics.drawable.LayerDrawable(arrayOf(baseGradient, sheenGradient))
+        val topInset = (1f * density).toInt()
+        val bottomInset = (14f * density).toInt()
+        val sideInset = (2f * density).toInt()
+        layerList.setLayerInset(1, sideInset, topInset, sideInset, bottomInset)
+        return layerList
+    }
+
+    /**
      * Dynamically generates the Nowhere Brand Pin Logo with the chosen primary
      * color body, darker quadrant radar shade, and center cutout.
      */
