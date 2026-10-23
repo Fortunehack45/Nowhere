@@ -752,7 +752,7 @@ class MainActivity : AppCompatActivity() {
                     binding.cardBottomContainer
                 },
                 title = "Control Deck & Simulation Modes",
-                description = "Switch between Fixed Pin teleport, Multi-Point Route Simulation, and 360Â° Floating Joystick. Tap Start Mocking to inject GPS globally across all apps.",
+                description = "Switch between Fixed Pin teleport, Multi-Point Route Simulation, and 360\u00B0 Floating Joystick. Tap Start Mocking to inject GPS globally across all apps.",
                 iconRes = R.drawable.ic_route,
                 stepNumber = 5,
                 totalSteps = 5,
@@ -865,7 +865,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnClearSearch.visibility = View.GONE
 
         val sessionPrefs = SessionPreferences(this)
-        if (sessionPrefs.lastLocationName.isBlank() || sessionPrefs.lastLocationName == "Mock Location Active" || sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .Â°]+$"))) {
+        if (sessionPrefs.lastLocationName.isBlank() || sessionPrefs.lastLocationName == "Mock Location Active" || sessionPrefs.lastLocationName.matches(Regex("^[0-9\\-+, .\u00B0]+$"))) {
             val lat = viewModel.uiState.value.fixedLatitude
             val lon = viewModel.uiState.value.fixedLongitude
             if (lat != 0.0 || lon != 0.0) {
@@ -1417,7 +1417,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnToggleTerrainAdvanced.setOnClickListener {
             val isExpanded = binding.layoutTerrainAdvancedSettings.visibility == View.VISIBLE
             binding.layoutTerrainAdvancedSettings.visibility = if (isExpanded) View.GONE else View.VISIBLE
-            binding.btnToggleTerrainAdvanced.text = if (isExpanded) "Advanced Settings â–¸" else "Advanced Settings â–¾"
+            binding.btnToggleTerrainAdvanced.text = if (isExpanded) "Advanced Settings \u25B8" else "Advanced Settings \u25BE"
         }
 
         binding.sliderTerrainRadius.addOnChangeListener { _, value, fromUser ->
@@ -1980,7 +1980,7 @@ class MainActivity : AppCompatActivity() {
             if (granted) {
                 com.google.android.material.snackbar.Snackbar.make(
                     binding.root,
-                    "âœ“ Background Location Granted â€” Google Maps will stay blue without widgets!",
+                    "\u2713 Background Location Granted \u2014 Google Maps will stay blue without widgets!",
                     com.google.android.material.snackbar.Snackbar.LENGTH_LONG
                 ).show()
             }
@@ -2066,7 +2066,7 @@ class MainActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         if (!isValid) {
                             MaterialAlertDialogBuilder(this@MainActivity)
-                                .setTitle("âš“ Ship Cannot Sail on Land")
+                                .setTitle("\u2693 Ship Cannot Sail on Land")
                                 .setMessage("Ships and marine vessels can only operate in water (oceans, seas, lakes, rivers).\n\n${reason ?: "One or more route waypoints are on land."}\n\nPlease reposition your waypoints into a water body or switch to Vehicle / Foot / Aircraft mode.")
                                 .setPositiveButton("Reposition Waypoints", null)
                                 .setNegativeButton("Switch to Vehicle") { _, _ ->
@@ -2510,9 +2510,9 @@ class MainActivity : AppCompatActivity() {
                 if (report != null && !isFinishing && !isDestroyed) {
                     binding.ivWeatherBadgeIcon.setImageResource(R.drawable.ic_weather_cloud_sun)
                     val tempStr = if (settingsPrefs.useImperialUnits) {
-                        String.format(Locale.US, "%.0fÂ°F", report.current.temperatureF)
+                        String.format(Locale.US, "%.0f\u00B0F", report.current.temperatureF)
                     } else {
-                        String.format(Locale.US, "%.0fÂ°C", report.current.temperatureC)
+                        String.format(Locale.US, "%.0f\u00B0C", report.current.temperatureC)
                     }
                     binding.tvWeatherBadgeText.text = tempStr
                     binding.layoutWeatherBadge.contentDescription = "${report.locationName}: ${report.current.conditionName}, $tempStr"
@@ -2664,12 +2664,12 @@ class MainActivity : AppCompatActivity() {
         val lon = if (state.isServiceRunning && state.serviceState is ServiceState.Running) state.serviceState.longitude else state.fixedLongitude
         val latDir = if (lat >= 0) "N" else "S"
         val lonDir = if (lon >= 0) "E" else "W"
-        binding.tvFixedCoords.text = String.format("%.5fÂ° %s, %.5fÂ° %s", abs(lat), latDir, abs(lon), lonDir)
+        binding.tvFixedCoords.text = String.format(Locale.US, "%.5f\u00B0 %s, %.5f\u00B0 %s", abs(lat), latDir, abs(lon), lonDir)
 
         if (state.isServiceRunning && state.serviceState is ServiceState.Running) {
             val speedKmh = state.serviceState.speedMps * 3.6f
             val formattedSpeed = settingsPrefs.formatSpeed(speedKmh)
-            binding.tvTelemetryMeta.text = String.format("%s â€¢ Â±%.1fm â€¢ 18 SAT", formattedSpeed, settingsPrefs.baseAccuracy)
+            binding.tvTelemetryMeta.text = String.format(Locale.US, "%s \u2022 \u00B1%.1fm \u2022 18 SAT", formattedSpeed, settingsPrefs.baseAccuracy)
 
             if (state.selectedTab == SelectedModeTab.FIXED && (state.serviceState.latitude != 0.0 || state.serviceState.longitude != 0.0)) {
                 updateFixedPinMarker(state.serviceState.latitude, state.serviceState.longitude)
@@ -2678,7 +2678,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } else {
-            binding.tvTelemetryMeta.text = String.format("%s â€¢ Â±%.1fm â€¢ 18 SAT", getString(R.string.status_standby), settingsPrefs.baseAccuracy)
+            binding.tvTelemetryMeta.text = String.format(Locale.US, "%s \u2022 \u00B1%.1fm \u2022 18 SAT", getString(R.string.status_standby), settingsPrefs.baseAccuracy)
         }
 
         // Fixed Controls State

@@ -38,7 +38,7 @@ object LiquidTouchEffectHelper {
         pressScale: Float = PRESS_SCALE,
         expandScale: Float = EXPAND_SCALE,
         dragResistance: Float = DRAG_RESISTANCE,
-        enableDragStretch: Boolean = true,
+        enableDragStretch: Boolean = false,
         onClick: (() -> Unit)? = null
     ) {
         val density = Resources.getSystem().displayMetrics.density
@@ -196,12 +196,13 @@ object LiquidTouchEffectHelper {
  */
 fun View.applyLiquidTouch(
     dragResistance: Float = 0.28f,
+    enableDragStretch: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
     LiquidTouchEffectHelper.attach(
         view = this,
         dragResistance = dragResistance,
-        enableDragStretch = true,
+        enableDragStretch = enableDragStretch,
         onClick = onClick
     )
 }
