@@ -760,18 +760,7 @@ object AdManager {
             Log.w(TAG, "Could not display loading dialog: ${e.message}")
         }
 
-        ConsentManager.getInstance(activity).ensureConsent(activity) { canRequest ->
-            if (!canRequest && ConsentManager.getInstance(activity).isConsentRequired) {
-                activity.runOnUiThread {
-                    try {
-                        if (loadingDialog.isShowing) loadingDialog.dismiss()
-                    } catch (ignored: Exception) {}
-                    Toast.makeText(activity, "Ad consent required to view rewards.", Toast.LENGTH_SHORT).show()
-                    onAdClosed?.invoke()
-                }
-                return@ensureConsent
-            }
-
+        ConsentManager.getInstance(activity).ensureConsent(activity) { _ ->
             initialize(activity.applicationContext) {
                 if (activity.isFinishing || activity.isDestroyed) {
                     activity.runOnUiThread {

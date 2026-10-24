@@ -57,6 +57,9 @@ class ConsentManager private constructor(private val context: Context) {
      */
     val canRequestAds: Boolean
         get() {
+            if (BuildConfig.DEBUG) {
+                return true
+            }
             if (consentInformation.canRequestAds()) {
                 return true
             }
@@ -73,7 +76,7 @@ class ConsentManager private constructor(private val context: Context) {
             if (isConsentGatheringCompleted || consentUpdateFailed) {
                 return !isConsentRequired
             }
-            return false
+            return !isConsentRequired
         }
 
     /**
