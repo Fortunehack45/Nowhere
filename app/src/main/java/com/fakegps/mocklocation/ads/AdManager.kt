@@ -89,9 +89,13 @@ object AdManager {
         } catch (ignored: Exception) {}
     }
 
-    fun initialize(context: Context) {
+    fun initialize(context: Context, onInitialized: (() -> Unit)? = null) {
         if (isPremium(context)) {
             Log.d(TAG, "User is Premium. Skipping AdMob initialization.")
+            return
+        }
+        if (isInitialized) {
+            onInitialized?.invoke()
             return
         }
         try {
@@ -99,9 +103,11 @@ object AdManager {
                 isInitialized = true
                 Log.d(TAG, "Google Mobile Ads initialized successfully: $status")
                 preloadAllAds(context)
+                onInitialized?.invoke()
             }
         } catch (e: Exception) {
             Log.w(TAG, "AdMob initialization skipped: ${e.message}")
+            onInitialized?.invoke()
         }
     }
 
@@ -116,8 +122,20 @@ object AdManager {
      * Loads an Adaptive/Standard Banner Ad into the specified container with automatic fallback.
      */
     fun loadBanner(activity: Activity, container: FrameLayout, isHomeBanner: Boolean = false) {
-        if (!ConsentManager.getInstance(activity).canRequestAds || isPremium(activity)) {
+        if (isPremium(activity)) {
             clearBanner(container)
+            return
+        }
+        if (!ConsentManager.getInstance(activity).canRequestAds) {
+            clearBanner(container)
+            return
+        }
+        if (!isInitialized) {
+            initialize(activity.applicationContext) {
+                if (!activity.isFinishing && !activity.isDestroyed) {
+                    loadBanner(activity, container, isHomeBanner)
+                }
+            }
             return
         }
         val primaryAdUnit = if (BuildConfig.DEBUG) {
@@ -228,8 +246,20 @@ object AdManager {
      * Loads a Native Advanced Ad into the specified container with automatic fallback.
      */
     fun loadNativeAd(activity: Activity, container: FrameLayout) {
-        if (!ConsentManager.getInstance(activity).canRequestAds || isPremium(activity)) {
+        if (isPremium(activity)) {
             clearBanner(container)
+            return
+        }
+        if (!ConsentManager.getInstance(activity).canRequestAds) {
+            clearBanner(container)
+            return
+        }
+        if (!isInitialized) {
+            initialize(activity.applicationContext) {
+                if (!activity.isFinishing && !activity.isDestroyed) {
+                    loadNativeAd(activity, container)
+                }
+            }
             return
         }
         val primaryUnit = if (BuildConfig.DEBUG) TEST_NATIVE_AD_UNIT_ID else PROD_NATIVE_AD_UNIT_ID
@@ -702,12 +732,6 @@ object AdManager {
             return
         }
 
-        if (!ConsentManager.getInstance(activity).canRequestAds) {
-            Toast.makeText(activity, "Ad consent required to view rewards.", Toast.LENGTH_SHORT).show()
-            onAdClosed?.invoke()
-            return
-        }
-
         // 1. If standard Rewarded ad is preloaded and ready, show immediately!
         if (isRewardedAdReady()) {
             showRewardedAd(
@@ -728,7 +752,7 @@ object AdManager {
             return
         }
 
-        // 3. Neither is preloaded yet -> Display loading dialog and load with multi-tier priority
+        // 3. Display loading dialog and ensure consent + AdMob initialization
         val loadingDialog = createLoadingDialog(activity, "Loading reward video...")
         try {
             loadingDialog.show()
@@ -736,6 +760,39 @@ object AdManager {
             Log.w(TAG, "Could not display loading dialog: ${e.message}")
         }
 
+        ConsentManager.getInstance(activity).ensureConsent(activity) { canRequest ->
+            if (!canRequest && ConsentManager.getInstance(activity).isConsentRequired) {
+                activity.runOnUiThread {
+                    try {
+                        if (loadingDialog.isShowing) loadingDialog.dismiss()
+                    } catch (ignored: Exception) {}
+                    Toast.makeText(activity, "Ad consent required to view rewards.", Toast.LENGTH_SHORT).show()
+                    onAdClosed?.invoke()
+                }
+                return@ensureConsent
+            }
+
+            initialize(activity.applicationContext) {
+                if (activity.isFinishing || activity.isDestroyed) {
+                    activity.runOnUiThread {
+                        try {
+                            if (loadingDialog.isShowing) loadingDialog.dismiss()
+                        } catch (ignored: Exception) {}
+                        onAdClosed?.invoke()
+                    }
+                    return@initialize
+                }
+                loadRewardVideoInternalWithDialog(activity, loadingDialog, onUserEarnedReward, onAdClosed)
+            }
+        }
+    }
+
+    private fun loadRewardVideoInternalWithDialog(
+        activity: Activity,
+        loadingDialog: Dialog,
+        onUserEarnedReward: () -> Unit,
+        onAdClosed: (() -> Unit)? = null
+    ) {
         var isHandled = false
         val dismissLoading = {
             activity.runOnUiThread {

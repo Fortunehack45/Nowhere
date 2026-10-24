@@ -369,12 +369,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Gather user consent via Google UMP SDK prior to initializing AdMob
-        com.fakegps.mocklocation.ads.ConsentManager.getInstance(this).gatherConsent(this) { _ ->
-            if (com.fakegps.mocklocation.ads.ConsentManager.getInstance(this).canRequestAds) {
-                com.fakegps.mocklocation.ads.AdManager.initialize(applicationContext)
-                if (!isFinishing && !isDestroyed && !com.fakegps.mocklocation.ads.AdManager.isPremium(this)) {
-                    com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
-                    com.fakegps.mocklocation.ads.AdManager.preloadAdsForActivity(this)
+        com.fakegps.mocklocation.ads.ConsentManager.getInstance(this).gatherConsent(this) { canRequest ->
+            if (canRequest) {
+                com.fakegps.mocklocation.ads.AdManager.initialize(applicationContext) {
+                    if (!isFinishing && !isDestroyed && !com.fakegps.mocklocation.ads.AdManager.isPremium(this@MainActivity)) {
+                        com.fakegps.mocklocation.ads.AdManager.loadBanner(this@MainActivity, binding.adBannerContainer, isHomeBanner = true)
+                        com.fakegps.mocklocation.ads.AdManager.preloadAdsForActivity(this@MainActivity)
+                    }
                 }
             }
         }
