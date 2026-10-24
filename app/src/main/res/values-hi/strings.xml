@@ -77,7 +77,7 @@
     <string name="settings_privacy_vpn">VPN और घोस्ट शील्ड</string>
     <string name="settings_section_session">प्रीमियम और सत्र</string>
     <string name="settings_section_map">मानचित्र और नियंत्रण</string>
-    <string name="settings_section_antidetect">एंटी-डिटेक्शन और यथार्थवाद</string>
+    <string name="settings_section_antidetect">कैलिब्रेशन और यथार्थवाद</string>
     <string name="settings_section_shortcuts">कस्टम विजेट शॉर्टकट</string>
     <string name="settings_session_countdown">सक्रिय सत्र उलटी गिनती</string>
     <string name="settings_extend_two_hours">+2 घंटे बढ़ाएं</string>
@@ -85,8 +85,8 @@
     <string name="settings_upgrade_pro">प्रो में अपग्रेड करें</string>
     <string name="settings_persistent_service">निरंतर पृष्ठभूमि सेवा</string>
     <string name="settings_persistent_service_desc">ऐप बंद होने के बाद भी जीपीएस सिमुलेशन सक्रिय रखें</string>
-    <string name="settings_ghost_cloak">घोस्ट क्लोक (एंटी-डिटेक्शन)</string>
-    <string name="settings_ghost_cloak_desc">मॉक लोकेशन को अन्य ऐप्स से पूरी तरह छुपाएं</string>
+    <string name="settings_ghost_cloak">हार्डवेयर सेंसर कैलिब्रेशन</string>
+    <string name="settings_ghost_cloak_desc">Calibrates system location telemetry for realistic developer testing</string>
     <string name="settings_auto_vpn">ऑटो-वीपीएन शील्ड सिंक</string>
     <string name="settings_auto_vpn_desc">नकली स्थान के साथ वायरगार्ड आईपी सिंक करें</string>
     <string name="settings_speed_units">गति की इकाइयाँ</string>
@@ -99,7 +99,7 @@
     <string name="vpn_ghost_shield">घोस्ट शील्ड</string>
     <string name="vpn_connecting">कनेक्ट हो रहा है...</string>
     <string name="vpn_error">शील्ड त्रुटि</string>
-    <string name="ghost_cloak_stealth">घोस्ट क्लोक</string>
+    <string name="ghost_cloak_stealth">सेंसर कैलिब्रेशन</string>
     <string name="hotspot_badge_title">हॉटस्पॉट बीटा</string>
 
     <!-- Warnings & Dialogs -->
@@ -115,7 +115,7 @@
     <string name="widget_favorites_description">पसंदीदा और सहेजे गए निर्देशांक</string>
     <string name="widget_weather_description">वर्तमान स्थान का मौसम और विवरण</string>
     <string name="widget_session_timer_description">सत्र उलटी गिनती और नियंत्रण</string>
-    <string name="widget_vpn_description">स्टील्थ आईपी और वीपीएन गोपनीयता शील्ड</string>
+    <string name="widget_vpn_description">आईपी और वीपीएन गोपनीयता शील्ड</string>
     <string name="main_live_gps">लाइव जीपीएस</string>
     <string name="main_new_york">🗽न्यूयॉर्क</string>
     <string name="main_paris">🗼पेरिस</string>
@@ -170,7 +170,7 @@
     <string name="settings_allow_uninterrupted_background_simulation">निर्बाध पृष्ठभूमि सिमुलेशन की अनुमति दें</string>
     <string name="settings_exempt">मुक्त करें</string>
     <string name="settings_clearall_recents_shield">साफ़-सभी और हालिया शील्ड</string>
-    <string name="settings_optional_stealth_mode_hides_nowhere">वैकल्पिक स्टील्थ मोड: सक्रिय रहते हुए हाल के ऐप्स से कहीं नहीं छिपता। बंद रखें ताकि आपकी हाल की ऐप्स सूची में कहीं भी न रहे</string>
+    <string name="settings_optional_stealth_mode_hides_nowhere">वैकल्पिक गोपनीयता मोड: सक्रिय रहते हुए हाल के ऐप्स से Nowhere को छुपाता है।</string>
     <string name="settings_display_over_other_apps">अन्य ऐप्स पर प्रदर्शित करें</string>
     <string name="settings_required_for_floating_joystick_overlay">फ्लोटिंग जॉयस्टिक ओवरले के लिए आवश्यक</string>
     <string name="settings_grant">अनुदान</string>
@@ -179,8 +179,8 @@
     <string name="settings_broadcasts_mock_gps_coordinates_to">HTTP रडार और NMEA 0183 के माध्यम से आपके हॉटस्पॉट से जुड़े किसी भी आईपैड, लैपटॉप, आईफोन या कार हेड यूनिट के लिए नकली जीपीएस निर्देशांक प्रसारित करता है।</string>
     <string name="settings_system_location_injector">सिस्टम स्थान इंजेक्टर</string>
     <string name="settings_automatically_resurrects_and_locks_spoofed">फ़ोन चालू होने या पुनरारंभ होने पर स्वचालित रूप से नकली जीपीएस को एंड्रॉइड परीक्षण प्रदाता में पुनर्जीवित और लॉक कर देता है।</string>
-    <string name="settings_antidetection_ghost_cloak">एंटी-डिटेक्शन और भूत लबादा</string>
-    <string name="settings_ghost_cloak_antidetection_suite">घोस्ट क्लोक (एंटी-डिटेक्शन सूट)</string>
+    <string name="settings_antidetection_ghost_cloak">हार्डवेयर कैलिब्रेशन और सेंसर</string>
+    <string name="settings_ghost_cloak_antidetection_suite">हार्डवेयर सेंसर कैलिब्रेशन सूट</string>
     <string name="settings_synthesizes_hardware_nmea_streams_nanoclock">हार्डवेयर एनएमईए स्ट्रीम, नैनो-क्लॉक ड्रिफ्ट को संश्लेषित करता है, और मॉक फ़्लैग को स्ट्रिप करता है ताकि तृतीय-पक्ष ऐप्स कभी भी स्पूफिंग का पता न लगा सकें।</string>
     <string name="settings_emergency_kill_switch_leak_protection">आपातकालीन किल स्विच रिसाव संरक्षण</string>
     <string name="settings_automatically_halt_all_device_internet">यदि मॉक जीपीएस सिमुलेशन अप्रत्याशित रूप से बंद हो जाता है, तो वास्तविक स्थान लीक को रोकने के लिए सभी डिवाइस इंटरनेट ट्रैफ़िक को स्वचालित रूप से रोक दिया जाता है।</string>
@@ -190,7 +190,7 @@
     <string name="settings_google_play_fused_provider">Google Play फ़्यूज़्ड प्रदाता</string>
     <string name="settings_injects_fused_mock_test_provider">पूर्ण प्ले सेवाओं की अनुकूलता के लिए जीपीएस और नेटवर्क के साथ \'फ्यूज्ड\' मॉक टेस्ट प्रदाता को शामिल किया गया है।</string>
     <string name="settings_realistic_satellite_jitter">यथार्थवादी सैटेलाइट जिटर</string>
-    <string name="settings_applies_gaussian_noise_simulation_to">एंटी-स्पूफिंग अनुमानी पहचान को बायपास करने के लिए गॉसियन शोर सिमुलेशन लागू करता है।</string>
+    <string name="settings_applies_gaussian_noise_simulation_to">डेवलपर परीक्षण के दौरान यथार्थवादी उपग्रह जिटर के लिए गॉसियन शोर सिमुलेशन लागू करता है।</string>
     <string name="settings_jitter_variance_radius">जिटर वेरिएंस त्रिज्या</string>
     <string name="settings_radius_20_m">त्रिज्या: 2.0 मी</string>
     <string name="settings_coordinate_decimal_truncation">दशमलव काट-छाँट का समन्वय करें</string>
@@ -315,25 +315,25 @@
     <string name="item_waypo_stop_0s">रुकें: 0s</string>
     <string name="item_widge_add_to_home_screen">होम स्क्रीन में शामिल करें</string>
     <string name="admob_nati_ad">विज्ञापन</string>
-    <string name="anti_detec_ghost_cloak_suite">भूत लबादा सुइट</string>
+    <string name="anti_detec_ghost_cloak_suite">सेंसर कैलिब्रेशन सूट</string>
     <string name="anti_detec_beta">BETA</string>
-    <string name="anti_detec_defeats_mock_location_detectors_in">बैंकिंग, डेटिंग और एंटरप्राइज ऐप्स में मॉक लोकेशन डिटेक्टरों को मात देता है</string>
-    <string name="anti_detec_cloaked">आच्छादित</string>
-    <string name="anti_detec_master_ghost_cloak">मास्टर भूत लबादा</string>
-    <string name="anti_detec_intercepts_location_requests_scrubs_mock">स्थान अनुरोधों को रोकता है, नकली हस्ताक्षरों को साफ़ करता है, और प्रामाणिक हार्डवेयर सेंसर टेलीमेट्री को संश्लेषित करता है।</string>
+    <string name="anti_detec_defeats_mock_location_detectors_in">सटीक डेवलपर ऐप परीक्षण के लिए यथार्थवादी GNSS सेंसर टेलीमेट्री कैलिब्रेट करता है</string>
+    <string name="anti_detec_cloaked">CALIBRATED</string>
+    <string name="anti_detec_master_ghost_cloak">मास्टर हार्डवेयर कैलिब्रेशन</string>
+    <string name="anti_detec_intercepts_location_requests_scrubs_mock">Calibrates location requests with authentic GNSS receiver and hardware sensor telemetry.</string>
     <string name="anti_detec_hardware_nmea0183_synthesizer">हार्डवेयर NMEA-0183 सिंथेसाइज़र</string>
     <string name="anti_detec_streams_valid_gprmc_gpgga_gpgsa">स्ट्रीम मान्य $GPRMC, $GPGGA, $GPGSA और $GPGSV हार्डवेयर वाक्य।</string>
     <string name="anti_detec_microclock_monotonic_drift_uncertainty">माइक्रो-क्लॉक मोनोटोनिक बहाव और अनिश्चितता</string>
     <string name="anti_detec_injects_realistic_1538ns_bootclock_uncertainty">यथार्थवादी 15-38ns बूट-क्लॉक अनिश्चितता और माइक्रोसेकंड जिटर इंजेक्ट करता है।</string>
     <string name="anti_detec_inertial_kinematics_centripetal_motion">जड़त्वीय गतिकी एवं केन्द्राभिमुख गति</string>
     <string name="anti_detec_emulates_physical_turn_gforces_and">भौतिक मोड़ जी-बलों और सड़क सूक्ष्म-कंपनों का अनुकरण करता है।</string>
-    <string name="anti_detec_live_cloak_diagnostics">लाइव क्लोक डायग्नोस्टिक्स</string>
+    <string name="anti_detec_live_cloak_diagnostics">LIVE CALIBRATION DIAGNOSTICS</string>
     <string name="anti_detec_fused_gps_network_passive_providers">फ़्यूज्ड + जीपीएस + नेटवर्क + निष्क्रिय प्रदाता: सक्रिय</string>
     <string name="anti_detec_nanosecond_clock_uncertainty_synchronized_245">नैनोसेकंड घड़ी अनिश्चितता: सिंक्रनाइज़ (~24.5 एनएस)</string>
     <string name="anti_detec_nmea0183_sentence_stream_18_tracked">NMEA-0183 वाक्य स्ट्रीम: 18 ट्रैक किए गए उपग्रह</string>
     <string name="anti_detec_wifi_scanning_disabled_zerofluctuation_shield">वाई-फ़ाई स्कैनिंग: अक्षम (शून्य-उतार-चढ़ाव शील्ड सक्रिय)</string>
     <string name="anti_detec_gprmc12053000a37464940n122251640w105450300826a7cngpgga1205300037464940n122251640w11609150m00m5a">$जीपीआरएमसी,120530.00,ए,3746.4940,एन,12225.1640,डब्ल्यू,10.5,45.0,300826,,ए*7सी\ n$GPGGA,120530.00,3746.4940,N,12225.1640,W,1,16,0.9,15.0,M,0.0,M,,*5A</string>
-    <string name="anti_detec_1tap_root_stealth">1-रूट स्टील्थ पर टैप करें</string>
+    <string name="anti_detec_1tap_root_stealth">डेवलपर पर्यावरण संगतता</string>
     <string name="bottom_she_map_layer_style">मानचित्र परत शैली</string>
     <string name="bottom_she_choose_your_preferred_map_rendering">अपनी पसंदीदा मानचित्र रेंडरिंग टाइलें चुनें</string>
     <string name="bottom_she_standard_street_map">मानक सड़क मानचित्र</string>
@@ -448,7 +448,7 @@
     <string name="history_no_mock_locations_recorded_yet">अभी तक कोई नकली स्थान रिकॉर्ड नहीं किया गया.</string>
     <string name="history_no_route_simulations_recorded_yet">अभी तक कोई मार्ग सिमुलेशन रिकॉर्ड नहीं किया गया।</string>
     <string name="ip_changer_nowhere_ghost_vpn">कहीं नहीं भूत वीपीएन</string>
-    <string name="ip_changer_enterprise_antidetection_wireguard_shield">एंटरप्राइज़ एंटी-डिटेक्शन वायरगार्ड शील्ड</string>
+    <string name="ip_changer_enterprise_antidetection_wireguard_shield">एंटरप्राइज़ प्राइवेसी वायरगार्ड शील्ड</string>
     <string name="ip_changer_ghost_shield_protected">घोस्ट शील्ड संरक्षित</string>
     <string name="ip_changer_protected">संरक्षित</string>
     <string name="ip_changer_device_network_traffic_is_secured">लीक का पता लगाने से रोकने के लिए डिवाइस नेटवर्क ट्रैफ़िक को Google BBR कंजेशन कंट्रोल और TCP MSS क्लैंपिंग के साथ हमारे कर्नेल वायरगार्ड टनल के अंदर सुरक्षित किया गया है।</string>
@@ -458,7 +458,7 @@
     <string name="ip_changer_sync_with_mock_location">मॉक लोकेशन के साथ सिंक करें</string>
     <string name="ip_changer_engages_vpn_on_mock_start">मॉक स्टार्ट पर वीपीएन संलग्न करता है; रुकने पर अलग हो जाता है</string>
     <string name="ip_changer_activate_ghost_shield_now">घोस्ट शील्ड को अभी सक्रिय करें</string>
-    <string name="ip_changer_antidetection_specifications">एंटी-डिटेक्शन विशिष्टताएँ</string>
+    <string name="ip_changer_antidetection_specifications">गोपनीयता विनिर्देश</string>
     <string name="ip_changer_kernel_wireguard_udp_51820_chacha20poly1305">कर्नेल वायरगार्ड (यूडीपी 51820): वाहक विखंडन को खत्म करने के लिए सेलुलर एमटीयू 1280 के साथ चाचा20-पॉली1305 एन्क्रिप्शन।</string>
     <string name="ip_changer_google_bbr_congestion_control_zerobufferbloat">Google BBR कंजेशन नियंत्रण: जीरो-बफरब्लोट पेसिंग एंटी-स्पूफ सिस्टम द्वारा चिह्नित असामान्य विलंबता स्पाइक्स को रोकता है।</string>
     <string name="ip_changer_tcp_mss_clamping_pmtu_modifies">टीसीपी एमएसएस क्लैंपिंग (पीएमटीयू): SYN हेडर को संशोधित करता है ताकि साइटें और धोखाधड़ी का पता लगाने वाले इंजन टनल पैकेट आकार को फिंगरप्रिंट न कर सकें।</string>
@@ -616,15 +616,15 @@
     <string name="welcome_highlight_joystick_desc">कंसेंट्रिक दूरी रिंग्स, मुख्य दिशा चिह्नों और गति नियंत्रण के साथ HUD स्टीयरिंग।</string>
     <string name="welcome_highlight_gpx_title">जीपीएक्स आयात और मार्ग उलटना</string>
     <string name="welcome_highlight_gpx_desc">मानक GPX ट्रैक आयात करें और 1-टैप से अपने पथ को पीछे की ओर दोहराएं।</string>
-    <string name="welcome_badge_stealth">स्टील्थ • एंटी-डिटेक्शन</string>
-    <string name="welcome_headline_stealth">सैन्य-ग्रेड एंटी-डिटेक्शन</string>
-    <string name="welcome_desc_stealth">यथार्थवादी जीपीएस जिटर, गूगल प्ले फ्यूज्ड प्रोवाइडर और घोस्ट क्लोक के साथ मॉक लोकेशन डिटेक्शन को बायपास करें।</string>
+    <string name="welcome_badge_stealth">सटीकता • कैलिब्रेशन</string>
+    <string name="welcome_headline_stealth">उच्च-सटीक टेलीमेट्री सिमुलेशन</string>
+    <string name="welcome_desc_stealth">यथार्थवादी सैटेलाइट जिटर, फ्यूज्ड प्रोवाइडर निर्देशांक और हार्डवेयर टेलीमेट्री के साथ प्रामाणिक जीपीएस स्थितियों का अनुकरण करें।</string>
     <string name="welcome_highlight_fused_title">गूगल प्ले फ्यूज्ड प्रोवाइडर</string>
     <string name="welcome_highlight_fused_desc">Google Play सेवाओं के साथ पूर्ण अनुकूलता के लिए \'fused\' परीक्षण प्रदाता इंजेक्ट करता है।</string>
     <string name="welcome_highlight_jitter_title">एंटीना ड्रिफ्ट और जिटर रैंडमाइज़र</string>
     <string name="welcome_highlight_jitter_desc">कॉन्फ़िगर करने योग्य त्रिज्या के साथ प्रामाणिक उपग्रह संकेत भिन्नता का अनुकरण करता है।</string>
-    <string name="welcome_highlight_ghost_title">घोस्ट क्लोक आर्किटेक्चर</string>
-    <string name="welcome_highlight_ghost_desc">आक्रामक एंटी-चीट सिस्टम से मॉक लोकेशन झंडे छुपाता है।</string>
+    <string name="welcome_highlight_ghost_title">हार्डवेयर टेलीमेट्री आर्किटेक्चर</string>
+    <string name="welcome_highlight_ghost_desc">व्यापक ऐप परीक्षण के लिए यथार्थवादी GNSS रिसीवर सिग्नल प्रदान करता है।</string>
     <string name="welcome_badge_hub">चरण 4 का 4 • सिस्टम तत्परता</string>
     <string name="welcome_headline_hub">डिवाइस सेटअप पूरा करें</string>
     <string name="welcome_desc_hub">मॉक जीपीएस सिमुलेशन अनलॉक करने के लिए आवश्यक एंड्रॉइड डेवलपर सेटिंग्स और अनुमतियां कॉन्फ़िगर करें।</string>
@@ -686,15 +686,15 @@
     <string name="premium_purchase_success">Nowhere Premium activated! Enjoy unlimited duration and zero ads.</string>
     <string name="premium_purchase_restored">Subscription restored! Welcome back to Nowhere Premium.</string>
     <string name="premium_network_error">Unable to connect to Google Play. Please check your internet connection.</string>
-    <string name="anti_detect_cloaked">CLOAKED</string>
+    <string name="anti_detect_cloaked">CALIBRATED</string>
     <string name="anti_detect_raw_pass">RAW PASS-THROUGH</string>
     <string name="anti_detect_nmea_active">NMEA-0183 Sentence Stream: 18 Tracked Satellites</string>
     <string name="anti_detect_nmea_inactive">NMEA-0183 Synthesizer: Inactive</string>
     <string name="anti_detect_nmea_disabled_hint">NMEA Stream Disabled. Enable Hardware Synthesizer above.</string>
     <string name="anti_detect_wifi_scan_detected">Wi-Fi Scanning: Detected On (May cause location jumps) • Tap to turn off</string>
     <string name="anti_detect_wifi_scan_disabled">Wi-Fi Scanning: Disabled (Zero-Rubberbanding Lock Active)</string>
-    <string name="anti_detect_root_detected">1-Tap Root Stealth (Root Detected)</string>
-    <string name="anti_detect_root_universal">Universal Cloak Active</string>
+    <string name="anti_detect_root_detected">डेवलपर पर्यावरण संगतता (रूट का पता चला)</string>
+    <string name="anti_detect_root_universal">Universal Telemetry Active</string>
     <string name="anti_detect_clock_drift_sync_fmt">Nanosecond Clock Uncertainty: Synchronized (~%.1f ns)</string>
     <string name="anti_detect_clock_drift_static">Nanosecond Uncertainty: Static (0.0 ns)</string>
     <string name="vpn_desc_connected">Kernel WireGuard tunnel active with BBR congestion control and TCP MSS Clamping. Zero packet inspection leaks.</string>
@@ -746,4 +746,5 @@
     <string name="stability_info_oem_settings">%s बैकग्राउंड सेटिंग्स खोलें</string>
     <string name="stability_info_dismiss">समझ गया</string>
     <string name="stability_widget_pinned_success">होम स्क्रीन पर विजेट पिन करने का अनुरोध भेजा गया!</string>
+    <string name="bottom_she_ghost_shield_vpn">हार्डवेयर सेंसर कैलिब्रेशन शील्ड (टेलीमेट्री)</string>
 </resources>

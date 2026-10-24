@@ -155,6 +155,8 @@ dependencies {
 
     // Google Mobile Ads (AdMob)
     implementation("com.google.android.gms:play-services-ads:23.0.0")
+    // Google User Messaging Platform (UMP) Consent SDK
+    implementation("com.google.android.ump:user-messaging-platform:2.2.0")
 
     // Google Play Services Fused Location (Hardware & GMS Fused Provider Mock Shield)
     implementation("com.google.android.gms:play-services-location:21.2.0")

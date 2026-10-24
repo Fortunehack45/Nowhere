@@ -322,7 +322,7 @@
             app:iconTint="@color/white" />
 
         <!-- ============================================================= -->
-        <!-- ENTERPRISE ANTI-DETECTION SPECS (NO RAW EMOJIS) -->
+        <!-- ENTERPRISE PRIVACY SPECS (NO RAW EMOJIS) -->
         <!-- ============================================================= -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

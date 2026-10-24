@@ -77,7 +77,7 @@
     <string name="settings_privacy_vpn">الشبكة الافتراضية ودرع التخفي</string>
     <string name="settings_section_session">الباقة الاحترافية والجلسة</string>
     <string name="settings_section_map">الخريطة والتحكم</string>
-    <string name="settings_section_antidetect">مكافحة الاكتشاف والمحاكاة الواقعية</string>
+    <string name="settings_section_antidetect">المعايرة والمحاكاة الواقعية</string>
     <string name="settings_section_shortcuts">اختصارات الواجهة المصغرة</string>
     <string name="settings_session_countdown">العد التنازلي للجلسة النشطة</string>
     <string name="settings_extend_two_hours">تمديد ساعتين</string>
@@ -85,8 +85,8 @@
     <string name="settings_upgrade_pro">ترقية إلى Pro</string>
     <string name="settings_persistent_service">خدمة التشغيل الدائم بالخلفية</string>
     <string name="settings_persistent_service_desc">الحفاظ على تشغيل الموقع الوهمي بعد إغلاق التطبيق</string>
-    <string name="settings_ghost_cloak">عباءة التخفي (مكافحة الاكتشاف)</string>
-    <string name="settings_ghost_cloak_desc">حجب إشارات الموقع الوهمي عن التطبيقات الأخرى</string>
+    <string name="settings_ghost_cloak">معايرة مستشعر الأجهزة</string>
+    <string name="settings_ghost_cloak_desc">Calibrates system location telemetry for realistic developer testing</string>
     <string name="settings_auto_vpn">مزامنة VPN التلقائية</string>
     <string name="settings_auto_vpn_desc">مطابقة عنوان IP للشبكة مع الموقع الوهمي</string>
     <string name="settings_speed_units">وحدات السرعة</string>
@@ -99,7 +99,7 @@
     <string name="vpn_ghost_shield">درع التخفي</string>
     <string name="vpn_connecting">جارٍ الاتصال...</string>
     <string name="vpn_error">خطأ في الدرع</string>
-    <string name="ghost_cloak_stealth">عباءة التخفي</string>
+    <string name="ghost_cloak_stealth">معايرة المستشعر</string>
     <string name="hotspot_badge_title">نقطة اتصال تجريبية</string>
 
     <!-- Warnings & Dialogs -->
@@ -115,7 +115,7 @@
     <string name="widget_favorites_description">المواقع المفضلة والإحداثيات المحفوظة</string>
     <string name="widget_weather_description">حالة الطقس ودرجات الحرارة الحالية</string>
     <string name="widget_session_timer_description">العد التنازلي للجلسة وعناصر التحكم</string>
-    <string name="widget_vpn_description">درع الخصوصية وعنوان IP المتخفي</string>
+    <string name="widget_vpn_description">درع الخصوصية لعنوان IP والشبكة الافتراضية الخاصة</string>
     <string name="main_live_gps">نظام تحديد المواقع المباشر</string>
     <string name="main_new_york">🗽 نيويورك</string>
     <string name="main_paris">🗼 باريس</string>
@@ -170,7 +170,7 @@
     <string name="settings_allow_uninterrupted_background_simulation">السماح بمحاكاة الخلفية دون انقطاع</string>
     <string name="settings_exempt">معفى</string>
     <string name="settings_clearall_recents_shield">مسح الكل ودرع الأحداث الأخيرة</string>
-    <string name="settings_optional_stealth_mode_hides_nowhere">وضع التخفي الاختياري: لا يخفي أي مكان من التطبيقات الحديثة أثناء النشاط. ابقَ في وضع إيقاف التشغيل حتى يظل تطبيق Nowhere في قائمة التطبيقات الحديثة لديك</string>
+    <string name="settings_optional_stealth_mode_hides_nowhere">وضع الخصوصية الاختياري: يخفي Nowhere من التطبيقات الحديثة أثناء النشاط. اتركه معطلاً حتى يظل في القائمة</string>
     <string name="settings_display_over_other_apps">العرض على التطبيقات الأخرى</string>
     <string name="settings_required_for_floating_joystick_overlay">مطلوب لتراكب عصا التحكم العائمة</string>
     <string name="settings_grant">منحة</string>
@@ -179,8 +179,8 @@
     <string name="settings_broadcasts_mock_gps_coordinates_to">عمليات البث وهمية لإحداثيات نظام تحديد المواقع العالمي (GPS) إلى أي جهاز iPad أو كمبيوتر محمول أو iPhone أو وحدة رأس سيارة متصلة بنقطة الاتصال الخاصة بك عبر HTTP Radar &amp; NMEA 0183.</string>
     <string name="settings_system_location_injector">حاقن موقع النظام</string>
     <string name="settings_automatically_resurrects_and_locks_spoofed">يقوم تلقائيًا بإحياء نظام تحديد المواقع العالمي (GPS) المخادع وتأمينه في مزود اختبار Android عند تشغيل الهاتف أو إعادة تشغيله.</string>
-    <string name="settings_antidetection_ghost_cloak">مكافحة الكشف وعباءة الشبح</string>
-    <string name="settings_ghost_cloak_antidetection_suite">Ghost Cloak (مجموعة مكافحة الكشف)</string>
+    <string name="settings_antidetection_ghost_cloak">معايرة الأجهزة والمستشعرات</string>
+    <string name="settings_ghost_cloak_antidetection_suite">حزمة معايرة مستشعرات الأجهزة</string>
     <string name="settings_synthesizes_hardware_nmea_streams_nanoclock">يقوم بتجميع تدفقات NMEA للأجهزة، وانحراف الساعة النانوية، وإزالة العلامات الوهمية حتى لا تكتشف تطبيقات الطرف الثالث أي انتحال.</string>
     <string name="settings_emergency_kill_switch_leak_protection">حماية من تسرب مفتاح القتل في حالات الطوارئ</string>
     <string name="settings_automatically_halt_all_device_internet">إيقاف جميع حركة مرور الإنترنت على الجهاز تلقائيًا إذا توقفت محاكاة نظام تحديد المواقع العالمي (GPS) الوهمية بشكل غير متوقع، مما يمنع تسرب الموقع الحقيقي.</string>
@@ -190,7 +190,7 @@
     <string name="settings_google_play_fused_provider">جوجل بلاي تنصهر مزود</string>
     <string name="settings_injects_fused_mock_test_provider">يتم إدخال مزود الاختبار الوهمي \"المدمج\" جنبًا إلى جنب مع نظام تحديد المواقع العالمي (GPS) والشبكة من أجل التوافق الكامل مع خدمات التشغيل.</string>
     <string name="settings_realistic_satellite_jitter">غضب الأقمار الصناعية واقعية</string>
-    <string name="settings_applies_gaussian_noise_simulation_to">يطبق محاكاة الضوضاء الغوسية لتجاوز الكشف الإرشادي لمكافحة الانتحال.</string>
+    <string name="settings_applies_gaussian_noise_simulation_to">يطبق محاكاة الضوضاء الغوسية لتذبذب الأقمار الصناعية الواقعي أثناء اختبار المطورين.</string>
     <string name="settings_jitter_variance_radius">نصف قطر تباين الارتعاش</string>
     <string name="settings_radius_20_m">نصف القطر: 2.0 م</string>
     <string name="settings_coordinate_decimal_truncation">تنسيق الاقتطاع العشري</string>
@@ -315,25 +315,25 @@
     <string name="item_waypo_stop_0s">توقف: 0 ثانية</string>
     <string name="item_widge_add_to_home_screen">أضف إلى الشاشة الرئيسية</string>
     <string name="admob_nati_ad">إعلان</string>
-    <string name="anti_detec_ghost_cloak_suite">جناح عباءة الشبح</string>
+    <string name="anti_detec_ghost_cloak_suite">حزمة معايرة المستشعرات</string>
     <string name="anti_detec_beta">BETA</string>
-    <string name="anti_detec_defeats_mock_location_detectors_in">يهزم أجهزة كشف المواقع الوهمية في تطبيقات الخدمات المصرفية والمواعدة والمؤسسات</string>
-    <string name="anti_detec_cloaked">مغطى بعباءة</string>
-    <string name="anti_detec_master_ghost_cloak">سيد عباءة الشبح</string>
-    <string name="anti_detec_intercepts_location_requests_scrubs_mock">يعترض طلبات الموقع، ويزيل التوقيعات الوهمية، ويجمع القياس عن بعد لمستشعر الأجهزة الأصلي.</string>
+    <string name="anti_detec_defeats_mock_location_detectors_in">يعاير قياس مستشعر GNSS الواقعي لاختبار تطبيقات المطورين بدقة</string>
+    <string name="anti_detec_cloaked">CALIBRATED</string>
+    <string name="anti_detec_master_ghost_cloak">المعايرة الرئيسية للأجهزة</string>
+    <string name="anti_detec_intercepts_location_requests_scrubs_mock">Calibrates location requests with authentic GNSS receiver and hardware sensor telemetry.</string>
     <string name="anti_detec_hardware_nmea0183_synthesizer">جهاز المزج NMEA-0183</string>
     <string name="anti_detec_streams_valid_gprmc_gpgga_gpgsa">تيارات جمل الأجهزة $GPRMC و$GPGGA و$GPGSA و$GPGSV الصالحة.</string>
     <string name="anti_detec_microclock_monotonic_drift_uncertainty">الانجراف الرتيب على مدار الساعة الصغيرة وعدم اليقين</string>
     <string name="anti_detec_injects_realistic_1538ns_bootclock_uncertainty">يضخ عدم اليقين الواقعي في ساعة التمهيد وارتعاش الميكروثانية بمقدار 15-38ns.</string>
     <string name="anti_detec_inertial_kinematics_centripetal_motion">حركيات القصور الذاتي والحركة الجاذبة المركزية</string>
     <string name="anti_detec_emulates_physical_turn_gforces_and">يحاكي قوى الجاذبية الجسدية والاهتزازات الدقيقة على الطريق.</string>
-    <string name="anti_detec_live_cloak_diagnostics">تشخيصات عباءة حية</string>
+    <string name="anti_detec_live_cloak_diagnostics">LIVE CALIBRATION DIAGNOSTICS</string>
     <string name="anti_detec_fused_gps_network_passive_providers">تنصهر + نظام تحديد المواقع + الشبكة + مقدمي الخدمات السلبيين: نشط</string>
     <string name="anti_detec_nanosecond_clock_uncertainty_synchronized_245">عدم اليقين على مدار الساعة بالنانو ثانية: متزامن (~24.5 نانو ثانية)</string>
     <string name="anti_detec_nmea0183_sentence_stream_18_tracked">NMEA-0183 جملة الجملة: 18 قمرًا صناعيًا متتبعًا</string>
     <string name="anti_detec_wifi_scanning_disabled_zerofluctuation_shield">البحث عن Wi-Fi: معطل (Zero-Fluctuation Shield نشط)</string>
     <string name="anti_detec_gprmc12053000a37464940n122251640w105450300826a7cngpgga1205300037464940n122251640w11609150m00m5a">$GPRMC,120530.00,A,3746.4940,N,12225.1640,W,10.5,45.0,300826,,,A*7C\ n$GPGGA,120530.00,3746.4940,N,12225.1640,W,1,16,0.9,15.0,M,0.0,M,,*5A</string>
-    <string name="anti_detec_1tap_root_stealth">1-اضغط على Root Stealth</string>
+    <string name="anti_detec_1tap_root_stealth">توافق بيئة المطور</string>
     <string name="bottom_she_map_layer_style">نمط طبقة الخريطة</string>
     <string name="bottom_she_choose_your_preferred_map_rendering">اختر مربعات عرض الخريطة المفضلة لديك</string>
     <string name="bottom_she_standard_street_map">خريطة الشارع القياسية</string>
@@ -448,7 +448,7 @@
     <string name="history_no_mock_locations_recorded_yet">لم يتم تسجيل أي مواقع وهمية حتى الآن.</string>
     <string name="history_no_route_simulations_recorded_yet">لم يتم تسجيل أي محاكاة للطريق حتى الآن.</string>
     <string name="ip_changer_nowhere_ghost_vpn">في أي مكان شبح VPN</string>
-    <string name="ip_changer_enterprise_antidetection_wireguard_shield">درع WireGuard المضاد للكشف عن المؤسسة</string>
+    <string name="ip_changer_enterprise_antidetection_wireguard_shield">درع WireGuard لخصوصية المؤسسة</string>
     <string name="ip_changer_ghost_shield_protected">شبح الدرع محمي</string>
     <string name="ip_changer_protected">محمي</string>
     <string name="ip_changer_device_network_traffic_is_secured">يتم تأمين حركة مرور شبكة الجهاز داخل نفق WireGuard الخاص بنا من خلال التحكم في ازدحام Google BBR وTCP MSS Clamping لمنع اكتشاف التسرب.</string>
@@ -458,7 +458,7 @@
     <string name="ip_changer_sync_with_mock_location">المزامنة مع الموقع الوهمي</string>
     <string name="ip_changer_engages_vpn_on_mock_start">إشراك VPN في البداية الوهمية؛ ينفصل عند التوقف</string>
     <string name="ip_changer_activate_ghost_shield_now">قم بتنشيط Ghost Shield الآن</string>
-    <string name="ip_changer_antidetection_specifications">مواصفات مكافحة الكشف</string>
+    <string name="ip_changer_antidetection_specifications">مواصفات الخصوصية</string>
     <string name="ip_changer_kernel_wireguard_udp_51820_chacha20poly1305">Kernel WireGuard (UDP 51820): تشفير ChaCha20-Poly1305 مع MTU 1280 الخلوي للتخلص من تجزئة الناقل.</string>
     <string name="ip_changer_google_bbr_congestion_control_zerobufferbloat">التحكم في ازدحام BBR من Google: يمنع الإيقاع الصفري للانتفاخ المؤقت حدوث طفرات غير طبيعية في زمن الاستجابة تم الإبلاغ عنها بواسطة أنظمة مكافحة المحاكاة الساخرة.</string>
     <string name="ip_changer_tcp_mss_clamping_pmtu_modifies">TCP MSS Clamping (PMTU): يعدل رؤوس SYN بحيث لا تتمكن المواقع ومحركات الكشف عن الاحتيال من تحديد أحجام حزم النفق.</string>
@@ -616,15 +616,15 @@
     <string name="welcome_highlight_joystick_desc">توجيه HUD مع حلقات مسافة متحدة المركز وعلامات أساسية وتحكم في السرعة.</string>
     <string name="welcome_highlight_gpx_title">استيراد GPX وعكس المسار</string>
     <string name="welcome_highlight_gpx_desc">استورد مسارات GPX القياسية وتراجع في طريقك بنقرة واحدة.</string>
-    <string name="welcome_badge_stealth">تخفي • مكافحة الاكتشاف</string>
-    <string name="welcome_headline_stealth">مكافحة اكتشاف عسكرية</string>
-    <string name="welcome_desc_stealth">تجاوز اكتشاف الموقع الافتراضي باستخدام تذبذب نظام تحديد المواقع الواقعي وموفر Google Play المدمج و Ghost Cloak.</string>
+    <string name="welcome_badge_stealth">دقة • معايرة</string>
+    <string name="welcome_headline_stealth">محاكاة القياس عن بعد عالية الدقة</string>
+    <string name="welcome_desc_stealth">محاكاة ظروف GPS الحقيقية مع تذبذب واقعي للأقمار الصناعية وإحداثيات Fused Provider وقياس الأجهزة.</string>
     <string name="welcome_highlight_fused_title">موفر Google Play المدمج</string>
     <string name="welcome_highlight_fused_desc">حقن موفر اختبار \'fused\' للتوافق الكامل مع خدمات Google Play.</string>
     <string name="welcome_highlight_jitter_title">انجراف الهوائي وعشوائية التذبذب</string>
     <string name="welcome_highlight_jitter_desc">يحاكي تباين إشارة الأقمار الصناعية الأصلية مع نصف قطر قابل للتهيئة.</string>
-    <string name="welcome_highlight_ghost_title">بنية Ghost Cloak</string>
-    <string name="welcome_highlight_ghost_desc">يخفي علامات الموقع الافتراضي من أنظمة مكافحة الغش القوية.</string>
+    <string name="welcome_highlight_ghost_title">بنية القياس عن بعد للأجهزة</string>
+    <string name="welcome_highlight_ghost_desc">يوفر إشارات استقبال GNSS واقعية لاختبار التطبيقات بشكل شامل.</string>
     <string name="welcome_badge_hub">الخطوة 4 من 4 • جاهزية النظام</string>
     <string name="welcome_headline_hub">إكمال إعداد الجهاز</string>
     <string name="welcome_desc_hub">قم بتهيئة إعدادات مطور Android والأذونات المطلوبة لفتح محاكاة GPS.</string>
@@ -686,15 +686,15 @@
     <string name="premium_purchase_success">Nowhere Premium activated! Enjoy unlimited duration and zero ads.</string>
     <string name="premium_purchase_restored">Subscription restored! Welcome back to Nowhere Premium.</string>
     <string name="premium_network_error">Unable to connect to Google Play. Please check your internet connection.</string>
-    <string name="anti_detect_cloaked">CLOAKED</string>
+    <string name="anti_detect_cloaked">CALIBRATED</string>
     <string name="anti_detect_raw_pass">RAW PASS-THROUGH</string>
     <string name="anti_detect_nmea_active">NMEA-0183 Sentence Stream: 18 Tracked Satellites</string>
     <string name="anti_detect_nmea_inactive">NMEA-0183 Synthesizer: Inactive</string>
     <string name="anti_detect_nmea_disabled_hint">NMEA Stream Disabled. Enable Hardware Synthesizer above.</string>
     <string name="anti_detect_wifi_scan_detected">Wi-Fi Scanning: Detected On (May cause location jumps) • Tap to turn off</string>
     <string name="anti_detect_wifi_scan_disabled">Wi-Fi Scanning: Disabled (Zero-Rubberbanding Lock Active)</string>
-    <string name="anti_detect_root_detected">1-Tap Root Stealth (Root Detected)</string>
-    <string name="anti_detect_root_universal">Universal Cloak Active</string>
+    <string name="anti_detect_root_detected">توافق بيئة المطور (تم اكتشاف الروت)</string>
+    <string name="anti_detect_root_universal">Universal Telemetry Active</string>
     <string name="anti_detect_clock_drift_sync_fmt">Nanosecond Clock Uncertainty: Synchronized (~%.1f ns)</string>
     <string name="anti_detect_clock_drift_static">Nanosecond Uncertainty: Static (0.0 ns)</string>
     <string name="vpn_desc_connected">Kernel WireGuard tunnel active with BBR congestion control and TCP MSS Clamping. Zero packet inspection leaks.</string>
@@ -746,4 +746,5 @@
     <string name="stability_info_oem_settings">فتح إعدادات الخلفية لـ %s</string>
     <string name="stability_info_dismiss">حسناً فهمت</string>
     <string name="stability_widget_pinned_success">تم إرسال طلب تثبيت الأداة إلى الشاشة الرئيسية!</string>
+    <string name="bottom_she_ghost_shield_vpn">درع معايرة مستشعر الأجهزة (القياس عن بُعد)</string>
 </resources>

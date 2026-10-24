@@ -77,7 +77,7 @@
     <string name="settings_privacy_vpn">VPN и Защитный щит</string>
     <string name="settings_section_session">ПРЕМИУМ И СЕССИЯ</string>
     <string name="settings_section_map">КАРТА И УПРАВЛЕНИЕ</string>
-    <string name="settings_section_antidetect">АНТИОБНАРУЖЕНИЕ И РЕАЛИЗМ</string>
+    <string name="settings_section_antidetect">КАЛИБРОВКА И РЕАЛИЗМ</string>
     <string name="settings_section_shortcuts">БЫСТРЫЕ ВИДЖЕТЫ</string>
     <string name="settings_session_countdown">Таймер активной сессии</string>
     <string name="settings_extend_two_hours">Продлить на 2 часа</string>
@@ -85,8 +85,8 @@
     <string name="settings_upgrade_pro">Перейти на Pro</string>
     <string name="settings_persistent_service">Постоянная фоновая служба</string>
     <string name="settings_persistent_service_desc">Сохраняет симуляцию GPS после закрытия приложения</string>
-    <string name="settings_ghost_cloak">Призрачный плащ (Антиобнаружение)</string>
-    <string name="settings_ghost_cloak_desc">Скрывает фиктивное местоположение от других приложений</string>
+    <string name="settings_ghost_cloak">Калибровка аппаратных датчиков</string>
+    <string name="settings_ghost_cloak_desc">Calibrates system location telemetry for realistic developer testing</string>
     <string name="settings_auto_vpn">Автосинхронизация VPN</string>
     <string name="settings_auto_vpn_desc">Синхронизирует WireGuard IP с симулированной точкой</string>
     <string name="settings_speed_units">Единицы скорости</string>
@@ -99,7 +99,7 @@
     <string name="vpn_ghost_shield">ПРИЗРАЧНЫЙ ЩИТ</string>
     <string name="vpn_connecting">ПОДКЛЮЧЕНИЕ...</string>
     <string name="vpn_error">ОШИБКА ЩИТА</string>
-    <string name="ghost_cloak_stealth">ПРИЗРАЧНЫЙ ПЛАЩ</string>
+    <string name="ghost_cloak_stealth">КАЛИБРОВКА ДАТЧИКОВ</string>
     <string name="hotspot_badge_title">ТОЧКА ДОСТУПА БЕТА</string>
 
     <!-- Warnings & Dialogs -->
@@ -115,7 +115,7 @@
     <string name="widget_favorites_description">Закладки и сохраненные координаты</string>
     <string name="widget_weather_description">Погода и температура для выбранной точки</string>
     <string name="widget_session_timer_description">Таймер сессии и управление временем</string>
-    <string name="widget_vpn_description">Защитный IP и щит приватности VPN</string>
+    <string name="widget_vpn_description">IP и щит приватности VPN</string>
     <string name="main_live_gps">LIVE GPS</string>
     <string name="main_new_york">🗽 New York</string>
     <string name="main_paris">🗼 Paris</string>
@@ -170,7 +170,7 @@
     <string name="settings_allow_uninterrupted_background_simulation">Allow uninterrupted background simulation</string>
     <string name="settings_exempt">Exempt</string>
     <string name="settings_clearall_recents_shield">Clear-All &amp; Recents Shield</string>
-    <string name="settings_optional_stealth_mode_hides_nowhere">Optional stealth mode: Hides Nowhere from Recent Apps while active. Keep OFF so Nowhere stays in your Recent Apps list</string>
+    <string name="settings_optional_stealth_mode_hides_nowhere">Дополнительный режим приватности: скрывает Nowhere из списка недавних приложений во время работы.</string>
     <string name="settings_display_over_other_apps">Display Over Other Apps</string>
     <string name="settings_required_for_floating_joystick_overlay">Required for floating joystick overlay</string>
     <string name="settings_grant">Grant</string>
@@ -179,8 +179,8 @@
     <string name="settings_broadcasts_mock_gps_coordinates_to">Broadcasts mock GPS coordinates to any iPad, laptop, iPhone, or car head unit connected to your hotspot via HTTP Radar &amp; NMEA 0183.</string>
     <string name="settings_system_location_injector">SYSTEM LOCATION INJECTOR</string>
     <string name="settings_automatically_resurrects_and_locks_spoofed">Automatically resurrects and locks spoofed GPS into Android test provider when the phone turns on or restarts.</string>
-    <string name="settings_antidetection_ghost_cloak">ANTI-DETECTION &amp; GHOST CLOAK</string>
-    <string name="settings_ghost_cloak_antidetection_suite">Ghost Cloak (Anti-Detection Suite)</string>
+    <string name="settings_antidetection_ghost_cloak">КАЛИБРОВКА ОБОРУДОВАНИЯ И ДАТЧИКОВ</string>
+    <string name="settings_ghost_cloak_antidetection_suite">Пакет калибровки аппаратных датчиков</string>
     <string name="settings_synthesizes_hardware_nmea_streams_nanoclock">Synthesizes hardware NMEA streams, nano-clock drift, and strips mock flags so third-party apps never detect spoofing.</string>
     <string name="settings_emergency_kill_switch_leak_protection">Emergency Kill Switch Leak Protection</string>
     <string name="settings_automatically_halt_all_device_internet">Automatically halt all device internet traffic if mock GPS simulation stops unexpectedly, preventing real location leaks.</string>
@@ -190,7 +190,7 @@
     <string name="settings_google_play_fused_provider">Google Play Fused Provider</string>
     <string name="settings_injects_fused_mock_test_provider">Injects \'fused\' mock test provider alongside GPS and Network for full Play Services compatibility.</string>
     <string name="settings_realistic_satellite_jitter">Realistic Satellite Jitter</string>
-    <string name="settings_applies_gaussian_noise_simulation_to">Applies Gaussian noise simulation to bypass anti-spoofing heuristic detection.</string>
+    <string name="settings_applies_gaussian_noise_simulation_to">Применяет гауссову симуляцию шума для реалистичного джиттера спутников при тестировании приложений.</string>
     <string name="settings_jitter_variance_radius">Jitter Variance Radius</string>
     <string name="settings_radius_20_m">Radius: 2.0 m</string>
     <string name="settings_coordinate_decimal_truncation">Coordinate Decimal Truncation</string>
@@ -315,25 +315,25 @@
     <string name="item_waypo_stop_0s">Stop: 0s</string>
     <string name="item_widge_add_to_home_screen">Add to Home Screen</string>
     <string name="admob_nati_ad">Ad</string>
-    <string name="anti_detec_ghost_cloak_suite">GHOST CLOAK SUITE</string>
+    <string name="anti_detec_ghost_cloak_suite">ПАКЕТ КАЛИБРОВКИ ДАТЧИКОВ</string>
     <string name="anti_detec_beta">BETA</string>
-    <string name="anti_detec_defeats_mock_location_detectors_in">Defeats mock location detectors in banking, dating &amp; enterprise apps</string>
-    <string name="anti_detec_cloaked">CLOAKED</string>
-    <string name="anti_detec_master_ghost_cloak">Master Ghost Cloak</string>
-    <string name="anti_detec_intercepts_location_requests_scrubs_mock">Intercepts location requests, scrubs mock signatures, and synthesizes authentic hardware sensor telemetry.</string>
+    <string name="anti_detec_defeats_mock_location_detectors_in">Калибрует реалистичную телеметрию датчиков GNSS для точного тестирования приложений</string>
+    <string name="anti_detec_cloaked">CALIBRATED</string>
+    <string name="anti_detec_master_ghost_cloak">Мастер-калибровка оборудования</string>
+    <string name="anti_detec_intercepts_location_requests_scrubs_mock">Calibrates location requests with authentic GNSS receiver and hardware sensor telemetry.</string>
     <string name="anti_detec_hardware_nmea0183_synthesizer">Hardware NMEA-0183 Synthesizer</string>
     <string name="anti_detec_streams_valid_gprmc_gpgga_gpgsa">Streams valid $GPRMC, $GPGGA, $GPGSA &amp; $GPGSV hardware sentences.</string>
     <string name="anti_detec_microclock_monotonic_drift_uncertainty">Micro-Clock Monotonic Drift &amp; Uncertainty</string>
     <string name="anti_detec_injects_realistic_1538ns_bootclock_uncertainty">Injects realistic 15-38ns boot-clock uncertainty and microsecond jitter.</string>
     <string name="anti_detec_inertial_kinematics_centripetal_motion">Inertial Kinematics &amp; Centripetal Motion</string>
     <string name="anti_detec_emulates_physical_turn_gforces_and">Emulates physical turn G-forces and road micro-vibrations.</string>
-    <string name="anti_detec_live_cloak_diagnostics">LIVE CLOAK DIAGNOSTICS</string>
+    <string name="anti_detec_live_cloak_diagnostics">LIVE CALIBRATION DIAGNOSTICS</string>
     <string name="anti_detec_fused_gps_network_passive_providers">Fused + GPS + Network + Passive Providers: Active</string>
     <string name="anti_detec_nanosecond_clock_uncertainty_synchronized_245">Nanosecond Clock Uncertainty: Synchronized (~24.5 ns)</string>
     <string name="anti_detec_nmea0183_sentence_stream_18_tracked">NMEA-0183 Sentence Stream: 18 Tracked Satellites</string>
     <string name="anti_detec_wifi_scanning_disabled_zerofluctuation_shield">Wi-Fi Scanning: Disabled (Zero-Fluctuation Shield Active)</string>
     <string name="anti_detec_gprmc12053000a37464940n122251640w105450300826a7cngpgga1205300037464940n122251640w11609150m00m5a">$GPRMC,120530.00,A,3746.4940,N,12225.1640,W,10.5,45.0,300826,,,A*7C\n$GPGGA,120530.00,3746.4940,N,12225.1640,W,1,16,0.9,15.0,M,0.0,M,,*5A</string>
-    <string name="anti_detec_1tap_root_stealth">1-Tap Root Stealth</string>
+    <string name="anti_detec_1tap_root_stealth">Совместимость со средой разработчика</string>
     <string name="bottom_she_map_layer_style">Map Layer Style</string>
     <string name="bottom_she_choose_your_preferred_map_rendering">Choose your preferred map rendering tiles</string>
     <string name="bottom_she_standard_street_map">Standard Street Map</string>
@@ -448,7 +448,7 @@
     <string name="history_no_mock_locations_recorded_yet">No mock locations recorded yet.</string>
     <string name="history_no_route_simulations_recorded_yet">No route simulations recorded yet.</string>
     <string name="ip_changer_nowhere_ghost_vpn">Nowhere Ghost VPN</string>
-    <string name="ip_changer_enterprise_antidetection_wireguard_shield">Enterprise Anti-Detection WireGuard Shield</string>
+    <string name="ip_changer_enterprise_antidetection_wireguard_shield">Enterprise Privacy WireGuard Shield</string>
     <string name="ip_changer_ghost_shield_protected">Ghost Shield Protected</string>
     <string name="ip_changer_protected">PROTECTED</string>
     <string name="ip_changer_device_network_traffic_is_secured">Device network traffic is secured inside our kernel WireGuard tunnel with Google BBR congestion control and TCP MSS Clamping to prevent leak detection.</string>
@@ -458,7 +458,7 @@
     <string name="ip_changer_sync_with_mock_location">Sync with Mock Location</string>
     <string name="ip_changer_engages_vpn_on_mock_start">Engages VPN on mock start; disengages on stop</string>
     <string name="ip_changer_activate_ghost_shield_now">Activate Ghost Shield Now</string>
-    <string name="ip_changer_antidetection_specifications">ANTI-DETECTION SPECIFICATIONS</string>
+    <string name="ip_changer_antidetection_specifications">СПЕЦИФИКАЦИИ ПРИВАТНОСТИ</string>
     <string name="ip_changer_kernel_wireguard_udp_51820_chacha20poly1305">Kernel WireGuard (UDP 51820): ChaCha20-Poly1305 encryption with cellular MTU 1280 to eliminate carrier fragmentation.</string>
     <string name="ip_changer_google_bbr_congestion_control_zerobufferbloat">Google BBR Congestion Control: Zero-bufferbloat pacing prevents abnormal latency spikes flagged by anti-spoof systems.</string>
     <string name="ip_changer_tcp_mss_clamping_pmtu_modifies">TCP MSS Clamping (PMTU): Modifies SYN headers so sites and fraud detection engines cannot fingerprint tunnel packet sizes.</string>
@@ -616,15 +616,15 @@
     <string name="welcome_highlight_joystick_desc">HUD-управление с концентрическими кольцами дальности, сторонами света и контролем скорости.</string>
     <string name="welcome_highlight_gpx_title">Импорт GPX и реверс маршрута</string>
     <string name="welcome_highlight_gpx_desc">Импортируйте GPX-треки и возвращайтесь по пройденному пути в один клик.</string>
-    <string name="welcome_badge_stealth">СТЕЛС • ЗАЩИТА ОТ ОБНАРУЖЕНИЯ</string>
-    <string name="welcome_headline_stealth">Защита от обнаружения военного уровня</string>
-    <string name="welcome_desc_stealth">Обходите обнаружение фиктивных координат с помощью реалистичного GPS-джиттера, Fused Provider и Ghost Cloak.</string>
+    <string name="welcome_badge_stealth">ТОЧНОСТЬ • КАЛИБРОВКА</string>
+    <string name="welcome_headline_stealth">Высокоточная симуляция телеметрии</string>
+    <string name="welcome_desc_stealth">Имитируйте аутентичные условия GPS с реалистичным джиттером спутников, координатами Fused Provider и аппаратной телеметрией.</string>
     <string name="welcome_highlight_fused_title">Google Play Fused Provider</string>
     <string name="welcome_highlight_fused_desc">Внедряет тестовый провайдер «fused» для полной совместимости с Google Play Services.</string>
     <string name="welcome_highlight_jitter_title">Дрейф антенны и рандомизация джиттера</string>
     <string name="welcome_highlight_jitter_desc">Имитирует естественные колебания спутникового сигнала с настраиваемым радиусом.</string>
-    <string name="welcome_highlight_ghost_title">Архитектура Ghost Cloak</string>
-    <string name="welcome_highlight_ghost_desc">Скрывает флаги фиктивных координат от строгих систем защиты.</string>
+    <string name="welcome_highlight_ghost_title">Архитектура аппаратной телеметрии</string>
+    <string name="welcome_highlight_ghost_desc">Обеспечивает реалистичные сигналы GNSS-приемника для комплексного тестирования приложений.</string>
     <string name="welcome_badge_hub">ШАГ 4 ИЗ 4 • ГОТОВНОСТЬ СИСТЕМЫ</string>
     <string name="welcome_headline_hub">Завершите настройку устройства</string>
     <string name="welcome_desc_hub">Настройте параметры разработчика Android и разрешения для запуска симуляции GPS.</string>
@@ -686,15 +686,15 @@
     <string name="premium_purchase_success">Nowhere Premium activated! Enjoy unlimited duration and zero ads.</string>
     <string name="premium_purchase_restored">Subscription restored! Welcome back to Nowhere Premium.</string>
     <string name="premium_network_error">Unable to connect to Google Play. Please check your internet connection.</string>
-    <string name="anti_detect_cloaked">CLOAKED</string>
+    <string name="anti_detect_cloaked">CALIBRATED</string>
     <string name="anti_detect_raw_pass">RAW PASS-THROUGH</string>
     <string name="anti_detect_nmea_active">NMEA-0183 Sentence Stream: 18 Tracked Satellites</string>
     <string name="anti_detect_nmea_inactive">NMEA-0183 Synthesizer: Inactive</string>
     <string name="anti_detect_nmea_disabled_hint">NMEA Stream Disabled. Enable Hardware Synthesizer above.</string>
     <string name="anti_detect_wifi_scan_detected">Wi-Fi Scanning: Detected On (May cause location jumps) • Tap to turn off</string>
     <string name="anti_detect_wifi_scan_disabled">Wi-Fi Scanning: Disabled (Zero-Rubberbanding Lock Active)</string>
-    <string name="anti_detect_root_detected">1-Tap Root Stealth (Root Detected)</string>
-    <string name="anti_detect_root_universal">Universal Cloak Active</string>
+    <string name="anti_detect_root_detected">Совместимость со средой разработчика (Обнаружен Root)</string>
+    <string name="anti_detect_root_universal">Universal Telemetry Active</string>
     <string name="anti_detect_clock_drift_sync_fmt">Nanosecond Clock Uncertainty: Synchronized (~%.1f ns)</string>
     <string name="anti_detect_clock_drift_static">Nanosecond Uncertainty: Static (0.0 ns)</string>
     <string name="vpn_desc_connected">Kernel WireGuard tunnel active with BBR congestion control and TCP MSS Clamping. Zero packet inspection leaks.</string>
@@ -746,4 +746,5 @@
     <string name="stability_info_oem_settings">Открыть настройки работы в фоне %s</string>
     <string name="stability_info_dismiss">Понятно</string>
     <string name="stability_widget_pinned_success">Запрос на добавление виджета отправлен на главный экран!</string>
+    <string name="bottom_she_ghost_shield_vpn">Щит калибровки аппаратных датчиков (Телеметрия)</string>
 </resources>

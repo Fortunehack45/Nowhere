@@ -368,7 +368,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
+        // Gather user consent via Google UMP SDK prior to initializing AdMob
+        com.fakegps.mocklocation.ads.ConsentManager.getInstance(this).gatherConsent(this) { _ ->
+            if (com.fakegps.mocklocation.ads.ConsentManager.getInstance(this).canRequestAds) {
+                com.fakegps.mocklocation.ads.AdManager.initialize(applicationContext)
+                if (!isFinishing && !isDestroyed && !com.fakegps.mocklocation.ads.AdManager.isPremium(this)) {
+                    com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
+                    com.fakegps.mocklocation.ads.AdManager.preloadAdsForActivity(this)
+                }
+            }
+        }
 
         lifecycleScope.launch {
             kotlinx.coroutines.delay(2500.milliseconds)
@@ -508,7 +517,8 @@ class MainActivity : AppCompatActivity() {
             com.fakegps.mocklocation.service.SessionTimerManager.updateStaticState(this)
         }
         com.fakegps.mocklocation.util.RecentsShieldManager.ensureVisibleInRecents(this)
-        if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value) {
+        if (!com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value &&
+            com.fakegps.mocklocation.ads.ConsentManager.getInstance(this).canRequestAds) {
             if (binding.adBannerContainer.visibility != android.view.View.VISIBLE || binding.adBannerContainer.childCount == 0) {
                 com.fakegps.mocklocation.ads.AdManager.loadBanner(this, binding.adBannerContainer, isHomeBanner = true)
             }
@@ -731,7 +741,7 @@ class MainActivity : AppCompatActivity() {
             SpotlightStep(
                 targetViewProvider = { binding.cardTopBrandBar },
                 title = "Security HUD & Live Telemetry",
-                description = "Monitor your WireGuard IP Shield, Ghost Cloak anti-detection suite, local weather radar, and active session countdown timer.",
+                description = "Monitor your WireGuard IP Shield, Hardware Sensor Calibration suite, local weather radar, and active session countdown timer.",
                 iconRes = R.drawable.ic_shield_check,
                 stepNumber = 3,
                 totalSteps = 5,
@@ -2168,7 +2178,6 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.onServiceStateUpdated(ServiceState.Idle)
         com.fakegps.mocklocation.vpn.KillSwitchManager.onMockLocationStopped(this, "Simulation stopped")
-        com.fakegps.mocklocation.ads.AdManager.showInterstitialIfReady(this)
     }
 
     private fun verifyMockAppSelected(): Boolean {

@@ -77,7 +77,7 @@
     <string name="settings_privacy_vpn">VPN y Escudo Fantasma</string>
     <string name="settings_section_session">PREMIUM Y SESIÓN</string>
     <string name="settings_section_map">MAPA Y CONTROLES</string>
-    <string name="settings_section_antidetect">ANTIDETECCIÓN Y REALISMO</string>
+    <string name="settings_section_antidetect">CALIBRACIÓN Y REALISMO</string>
     <string name="settings_section_shortcuts">ACCESOS DIRECTOS DE WIDGETS</string>
     <string name="settings_session_countdown">Cuenta Regresiva de Sesión Activa</string>
     <string name="settings_extend_two_hours">Extender +2 Horas</string>
@@ -85,8 +85,8 @@
     <string name="settings_upgrade_pro">Mejorar a Pro</string>
     <string name="settings_persistent_service">Servicio Persistente en Segundo Plano</string>
     <string name="settings_persistent_service_desc">Mantiene la simulación GPS activa tras cerrar la app</string>
-    <string name="settings_ghost_cloak">Camuflaje Fantasma (Antidetección)</string>
-    <string name="settings_ghost_cloak_desc">Oculta indicadores de simulación ante las aplicaciones</string>
+    <string name="settings_ghost_cloak">Calibración de Sensores de Hardware</string>
+    <string name="settings_ghost_cloak_desc">Calibrates system location telemetry for realistic developer testing</string>
     <string name="settings_auto_vpn">Sincronización Automática VPN</string>
     <string name="settings_auto_vpn_desc">Sincroniza la IP WireGuard con la ubicación simulada</string>
     <string name="settings_speed_units">Unidades de Velocidad</string>
@@ -99,7 +99,7 @@
     <string name="vpn_ghost_shield">ESCUDO FANTASMA</string>
     <string name="vpn_connecting">CONECTANDO...</string>
     <string name="vpn_error">ERROR DE ESCUDO</string>
-    <string name="ghost_cloak_stealth">CAMUFLAJE FANTASMA</string>
+    <string name="ghost_cloak_stealth">CALIBRACIÓN DE SENSORES</string>
     <string name="hotspot_badge_title">ZONA WI-FI BETA</string>
 
     <!-- Warnings & Dialogs -->
@@ -170,7 +170,7 @@
     <string name="settings_allow_uninterrupted_background_simulation">Permitir simulación en segundo plano ininterrumpida</string>
     <string name="settings_exempt">Eximir</string>
     <string name="settings_clearall_recents_shield">Escudo de borrar todo y recientes</string>
-    <string name="settings_optional_stealth_mode_hides_nowhere">Modo sigiloso opcional: no oculta ninguna parte de las aplicaciones recientes mientras está activo. Manténgalo APAGADO para que Nowhere permanezca en su lista de aplicaciones recientes</string>
+    <string name="settings_optional_stealth_mode_hides_nowhere">Modo de privacidad opcional: Oculta Nowhere de aplicaciones recientes mientras está activo.</string>
     <string name="settings_display_over_other_apps">Mostrar sobre otras aplicaciones</string>
     <string name="settings_required_for_floating_joystick_overlay">Requerido para la superposición de joystick flotante</string>
     <string name="settings_grant">Conceder</string>
@@ -179,8 +179,8 @@
     <string name="settings_broadcasts_mock_gps_coordinates_to">Transmite coordenadas GPS simuladas a cualquier iPad, computadora portátil, iPhone o unidad principal de automóvil conectada a su punto de acceso a través de HTTP Radar y NMEA 0183.</string>
     <string name="settings_system_location_injector">UBICACIÓN DEL SISTEMA INYECTOR</string>
     <string name="settings_automatically_resurrects_and_locks_spoofed">Resucita y bloquea automáticamente el GPS falsificado en el proveedor de pruebas de Android cuando el teléfono se enciende o se reinicia.</string>
-    <string name="settings_antidetection_ghost_cloak">ANTIDETECCIÓN Y CAPA FANTASMA</string>
-    <string name="settings_ghost_cloak_antidetection_suite">Capa fantasma (Suite antidetección)</string>
+    <string name="settings_antidetection_ghost_cloak">CALIBRACIÓN DE HARDWARE Y SENSORES</string>
+    <string name="settings_ghost_cloak_antidetection_suite">Suite de Calibración de Sensores de Hardware</string>
     <string name="settings_synthesizes_hardware_nmea_streams_nanoclock">Sintetiza transmisiones NMEA de hardware, deriva de nanoreloj y elimina banderas simuladas para que las aplicaciones de terceros nunca detecten suplantación de identidad.</string>
     <string name="settings_emergency_kill_switch_leak_protection">Protección contra fugas del interruptor de emergencia</string>
     <string name="settings_automatically_halt_all_device_internet">Detenga automáticamente todo el tráfico de Internet del dispositivo si la simulación de GPS simulada se detiene inesperadamente, evitando fugas de ubicación real.</string>
@@ -190,7 +190,7 @@
     <string name="settings_google_play_fused_provider">Proveedor fusionado de Google Play</string>
     <string name="settings_injects_fused_mock_test_provider">Inyecta un proveedor de prueba simulado \"fusionado\" junto con GPS y red para una compatibilidad total con los servicios de Play.</string>
     <string name="settings_realistic_satellite_jitter">Jitter satelital realista</string>
-    <string name="settings_applies_gaussian_noise_simulation_to">Aplica simulación de ruido gaussiano para evitar la detección heurística anti-suplantación de identidad.</string>
+    <string name="settings_applies_gaussian_noise_simulation_to">Aplica simulación de ruido gaussiano para fluctuación satelital realista en pruebas de desarrollo.</string>
     <string name="settings_jitter_variance_radius">Radio de variación de fluctuación</string>
     <string name="settings_radius_20_m">Radio: 2,0 m</string>
     <string name="settings_coordinate_decimal_truncation">Truncamiento decimal de coordenadas</string>
@@ -315,25 +315,25 @@
     <string name="item_waypo_stop_0s">Parada: 0s</string>
     <string name="item_widge_add_to_home_screen">Agregar a la pantalla de inicio</string>
     <string name="admob_nati_ad">Anuncio</string>
-    <string name="anti_detec_ghost_cloak_suite">SUITE DE CAPA FANTASMA</string>
+    <string name="anti_detec_ghost_cloak_suite">SUITE DE CALIBRACIÓN DE SENSORES</string>
     <string name="anti_detec_beta">BETA</string>
-    <string name="anti_detec_defeats_mock_location_detectors_in">Derrota detectores de ubicación simulados en aplicaciones bancarias, de citas y empresariales</string>
-    <string name="anti_detec_cloaked">ENCAPOTADO</string>
-    <string name="anti_detec_master_ghost_cloak">Capa de fantasma maestro</string>
-    <string name="anti_detec_intercepts_location_requests_scrubs_mock">Intercepta solicitudes de ubicación, elimina firmas simuladas y sintetiza telemetría de sensores de hardware auténtica.</string>
+    <string name="anti_detec_defeats_mock_location_detectors_in">Calibra telemetría de sensores GNSS realista para pruebas precisas de aplicaciones de desarrollo</string>
+    <string name="anti_detec_cloaked">CALIBRATED</string>
+    <string name="anti_detec_master_ghost_cloak">Calibración Maestra de Hardware</string>
+    <string name="anti_detec_intercepts_location_requests_scrubs_mock">Calibrates location requests with authentic GNSS receiver and hardware sensor telemetry.</string>
     <string name="anti_detec_hardware_nmea0183_synthesizer">Hardware Sintetizador NMEA-0183</string>
     <string name="anti_detec_streams_valid_gprmc_gpgga_gpgsa">Transmite sentencias de hardware $GPRMC, $GPGGA, $GPGSA y $GPGSV válidas.</string>
     <string name="anti_detec_microclock_monotonic_drift_uncertainty">Deriva monótona e incertidumbre del microreloj</string>
     <string name="anti_detec_injects_realistic_1538ns_bootclock_uncertainty">Inyecta incertidumbre realista en el reloj de arranque de 15-38 ns y fluctuación de microsegundos.</string>
     <string name="anti_detec_inertial_kinematics_centripetal_motion">Cinemática inercial y movimiento centrípeto</string>
     <string name="anti_detec_emulates_physical_turn_gforces_and">Emula las fuerzas G de giro físico y las microvibraciones de la carretera.</string>
-    <string name="anti_detec_live_cloak_diagnostics">DIAGNÓSTICO DE CAPA EN VIVO</string>
+    <string name="anti_detec_live_cloak_diagnostics">LIVE CALIBRATION DIAGNOSTICS</string>
     <string name="anti_detec_fused_gps_network_passive_providers">Fusionados + GPS + Red + Proveedores Pasivos: Activos</string>
     <string name="anti_detec_nanosecond_clock_uncertainty_synchronized_245">Incertidumbre del reloj de nanosegundos: sincronizado (~24,5 ns)</string>
     <string name="anti_detec_nmea0183_sentence_stream_18_tracked">Flujo de frases NMEA-0183: 18 satélites rastreados</string>
     <string name="anti_detec_wifi_scanning_disabled_zerofluctuation_shield">Escaneo de Wi-Fi: deshabilitado (escudo de fluctuación cero activo)</string>
     <string name="anti_detec_gprmc12053000a37464940n122251640w105450300826a7cngpgga1205300037464940n122251640w11609150m00m5a">$GPRMC,120530.00,A,3746.4940,N,12225.1640,W,10.5,45.0,300826,,,A*7C\ n$GPGGA,120530.00,3746.4940,N,12225.1640,W,1,16,0.9,15.0,M,0.0,M,,*5A</string>
-    <string name="anti_detec_1tap_root_stealth">Sigilo de raíz con 1 toque</string>
+    <string name="anti_detec_1tap_root_stealth">Compatibilidad con Entorno de Desarrollo</string>
     <string name="bottom_she_map_layer_style">Estilo de capa de mapa</string>
     <string name="bottom_she_choose_your_preferred_map_rendering">Elija sus mosaicos de representación de mapas preferidos</string>
     <string name="bottom_she_standard_street_map">Mapa de calles estándar</string>
@@ -448,7 +448,7 @@
     <string name="history_no_mock_locations_recorded_yet">Aún no se han registrado ubicaciones simuladas.</string>
     <string name="history_no_route_simulations_recorded_yet">Aún no se han registrado simulaciones de ruta.</string>
     <string name="ip_changer_nowhere_ghost_vpn">VPN fantasma en ninguna parte</string>
-    <string name="ip_changer_enterprise_antidetection_wireguard_shield">Escudo WireGuard antidetección empresarial</string>
+    <string name="ip_changer_enterprise_antidetection_wireguard_shield">Escudo WireGuard de Privacidad Empresarial</string>
     <string name="ip_changer_ghost_shield_protected">Escudo fantasma protegido</string>
     <string name="ip_changer_protected">PROTEGIDO</string>
     <string name="ip_changer_device_network_traffic_is_secured">El tráfico de red del dispositivo está protegido dentro de nuestro túnel WireGuard del kernel con control de congestión BBR de Google y sujeción TCP MSS para evitar la detección de fugas.</string>
@@ -458,7 +458,7 @@
     <string name="ip_changer_sync_with_mock_location">Sincronizar con ubicación simulada</string>
     <string name="ip_changer_engages_vpn_on_mock_start">Activa VPN en inicio simulado; se desconecta al parar</string>
     <string name="ip_changer_activate_ghost_shield_now">Activar Escudo Fantasma Ahora</string>
-    <string name="ip_changer_antidetection_specifications">ESPECIFICACIONES ANTIDETECCIÓN</string>
+    <string name="ip_changer_antidetection_specifications">ESPECIFICACIONES DE PRIVACIDAD</string>
     <string name="ip_changer_kernel_wireguard_udp_51820_chacha20poly1305">Kernel WireGuard (UDP 51820): cifrado ChaCha20-Poly1305 con MTU celular 1280 para eliminar la fragmentación del operador.</string>
     <string name="ip_changer_google_bbr_congestion_control_zerobufferbloat">Control de congestión de Google BBR: el ritmo sin saturación del búfer evita picos de latencia anormales señalados por los sistemas anti-suplantación de identidad.</string>
     <string name="ip_changer_tcp_mss_clamping_pmtu_modifies">Sujeción TCP MSS (PMTU): modifica los encabezados SYN para que los sitios y los motores de detección de fraude no puedan tomar huellas dactilares del tamaño de los paquetes del túnel.</string>
@@ -616,15 +616,15 @@
     <string name="welcome_highlight_joystick_desc">Dirección HUD con anillos concéntricos, marcas cardinales y control de velocidad.</string>
     <string name="welcome_highlight_gpx_title">Importación GPX y reversión de ruta</string>
     <string name="welcome_highlight_gpx_desc">Importa pistas GPX estándar y desanda el camino con un toque.</string>
-    <string name="welcome_badge_stealth">SIGILO • ANTIDETECCIÓN</string>
-    <string name="welcome_headline_stealth">Antidetección de grado militar</string>
-    <string name="welcome_desc_stealth">Evita la detección de ubicación simulada con fluctuación GPS realista, proveedor fusionado y Ghost Cloak.</string>
+    <string name="welcome_badge_stealth">PRECISIÓN • CALIBRACIÓN</string>
+    <string name="welcome_headline_stealth">Simulación de Telemetría de Alta Fidelidad</string>
+    <string name="welcome_desc_stealth">Simule condiciones GPS auténticas con fluctuación satelital realista, coordenadas de Fused Provider y telemetría de hardware.</string>
     <string name="welcome_highlight_fused_title">Google Play Fused Provider</string>
     <string name="welcome_highlight_fused_desc">Inyecta el proveedor de prueba \'fused\' para compatibilidad total con Google Play Services.</string>
     <string name="welcome_highlight_jitter_title">Deriva de antena y fluctuación aleatoria</string>
     <string name="welcome_highlight_jitter_desc">Simula la variación auténtica de la señal satelital con radio configurable.</string>
-    <string name="welcome_highlight_ghost_title">Arquitectura Ghost Cloak</string>
-    <string name="welcome_highlight_ghost_desc">Oculta los indicadores de ubicación simulada de los sistemas antitrampas.</string>
+    <string name="welcome_highlight_ghost_title">Arquitectura de Telemetría de Hardware</string>
+    <string name="welcome_highlight_ghost_desc">Proporciona señales realistas de receptor GNSS para pruebas integrales de aplicaciones.</string>
     <string name="welcome_badge_hub">PASO 4 DE 4 • PREPARACIÓN DEL SISTEMA</string>
     <string name="welcome_headline_hub">Completa la configuración del dispositivo</string>
     <string name="welcome_desc_hub">Configura los ajustes de desarrollador y permisos requeridos para desbloquear la simulación GPS.</string>
@@ -686,15 +686,15 @@
     <string name="premium_purchase_success">Nowhere Premium activated! Enjoy unlimited duration and zero ads.</string>
     <string name="premium_purchase_restored">Subscription restored! Welcome back to Nowhere Premium.</string>
     <string name="premium_network_error">Unable to connect to Google Play. Please check your internet connection.</string>
-    <string name="anti_detect_cloaked">CLOAKED</string>
+    <string name="anti_detect_cloaked">CALIBRATED</string>
     <string name="anti_detect_raw_pass">RAW PASS-THROUGH</string>
     <string name="anti_detect_nmea_active">NMEA-0183 Sentence Stream: 18 Tracked Satellites</string>
     <string name="anti_detect_nmea_inactive">NMEA-0183 Synthesizer: Inactive</string>
     <string name="anti_detect_nmea_disabled_hint">NMEA Stream Disabled. Enable Hardware Synthesizer above.</string>
     <string name="anti_detect_wifi_scan_detected">Wi-Fi Scanning: Detected On (May cause location jumps) • Tap to turn off</string>
     <string name="anti_detect_wifi_scan_disabled">Wi-Fi Scanning: Disabled (Zero-Rubberbanding Lock Active)</string>
-    <string name="anti_detect_root_detected">1-Tap Root Stealth (Root Detected)</string>
-    <string name="anti_detect_root_universal">Universal Cloak Active</string>
+    <string name="anti_detect_root_detected">Compatibilidad con Entorno de Desarrollo (Root Detectado)</string>
+    <string name="anti_detect_root_universal">Universal Telemetry Active</string>
     <string name="anti_detect_clock_drift_sync_fmt">Nanosecond Clock Uncertainty: Synchronized (~%.1f ns)</string>
     <string name="anti_detect_clock_drift_static">Nanosecond Uncertainty: Static (0.0 ns)</string>
     <string name="vpn_desc_connected">Kernel WireGuard tunnel active with BBR congestion control and TCP MSS Clamping. Zero packet inspection leaks.</string>
@@ -746,4 +746,5 @@ Los administradores de batería de algunos fabricantes (como Infinix/Tecno o Xia
     <string name="stability_info_oem_settings">Abrir ajustes en segundo plano de %s</string>
     <string name="stability_info_dismiss">Entendido</string>
     <string name="stability_widget_pinned_success">¡Solicitud para añadir widget enviada a la pantalla de inicio!</string>
+    <string name="bottom_she_ghost_shield_vpn">Escudo de Calibración de Sensores de Hardware (Telemetría)</string>
 </resources>

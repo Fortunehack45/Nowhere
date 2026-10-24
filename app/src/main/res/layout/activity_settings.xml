@@ -1069,7 +1069,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- SECTION: ANTI-DETECTION & GHOST CLOAK -->
+            <!-- SECTION: HARDWARE SENSOR CALIBRATION -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -54,6 +54,7 @@ object AdManager {
     const val PROD_BANNER_AD_UNIT_ID = "ca-app-pub-5191202278112313/6778431802"
     const val PROD_HOME_BANNER_AD_UNIT_ID = "ca-app-pub-5191202278112313/8553859547"
     const val PROD_APP_OPEN_AD_UNIT_ID = "ca-app-pub-5191202278112313/3576719243"
+    const val PROD_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-5191202278112313/6932394336"
     const val PROD_NATIVE_AD_UNIT_ID = "ca-app-pub-5191202278112313/5736124511"
     const val PROD_REWARDED_AD_UNIT_ID = "ca-app-pub-5191202278112313/1933445026"
     const val PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-5191202278112313/6932394336"
@@ -115,7 +116,7 @@ object AdManager {
      * Loads an Adaptive/Standard Banner Ad into the specified container with automatic fallback.
      */
     fun loadBanner(activity: Activity, container: FrameLayout, isHomeBanner: Boolean = false) {
-        if (isPremium(activity)) {
+        if (!ConsentManager.getInstance(activity).canRequestAds || isPremium(activity)) {
             clearBanner(container)
             return
         }
@@ -124,7 +125,11 @@ object AdManager {
         } else {
             if (isHomeBanner) PROD_HOME_BANNER_AD_UNIT_ID else PROD_BANNER_AD_UNIT_ID
         }
-        val fallbackAdUnit = if (isHomeBanner) PROD_BANNER_AD_UNIT_ID else PROD_HOME_BANNER_AD_UNIT_ID
+        val fallbackAdUnit = if (BuildConfig.DEBUG) {
+            TEST_BANNER_AD_UNIT_ID
+        } else {
+            if (isHomeBanner) PROD_BANNER_AD_UNIT_ID else PROD_HOME_BANNER_AD_UNIT_ID
+        }
 
         loadBannerInternal(activity, container, primaryAdUnit, fallbackAdUnit)
     }
@@ -199,9 +204,9 @@ object AdManager {
                                 activity,
                                 container,
                                 fallbackAdUnitId,
-                                if (fallbackAdUnitId != TEST_BANNER_AD_UNIT_ID) TEST_BANNER_AD_UNIT_ID else null
+                                if (BuildConfig.DEBUG && fallbackAdUnitId != TEST_BANNER_AD_UNIT_ID) TEST_BANNER_AD_UNIT_ID else null
                             )
-                        } else if (adUnitId != TEST_BANNER_AD_UNIT_ID) {
+                        } else if (BuildConfig.DEBUG && adUnitId != TEST_BANNER_AD_UNIT_ID) {
                             Log.d(TAG, "Retrying banner with test ad unit ($TEST_BANNER_AD_UNIT_ID)")
                             loadBannerInternal(activity, container, TEST_BANNER_AD_UNIT_ID, null)
                         } else {
@@ -223,12 +228,13 @@ object AdManager {
      * Loads a Native Advanced Ad into the specified container with automatic fallback.
      */
     fun loadNativeAd(activity: Activity, container: FrameLayout) {
-        if (isPremium(activity)) {
+        if (!ConsentManager.getInstance(activity).canRequestAds || isPremium(activity)) {
             clearBanner(container)
             return
         }
         val primaryUnit = if (BuildConfig.DEBUG) TEST_NATIVE_AD_UNIT_ID else PROD_NATIVE_AD_UNIT_ID
-        loadNativeAdInternal(activity, container, primaryUnit, if (BuildConfig.DEBUG) null else TEST_NATIVE_AD_UNIT_ID)
+        val fallbackUnit = if (BuildConfig.DEBUG) TEST_NATIVE_AD_UNIT_ID else null
+        loadNativeAdInternal(activity, container, primaryUnit, fallbackUnit)
     }
 
     private fun loadNativeAdInternal(
@@ -370,12 +376,13 @@ object AdManager {
     // --- Interstitial Ads ---
 
     fun preloadInterstitial(context: Context) {
-        if (isPremium(context)) return
-        val primaryUnit = TEST_INTERSTITIAL_AD_UNIT_ID
-        loadInterstitialInternal(context, primaryUnit)
+        if (!ConsentManager.getInstance(context).canRequestAds || isPremium(context)) return
+        val primaryUnit = if (BuildConfig.DEBUG) TEST_INTERSTITIAL_AD_UNIT_ID else PROD_INTERSTITIAL_AD_UNIT_ID
+        val fallbackUnit = if (BuildConfig.DEBUG) TEST_INTERSTITIAL_AD_UNIT_ID else null
+        loadInterstitialInternal(context, primaryUnit, fallbackUnit)
     }
 
-    private fun loadInterstitialInternal(context: Context, adUnit: String) {
+    private fun loadInterstitialInternal(context: Context, adUnit: String, fallbackUnit: String? = null) {
         try {
             val adRequest = AdRequest.Builder().build()
             InterstitialAd.load(
@@ -391,6 +398,9 @@ object AdManager {
                     override fun onAdFailedToLoad(error: LoadAdError) {
                         interstitialAd = null
                         Log.w(TAG, "Interstitial ad failed to load ($adUnit): ${error.message}")
+                        if (fallbackUnit != null && fallbackUnit != adUnit) {
+                            loadInterstitialInternal(context, fallbackUnit, null)
+                        }
                     }
                 }
             )
@@ -485,9 +495,9 @@ object AdManager {
     // --- Rewarded Ads ---
 
     fun preloadRewardedAd(context: Context) {
-        if (isPremium(context)) return
+        if (!ConsentManager.getInstance(context).canRequestAds || isPremium(context)) return
         val primaryUnit = if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else PROD_REWARDED_AD_UNIT_ID
-        loadRewardedAdInternal(context, primaryUnit, if (BuildConfig.DEBUG) null else TEST_REWARDED_AD_UNIT_ID)
+        loadRewardedAdInternal(context, primaryUnit, if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else null)
     }
 
     private fun loadRewardedAdInternal(context: Context, adUnit: String, fallbackUnit: String? = null) {
@@ -575,9 +585,9 @@ object AdManager {
     // --- Rewarded Interstitial Ads (Interstellar Reward Ads) ---
 
     fun preloadRewardedInterstitialAd(context: Context) {
-        if (isPremium(context)) return
+        if (!ConsentManager.getInstance(context).canRequestAds || isPremium(context)) return
         val primaryUnit = if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else PROD_REWARDED_INTERSTITIAL_AD_UNIT_ID
-        loadRewardedInterstitialInternal(context, primaryUnit, if (BuildConfig.DEBUG) null else TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID)
+        loadRewardedInterstitialInternal(context, primaryUnit, if (BuildConfig.DEBUG) TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID else null)
     }
 
     private fun loadRewardedInterstitialInternal(context: Context, adUnit: String, fallbackUnit: String? = null) {
@@ -667,7 +677,7 @@ object AdManager {
      * Call this in onResume() of key activities (e.g. MainActivity).
      */
     fun preloadAdsForActivity(activity: Activity) {
-        if (isPremium(activity)) return
+        if (!ConsentManager.getInstance(activity).canRequestAds || isPremium(activity)) return
         preloadInterstitial(activity)
         preloadRewardedAd(activity)
         preloadRewardedInterstitialAd(activity)
@@ -688,6 +698,12 @@ object AdManager {
 
         if (isPremium(activity)) {
             onUserEarnedReward()
+            onAdClosed?.invoke()
+            return
+        }
+
+        if (!ConsentManager.getInstance(activity).canRequestAds) {
+            Toast.makeText(activity, "Ad consent required to view rewards.", Toast.LENGTH_SHORT).show()
             onAdClosed?.invoke()
             return
         }
@@ -736,15 +752,14 @@ object AdManager {
             if (!isHandled) {
                 isHandled = true
                 dismissLoading()
-                Log.w(TAG, "Reward video took longer than expected. Granting session extension.")
-                Toast.makeText(activity, "✅ +2 Hours Added! Simulation extended.", Toast.LENGTH_SHORT).show()
-                onUserEarnedReward()
+                Log.w(TAG, "Reward video request timed out.")
+                Toast.makeText(activity, "Ad unavailable at the moment. Please try again shortly.", Toast.LENGTH_SHORT).show()
                 onAdClosed?.invoke()
                 preloadRewardedAd(activity)
                 preloadRewardedInterstitialAd(activity)
             }
         }
-        handler.postDelayed(timeoutRunnable, 6000L)
+        handler.postDelayed(timeoutRunnable, 10000L)
 
         fun presentRewardedAd(ad: RewardedAd) {
             if (isHandled) return
@@ -764,6 +779,7 @@ object AdManager {
                     rewardedAd = null
                     preloadRewardedAd(activity)
                     preloadRewardedInterstitialAd(activity)
+                    Toast.makeText(activity, "Ad unavailable at the moment. Please try again shortly.", Toast.LENGTH_SHORT).show()
                     onAdClosed?.invoke()
                 }
             }
@@ -781,6 +797,7 @@ object AdManager {
             } catch (e: Exception) {
                 Log.e(TAG, "Error displaying rewarded ad: ${e.message}")
                 rewardedAd = null
+                Toast.makeText(activity, "Ad unavailable at the moment. Please try again shortly.", Toast.LENGTH_SHORT).show()
                 onAdClosed?.invoke()
             }
         }
@@ -803,6 +820,7 @@ object AdManager {
                     rewardedInterstitialAd = null
                     preloadRewardedInterstitialAd(activity)
                     preloadRewardedAd(activity)
+                    Toast.makeText(activity, "Ad unavailable at the moment. Please try again shortly.", Toast.LENGTH_SHORT).show()
                     onAdClosed?.invoke()
                 }
             }
@@ -820,6 +838,7 @@ object AdManager {
             } catch (e: Exception) {
                 Log.e(TAG, "Error displaying rewarded interstitial ad: ${e.message}")
                 rewardedInterstitialAd = null
+                Toast.makeText(activity, "Ad unavailable at the moment. Please try again shortly.", Toast.LENGTH_SHORT).show()
                 onAdClosed?.invoke()
             }
         }
@@ -841,8 +860,8 @@ object AdManager {
                     Log.w(TAG, "Primary Rewarded Ad failed ($primaryRewardedUnit): ${loadAdError.message}")
                     if (isHandled) return
 
-                    // Step 2: Fallback to Google Test Rewarded Ad Unit if primary was prod
-                    if (primaryRewardedUnit != TEST_REWARDED_AD_UNIT_ID) {
+                    // Step 2: Fallback to Google Test Rewarded Ad Unit only in DEBUG builds
+                    if (BuildConfig.DEBUG && primaryRewardedUnit != TEST_REWARDED_AD_UNIT_ID) {
                         Log.d(TAG, "Attempting fallback to Test Rewarded Ad Unit ($TEST_REWARDED_AD_UNIT_ID)...")
                         RewardedAd.load(
                             activity,
@@ -878,7 +897,7 @@ object AdManager {
 
                             override fun onAdFailedToLoad(interstitialError: LoadAdError) {
                                 Log.w(TAG, "Rewarded Interstitial failed: ${interstitialError.message}")
-                                if (interstitialUnit != TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID && !isHandled) {
+                                if (BuildConfig.DEBUG && interstitialUnit != TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID && !isHandled) {
                                     RewardedInterstitialAd.load(
                                         activity,
                                         TEST_REWARDED_INTERSTITIAL_AD_UNIT_ID,
@@ -893,9 +912,8 @@ object AdManager {
                                                 isHandled = true
                                                 handler.removeCallbacks(timeoutRunnable)
                                                 dismissLoading()
-                                                Log.w(TAG, "All rewarded ad options returned no fill: ${finalError.message}. Granting courtesy extension.")
-                                                Toast.makeText(activity, "✅ +2 Hours Added! Simulation extended.", Toast.LENGTH_SHORT).show()
-                                                onUserEarnedReward()
+                                                Log.w(TAG, "All rewarded ad options returned no fill: ${finalError.message}.")
+                                                Toast.makeText(activity, "Ad unavailable at the moment. Please try again shortly.", Toast.LENGTH_SHORT).show()
                                                 onAdClosed?.invoke()
                                             }
                                         }
@@ -905,9 +923,8 @@ object AdManager {
                                     isHandled = true
                                     handler.removeCallbacks(timeoutRunnable)
                                     dismissLoading()
-                                    Log.w(TAG, "Rewarded interstitial unavailable. Granting courtesy extension.")
-                                    Toast.makeText(activity, "✅ +2 Hours Added! Simulation extended.", Toast.LENGTH_SHORT).show()
-                                    onUserEarnedReward()
+                                    Log.w(TAG, "Rewarded ad unavailable: ${interstitialError.message}.")
+                                    Toast.makeText(activity, "Ad unavailable at the moment. Please try again shortly.", Toast.LENGTH_SHORT).show()
                                     onAdClosed?.invoke()
                                 }
                             }

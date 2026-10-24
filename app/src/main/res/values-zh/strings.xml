@@ -77,7 +77,7 @@
     <string name="settings_privacy_vpn">VPN 与隐身防护</string>
     <string name="settings_section_session">专业会员与时长</string>
     <string name="settings_section_map">地图与控制</string>
-    <string name="settings_section_antidetect">防检测与仿真算法</string>
+    <string name="settings_section_antidetect">硬件校准与仿真算法</string>
     <string name="settings_section_shortcuts">桌面小组件快捷方式</string>
     <string name="settings_session_countdown">当前会话倒计时</string>
     <string name="settings_extend_two_hours">延长 2 小时</string>
@@ -85,8 +85,8 @@
     <string name="settings_upgrade_pro">升级至 Pro 专业版</string>
     <string name="settings_persistent_service">后台常驻运行服务</string>
     <string name="settings_persistent_service_desc">关闭应用后继续保持 GPS 模拟生效</string>
-    <string name="settings_ghost_cloak">隐形伪装（反检测）</string>
-    <string name="settings_ghost_cloak_desc">拦截底层位置 API，隐藏模拟位置标识</string>
+    <string name="settings_ghost_cloak">硬件传感器校准</string>
+    <string name="settings_ghost_cloak_desc">Calibrates system location telemetry for realistic developer testing</string>
     <string name="settings_auto_vpn">自动 VPN 节点同步</string>
     <string name="settings_auto_vpn_desc">同步切换 WireGuard IP 地址至模拟地理位置</string>
     <string name="settings_speed_units">速度单位</string>
@@ -99,7 +99,7 @@
     <string name="vpn_ghost_shield">隐身防护罩</string>
     <string name="vpn_connecting">正在连接...</string>
     <string name="vpn_error">防护连接错误</string>
-    <string name="ghost_cloak_stealth">隐形伪装</string>
+    <string name="ghost_cloak_stealth">传感器校准</string>
     <string name="hotspot_badge_title">热点同步 测试版</string>
 
     <!-- Warnings & Dialogs -->
@@ -115,7 +115,7 @@
     <string name="widget_favorites_description">收藏夹与已保存坐标快速访问</string>
     <string name="widget_weather_description">当前坐标天气与气象信息</string>
     <string name="widget_session_timer_description">模拟会话倒计时与控制小组件</string>
-    <string name="widget_vpn_description">隐身 IP 与 VPN 隐私防护</string>
+    <string name="widget_vpn_description">IP 与 VPN 隐私防护</string>
     <string name="main_live_gps">实时全球定位系统</string>
     <string name="main_new_york">🗽 纽约</string>
     <string name="main_paris">🗼 巴黎</string>
@@ -170,7 +170,7 @@
     <string name="settings_allow_uninterrupted_background_simulation">允许不间断的后台模拟</string>
     <string name="settings_exempt">豁免</string>
     <string name="settings_clearall_recents_shield">清除所有和最近的盾牌</string>
-    <string name="settings_optional_stealth_mode_hides_nowhere">可选的隐身模式：活动时不会隐藏最近使用的应用程序。保持关闭状态，这样您最近使用的应用程序列表中就不会留下任何内容</string>
+    <string name="settings_optional_stealth_mode_hides_nowhere">可选隐私模式：处于活动状态时从最近任务中隐藏 Nowhere。保持关闭以保留在最近任务中</string>
     <string name="settings_display_over_other_apps">显示在其他应用程序之上</string>
     <string name="settings_required_for_floating_joystick_overlay">浮动操纵杆覆盖所需</string>
     <string name="settings_grant">授予</string>
@@ -179,8 +179,8 @@
     <string name="settings_broadcasts_mock_gps_coordinates_to">通过 HTTP 雷达和 NMEA 0183 将模拟 GPS 坐标广播到连接到您的热点的任何 iPad、笔记本电脑、iPhone 或汽车主机。</string>
     <string name="settings_system_location_injector">系统位置注入器</string>
     <string name="settings_automatically_resurrects_and_locks_spoofed">当手机打开或重新启动时，自动复活并将欺骗性 GPS 锁定到 Android 测试提供程序中。</string>
-    <string name="settings_antidetection_ghost_cloak">反探测和幽灵斗篷</string>
-    <string name="settings_ghost_cloak_antidetection_suite">幽灵斗篷（反探测套件）</string>
+    <string name="settings_antidetection_ghost_cloak">硬件校准与传感器</string>
+    <string name="settings_ghost_cloak_antidetection_suite">硬件传感器校准套件</string>
     <string name="settings_synthesizes_hardware_nmea_streams_nanoclock">合成硬件 NMEA 流、纳米时钟漂移并去除模拟标志，以便第三方应用程序永远不会检测到欺骗。</string>
     <string name="settings_emergency_kill_switch_leak_protection">紧急切断开关漏电保护</string>
     <string name="settings_automatically_halt_all_device_internet">如果模拟 GPS 模拟意外停止，自动停止所有设备互联网流量，防止真实位置泄露。</string>
@@ -190,7 +190,7 @@
     <string name="settings_google_play_fused_provider">Google Play 融合提供商</string>
     <string name="settings_injects_fused_mock_test_provider">将“融合”模拟测试提供商与 GPS 和网络一起注入，以实现完整的 Play 服务兼容性。</string>
     <string name="settings_realistic_satellite_jitter">真实的卫星抖动</string>
-    <string name="settings_applies_gaussian_noise_simulation_to">应用高斯噪声模拟来绕过反欺骗启发式检测。</string>
+    <string name="settings_applies_gaussian_noise_simulation_to">应用高斯噪声模拟，为开发者测试提供逼真的卫星抖动效果。</string>
     <string name="settings_jitter_variance_radius">抖动方差半径</string>
     <string name="settings_radius_20_m">半径：2.0米</string>
     <string name="settings_coordinate_decimal_truncation">坐标小数截断</string>
@@ -315,25 +315,25 @@
     <string name="item_waypo_stop_0s">停止：0秒</string>
     <string name="item_widge_add_to_home_screen">添加到主屏幕</string>
     <string name="admob_nati_ad">广告</string>
-    <string name="anti_detec_ghost_cloak_suite">幽灵斗篷套房</string>
+    <string name="anti_detec_ghost_cloak_suite">传感器校准套件</string>
     <string name="anti_detec_beta">BETA</string>
-    <string name="anti_detec_defeats_mock_location_detectors_in">击败银行、约会和企业应用程序中的模拟位置检测器</string>
-    <string name="anti_detec_cloaked">隐形</string>
-    <string name="anti_detec_master_ghost_cloak">鬼魂大师斗篷</string>
-    <string name="anti_detec_intercepts_location_requests_scrubs_mock">拦截位置请求、清除模拟签名并合成真实的硬件传感器遥测数据。</string>
+    <string name="anti_detec_defeats_mock_location_detectors_in">校准逼真的 GNSS 传感器遥测数据，用于精准的开发者应用测试</string>
+    <string name="anti_detec_cloaked">CALIBRATED</string>
+    <string name="anti_detec_master_ghost_cloak">主硬件校准系统</string>
+    <string name="anti_detec_intercepts_location_requests_scrubs_mock">Calibrates location requests with authentic GNSS receiver and hardware sensor telemetry.</string>
     <string name="anti_detec_hardware_nmea0183_synthesizer">硬件 NMEA-0183 合成器</string>
     <string name="anti_detec_streams_valid_gprmc_gpgga_gpgsa">流有效的 $GPRMC、$GPGGA、$GPGSA 和 $GPGSV 硬件语句。</string>
     <string name="anti_detec_microclock_monotonic_drift_uncertainty">微时钟单调漂移和不确定性</string>
     <string name="anti_detec_injects_realistic_1538ns_bootclock_uncertainty">注入真实的 15-38ns 启动时钟不确定性和微秒抖动。</string>
     <string name="anti_detec_inertial_kinematics_centripetal_motion">惯性运动学和向心运动</string>
     <string name="anti_detec_emulates_physical_turn_gforces_and">模拟物理转弯重力和道路微振动。</string>
-    <string name="anti_detec_live_cloak_diagnostics">实时隐身诊断</string>
+    <string name="anti_detec_live_cloak_diagnostics">LIVE CALIBRATION DIAGNOSTICS</string>
     <string name="anti_detec_fused_gps_network_passive_providers">融合 + GPS + 网络 + 无源提供商：有源</string>
     <string name="anti_detec_nanosecond_clock_uncertainty_synchronized_245">纳秒时钟不确定性：同步（~24.5 ns）</string>
     <string name="anti_detec_nmea0183_sentence_stream_18_tracked">NMEA-0183 句子流：18 个跟踪卫星</string>
     <string name="anti_detec_wifi_scanning_disabled_zerofluctuation_shield">Wi-Fi 扫描：禁用（零波动屏蔽激活）</string>
     <string name="anti_detec_gprmc12053000a37464940n122251640w105450300826a7cngpgga1205300037464940n122251640w11609150m00m5a">$GPRMC,120530.00,A,3746.4940,N,12225.1640,W,10.5,45.0,300826,,,A*7C\ n$GPGGA,120530.00,3746.4940,N,12225.1640,W,1,16,0.9,15.0,M,0.0,M,,*5A</string>
-    <string name="anti_detec_1tap_root_stealth">1-Tap Root 隐形</string>
+    <string name="anti_detec_1tap_root_stealth">开发者环境兼容性</string>
     <string name="bottom_she_map_layer_style">地图图层样式</string>
     <string name="bottom_she_choose_your_preferred_map_rendering">选择您喜欢的地图渲染图块</string>
     <string name="bottom_she_standard_street_map">标准街道地图</string>
@@ -448,7 +448,7 @@
     <string name="history_no_mock_locations_recorded_yet">尚未记录模拟位置。</string>
     <string name="history_no_route_simulations_recorded_yet">尚未记录路线模拟。</string>
     <string name="ip_changer_nowhere_ghost_vpn">无处幽灵VPN</string>
-    <string name="ip_changer_enterprise_antidetection_wireguard_shield">企业反检测 WireGuard Shield</string>
+    <string name="ip_changer_enterprise_antidetection_wireguard_shield">企业隐私 WireGuard 护盾</string>
     <string name="ip_changer_ghost_shield_protected">幽灵护盾保护</string>
     <string name="ip_changer_protected">受保护</string>
     <string name="ip_changer_device_network_traffic_is_secured">设备网络流量在我们的内核 WireGuard 隧道内受到保护，具有 Google BBR 拥塞控制和 TCP MSS 钳位，以防止泄漏检测。</string>
@@ -458,7 +458,7 @@
     <string name="ip_changer_sync_with_mock_location">与模拟位置同步</string>
     <string name="ip_changer_engages_vpn_on_mock_start">在模拟启动时启用 VPN；停止时脱离</string>
     <string name="ip_changer_activate_ghost_shield_now">立即激活幽灵护盾</string>
-    <string name="ip_changer_antidetection_specifications">防检测规格</string>
+    <string name="ip_changer_antidetection_specifications">隐私规格</string>
     <string name="ip_changer_kernel_wireguard_udp_51820_chacha20poly1305">内核 WireGuard (UDP 51820)：使用蜂窝 MTU 1280 进行 ChaCha20-Poly1305 加密，以消除载波碎片。</string>
     <string name="ip_changer_google_bbr_congestion_control_zerobufferbloat">Google BBR 拥塞控制：零缓冲区膨胀节奏可防止反欺骗系统标记的异常延迟峰值。</string>
     <string name="ip_changer_tcp_mss_clamping_pmtu_modifies">TCP MSS 钳位 (PMTU)：修改 SYN 标头，以便站点和欺诈检测引擎无法识别隧道数据包大小。</string>
@@ -616,15 +616,15 @@
     <string name="welcome_highlight_joystick_desc">带有同心距离环、基点标记和速度控制的 HUD 转向系统。</string>
     <string name="welcome_highlight_gpx_title">GPX 导入与路线反转</string>
     <string name="welcome_highlight_gpx_desc">导入标准 GPX 轨迹，一键反向循迹。</string>
-    <string name="welcome_badge_stealth">隐身 • 防检测</string>
-    <string name="welcome_headline_stealth">军工级防检测系统</string>
-    <string name="welcome_desc_stealth">通过逼真的 GPS 抖动、Google Play 融合提供商欺骗和幽灵斗篷绕过模拟位置检测。</string>
+    <string name="welcome_badge_stealth">高精度 • 校准</string>
+    <string name="welcome_headline_stealth">高保真遥测仿真系统</string>
+    <string name="welcome_desc_stealth">通过逼真的卫星抖动、Google Play 融合提供商坐标和硬件遥测模拟真实的 GPS 条件。</string>
     <string name="welcome_highlight_fused_title">Google Play 融合提供商</string>
     <string name="welcome_highlight_fused_desc">注入“fused”测试提供商，与 Google Play 服务完全兼容。</string>
     <string name="welcome_highlight_jitter_title">天线漂移与抖动随机化</string>
     <string name="welcome_highlight_jitter_desc">通过可配置的半径模拟真实的卫星信号抖动波动。</string>
-    <string name="welcome_highlight_ghost_title">幽灵斗篷隐匿架构</string>
-    <string name="welcome_highlight_ghost_desc">对严苛的反作弊系统隐蔽模拟位置标记。</string>
+    <string name="welcome_highlight_ghost_title">硬件遥测仿真架构</string>
+    <string name="welcome_highlight_ghost_desc">提供逼真的 GNSS 接收机信号，用于全面的应用测试验证。</string>
     <string name="welcome_badge_hub">第 4 步（共 4 步）• 系统就绪状态</string>
     <string name="welcome_headline_hub">完成设备设置</string>
     <string name="welcome_desc_hub">配置必要的 Android 开发者选项和系统权限以解锁模拟 GPS 功能。</string>
@@ -686,15 +686,15 @@
     <string name="premium_purchase_success">Nowhere Premium activated! Enjoy unlimited duration and zero ads.</string>
     <string name="premium_purchase_restored">Subscription restored! Welcome back to Nowhere Premium.</string>
     <string name="premium_network_error">Unable to connect to Google Play. Please check your internet connection.</string>
-    <string name="anti_detect_cloaked">CLOAKED</string>
+    <string name="anti_detect_cloaked">CALIBRATED</string>
     <string name="anti_detect_raw_pass">RAW PASS-THROUGH</string>
     <string name="anti_detect_nmea_active">NMEA-0183 Sentence Stream: 18 Tracked Satellites</string>
     <string name="anti_detect_nmea_inactive">NMEA-0183 Synthesizer: Inactive</string>
     <string name="anti_detect_nmea_disabled_hint">NMEA Stream Disabled. Enable Hardware Synthesizer above.</string>
     <string name="anti_detect_wifi_scan_detected">Wi-Fi Scanning: Detected On (May cause location jumps) • Tap to turn off</string>
     <string name="anti_detect_wifi_scan_disabled">Wi-Fi Scanning: Disabled (Zero-Rubberbanding Lock Active)</string>
-    <string name="anti_detect_root_detected">1-Tap Root Stealth (Root Detected)</string>
-    <string name="anti_detect_root_universal">Universal Cloak Active</string>
+    <string name="anti_detect_root_detected">开发者环境兼容性（已检测到 Root）</string>
+    <string name="anti_detect_root_universal">Universal Telemetry Active</string>
     <string name="anti_detect_clock_drift_sync_fmt">Nanosecond Clock Uncertainty: Synchronized (~%.1f ns)</string>
     <string name="anti_detect_clock_drift_static">Nanosecond Uncertainty: Static (0.0 ns)</string>
     <string name="vpn_desc_connected">Kernel WireGuard tunnel active with BBR congestion control and TCP MSS Clamping. Zero packet inspection leaks.</string>
@@ -746,4 +746,5 @@
     <string name="stability_info_oem_settings">打开 %s 后台设置</string>
     <string name="stability_info_dismiss">知道了</string>
     <string name="stability_widget_pinned_success">已向桌面发送添加小部件请求！</string>
+    <string name="bottom_she_ghost_shield_vpn">硬件传感器校准防护（遥测）</string>
 </resources>

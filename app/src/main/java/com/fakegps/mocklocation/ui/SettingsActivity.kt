@@ -599,10 +599,10 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
-        // Anti-Detection & Ghost Cloak Suite
+        // Sensor Calibration Suite
         binding.switchSettingsGhostCloak.setOnCheckedChangeListener { _, isChecked ->
             settingsPrefs.isGhostCloakEnabled = isChecked
-            val msg = if (isChecked) "Ghost Cloak: Active (Stealth Mode ON)" else "Ghost Cloak: Inactive"
+            val msg = if (isChecked) "Hardware Calibration: Active (Realistic Telemetry ON)" else "Hardware Calibration: Inactive"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 

@@ -43,7 +43,7 @@ class AppOpenAdManager(private val application: Application) :
     init {
         application.registerActivityLifecycleCallbacks(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
-        loadAd(application)
+        // Ad loading is deferred until user consent is obtained via ConsentManager
     }
 
     private fun isPremium(): Boolean {
@@ -54,12 +54,14 @@ class AppOpenAdManager(private val application: Application) :
      * Request an App Open Ad with automatic fallback.
      */
     fun loadAd(context: Context) {
-        if (isPremium() || isLoadingAd || isAdAvailable()) {
+        if (!ConsentManager.getInstance(context).canRequestAds || isPremium() || isLoadingAd || isAdAvailable()) {
             return
         }
 
         val adUnitId = if (BuildConfig.DEBUG) TEST_APP_OPEN_AD_UNIT_ID else PROD_APP_OPEN_AD_UNIT_ID
-        loadAdInternal(context, adUnitId, if (BuildConfig.DEBUG) null else TEST_APP_OPEN_AD_UNIT_ID)
+        // In release builds, never fall back to test ad unit IDs
+        val fallbackUnitId = if (BuildConfig.DEBUG) TEST_APP_OPEN_AD_UNIT_ID else null
+        loadAdInternal(context, adUnitId, fallbackUnitId)
     }
 
     private fun loadAdInternal(context: Context, adUnitId: String, fallbackUnitId: String? = null) {
@@ -182,6 +184,9 @@ class AppOpenAdManager(private val application: Application) :
      */
     override fun onStart(owner: LifecycleOwner) {
         super.onStart(owner)
+        if (!ConsentManager.getInstance(application).canRequestAds) {
+            return
+        }
         currentActivity?.let { activity ->
             // Do not interrupt first-time onboarding screen
             val className = activity::class.java.simpleName

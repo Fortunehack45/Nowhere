@@ -44,10 +44,7 @@ class MockLocationApp : Application() {
         // Initialize Google Play Billing Manager (Subscriptions & Entitlements)
         com.fakegps.mocklocation.billing.BillingManager.getInstance(this)
 
-        // Initialize Google Mobile Ads SDK (AdMob)
-        AdManager.initialize(this)
-
-        // Initialize Google AdMob App Open Ads Manager
+        // Initialize Google AdMob App Open Ads Manager (ad loading deferred until consent)
         appOpenAdManager = AppOpenAdManager(this)
 
         // VPN Auto-Sync: Synchronizes WireGuard IP shield with mock location by default.

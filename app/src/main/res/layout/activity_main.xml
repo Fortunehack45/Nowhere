@@ -174,7 +174,7 @@
                                 android:textStyle="bold" />
                         </LinearLayout>
 
-                        <!-- Ghost Cloak Anti-Detection HUD Pill -->
+                        <!-- Hardware Sensor Calibration HUD Pill -->
                         <LinearLayout
                             android:id="@+id/layoutGhostCloakBadge"
                             android:layout_width="wrap_content"
