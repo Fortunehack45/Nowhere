@@ -33,6 +33,7 @@ import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
@@ -99,6 +100,12 @@ object AdManager {
             return
         }
         try {
+            if (BuildConfig.DEBUG) {
+                val requestConfig = RequestConfiguration.Builder()
+                    .setTestDeviceIds(listOf(AdRequest.DEVICE_ID_EMULATOR))
+                    .build()
+                MobileAds.setRequestConfiguration(requestConfig)
+            }
             MobileAds.initialize(context) { status ->
                 isInitialized = true
                 Log.d(TAG, "Google Mobile Ads initialized successfully: $status")

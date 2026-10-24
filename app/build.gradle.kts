@@ -64,10 +64,12 @@ android {
     buildTypes {
         debug {
             signingConfig = signingConfigs.getByName("universalKey")
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("universalKey")
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-5191202278112313~3868363285"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

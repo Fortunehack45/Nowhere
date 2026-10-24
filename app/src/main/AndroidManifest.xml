@@ -147,7 +147,7 @@
         <!-- Google Mobile Ads (AdMob) App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-5191202278112313~3868363285" />
+            android:value="${admobAppId}" />
 
         <!-- Home Screen App Widget: Quick Actions -->
         <receiver
