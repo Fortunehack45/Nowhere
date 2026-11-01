@@ -1,0 +1,9 @@
+.git
+.github
+.gitignore
+deploy/
+scripts/
+*.md
+*.log
+.DS_Store
+Thumbs.db

@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -46,7 +48,8 @@ func main() {
 		len(registry.GetNodes()), len(registry.GetLeasedRegions()))
 
 	// 2. Initialize SSH Connection Pool
-	sshPool := ssh.NewClientPool(*sshKeyFlag, 8*time.Second)
+	resolvedSSHKey := resolveSSHKeyPath(*sshKeyFlag)
+	sshPool := ssh.NewClientPool(resolvedSSHKey, 8*time.Second)
 	defer sshPool.Close()
 
 	// 3. Initialize WireGuard, Proxy & Game Optimizer
@@ -152,4 +155,37 @@ func getEnv(key, fallback string) string {
 		return val
 	}
 	return fallback
+}
+
+// resolveSSHKeyPath checks if the key exists on disk or dynamically provisions it from
+// the SSH_PRIVATE_KEY_B64 or SSH_PRIVATE_KEY environment variables (e.g. on Vercel).
+func resolveSSHKeyPath(providedPath string) string {
+	if _, err := os.Stat(providedPath); err == nil {
+		return providedPath
+	}
+
+	b64Key := os.Getenv("SSH_PRIVATE_KEY_B64")
+	var keyBytes []byte
+	var err error
+
+	if b64Key != "" {
+		keyBytes, err = base64.StdEncoding.DecodeString(strings.TrimSpace(b64Key))
+		if err != nil {
+			log.Printf("[SSH] Warning: Failed to base64-decode SSH_PRIVATE_KEY_B64: %v", err)
+		}
+	} else if rawKey := os.Getenv("SSH_PRIVATE_KEY"); rawKey != "" {
+		keyBytes = []byte(rawKey)
+	}
+
+	if len(keyBytes) > 0 {
+		tmpPath := filepath.Join(os.TempDir(), "nowhere_deploy.pem")
+		if writeErr := os.WriteFile(tmpPath, keyBytes, 0600); writeErr == nil {
+			log.Printf("[SSH] Successfully provisioned SSH private key from environment into %s", tmpPath)
+			return tmpPath
+		} else {
+			log.Printf("[SSH] Warning: Failed writing temporary SSH key to %s: %v", tmpPath, writeErr)
+		}
+	}
+
+	return providedPath
 }
