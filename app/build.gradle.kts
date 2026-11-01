@@ -24,7 +24,7 @@ fun getDynamicBuildNumber(): Int {
     }.getOrNull() ?: 58
 
     val envRunNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
-    return 1800 + gitCommitCount + envRunNumber
+    return 2050 + gitCommitCount + envRunNumber
 }
 
 val computedVersionCode = getDynamicBuildNumber()
@@ -67,7 +67,8 @@ android {
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             signingConfig = signingConfigs.getByName("universalKey")
             manifestPlaceholders["admobAppId"] = "ca-app-pub-5191202278112313~3868363285"
             proguardFiles(

@@ -40,12 +40,21 @@
 -keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
 -dontwarn kotlinx.coroutines.**
 
-# App Data Models & Preferences
+# App Data Models, Preferences & VPN
 -keep class com.fakegps.mocklocation.data.model.** { *; }
 -keep class com.fakegps.mocklocation.simulator.** { *; }
 -keep class com.fakegps.mocklocation.weather.** { *; }
--keep class com.fakegps.mocklocation.util.AppUpdateManager$** { *; }
+-keep class com.fakegps.mocklocation.util.** { *; }
 -keep class com.fakegps.mocklocation.vpn.** { *; }
+
+# Google User Messaging Platform (UMP)
+-keep class com.google.android.ump.** { *; }
+-dontwarn com.google.android.ump.**
+
+# AndroidX WorkManager
+-keep class * extends androidx.work.Worker { *; }
+-keep class * extends androidx.work.CoroutineWorker { *; }
+-keep class * extends androidx.work.ListenableWorker { *; }
 
 # Google Play Billing Client
 -keep class com.android.billingclient.api.** { *; }
