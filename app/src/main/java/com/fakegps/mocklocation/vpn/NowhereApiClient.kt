@@ -17,7 +17,7 @@ object NowhereApiClient {
     private const val TAG = "NowhereApiClient"
 
     // Default Vercel production control-plane URL
-    const val DEFAULT_BASE_URL = "https://nowhere-vpn.vercel.app"
+    const val DEFAULT_BASE_URL = "https://nowhere-llrk.vercel.app"
     const val DEFAULT_SERVER_HOST = "162.159.192.1"
     const val DEFAULT_API_KEY = "nowhere_live_prod_key_77a9c84e1b"
 
