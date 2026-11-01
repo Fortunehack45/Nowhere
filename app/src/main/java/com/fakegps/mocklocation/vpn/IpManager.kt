@@ -16,18 +16,18 @@ object IpManager {
 
     private const val TAG = "IpManager"
 
-    // Primary Single High-Performance Google Cloud WireGuard Node
+    // Primary High-Performance Cloudflare WARP Global WireGuard Node (100% Free, Unlimited Speed)
     val PRIMARY_SECURE_NODE = IpNode(
-        id = "us_central_gcp",
-        name = "Nowhere Ghost Shield",
+        id = "cloudflare_warp",
+        name = "Cloudflare Global Shield",
         country = "United States",
         countryCode = "US",
-        flagEmoji = "🇺🇸",
-        city = "Council Bluffs",
+        flagEmoji = "⚡",
+        city = "Worldwide (300+ Cities)",
         latitude = 41.2619,
         longitude = -95.8608,
-        virtualIp = NowhereApiClient.DEFAULT_SERVER_HOST,
-        pingMs = 12,
+        virtualIp = "162.159.192.1",
+        pingMs = 8,
         isAvailable = true
     )
 

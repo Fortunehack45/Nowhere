@@ -1,23 +1,23 @@
-# Nowhere VPN - Single High-Performance Production WireGuard Server
-# Single source of truth for the primary Google Cloud WireGuard node.
+# Nowhere VPN - Node Inventory
+# Configured for Cloudflare WARP Anycast (100% Free, Zero VPS, Unlimited Global Bandwidth)
 
 nodes:
   # ============================================================================
-  # PRIMARY GOOGLE CLOUD PRODUCTION NODE
+  # CLOUDFLARE WARP ANYCAST GLOBAL NODE (100% FREE FOREVER & ZERO MAINTENANCE)
   # ============================================================================
-  - id: us_central_gcp
+  - id: cloudflare_warp
     region_group: nowhere_primary
     country: US
-    country_name: "Nowhere Primary Secure Shield"
-    city: "Google Cloud Node"
-    endpoint: 35.254.180.81:51820
-    server_pubkey: 0/Ji7Sp0ZEDdQ0n04aL3WTRLu/arq3w9yRghJAscgQg=
-    ssh_host: 127.0.0.1
-    ssh_port: 22
-    ssh_user: root
+    country_name: "Cloudflare Global Shield"
+    city: "Worldwide Anycast (300+ Cities)"
+    endpoint: 162.159.192.1:2408
+    server_pubkey: bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=
+    ssh_host: ""
+    ssh_port: 0
+    ssh_user: ""
     ssh_key_path: ""
-    tunnel_subnet: 10.8.0.0/24
+    tunnel_subnet: 172.16.0.0/24
     dns: 1.1.1.1,1.0.0.1
-    interface: wg0
-    capacity_peers: 500
+    interface: warp
+    capacity_peers: 10000000
     enabled: true

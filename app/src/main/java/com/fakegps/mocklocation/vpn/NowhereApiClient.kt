@@ -18,7 +18,7 @@ object NowhereApiClient {
 
     // Default Vercel production control-plane URL
     const val DEFAULT_BASE_URL = "https://nowhere-vpn.vercel.app"
-    const val DEFAULT_SERVER_HOST = "35.254.180.81"
+    const val DEFAULT_SERVER_HOST = "162.159.192.1"
     const val DEFAULT_API_KEY = "nowhere_live_prod_key_77a9c84e1b"
 
     data class TunnelResponse(
@@ -87,7 +87,7 @@ object NowhereApiClient {
                 setRequestProperty("X-API-Key", getApiKey(context))
             }
 
-            val effectiveNodeId = if (nodeId.isNullOrEmpty()) "us_central_gcp" else nodeId
+            val effectiveNodeId = if (nodeId.isNullOrEmpty()) "cloudflare_warp" else nodeId
             val effectiveCountry = country ?: "US"
 
             val jsonBody = JSONObject().apply {

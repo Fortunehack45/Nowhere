@@ -68,7 +68,17 @@ func (s *Server) HandleConnect(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	// 1. Check if requested target is a Leased Proxy Region first
+	// 1. Check if requested target is Cloudflare WARP or Leased Proxy Region
+	if req.NodeID == "cloudflare_warp" || req.NodeID == "warp" {
+		tunnelConfig, err := wireguard.ProvisionWarpPeer(ctx, req.ClientPublicKey, "")
+		if err != nil {
+			respondJSON(w, http.StatusInternalServerError, map[string]string{"status": "error", "message": err.Error()})
+			return
+		}
+		respondJSON(w, http.StatusOK, tunnelConfig)
+		return
+	}
+
 	if req.NodeID != "" {
 		if leased, ok := s.registry.GetLeasedRegion(req.NodeID); ok {
 			tunnelConfig, err := s.leasedExit.ProvisionLeasedPeer(ctx, leased, req.ClientPublicKey, "")
@@ -113,7 +123,12 @@ func (s *Server) HandleConnect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. Provision WireGuard peer on live node
-	tunnelConfig, err := s.wgManager.ProvisionPeer(ctx, selectedNode, req.ClientPublicKey, "")
+	var tunnelConfig *wireguard.TunnelConfig
+	if selectedNode.ID == "cloudflare_warp" || selectedNode.SSHHost == "" {
+		tunnelConfig, err = wireguard.ProvisionWarpPeer(ctx, req.ClientPublicKey, "")
+	} else {
+		tunnelConfig, err = s.wgManager.ProvisionPeer(ctx, selectedNode, req.ClientPublicKey, "")
+	}
 	if err != nil {
 		respondJSON(w, http.StatusInternalServerError, map[string]string{
 			"status":  "error",

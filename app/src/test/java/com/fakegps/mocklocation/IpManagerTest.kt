@@ -28,7 +28,7 @@ class IpManagerTest {
         assertEquals("London", nodeUk.city)
 
         val defaultNode = IpManager.getNodeById("invalid_id")
-        assertEquals("us_central_gcp", defaultNode.id)
+        assertEquals("cloudflare_warp", defaultNode.id)
     }
 
     @Test
@@ -43,7 +43,7 @@ class IpManagerTest {
         assertTrue(londonMatch.isAvailable)
 
         val usMatch = IpManager.findClosestNodeForCoordinates(41.2619, -95.8608)
-        assertEquals("us_central_gcp", usMatch.id)
+        assertEquals("cloudflare_warp", usMatch.id)
         assertTrue(usMatch.isAvailable)
     }
 

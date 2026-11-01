@@ -441,13 +441,13 @@ class NowhereVpnService : Service() {
                 val backendHost = NowhereApiClient.getCustomBackendUrl(this@NowhereVpnService)
                     .substringAfter("://").substringBefore(":").substringBefore("/")
 
-                // Auto-correct stale server IP or local placeholder to the live verified backend host
-                val serverEndpoint = if (backendHost.isNotBlank() && (rawEndpoint.contains("104.197.128.154") || rawEndpoint.startsWith("127.0.0.1") || rawEndpoint.startsWith("localhost") || !rawEndpoint.startsWith(backendHost))) {
-                    "$backendHost:$rawPort"
-                } else if (rawEndpoint.isNotBlank()) {
+                // Keep valid remote endpoint (e.g. Cloudflare WARP Anycast or dedicated VPS node)
+                val serverEndpoint = if (rawEndpoint.isNotBlank() && !rawEndpoint.contains("104.197.128.154") && !rawEndpoint.startsWith("127.0.0.1") && !rawEndpoint.startsWith("localhost")) {
                     rawEndpoint
-                } else {
+                } else if (backendHost.isNotBlank()) {
                     "$backendHost:$rawPort"
+                } else {
+                    rawEndpoint
                 }
                 val serverPubkey = tunnelResp.serverPubkey
 
