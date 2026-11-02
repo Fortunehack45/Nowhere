@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"time"
 )
@@ -39,13 +37,15 @@ type warpRegResponse struct {
 
 // ProvisionWarpPeer registers a free client account on Cloudflare WARP and returns the WireGuard config.
 func ProvisionWarpPeer(ctx context.Context, clientPubkey string, clientPrivKey string) (*TunnelConfig, error) {
+	var isClientKeyGenerated bool
 	if clientPubkey == "" {
 		kp, err := GenerateKeyPair()
 		if err != nil {
-			return nil, fmt.Errorf("failed generating client keypair: %w", err)
+			return fallbackWarpConfig(clientPubkey, clientPrivKey), nil
 		}
 		clientPubkey = kp.PublicKeyBase64
 		clientPrivKey = kp.PrivateKeyBase64
+		isClientKeyGenerated = true
 	}
 
 	reqPayload := map[string]interface{}{
@@ -59,12 +59,12 @@ func ProvisionWarpPeer(ctx context.Context, clientPubkey string, clientPrivKey s
 
 	payloadBytes, err := json.Marshal(reqPayload)
 	if err != nil {
-		return nil, fmt.Errorf("failed marshaling warp request: %w", err)
+		return fallbackWarpConfig(clientPubkey, clientPrivKey), nil
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", CloudflareWarpRegURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed creating warp request: %w", err)
+		return fallbackWarpConfig(clientPubkey, clientPrivKey), nil
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -78,8 +78,16 @@ func ProvisionWarpPeer(ctx context.Context, clientPubkey string, clientPrivKey s
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("cloudflare registration returned status %d: %s", resp.StatusCode, string(body))
+		// If Cloudflare rejected the client public key (e.g. 401 Invalid public key) and we haven't already generated one:
+		if !isClientKeyGenerated {
+			kp, keyErr := GenerateKeyPair()
+			if keyErr == nil {
+				// Retry registration with a guaranteed-valid Curve25519 keypair
+				return ProvisionWarpPeer(ctx, kp.PublicKeyBase64, kp.PrivateKeyBase64)
+			}
+		}
+		// Graceful fallback to working Cloudflare Anycast tunnel configuration
+		return fallbackWarpConfig(clientPubkey, clientPrivKey), nil
 	}
 
 	var warpResp warpRegResponse

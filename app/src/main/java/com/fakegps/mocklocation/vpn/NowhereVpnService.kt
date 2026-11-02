@@ -59,7 +59,7 @@ class NowhereVpnService : Service() {
         val vpnState: StateFlow<VpnState> = _vpnState.asStateFlow()
 
         fun start(context: Context, nodeId: String) {
-            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
+            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
             if (!isPremium) {
                 Log.w(TAG, "NowhereVpnService: Non-premium user cannot start VPN. Skipping service launch.")
                 _vpnState.value = VpnState.Disconnected
@@ -85,7 +85,7 @@ class NowhereVpnService : Service() {
         }
 
         fun startWithTunnelResponse(context: Context, response: NowhereApiClient.TunnelResponse, customName: String? = null) {
-            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value
+            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
             if (!isPremium) {
                 Log.w(TAG, "NowhereVpnService: Non-premium user cannot start VPN. Skipping service launch.")
                 _vpnState.value = VpnState.Disconnected
@@ -246,7 +246,7 @@ class NowhereVpnService : Service() {
         val defaultNode = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.PRIMARY_SECURE_NODE
         startForegroundNotification(defaultNode, _trafficStats.value)
 
-        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value
+        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
         if (!isPremium && intent?.action != ACTION_DISCONNECT) {
             Log.w(TAG, "NowhereVpnService: Non-premium user cannot start VPN. Stopping cleanly.")
             disconnectVpn()
@@ -405,9 +405,9 @@ class NowhereVpnService : Service() {
             try {
                 disconnectInterface()
 
-                // 1. Generate / retrieve persistent client public key
-                val clientPubkey = WireGuardTunnelManager.getClientPublicKeyBase64()
-                activeClientPublicKey = clientPubkey
+                // 1. Retrieve persistent client public key (if already provisioned)
+                val clientPubkey = WireGuardTunnelManager.getClientPublicKeyBase64(this@NowhereVpnService)
+                activeClientPublicKey = clientPubkey ?: ""
 
                 // 2. Request peer configuration from Nowhere VPN Live Backend
                 Log.i(TAG, "Requesting tunnel configuration from backend for node: ${node.id} (${node.country})...")
@@ -433,6 +433,14 @@ class NowhereVpnService : Service() {
                 }
 
                 activeServerNodeId = tunnelResp.nodeId
+                if (tunnelResp.clientPublicKey.isNotBlank()) {
+                    WireGuardTunnelManager.saveProvisionedKeys(
+                        context = this@NowhereVpnService,
+                        pubKey = tunnelResp.clientPublicKey,
+                        privKey = tunnelResp.clientPrivateKey
+                    )
+                    activeClientPublicKey = tunnelResp.clientPublicKey
+                }
                 val rawIp = tunnelResp.assignedIp
                 val assignedTunnelIp = if (rawIp.contains("/")) rawIp.substringBefore("/") else rawIp
                 val tunnelDns = tunnelResp.dns.firstOrNull() ?: "1.1.1.1"

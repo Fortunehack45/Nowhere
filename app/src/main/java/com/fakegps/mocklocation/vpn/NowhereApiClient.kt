@@ -80,8 +80,8 @@ object NowhereApiClient {
             val url = URL(endpoint)
             val conn = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
-                connectTimeout = 3500
-                readTimeout = 3500
+                connectTimeout = 15000
+                readTimeout = 15000
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json")
                 setRequestProperty("X-API-Key", getApiKey(context))
@@ -93,7 +93,10 @@ object NowhereApiClient {
             val jsonBody = JSONObject().apply {
                 put("node_id", effectiveNodeId)
                 put("country", effectiveCountry)
-                if (!clientPublicKey.isNullOrEmpty()) put("client_public_key", clientPublicKey)
+                // Only send client_public_key if provided and valid (not empty)
+                if (!clientPublicKey.isNullOrBlank() && clientPublicKey.length >= 43) {
+                    put("client_public_key", clientPublicKey)
+                }
             }
 
             OutputStreamWriter(conn.outputStream).use { it.write(jsonBody.toString()) }

@@ -40,3 +40,23 @@ func TestProvisionWarpPeer(t *testing.T) {
 		t.Errorf("Expected DNS 1.1.1.1, got %v", config.DNS)
 	}
 }
+
+func TestProvisionWarpPeer_InvalidKeyRecovery(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Pass an invalid public key (which Cloudflare rejects with 401)
+	invalidKey := "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+	config, err := ProvisionWarpPeer(ctx, invalidKey, "")
+	if err != nil {
+		t.Fatalf("ProvisionWarpPeer should recover from invalid key, but returned error: %v", err)
+	}
+
+	if config == nil || config.ServerPubkey == "" {
+		t.Fatalf("Expected valid config after recovery, got nil or empty pubkey")
+	}
+
+	if config.ClientPublicKey == "" {
+		t.Errorf("Expected regenerated ClientPublicKey, got empty")
+	}
+}

@@ -33,6 +33,22 @@ object WireGuardTunnelManager {
     private var cachedPrivKey: String? = null
 
     @Synchronized
+    fun saveProvisionedKeys(context: Context?, pubKey: String, privKey: String?) {
+        cachedPubKey = pubKey
+        if (!privKey.isNullOrEmpty()) {
+            cachedPrivKey = privKey
+        }
+        if (context != null) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val editor = prefs.edit().putString(KEY_PUB, pubKey)
+            if (!privKey.isNullOrEmpty()) {
+                editor.putString(KEY_PRIV, privKey)
+            }
+            editor.apply()
+        }
+    }
+
+    @Synchronized
     private fun ensureKeys(context: Context? = null) {
         if (cachedPubKey != null && cachedPrivKey != null) return
 
@@ -40,39 +56,21 @@ object WireGuardTunnelManager {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val savedPub = prefs.getString(KEY_PUB, null)
             val savedPriv = prefs.getString(KEY_PRIV, null)
-            if (!savedPub.isNullOrEmpty() && !savedPriv.isNullOrEmpty()) {
+            if (!savedPub.isNullOrEmpty()) {
                 cachedPubKey = savedPub
                 cachedPrivKey = savedPriv
-                return
             }
         }
-
-        val random = SecureRandom()
-        val privBytes = ByteArray(32).also { random.nextBytes(it) }
-        val pubBytes = ByteArray(32).also { random.nextBytes(it) }
-        val pubBase64 = Base64.encodeToString(pubBytes, Base64.NO_WRAP)
-        val privBase64 = Base64.encodeToString(privBytes, Base64.NO_WRAP)
-
-        cachedPubKey = pubBase64
-        cachedPrivKey = privBase64
-
-        if (context != null) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit()
-                .putString(KEY_PUB, pubBase64)
-                .putString(KEY_PRIV, privBase64)
-                .apply()
-        }
     }
 
-    fun getClientPublicKeyBase64(context: Context? = null): String {
+    fun getClientPublicKeyBase64(context: Context? = null): String? {
         ensureKeys(context)
-        return cachedPubKey ?: "dGVzdF9wdWJsaWNfa2V5X2Zvcl9ub3doZXJlX3ZwbjE="
+        return cachedPubKey
     }
 
-    fun getClientPrivateKeyBase64(context: Context? = null): String {
+    fun getClientPrivateKeyBase64(context: Context? = null): String? {
         ensureKeys(context)
-        return cachedPrivKey ?: "dGVzdF9wcml2YXRlX2tleV9ub3doZXJlX3ZwbjEyMw=="
+        return cachedPrivKey
     }
 
     suspend fun startTunnel(

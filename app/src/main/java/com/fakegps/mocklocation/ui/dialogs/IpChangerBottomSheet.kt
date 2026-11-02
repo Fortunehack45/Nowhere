@@ -138,12 +138,12 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         val ctx = requireContext()
 
         // Auto-Sync Switch
-        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value
+        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
         binding.switchAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled && isPremium
         binding.switchAutoVpnSync.setOnCheckedChangeListener { buttonView, isChecked ->
             buttonView.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
             if (isChecked) {
-                val isPrem = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value
+                val isPrem = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
                 if (!isPrem) {
                     buttonView.isChecked = false
                     Toast.makeText(ctx, "Ghost Shield VPN is a Pro feature. Upgrade to Nowhere Pro.", Toast.LENGTH_SHORT).show()
@@ -174,13 +174,13 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 NowhereVpnService.stop(ctx)
                 Toast.makeText(ctx, "Ghost Shield Deactivated", Toast.LENGTH_SHORT).show()
             } else {
-                val isPrem = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value
+                val isPrem = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
                 if (!isPrem) {
                     Toast.makeText(ctx, "Ghost Shield is a Pro feature. Upgrade to Nowhere Pro.", Toast.LENGTH_SHORT).show()
                     com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance().show(parentFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
                     return@setOnClickListener
                 }
-                NowhereVpnService.start(ctx, "us_central_gcp")
+                NowhereVpnService.start(ctx, com.fakegps.mocklocation.vpn.IpManager.PRIMARY_SECURE_NODE.id)
                 Toast.makeText(ctx, "Hardware Telemetry Shield Active", Toast.LENGTH_SHORT).show()
             }
         }
