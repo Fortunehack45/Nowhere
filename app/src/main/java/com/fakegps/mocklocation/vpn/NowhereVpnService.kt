@@ -9,8 +9,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.app.Service
-import android.os.IBinder
+import android.net.VpnService
 import android.os.Build
 import android.content.pm.ServiceInfo
 import android.os.ParcelFileDescriptor
@@ -33,9 +32,9 @@ import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.URL
 
-class NowhereVpnService : Service() {
+class NowhereVpnService : VpnService() {
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onBind(intent: Intent?): android.os.IBinder? = super.onBind(intent)
 
     companion object {
         private const val TAG = "NowhereVpnService"
@@ -354,7 +353,12 @@ class NowhereVpnService : Service() {
             networkCallback = object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     if (isRunning && sessionPrefs.isIpMaskingEnabled) {
-                        Log.i(TAG, "Network available: underlying network active.")
+                        Log.i(TAG, "Network available: syncing underlying network to VPN tunnel...")
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            try {
+                                setUnderlyingNetworks(arrayOf(network))
+                            } catch (ignored: Exception) {}
+                        }
                     }
                 }
 
@@ -554,10 +558,14 @@ class NowhereVpnService : Service() {
                 delay(1000L)
                 val durationSec = if (sessionStartTimeMs > 0L) (System.currentTimeMillis() - sessionStartTimeMs) / 1000L else 0L
 
-                val rxInc = (1024L..4096L).random()
-                val txInc = (512L..2048L).random()
-                totalRxBytes += rxInc
-                totalTxBytes += txInc
+                // Read live stats from WireGuard GoBackend
+                val wgStats = WireGuardTunnelManager.getStatistics(this@NowhereVpnService)
+                if (wgStats != null) {
+                    val realRx = wgStats.totalRx()
+                    val realTx = wgStats.totalTx()
+                    if (realRx > 0L) totalRxBytes = realRx
+                    if (realTx > 0L) totalTxBytes = realTx
+                }
 
                 val rxRate = (totalRxBytes - prevRx).coerceAtLeast(0L)
                 val txRate = (totalTxBytes - prevTx).coerceAtLeast(0L)

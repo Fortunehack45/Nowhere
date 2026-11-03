@@ -212,6 +212,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var pendingAutoVpnNodeId: String? = null
+
+    private val vpnPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val nodeId = pendingAutoVpnNodeId ?: com.fakegps.mocklocation.vpn.IpManager.PRIMARY_SECURE_NODE.id
+            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, nodeId)
+            Toast.makeText(this, getString(R.string.status_shield_active), Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, getString(R.string.permission_vpn_required), Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private var currentLanguageCode: String = ""
     private var currentThemeMode: String = ""
 
@@ -1964,9 +1978,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
-        // VpnService removed to comply with Google Play Store policy.
+        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
+        if (!isPremium) return
+        val sessionPrefs = SessionPreferences(this)
+        if (settingsPrefs.isAutoVpnSyncEnabled) {
+            val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
+            pendingAutoVpnNodeId = node.id
+            val prepareIntent = android.net.VpnService.prepare(this)
+            if (prepareIntent != null) {
+                vpnPermissionLauncher.launch(prepareIntent)
+                return
+            }
+            if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
+                try {
+                    sessionPrefs.isIpMaskingEnabled = true
+                    com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
+                } catch (e: Exception) {
+                    android.util.Log.w("MainActivity", "Failed to auto-engage VPN: ${e.message}")
+                }
+            }
+        }
     }
 
     private fun ensureActiveSessionOrPrompt(onActive: () -> Unit): Boolean {

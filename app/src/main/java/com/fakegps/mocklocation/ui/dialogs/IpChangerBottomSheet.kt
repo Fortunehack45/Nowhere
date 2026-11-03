@@ -2,6 +2,7 @@ package com.fakegps.mocklocation.ui.dialogs
 
 import android.app.Activity
 import android.content.Context
+import android.net.VpnService
 import android.os.Bundle
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
@@ -54,6 +55,38 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
     private lateinit var sessionPrefs: SessionPreferences
     private lateinit var settingsPrefs: AppSettingsPreferences
+
+    private var pendingTargetNodeId: String? = null
+
+    private val vpnPrepareLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val ctx = context ?: return@registerForActivityResult
+        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
+        if (!isPremium) {
+            Toast.makeText(ctx, "Ghost Shield VPN is a Pro feature. Upgrade to Nowhere Pro.", Toast.LENGTH_SHORT).show()
+            com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance().show(parentFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
+            return@registerForActivityResult
+        }
+        if (result.resultCode == Activity.RESULT_OK) {
+            val nodeId = pendingTargetNodeId ?: com.fakegps.mocklocation.vpn.IpManager.PRIMARY_SECURE_NODE.id
+            NowhereVpnService.start(ctx, nodeId)
+            Toast.makeText(ctx, "Ghost Shield Activated", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(ctx, "VPN Permission required to activate Ghost Shield", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startVpnWithPermissionCheck(ctx: Context, nodeId: String) {
+        pendingTargetNodeId = nodeId
+        val prepareIntent = VpnService.prepare(ctx)
+        if (prepareIntent != null) {
+            vpnPrepareLauncher.launch(prepareIntent)
+        } else {
+            NowhereVpnService.start(ctx, nodeId)
+            Toast.makeText(ctx, "Ghost Shield Activated", Toast.LENGTH_SHORT).show()
+        }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -160,7 +193,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 val lat = if (liveState is com.fakegps.mocklocation.service.ServiceState.Running) liveState.latitude else sessionPrefs.lastLatitude
                 val lon = if (liveState is com.fakegps.mocklocation.service.ServiceState.Running) liveState.longitude else sessionPrefs.lastLongitude
                 val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
-                NowhereVpnService.start(ctx, node.id)
+                startVpnWithPermissionCheck(ctx, node.id)
             }
             val statusMsg = if (isChecked) "Sync with Mock Location Enabled" else "Direct Carrier Internet Active ⚡"
             Toast.makeText(ctx, statusMsg, Toast.LENGTH_SHORT).show()
@@ -180,8 +213,7 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                     com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance().show(parentFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
                     return@setOnClickListener
                 }
-                NowhereVpnService.start(ctx, com.fakegps.mocklocation.vpn.IpManager.PRIMARY_SECURE_NODE.id)
-                Toast.makeText(ctx, "Hardware Telemetry Shield Active", Toast.LENGTH_SHORT).show()
+                startVpnWithPermissionCheck(ctx, com.fakegps.mocklocation.vpn.IpManager.PRIMARY_SECURE_NODE.id)
             }
         }
 
