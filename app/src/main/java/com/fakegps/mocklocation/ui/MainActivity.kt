@@ -1979,8 +1979,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
-        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
-        if (!isPremium) return
         val sessionPrefs = SessionPreferences(this)
         if (settingsPrefs.isAutoVpnSyncEnabled) {
             val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
@@ -2582,9 +2580,6 @@ class MainActivity : AppCompatActivity() {
                         if (binding.switchMotionSync.isChecked) {
                             binding.switchMotionSync.isChecked = false
                             disableMotionSync()
-                        }
-                        if (com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
-                            com.fakegps.mocklocation.vpn.NowhereVpnService.stop(this@MainActivity)
                         }
                         if (binding.adBannerContainer.childCount == 0) {
                             com.fakegps.mocklocation.ads.AdManager.loadBanner(this@MainActivity, binding.adBannerContainer, isHomeBanner = true)

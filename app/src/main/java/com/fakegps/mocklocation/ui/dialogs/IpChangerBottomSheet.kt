@@ -62,12 +62,6 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val ctx = context ?: return@registerForActivityResult
-        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
-        if (!isPremium) {
-            Toast.makeText(ctx, "Ghost Shield VPN is a Pro feature. Upgrade to Nowhere Pro.", Toast.LENGTH_SHORT).show()
-            com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance().show(parentFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
-            return@registerForActivityResult
-        }
         if (result.resultCode == Activity.RESULT_OK) {
             val nodeId = pendingTargetNodeId ?: com.fakegps.mocklocation.vpn.IpManager.PRIMARY_SECURE_NODE.id
             NowhereVpnService.start(ctx, nodeId)
@@ -171,19 +165,9 @@ class IpChangerBottomSheet @JvmOverloads constructor(
         val ctx = requireContext()
 
         // Auto-Sync Switch
-        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
-        binding.switchAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled && isPremium
+        binding.switchAutoVpnSync.isChecked = settingsPrefs.isAutoVpnSyncEnabled
         binding.switchAutoVpnSync.setOnCheckedChangeListener { buttonView, isChecked ->
             buttonView.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-            if (isChecked) {
-                val isPrem = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
-                if (!isPrem) {
-                    buttonView.isChecked = false
-                    Toast.makeText(ctx, "Ghost Shield VPN is a Pro feature. Upgrade to Nowhere Pro.", Toast.LENGTH_SHORT).show()
-                    com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance().show(parentFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
-                    return@setOnCheckedChangeListener
-                }
-            }
             settingsPrefs.isAutoVpnSyncEnabled = isChecked
             sessionPrefs.isIpMaskingEnabled = isChecked
             if (!isChecked && NowhereVpnService.isRunning) {
@@ -207,12 +191,6 @@ class IpChangerBottomSheet @JvmOverloads constructor(
                 NowhereVpnService.stop(ctx)
                 Toast.makeText(ctx, "Ghost Shield Deactivated", Toast.LENGTH_SHORT).show()
             } else {
-                val isPrem = com.fakegps.mocklocation.billing.BillingManager.getInstance(ctx).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
-                if (!isPrem) {
-                    Toast.makeText(ctx, "Ghost Shield is a Pro feature. Upgrade to Nowhere Pro.", Toast.LENGTH_SHORT).show()
-                    com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.newInstance().show(parentFragmentManager, com.fakegps.mocklocation.ui.dialogs.PremiumBottomSheet.TAG)
-                    return@setOnClickListener
-                }
                 startVpnWithPermissionCheck(ctx, com.fakegps.mocklocation.vpn.IpManager.PRIMARY_SECURE_NODE.id)
             }
         }

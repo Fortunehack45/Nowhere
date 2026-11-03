@@ -58,12 +58,6 @@ class NowhereVpnService : VpnService() {
         val vpnState: StateFlow<VpnState> = _vpnState.asStateFlow()
 
         fun start(context: Context, nodeId: String) {
-            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
-            if (!isPremium) {
-                Log.w(TAG, "NowhereVpnService: Non-premium user cannot start VPN. Skipping service launch.")
-                _vpnState.value = VpnState.Disconnected
-                return
-            }
             val intent = Intent(context, NowhereVpnService::class.java).apply {
                 action = ACTION_CONNECT
                 putExtra(EXTRA_NODE_ID, nodeId)
@@ -84,12 +78,6 @@ class NowhereVpnService : VpnService() {
         }
 
         fun startWithTunnelResponse(context: Context, response: NowhereApiClient.TunnelResponse, customName: String? = null) {
-            val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(context).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
-            if (!isPremium) {
-                Log.w(TAG, "NowhereVpnService: Non-premium user cannot start VPN. Skipping service launch.")
-                _vpnState.value = VpnState.Disconnected
-                return
-            }
             val intent = Intent(context, NowhereVpnService::class.java).apply {
                 action = ACTION_CONNECT_TUNNEL_CONFIG
                 putExtra(EXTRA_NODE_ID, response.nodeId)
@@ -245,12 +233,6 @@ class NowhereVpnService : VpnService() {
         val defaultNode = IpManager.findNodeById(sessionPrefs.activeIpNodeId) ?: IpManager.PRIMARY_SECURE_NODE
         startForegroundNotification(defaultNode, _trafficStats.value)
 
-        val isPremium = com.fakegps.mocklocation.billing.BillingManager.getInstance(this).isPremium.value || com.fakegps.mocklocation.BuildConfig.DEBUG
-        if (!isPremium && intent?.action != ACTION_DISCONNECT) {
-            Log.w(TAG, "NowhereVpnService: Non-premium user cannot start VPN. Stopping cleanly.")
-            disconnectVpn()
-            return START_NOT_STICKY
-        }
         when (intent?.action) {
             ACTION_CONNECT -> {
                 isExplicitlyDisconnecting.set(false)
