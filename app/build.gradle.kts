@@ -34,6 +34,7 @@ val computedVersionName = customVersionName ?: "1.0.$computedVersionCode"
 android {
     namespace = "com.fakegps.mocklocation"
     compileSdk = 36
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.nowhere.gps.locationchanger"
@@ -75,6 +76,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
         }
     }
 
@@ -125,8 +129,8 @@ dependencies {
     // Core Library Desugaring for Java 8+ features
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
-    // Official WireGuard Android Tunnel Engine (Native ChaCha20-Poly1305 encryption & full IPv4/IPv6 routing)
-    implementation("com.wireguard.android:tunnel:1.0.20230706")
+    // Official WireGuard Android Tunnel Engine with 16 KB Page-Size Support (NDK r27+ ELF Aligned)
+    implementation(files("libs/tunnel-16kb.aar"))
 
     // AndroidX & Core
     implementation("androidx.core:core-ktx:1.12.0")
