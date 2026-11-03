@@ -1,4 +1,6 @@
 import java.io.ByteArrayOutputStream
+import java.util.Properties
+import com.android.build.gradle.api.ApkVariantOutput
 
 plugins {
     id("com.android.application")
@@ -24,12 +26,32 @@ fun getDynamicBuildNumber(): Int {
     }.getOrNull() ?: 58
 
     val envRunNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
-    return 2050 + gitCommitCount + envRunNumber
+    val calculated = 2550 + gitCommitCount + envRunNumber
+    return maxOf(2550, calculated)
 }
 
 val computedVersionCode = getDynamicBuildNumber()
 val customVersionName = project.findProperty("versionName") as? String
 val computedVersionName = customVersionName ?: "1.0.$computedVersionCode"
+
+// Secure Keystore Properties
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+fun getSecret(key: String, envKey: String): String? {
+    return System.getenv(envKey)
+        ?: (project.findProperty(key) as? String)
+        ?: keystoreProperties.getProperty(key)
+}
+
+val releaseKeystorePath = getSecret("NOWHERE_KEYSTORE_PATH", "NOWHERE_KEYSTORE_PATH") ?: "nowhere_key.jks"
+val releaseKeystorePassword = getSecret("NOWHERE_KEYSTORE_PASSWORD", "NOWHERE_KEYSTORE_PASSWORD")
+val releaseKeyAlias = getSecret("NOWHERE_KEY_ALIAS", "NOWHERE_KEY_ALIAS") ?: "nowhere"
+val releaseKeyPassword = getSecret("NOWHERE_KEY_PASSWORD", "NOWHERE_KEY_PASSWORD") ?: releaseKeystorePassword
 
 android {
     namespace = "com.fakegps.mocklocation"
@@ -50,43 +72,52 @@ android {
     }
 
     signingConfigs {
-        create("universalKey") {
-            storeFile = file("nowhere_key.jks")
-            storePassword = "nowhere123"
-            keyAlias = "nowhere"
-            keyPassword = "nowhere123"
-            enableV1Signing = true
-            enableV2Signing = true
-            enableV3Signing = true
-            enableV4Signing = true
+        create("release") {
+            val keyFile = file(releaseKeystorePath)
+            if (keyFile.exists() && !releaseKeystorePassword.isNullOrBlank()) {
+                storeFile = keyFile
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = true
+            }
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("universalKey")
+            val relConfig = signingConfigs.findByName("release")
+            if (relConfig != null && relConfig.storeFile != null && relConfig.storeFile!!.exists()) {
+                signingConfig = relConfig
+            }
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("universalKey")
+            val relConfig = signingConfigs.findByName("release")
+            if (relConfig != null && relConfig.storeFile != null && relConfig.storeFile!!.exists()) {
+                signingConfig = relConfig
+            }
             manifestPlaceholders["admobAppId"] = "ca-app-pub-5191202278112313~3868363285"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             ndk {
-                debugSymbolLevel = "SYMBOL_TABLE"
+                debugSymbolLevel = "FULL"
             }
         }
     }
 
     applicationVariants.all {
+        val variantName = name
         outputs.all {
-            if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
-                outputFileName = "Nowhere-v${defaultConfig.versionName}-${name}.apk"
-            }
+            val apkOutput = this as? ApkVariantOutput
+            apkOutput?.outputFileName = "Nowhere-v${computedVersionName}-${variantName}.apk"
         }
     }
 
@@ -189,3 +220,22 @@ dependencies {
     testImplementation("org.robolectric:android-all:14-robolectric-10818077")
     testImplementation("androidx.test:core:1.5.0")
 }
+
+tasks.register<Zip>("packageNativeDebugSymbols") {
+    description = "Packages native .so libraries into native-debug-symbols.zip for Google Play Console"
+    group = "publishing"
+    from(zipTree("libs/tunnel-16kb.aar")) {
+        include("jni/**")
+        eachFile {
+            path = path.removePrefix("jni/")
+        }
+        includeEmptyDirs = false
+    }
+    archiveFileName.set("native-debug-symbols.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("outputs"))
+}
+
+tasks.matching { it.name == "bundleRelease" }.configureEach {
+    finalizedBy("packageNativeDebugSymbols")
+}
+

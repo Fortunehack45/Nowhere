@@ -16,6 +16,9 @@ app/robolectric-deps/
 *.key
 *.p12
 *.pkcs12
+*.jks
+*.keystore
+keystore.properties
 *service_account*.json
 *service-account*.json
 *credentials*.json

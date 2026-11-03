@@ -39,6 +39,13 @@ jobs:
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
 
+      - name: Decode Release Keystore
+        if: env.NOWHERE_KEYSTORE_BASE64 != ''
+        run: |
+          echo "$NOWHERE_KEYSTORE_BASE64" | base64 -d > app/nowhere_key.jks
+        env:
+          NOWHERE_KEYSTORE_BASE64: ${{ secrets.NOWHERE_KEYSTORE_BASE64 }}
+
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --continue --stacktrace
 
@@ -46,6 +53,39 @@ jobs:
         run: ./gradlew assembleDebug assembleRelease bundleRelease --stacktrace
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          NOWHERE_KEYSTORE_PATH: nowhere_key.jks
+          NOWHERE_KEYSTORE_PASSWORD: ${{ secrets.NOWHERE_KEYSTORE_PASSWORD }}
+          NOWHERE_KEY_ALIAS: ${{ secrets.NOWHERE_KEY_ALIAS }}
+          NOWHERE_KEY_PASSWORD: ${{ secrets.NOWHERE_KEY_PASSWORD }}
+
+      - name: Verify 16 KB Page Alignment on 64-bit Native Libraries
+        run: |
+          echo "=== Auditing 16 KB Alignment for 64-bit Native Libraries in Release AAB ==="
+          mkdir -p aab_check
+          AAB_FILE=$(ls app/build/outputs/bundle/release/*.aab 2>/dev/null | head -n 1)
+          if [ -z "$AAB_FILE" ]; then
+            echo "Error: Release AAB not found!"
+            exit 1
+          fi
+          unzip -q "$AAB_FILE" -d aab_check
+          FAILED=0
+          for so in $(find aab_check -path "*/arm64-v8a/*.so" -o -path "*/x86_64/*.so"); do
+            echo "Checking $so ..."
+            ALIGN=$(readelf -lW "$so" | awk '/LOAD/{print $NF}' | sort -u)
+            echo "  LOAD segment alignments: $ALIGN"
+            for val in $ALIGN; do
+              if [ "$val" = "0x1000" ] || [ "$val" = "4096" ]; then
+                echo "ERROR: $so has 4 KB alignment ($val)!"
+                FAILED=1
+              fi
+            done
+          done
+          rm -rf aab_check
+          if [ $FAILED -ne 0 ]; then
+            echo "Build failed: One or more 64-bit native libraries do not support 16 KB page size!"
+            exit 1
+          fi
+          echo "SUCCESS: All 64-bit native libraries are 16 KB page-aligned (>= 0x4000)!"
 
       - name: List Generated APK & AAB Files and Extract Version
         id: extract_version
@@ -89,6 +129,7 @@ jobs:
             app/build/outputs/apk/debug/*.apk
             app/build/outputs/bundle/release/*.aab
             app/build/outputs/mapping/release/*.txt
+            app/build/outputs/native-debug-symbols.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -100,6 +141,15 @@ jobs:
           path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Upload Native Debug Symbols Artifact
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nowhere-Native-Debug-Symbols-v${{ steps.extract_version.outputs.version }}
+          path: app/build/outputs/native-debug-symbols.zip
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Upload Deobfuscation Mapping Artifact (mapping.txt)
         continue-on-error: true

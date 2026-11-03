@@ -123,12 +123,13 @@ object WireGuardTunnelManager {
         serverEndpoint: String,
         serverPublicKey: String,
         assignedClientIp: String,
+        assignedClientIpv6: String? = null,
         dnsServer: String = "1.1.1.1",
         mtu: Int = 1280
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             ensureKeys(context)
-            Log.i(TAG, "Initiating secure WireGuard tunnel to $serverEndpoint (Assigned IP: $assignedClientIp)...")
+            Log.i(TAG, "Initiating secure WireGuard tunnel to $serverEndpoint (Assigned IPv4: $assignedClientIp, IPv6: $assignedClientIpv6)...")
 
             val wgBackend = getBackend(context)
             val tunnel = activeTunnel ?: NowhereTunnel().also { activeTunnel = it }
@@ -150,6 +151,16 @@ object WireGuardTunnelManager {
                 .setMtu(mtu.coerceIn(1280, 1420))
                 .excludeApplication(context.packageName)
 
+            if (!assignedClientIpv6.isNullOrBlank()) {
+                val cleanIpv6 = if (assignedClientIpv6.contains("/")) assignedClientIpv6 else "$assignedClientIpv6/128"
+                try {
+                    ifaceBuilder.addAddress(InetNetwork.parse(cleanIpv6))
+                    Log.i(TAG, "Added IPv6 tunnel interface address: $cleanIpv6")
+                } catch (e: Exception) {
+                    Log.w(TAG, "Could not add IPv6 tunnel address ($cleanIpv6): ${e.message}")
+                }
+            }
+
             val dnsCandidates = linkedSetOf<String>().apply {
                 if (dnsServer.isNotBlank()) add(dnsServer.trim())
                 add("1.1.1.1")
@@ -165,6 +176,7 @@ object WireGuardTunnelManager {
                 .parsePublicKey(serverPublicKey)
                 .setEndpoint(InetEndpoint.parse(serverEndpoint))
                 .addAllowedIp(InetNetwork.parse("0.0.0.0/0"))
+                .addAllowedIp(InetNetwork.parse("::/0"))
                 .setPersistentKeepalive(25)
 
             val config = Config.Builder()
@@ -186,15 +198,15 @@ object WireGuardTunnelManager {
         }
     }
 
-    suspend fun verifyHandshake(context: Context, maxWaitMs: Long = 4000L): Boolean = withContext(Dispatchers.IO) {
+    suspend fun verifyHandshake(context: Context, maxWaitMs: Long = 7000L): Boolean = withContext(Dispatchers.IO) {
         val tunnel = activeTunnel ?: return@withContext false
         val startTime = System.currentTimeMillis()
 
         while (System.currentTimeMillis() - startTime < maxWaitMs) {
-            kotlinx.coroutines.delay(300L)
+            kotlinx.coroutines.delay(400L)
             try {
                 val stats = getBackend(context).getStatistics(tunnel)
-                if (stats.totalRx() > 0) {
+                if (stats != null && stats.totalRx() > 0L) {
                     Log.i(TAG, "WireGuard Handshake confirmed! RX: ${stats.totalRx()} bytes, TX: ${stats.totalTx()} bytes")
                     return@withContext true
                 }
@@ -202,12 +214,8 @@ object WireGuardTunnelManager {
                 Log.w(TAG, "Polling WireGuard statistics warning: ${e.message}")
             }
         }
-        // Fallback check: if tunnel is UP, return true to allow connection to stabilize in background
-        try {
-            getBackend(context).getState(tunnel) == Tunnel.State.UP
-        } catch (e: Exception) {
-            false
-        }
+        Log.w(TAG, "WireGuard Handshake timeout: 0 RX bytes received after ${maxWaitMs}ms")
+        false
     }
 
     fun stopTunnelSync(context: Context) {

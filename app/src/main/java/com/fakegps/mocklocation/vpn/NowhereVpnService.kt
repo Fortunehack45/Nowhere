@@ -333,7 +333,7 @@ class NowhereVpnService : VpnService() {
         tunnelJob = serviceScope.launch {
             try {
                 disconnectInterface()
-                bringUpTunnel(node, cleanEndpoint, serverPubkey, assignedIp, dns)
+                bringUpTunnel(node, cleanEndpoint, serverPubkey, assignedIp, null, dns)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -397,10 +397,8 @@ class NowhereVpnService : VpnService() {
         if (sessionStartTimeMs == 0L) {
             sessionStartTimeMs = System.currentTimeMillis()
         }
-        if (totalRxBytes == 0L) {
-            totalRxBytes = 24_576L
-            totalTxBytes = 16_384L
-        }
+        totalRxBytes = 0L
+        totalTxBytes = 0L
 
         startForegroundNotification(node, _trafficStats.value)
 
@@ -463,9 +461,9 @@ class NowhereVpnService : VpnService() {
                 }
                 val serverPubkey = tunnelResp.serverPubkey
 
-                Log.i(TAG, "Provisioned WireGuard peer! Server: $serverEndpoint, Assigned IP: $assignedTunnelIp")
+                Log.i(TAG, "Provisioned WireGuard peer! Server: $serverEndpoint, Assigned IP: $assignedTunnelIp, IPv6: ${tunnelResp.assignedIpv6}")
 
-                bringUpTunnel(node, serverEndpoint, serverPubkey, assignedTunnelIp, tunnelDns)
+                bringUpTunnel(node, serverEndpoint, serverPubkey, assignedTunnelIp, tunnelResp.assignedIpv6, tunnelDns)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -480,10 +478,11 @@ class NowhereVpnService : VpnService() {
         serverEndpoint: String,
         serverPubkey: String,
         assignedTunnelIp: String,
+        assignedTunnelIpv6: String? = null,
         tunnelDns: String
     ) {
         val cleanAssignedIp = if (assignedTunnelIp.contains("/")) assignedTunnelIp.substringBefore("/") else assignedTunnelIp
-        Log.i(TAG, "Starting WireGuard GoBackend for ${node.name} [Endpoint: $serverEndpoint, IP: $cleanAssignedIp, DNS: $tunnelDns]")
+        Log.i(TAG, "Starting WireGuard GoBackend for ${node.name} [Endpoint: $serverEndpoint, IP: $cleanAssignedIp, IPv6: $assignedTunnelIpv6, DNS: $tunnelDns]")
 
         // Pre-flight check: ensure endpoint can be resolved before touching default routes
         val canResolve = withContext(Dispatchers.IO) {
@@ -505,6 +504,7 @@ class NowhereVpnService : VpnService() {
             serverEndpoint = serverEndpoint,
             serverPublicKey = serverPubkey,
             assignedClientIp = cleanAssignedIp,
+            assignedClientIpv6 = assignedTunnelIpv6,
             dnsServer = tunnelDns
         )
 
@@ -516,9 +516,11 @@ class NowhereVpnService : VpnService() {
         }
 
         Log.i(TAG, "Verifying WireGuard handshake with $serverEndpoint...")
-        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 6000L)
+        val handshakeConfirmed = WireGuardTunnelManager.verifyHandshake(this@NowhereVpnService, maxWaitMs = 7000L)
         if (!handshakeConfirmed) {
-            Log.w(TAG, "WireGuard handshake pending or high latency with $serverEndpoint — maintaining active tunnel for background retry")
+            Log.w(TAG, "WireGuard handshake timed out with $serverEndpoint (0 RX bytes received). Preserving mobile data.")
+            handleConnectionFailure(node, "WireGuard handshake timed out. Remote server unreachable.")
+            return
         }
 
         isRunning = true

@@ -29,6 +29,7 @@ object NowhereApiClient {
         val serverPubkey: String,
         val endpoint: String,
         val assignedIp: String,
+        val assignedIpv6: String? = null,
         val clientPrivateKey: String?,
         val clientPublicKey: String,
         val allowedIps: List<String>,
@@ -130,6 +131,9 @@ object NowhereApiClient {
                 val rawEndpoint = json.optString("endpoint", "$DEFAULT_SERVER_HOST:51820")
                 val cleanEndpoint = sanitizeEndpoint(rawEndpoint)
 
+                val rawIpv6 = json.optString("assigned_ipv6", "")
+                val cleanIpv6 = if (rawIpv6.isNotBlank() && !rawIpv6.equals("null", ignoreCase = true)) rawIpv6 else null
+
                 val resp = TunnelResponse(
                     nodeId = json.optString("node_id", "us_central_gcp"),
                     country = json.optString("country", "US"),
@@ -138,6 +142,7 @@ object NowhereApiClient {
                     serverPubkey = json.optString("server_pubkey", ""),
                     endpoint = cleanEndpoint,
                     assignedIp = json.optString("assigned_ip", "10.8.0.2/32"),
+                    assignedIpv6 = cleanIpv6,
                     clientPrivateKey = if (json.has("client_private_key")) json.getString("client_private_key") else null,
                     clientPublicKey = json.optString("client_public_key", ""),
                     allowedIps = allowedIpsList,

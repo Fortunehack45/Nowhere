@@ -23,6 +23,7 @@ type TunnelConfig struct {
 	ServerPubkey     string   `json:"server_pubkey"`
 	Endpoint         string   `json:"endpoint"`
 	AssignedIP       string   `json:"assigned_ip"`
+	AssignedIPv6     string   `json:"assigned_ipv6,omitempty"`
 	ClientPrivateKey string   `json:"client_private_key,omitempty"`
 	ClientPublicKey  string   `json:"client_public_key"`
 	AllowedIPs       []string `json:"allowed_ips"`
