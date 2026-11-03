@@ -73,7 +73,15 @@ android {
 
     signingConfigs {
         create("release") {
-            val keyFile = file(releaseKeystorePath)
+            val keyFile = if (file(releaseKeystorePath).exists()) {
+                file(releaseKeystorePath)
+            } else if (rootProject.file(releaseKeystorePath).exists()) {
+                rootProject.file(releaseKeystorePath)
+            } else if (rootProject.file("app/$releaseKeystorePath").exists()) {
+                rootProject.file("app/$releaseKeystorePath")
+            } else {
+                file(releaseKeystorePath)
+            }
             if (keyFile.exists() && !releaseKeystorePassword.isNullOrBlank()) {
                 storeFile = keyFile
                 storePassword = releaseKeystorePassword
@@ -101,6 +109,9 @@ android {
             val relConfig = signingConfigs.findByName("release")
             if (relConfig != null && relConfig.storeFile != null && relConfig.storeFile!!.exists()) {
                 signingConfig = relConfig
+            } else {
+                // Fallback to debug signature if release key is absent so APK is never unsigned
+                signingConfig = signingConfigs.getByName("debug")
             }
             manifestPlaceholders["admobAppId"] = "ca-app-pub-5191202278112313~3868363285"
             proguardFiles(
