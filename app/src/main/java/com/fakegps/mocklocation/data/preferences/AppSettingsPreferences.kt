@@ -104,6 +104,7 @@ class AppSettingsPreferences(context: Context) {
         const val KEY_CLOCK_DRIFT_EMULATION_ENABLED = "key_clock_drift_emulation_enabled"
         const val KEY_SENSOR_KINEMATICS_ENABLED = "key_sensor_kinematics_enabled"
         const val KEY_AUTO_VPN_SYNC_ENABLED = "key_auto_vpn_sync_enabled"
+        const val KEY_HAS_ACCEPTED_VPN_DISCLOSURE = "key_has_accepted_vpn_disclosure"
 
         // Recents & Clear-All Shield Key
         const val KEY_RECENTS_SHIELD_ENABLED = "key_recents_shield_enabled"
@@ -134,6 +135,10 @@ class AppSettingsPreferences(context: Context) {
     var isAutoVpnSyncEnabled: Boolean
         get() = prefs.getBoolean(KEY_AUTO_VPN_SYNC_ENABLED, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_VPN_SYNC_ENABLED, value).apply()
+
+    var hasAcceptedVpnDisclosure: Boolean
+        get() = prefs.getBoolean(KEY_HAS_ACCEPTED_VPN_DISCLOSURE, false)
+        set(value) = prefs.edit().putBoolean(KEY_HAS_ACCEPTED_VPN_DISCLOSURE, value).apply()
 
     var appThemeColor: String
         get() = prefs.getString("key_app_theme_color", "RED") ?: "RED"

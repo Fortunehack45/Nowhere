@@ -73,6 +73,24 @@ class IpChangerBottomSheet @JvmOverloads constructor(
 
     private fun startVpnWithPermissionCheck(ctx: Context, nodeId: String) {
         pendingTargetNodeId = nodeId
+        val settings = AppSettingsPreferences(ctx)
+        if (!settings.hasAcceptedVpnDisclosure) {
+            VpnDisclosureDialog(
+                context = ctx,
+                onConsentGranted = {
+                    settings.hasAcceptedVpnDisclosure = true
+                    launchVpnPrepareOrStart(ctx, nodeId)
+                },
+                onConsentDenied = {
+                    Toast.makeText(ctx, getString(R.string.vpn_disclosure_denied_msg), Toast.LENGTH_SHORT).show()
+                }
+            ).show()
+        } else {
+            launchVpnPrepareOrStart(ctx, nodeId)
+        }
+    }
+
+    private fun launchVpnPrepareOrStart(ctx: Context, nodeId: String) {
         val prepareIntent = VpnService.prepare(ctx)
         if (prepareIntent != null) {
             vpnPrepareLauncher.launch(prepareIntent)

@@ -658,6 +658,19 @@
     <string name="disclosure_btn_agree">Agree &amp; Continue</string>
     <string name="disclosure_btn_deny">Not Now</string>
     <string name="disclosure_denied_warning">Location permission was not granted. Map will remain at default position.</string>
+
+    <!-- Prominent VpnService Disclosure & User Consent Dialog (Google Play Compliant) -->
+    <string name="vpn_disclosure_badge">PROMINENT DISCLOSURE (VpnService)</string>
+    <string name="vpn_disclosure_title">Ghost Shield VPN &amp; Network Privacy</string>
+    <string name="vpn_disclosure_core_title">Core Functionality &amp; VpnService Usage</string>
+    <string name="vpn_disclosure_core_desc">Nowhere utilizes Android\'s VpnService to create a secure, encrypted device-level WireGuard tunnel (\"Ghost Shield\"). When you mock your GPS location, your network traffic and IP address are routed through this tunnel to match your simulated location, protecting your privacy and preventing IP-to-location correlation leaks by third-party apps and trackers.</string>
+    <string name="vpn_disclosure_encryption_title">End-to-End Encryption &amp; Zero Logging</string>
+    <string name="vpn_disclosure_encryption_desc">All data passing through the tunnel is strongly encrypted end-to-end using ChaCha20-Poly1305. Nowhere NEVER inspects, logs, stores, sells, or monetizes your personal network traffic, browsing activity, or sensitive app data.</string>
+    <string name="vpn_disclosure_control_title">Affirmative User Control</string>
+    <string name="vpn_disclosure_control_desc">Ghost Shield activates only when you tap \"Activate Ghost Shield Now\" or enable \"Sync with Mock Location\". You can disconnect the VPN at any time with a single tap.</string>
+    <string name="vpn_disclosure_btn_agree">Agree &amp; Enable Ghost Shield</string>
+    <string name="vpn_disclosure_btn_deny">Not Now</string>
+    <string name="vpn_disclosure_denied_msg">VPN activation cancelled. Real IP address will remain unmasked.</string>
     <string name="vpn_state_protected">Ghost Shield Protected</string>
     <string name="vpn_badge_protected">PROTECTED</string>
     <string name="vpn_btn_deactivate">Deactivate Ghost Shield</string>
