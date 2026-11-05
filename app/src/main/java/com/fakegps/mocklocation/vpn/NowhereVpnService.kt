@@ -58,19 +58,8 @@ class NowhereVpnService : VpnService() {
         val vpnState: StateFlow<VpnState> = _vpnState.asStateFlow()
 
         fun start(context: Context, nodeId: String) {
-            val intent = Intent(context, NowhereVpnService::class.java).apply {
-                action = ACTION_CONNECT
-                putExtra(EXTRA_NODE_ID, nodeId)
-            }
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start NowhereVpnService: ${e.message}", e)
-            }
+            Log.i(TAG, "NowhereVpnService: VpnService disabled for Google Play compliance.")
+            _vpnState.value = VpnState.Disconnected
         }
 
         fun startVpn(context: Context, node: IpNode) {
@@ -78,37 +67,11 @@ class NowhereVpnService : VpnService() {
         }
 
         fun startWithTunnelResponse(context: Context, response: NowhereApiClient.TunnelResponse, customName: String? = null) {
-            val intent = Intent(context, NowhereVpnService::class.java).apply {
-                action = ACTION_CONNECT_TUNNEL_CONFIG
-                putExtra(EXTRA_NODE_ID, response.nodeId)
-                putExtra(EXTRA_ENDPOINT, response.endpoint)
-                putExtra(EXTRA_SERVER_PUBKEY, response.serverPubkey)
-                putExtra(EXTRA_ASSIGNED_IP, response.assignedIp)
-                putExtra(EXTRA_DNS, response.dns.firstOrNull() ?: "1.1.1.1")
-                if (customName != null) {
-                    putExtra(EXTRA_CUSTOM_NAME, customName)
-                }
-            }
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start NowhereVpnService with tunnel config: ${e.message}", e)
-            }
+            Log.i(TAG, "NowhereVpnService: VpnService disabled for Google Play compliance.")
+            _vpnState.value = VpnState.Disconnected
         }
 
         fun stop(context: Context) {
-            val intent = Intent(context, NowhereVpnService::class.java).apply {
-                action = ACTION_DISCONNECT
-            }
-            try {
-                context.startService(intent)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to send disconnect to NowhereVpnService: ${e.message}", e)
-            }
             isRunning = false
             _vpnState.value = VpnState.Disconnected
         }

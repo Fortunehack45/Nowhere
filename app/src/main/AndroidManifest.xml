@@ -100,21 +100,6 @@
             android:stopWithTask="false"
             android:exported="false" />
 
-        <service
-            android:name=".vpn.NowhereVpnService"
-            android:enabled="true"
-            android:exported="false"
-            android:stopWithTask="false"
-            android:permission="android.permission.BIND_VPN_SERVICE"
-            android:foregroundServiceType="specialUse">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Virtual IP privacy tunnel and hardware-level mock IP telemetry" />
-        </service>
-
         <!-- AndroidX Per-App Language Metadata Holder Service (Android 12 and below) -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

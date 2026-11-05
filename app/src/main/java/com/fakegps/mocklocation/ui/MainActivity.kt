@@ -1979,43 +1979,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun autoEngageVpnForLocation(lat: Double, lon: Double) {
-        val sessionPrefs = SessionPreferences(this)
-        if (settingsPrefs.isAutoVpnSyncEnabled) {
-            val node = com.fakegps.mocklocation.vpn.IpManager.findClosestNodeForCoordinates(lat, lon)
-            pendingAutoVpnNodeId = node.id
-            if (!settingsPrefs.hasAcceptedVpnDisclosure) {
-                com.fakegps.mocklocation.ui.dialogs.VpnDisclosureDialog(
-                    context = this,
-                    onConsentGranted = {
-                        settingsPrefs.hasAcceptedVpnDisclosure = true
-                        val prepareIntent = android.net.VpnService.prepare(this)
-                        if (prepareIntent != null) {
-                            vpnPermissionLauncher.launch(prepareIntent)
-                        } else if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
-                            sessionPrefs.isIpMaskingEnabled = true
-                            com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
-                        }
-                    },
-                    onConsentDenied = {
-                        android.widget.Toast.makeText(this, getString(R.string.vpn_disclosure_denied_msg), android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                ).show()
-                return
-            }
-            val prepareIntent = android.net.VpnService.prepare(this)
-            if (prepareIntent != null) {
-                vpnPermissionLauncher.launch(prepareIntent)
-                return
-            }
-            if (!com.fakegps.mocklocation.vpn.NowhereVpnService.isRunning) {
-                try {
-                    sessionPrefs.isIpMaskingEnabled = true
-                    com.fakegps.mocklocation.vpn.NowhereVpnService.start(this, node.id)
-                } catch (e: Exception) {
-                    android.util.Log.w("MainActivity", "Failed to auto-engage VPN: ${e.message}")
-                }
-            }
-        }
+        // Device-level VpnService disabled for Google Play policy compliance
     }
 
     private fun ensureActiveSessionOrPrompt(onActive: () -> Unit): Boolean {
